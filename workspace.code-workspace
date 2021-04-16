@@ -53,6 +53,30 @@
 					"--dump_model",
 				]
 			},
+			{
+				"name": "fw/train",
+				"type": "python",
+				"request": "launch",
+				"module": "fgsim",
+				"args": [
+					"--tag",
+					"forward",
+					"--debug",
+					"train",
+					"--dump_model",
+				]
+			},
+			{
+				"name": "fw/gen",
+				"type": "python",
+				"request": "launch",
+				"module": "fgsim",
+				"args": [
+					"--tag",
+					"forward",
+					"generate",
+				]
+			},
 		]
 	},
 }
