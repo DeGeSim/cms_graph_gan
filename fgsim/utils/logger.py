@@ -2,7 +2,7 @@ import logging
 from ..config import conf
 
 logger = logging.getLogger(__name__)
-format="%(name)s - %(levelname)s - %(message)s"
+format = "%(name)s - %(levelname)s - %(message)s"
 
 logging.basicConfig(
     filename=f"wd/{conf.tag}/log",

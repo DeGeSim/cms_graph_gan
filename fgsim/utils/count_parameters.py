@@ -1,4 +1,6 @@
 from ..utils.logger import logger
+
+
 def count_parameters(model):
     from prettytable import PrettyTable
 

@@ -77,6 +77,12 @@
 					"generate",
 				]
 			},
+			{
+				"name": "runfile",
+				"type": "python",
+				"request": "launch",
+				"program": "${file}",
+			},
 		]
 	},
 }

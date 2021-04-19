@@ -15,10 +15,9 @@ device = get_device()
 
 fn = f"wd/{args.tag}/config.yaml"
 if not os.path.isfile(fn):
-    fn = 'fgsim/default.yaml'
+    fn = "fgsim/default.yaml"
 
 with open(fn, "r") as fp:
     fileconf = OmegaConf.load(fp)
 
 conf = OmegaConf.merge(vars(args), fileconf)
-

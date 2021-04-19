@@ -42,7 +42,8 @@ def main():
 
     logger.info(f"Running command {conf['command']}")
     if conf["command"] == "train":
-        from .geo.loader import graph
+        from .geo.fw_loader import graph
+        from .fw_data_loader import data_generator
         from .train.holder import model_holder
         from .train.train import training_procedure
 
