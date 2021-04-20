@@ -1,5 +1,6 @@
 """Main module."""
 import sys
+
 import pretty_errors
 
 from .utils.logger import logger
@@ -42,10 +43,8 @@ def main():
 
     logger.info(f"Running command {conf['command']}")
     if conf["command"] == "train":
-        from .geo.fw_loader import graph
-        from .fw_data_loader import data_generator
+        from .train.fw_train import training_procedure
         from .train.holder import model_holder
-        from .train.train import training_procedure
 
         training_procedure(model_holder)
 

@@ -2,6 +2,7 @@ import gc
 import os
 import sys
 from pprint import pprint
+from .logger import logger
 
 import torch
 

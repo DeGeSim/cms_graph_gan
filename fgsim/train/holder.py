@@ -1,34 +1,37 @@
 import os
 
 import torch
-import torch.optim as optim
 
 from ..config import conf, device
-from ..data_loader import eventarr, posD
-from ..geo.mapper import Geomapper
+# from ..geo.mapper import Geomapper
 from ..utils.count_parameters import count_parameters
-from ..utils.logger import logger
-from .model import Discriminator, Generator
+from .model import Net
 
 
 class modelHolder:
     def __init__(self) -> None:
-        mapper = Geomapper(posD)
-        self.train_data = torch.tensor(mapper.map_events(eventarr))
+        # self.train_data = torch.tensor(mapper.map_events(eventarr))
+
         self.metrics = {"losses_g": [], "losses_d": [], "memory": [], "epoch": 0}
         self.checkpoint_path = f"wd/{conf.tag}/checkpoint.torch"
         self.checkpoint_old_path = f"wd/{conf.tag}/checkpoint_old.torch"
 
-        self.discriminator = Discriminator().to(device)
-        self.generator = Generator(conf.model.gan.nz).to(device)
+        # self.discriminator = Discriminator().to(device)
+        # self.generator = Generator(conf.model.gan.nz).to(device)
+        self.model = Net().to(device)
 
-        count_parameters(self.generator)
-        count_parameters(self.discriminator)
+        # count_parameters(self.generator)
+        # count_parameters(self.discriminator)
+        count_parameters(self.model)
         # optimizers
-        self.optim_g = optim.Adam(self.generator.parameters(), lr=conf.model.gan.lr)
-        self.optim_d = optim.Adam(self.discriminator.parameters(), lr=conf.model.gan.lr)
+        # self.optim_g = optim.Adam(self.generator.parameters(), lr=conf.model.gan.lr)
+        # self.optim_d = optim.Adam(self.discriminator.parameters(), lr=conf.model.gan.lr)
+        self.optim = torch.optim.Adam(
+            self.model.parameters(), lr=0.01, weight_decay=5e-4
+        )
         # loss function
-        self.criterion = torch.nn.BCELoss().to(device)
+        # self.lossf = torch.nn.BCELoss().to(device)
+        self.lossf = torch.nn.MSELoss()
         self.load_checkpoint()
 
     def load_checkpoint(self):
@@ -61,14 +64,14 @@ class modelHolder:
             self.checkpoint_path,
         )
 
-    def run_training(self):
-        from .train import training_procedure
+    # def run_training(self):
+    #     from .train import training_procedure
 
-        self.generator, self.discriminator = training_procedure(self)
+    #     self.generator, self.discriminator = training_procedure(self)
 
-        logger.info("Training finished")
-        torch.save(self.generator.state_dict(), "output/generator.pth")
-        logger.info("Model saved")
+    #     logger.info("Training finished")
+    #     torch.save(self.generator.state_dict(), "output/generator.pth")
+    #     logger.info("Model saved")
 
 
 model_holder = modelHolder()

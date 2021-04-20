@@ -1,12 +1,13 @@
 # %%
-import numpy as np
-import h5py as h5
 import os
+
+import h5py as h5
+import numpy as np
 import torch
-from ..config import conf
-from ..utils.logger import logger
 from torch_geometric.data import Data
 
+from ..config import conf
+from ..utils.logger import logger
 
 # %%
 
@@ -17,16 +18,16 @@ if os.path.isfile(conf["graphpath"]):
     logger.info("Done loading graph.")
 else:
     logger.info("Generating graph...")
-    from ..fw_data_loader import data_generator
 
-    arr = np.zeros(next(data_generator()).shape)
+    with h5.File("wd/forward/Ele_FixedAngle/EleEscan_1_1.h5", "r") as f:
+        example = np.swapaxes(f["ECAL"][0], 0, 2)
+    arr = np.zeros(example.shape)
 
     num_nodes = arr.shape[0] * arr.shape[1] * arr.shape[2]
     # Node features:
     # 0.Energy
-    # 1.layer
-    # 2-5 hidden
-    num_node_features = 6
+    # 1-4 hidden
+    num_node_features = 5
 
     num_edge_features = 1
     # Node feature matrix
@@ -37,21 +38,21 @@ else:
     edge_attr = np.empty((0, num_edge_features), dtype=int)
 
     def arrpos(i, j, k, shape):
-        return i * shape[1] * shape[2] + j * (shape[2]) + (k + 1)
+        return i * shape[1] * shape[2] + j * (shape[2]) + k
 
     nlayers = arr.shape[0]
     # Keep track of connection per layer
     # layer node1 node2
-    edges_per_layer = np.empty((nlayers, 2, 0), dtype=int)
-    forward_edges_per_layer = np.empty((nlayers, 2, 0), dtype=int)
-    backward_edges_per_layer = np.empty((nlayers, 2, 0), dtype=int)
+    edges_per_layer = [np.empty((2, 0), dtype=int) for _ in range(nlayers)]
+    forward_edges_per_layer = [np.empty((2, 0), dtype=int) for _ in range(nlayers)]
+    backward_edges_per_layer = [np.empty((2, 0), dtype=int) for _ in range(nlayers)]
     # layer node
-    nodes_per_layer = np.empty((nlayers, 1, 0), dtype=int)
+    nodes_per_layer = [np.empty((1, 0), dtype=int) for _ in range(nlayers)]
 
     # layer
     num_edges = 0
     for i in range(arr.shape[0]):
-        nodefeaturearr = np.array([[0, i] + [0 for _ in range(4)]])
+        nodefeaturearr = np.array([[0 for _ in range(5)]])
         # row
         for j in range(arr.shape[1]):
             # column
@@ -65,6 +66,7 @@ else:
                 )
                 # print(f"{curid}: {i} {j} {k} | {arr.shape}")
                 # regular neighbors
+                # up
                 if j != 0:
                     targetid = arrpos(i, j - 1, k, arr.shape)
                     edge_index = np.append(
@@ -80,6 +82,7 @@ else:
                     edge_attr = np.append(edge_attr, np.array([[0]]), axis=0)
 
                     num_edges = num_edges + 1
+                # down
                 if j != arr.shape[1] - 1:
                     targetid = arrpos(i, j + 1, k, arr.shape)
                     edge_index = np.append(
@@ -94,6 +97,7 @@ else:
                     )
                     edge_attr = np.append(edge_attr, np.array([[0]]), axis=0)
                     num_edges = num_edges + 1
+                # left
                 if k != 0:
                     targetid = arrpos(i, j, k - 1, arr.shape)
                     edge_index = np.append(
@@ -108,6 +112,7 @@ else:
                     )
                     edge_attr = np.append(edge_attr, np.array([[0]]), axis=0)
                     num_edges = num_edges + 1
+                # right
                 if k != arr.shape[1] - 1:
                     targetid = arrpos(i, j, k + 1, arr.shape)
                     edge_index = np.append(
@@ -165,6 +170,15 @@ else:
     assert tuple(graph.edge_attr.shape) == (num_edges, num_edge_features)
     assert tuple(graph.edge_index.shape) == (2, num_edges)
 
+    nodes_per_layer = np.stack(nodes_per_layer)
+    edges_per_layer = np.stack(edges_per_layer)
+
+    del forward_edges_per_layer[-1]
+    del backward_edges_per_layer[0]
+
+    forward_edges_per_layer = np.stack(forward_edges_per_layer)
+    backward_edges_per_layer = np.stack(backward_edges_per_layer)
+
     torch.save(
         {
             "graph": graph,
@@ -179,19 +193,3 @@ else:
 
 num_nodes, num_node_features = tuple(graph.x.shape)
 num_edges, num_edge_features = tuple(graph.edge_attr.shape)
-
-print("foo")
-# edges = graph.edge_index.T
-
-# def f(edge):
-#     return edge.flip(0) not in edges, edge
-
-# # from multiprocessing import Pool
-# # with Pool(5) as p:
-# #     for b, edge in p.imap(f, edges):
-# #         if b:
-# #             print(edge)
-
-# for b, edge in map(f, edges):
-#     if b:
-#         print(edge)
