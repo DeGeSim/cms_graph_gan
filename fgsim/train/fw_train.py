@@ -14,10 +14,10 @@ def training_procedure(c: modelHolder):
         conf.model.gan[x] for x in ["batch_size", "n_epochs", "k", "nz", "sample_size"]
     )
 
-    train_loader = DataLoader(Dataset(), batch_size=30, shuffle=True, num_workers=6)
+    train_loader = DataLoader(Dataset(), batch_size=300, shuffle=True, num_workers=6)
 
     # Initialize the training
-    c.model=c.model.float()
+    c.model=c.model.float().to(device)
     c.model.train()
     logger.info(f"Starting with epoch {c.metrics['epoch'] + 1}")
 
@@ -32,7 +32,7 @@ def training_procedure(c: modelHolder):
             c.optim.zero_grad()
             out = c.model(imgs.to(device))
 
-            loss = c.lossf(out, energies)
+            loss = c.lossf(out, energies.to(device))
             loss.backward()
             c.optim.step()
 

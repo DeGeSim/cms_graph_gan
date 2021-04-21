@@ -31,7 +31,7 @@ class modelHolder:
         )
         # loss function
         # self.lossf = torch.nn.BCELoss().to(device)
-        self.lossf = torch.nn.MSELoss()
+        self.lossf = torch.nn.MSELoss().to(device)
         self.load_checkpoint()
 
     def load_checkpoint(self):

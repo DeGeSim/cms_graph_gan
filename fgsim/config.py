@@ -7,9 +7,12 @@ from .cli import args
 
 def get_device():
     import torch
-
-    return torch.device("cpu")
-    return torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    if torch.cuda.is_available():
+        dev= torch.device("cuda")
+        torch.cuda.set_device(3)
+    else:
+        dev = torch.device("cpu")
+    return dev
 
 
 device = get_device()

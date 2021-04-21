@@ -4,7 +4,7 @@ import torch
 import torch.nn.functional as F
 from torch_geometric.nn import GCNConv
 
-from ..config import conf
+from ..config import conf, device
 from ..geo.fw_loader import graph, num_node_features
 
 imgpixels = reduce(lambda a, b: a * b, conf["mapper"]["calo_img_shape"])
@@ -17,10 +17,10 @@ class Net(torch.nn.Module):
         super(Net, self).__init__()
         torch.manual_seed(0)
         self.conv1 = GCNConv(num_node_features, num_node_features)
-        self.conv2 = GCNConv(num_node_features, 16)
-        self.conv3 = GCNConv(16, 1)
+        self.conv2 = GCNConv(num_node_features, num_node_features)
+        self.conv3 = GCNConv(num_node_features, 1)
         # self.msgpassnn = GCNConv(16, dataset.num_classes)
-        self.edge_index = graph.edge_index
+        self.edge_index = graph.edge_index.to(device)
 
     def forward(self, data):
         x = data
