@@ -1,72 +1,196 @@
-from copy import deepcopy
+from pathlib import Path
 
 import h5py as h5
-import numba as nb
 import numpy as np
 import torch
 
-from .geo.fw_loader import graph, num_node_features, num_nodes
-
-# filelist = [
-#     f"wd/forward/Ele_FixedAngle/EleEscan_{i}_{j}.h5"
-#     # for i in range(1, 9)
-#     for i in range(1, 2)
-#     # for j in range(1, 11)
-#     for j in range(1, 2)
-# ]
+from .geo.fw_loader import num_node_features, num_nodes
 
 
-# def data_generator():
-#     for fn in filelist:
-#         f = h5.File(fn, "r")
-#         caloimgs = f["ECAL"]
-#         energies = f["energy"]
-#         caloimgs = np.swapaxes(caloimgs, 1, 3)
-#         for energy, img in zip(energies, caloimgs):
-#             yield (energy, img)
+def h5torchtrans(caloimgs):
+    nsamples = caloimgs.shape[0]
+    X = torch.zeros((nsamples, num_nodes, num_node_features), dtype=torch.float32)
+    caloimgs = np.swapaxes(caloimgs, 1, 3).reshape((nsamples, -1))
+
+    X[:, :, 0] = torch.tensor(caloimgs, dtype=torch.float32)
+    return X
 
 
-# data_gen = data_generator()
+# arr = np.zeros((10000, 50, 50, 25))
+# foo = h5torchtrans(arr)
 
+# https://gist.github.com/branislav1991/4c143394bdad612883d148e0617bdccd#file-hdf5_dataset-py
+class HDF5Dataset(torch.utils.data.Dataset):
+    """Represents an abstract HDF5 dataset.
 
-class Dataset(torch.utils.data.Dataset):
-    "Characterizes a dataset for PyTorch"
+    Input params:
+        file_path: Path to the folder containing the dataset (one or multiple HDF5 files).
+        recursive: If True, searches for h5 files in subdirectories.
+        load_data: If True, loads all the data immediately into RAM. Use this if
+            the dataset is fits into memory. Otherwise, leave this at false and
+            the data will load lazily.
+        data_cache_size: Number of HDF5 files that can be cached in the cache (default=3).
+        transform: PyTorch transform to apply to every data instance (default=None).
+    """
 
-    def __init__(self):
-        "Initialization"
-        self.filelist = [
-            f"wd/forward/Ele_FixedAngle/EleEscan_{i}_{j}.h5"
-            # for i in range(1, 9)
-            for i in range(1, 2)
-            # for j in range(1, 11)
-            for j in range(1, 2)
-        ]
-        self.entries_per_file = []
-        for fn in self.filelist:
-            with h5.File(fn, "r") as f:
-                self.entries_per_file.append(len(f["energy"]))
+    def __init__(
+        self,
+        file_path,
+        recursive,
+        load_data,
+        Xname,
+        yname,
+        data_cache_size=3,
+        transform=None,
+    ):
+        super().__init__()
+        self.data_info = []
+        self.data_cache = {}
+        self.data_cache_size = data_cache_size
+        self.transform = transform
+        self.Xname = Xname
+        self.yname = yname
 
-        self.list_IDs = list(range(sum(self.entries_per_file)))
+        # Search for all h5 files
+        p = Path(file_path)
+        assert p.is_dir()
+        if recursive:
+            files = sorted(p.glob("**/*.h5"))
+        else:
+            files = sorted(p.glob("*.h5"))
+        if len(files) < 1:
+            raise RuntimeError("No hdf5 datasets found")
 
-    def __len__(self):
-        return len(self.list_IDs)
+        for h5dataset_fp in files:
+            self._add_data_infos(str(h5dataset_fp.resolve()), load_data)
 
     def __getitem__(self, index):
-        "Generates one sample of data"
-        # Select sample
-        i = 0
-        while index > self.entries_per_file[i]:
-            i = i + 1
-            index = index - self.entries_per_file[i]
+        # get data
+        x = self.get_data(self.Xname, index)
+        if self.transform:
+            x = self.transform(x)
+        else:
+            x = torch.from_numpy(x)
 
-        with h5.File(self.filelist[i], "r") as f:
-            caloimg = f["ECAL"][i]
-            energie = f["energy"][i]
+        # get label
+        y = self.get_data(self.yname, index)
+        y = torch.from_numpy(y)
+        return (x, y)
 
-        caloimg = np.swapaxes(caloimg, 0, 2).flatten()
+    def __len__(self):
+        return len(self.get_data_infos(self.Xname))
 
-        X = torch.zeros((num_nodes, num_node_features),dtype=torch.float32)
-        X[:, 0] = torch.tensor(caloimg, dtype=torch.float32)
-        y = torch.tensor(energie,dtype=torch.float32)
+    def _add_data_infos(self, file_path, load_data):
+        with h5.File(file_path) as h5_file:
+            # Walk through all groups, extracting datasets
+            # print(h5_file.items())
+            # print(h5_file.keys())
 
-        return X, y
+            # for gname, group in h5_file.items():
+            #     for dname, ds in group.items():
+            for dname, ds in [
+                e for e in h5_file.items() if e[0] in (self.Xname, self.yname)
+            ]:
+                # print(f"ds {dname}:\n {ds}.")
+                # print(f"ds type {type(ds)}.")
+                # print(f"ds dir {dir(ds)}.")
+                # if data is not loaded its cache index is -1
+                idx = -1
+                if load_data:
+                    # add data to the data cache
+                    idx = self._add_to_cache(ds.value, file_path)
+
+                # type is derived from the name of the dataset; we expect the dataset
+                # name to have a name such as 'data' or 'label' to identify its type
+                # we also store the shape of the data in case we need it
+                self.data_info.append(
+                    {
+                        "file_path": file_path,
+                        "type": dname,
+                        "shape": ds.shape,
+                        "cache_idx": idx,
+                    }
+                )
+
+    def _load_data(self, file_path):
+        """Load data to the cache given the file
+        path and update the cache index in the
+        data_info structure.
+        """
+        with h5.File(file_path) as h5_file:
+            # for gname, group in h5_file.items():
+            #     for dname, ds in group.items():
+            for dname, ds in [
+                e for e in h5_file.items() if e[0] in (self.Xname, self.yname)
+            ]:
+                # add data to the data cache and retrieve
+                # the cache index
+                idx = self._add_to_cache(ds[:], file_path)
+
+                # find the beginning index of the hdf5 file we are looking for
+                file_idx = next(
+                    i
+                    for i, v in enumerate(self.data_info)
+                    if v["file_path"] == file_path
+                )
+
+                # the data info should have the same index
+                # since we loaded it in the same way
+                self.data_info[file_idx + idx]["cache_idx"] = idx
+
+        # remove an element from data cache if size was exceeded
+        if len(self.data_cache) > self.data_cache_size:
+            # remove one item from the cache at random
+            removal_keys = list(self.data_cache)
+            removal_keys.remove(file_path)
+            self.data_cache.pop(removal_keys[0])
+            # remove invalid cache_idx
+            self.data_info = [
+                {
+                    "file_path": di["file_path"],
+                    "type": di["type"],
+                    "shape": di["shape"],
+                    "cache_idx": -1,
+                }
+                if di["file_path"] == removal_keys[0]
+                else di
+                for di in self.data_info
+            ]
+
+    def _add_to_cache(self, data, file_path):
+        """Adds data to the cache and returns its index. There is one cache
+        list for every file_path, containing all datasets in that file.
+        """
+        if file_path not in self.data_cache:
+            self.data_cache[file_path] = [data]
+        else:
+            self.data_cache[file_path].append(data)
+        return len(self.data_cache[file_path]) - 1
+
+    def get_data_infos(self, type):
+        """Get data infos belonging to a certain type of data."""
+        data_info_type = [di for di in self.data_info if di["type"] == type]
+        return data_info_type
+
+    def get_data(self, type, i):
+        """Call this function anytime you want to access a chunk of data from the
+        dataset. This will make sure that the data is loaded in case it is
+        not part of the data cache.
+        """
+        fp = self.get_data_infos(type)[i]["file_path"]
+        if fp not in self.data_cache:
+            self._load_data(fp)
+
+        # get new cache_idx assigned by _load_data_info
+        cache_idx = self.get_data_infos(type)[i]["cache_idx"]
+        return self.data_cache[fp][cache_idx]
+
+
+dataset = HDF5Dataset(
+    file_path="wd/forward/Ele_FixedAngle",
+    recursive=False,
+    load_data=False,
+    transform=h5torchtrans,
+    Xname="ECAL",
+    yname="energy",
+)

@@ -7,8 +7,9 @@ from .cli import args
 
 def get_device():
     import torch
+
     if torch.cuda.is_available():
-        dev= torch.device("cuda")
+        dev = torch.device("cuda")
         torch.cuda.set_device(3)
     else:
         dev = torch.device("cpu")

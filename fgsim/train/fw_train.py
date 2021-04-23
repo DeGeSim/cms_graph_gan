@@ -2,7 +2,7 @@ from torch.utils.data import DataLoader
 from tqdm import tqdm
 
 from ..config import conf, device
-from ..fw_data_loader import Dataset
+from ..fw_data_loader import dataset
 from ..plot import plotlosses
 from ..utils.logger import logger
 from .holder import modelHolder
@@ -14,10 +14,10 @@ def training_procedure(c: modelHolder):
         conf.model.gan[x] for x in ["batch_size", "n_epochs", "k", "nz", "sample_size"]
     )
 
-    train_loader = DataLoader(Dataset(), batch_size=300, shuffle=True, num_workers=6)
+    train_loader = DataLoader(dataset, batch_size=batch_size, shuffle=True, num_workers=6)
 
     # Initialize the training
-    c.model=c.model.float().to(device)
+    c.model = c.model.float().to(device)
     c.model.train()
     logger.info(f"Starting with epoch {c.metrics['epoch'] + 1}")
 

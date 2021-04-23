@@ -14,7 +14,6 @@ if not logger.handlers:
     )
     logger.setLevel(logging.INFO)
 
-
     streamhandler = logging.StreamHandler()
     formatter = logging.Formatter(format)
     streamhandler.setFormatter(formatter)

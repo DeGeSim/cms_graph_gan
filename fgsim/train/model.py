@@ -19,7 +19,6 @@ class Net(torch.nn.Module):
         self.conv1 = GCNConv(num_node_features, num_node_features)
         self.conv2 = GCNConv(num_node_features, num_node_features)
         self.conv3 = GCNConv(num_node_features, 1)
-        # self.msgpassnn = GCNConv(16, dataset.num_classes)
         self.edge_index = graph.edge_index.to(device)
 
     def forward(self, data):
@@ -31,13 +30,7 @@ class Net(torch.nn.Module):
         x = F.relu(x)
         x = F.dropout(x, training=self.training)
         x = self.conv3(x, self.edge_index)
-
-        # shape [30, 65025, 1]
         x = torch.squeeze(x, dim=2)
-        # shape [30, 65025]
-
-        x = torch.sigmoid(x)
-
         return torch.sum(x, dim=1)
 
         # for layer, sel in layerselmap:
