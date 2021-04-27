@@ -27,7 +27,7 @@ else:
     # Node features:
     # 0.Energy
     # 1-4 hidden
-    num_node_features = 5
+    num_node_features = 3
 
     num_edge_features = 1
     # Node feature matrix

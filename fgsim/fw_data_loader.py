@@ -4,20 +4,56 @@ import h5py as h5
 import numpy as np
 import torch
 
-from .geo.fw_loader import num_node_features, num_nodes
+from .geo.fw_loader import graph, num_node_features, num_nodes, num_edges
+
+with h5.File("wd/forward/Ele_FixedAngle/EleEscan_1_1.h5") as f:
+    excalimgs = f["ECAL"][:]
+
+adjmtx = graph.edge_index
 
 
-def h5torchtrans(caloimgs):
+def edge_of_non_zero_nodes(arr):
+    assert arr.shape == (1,2)
+    origin, target = arr
+    if caloimg[origin] and caloimg[target]:
+        return True
+    else:
+        return False
+
+
+def reducegraph(caloimgs):
     nsamples = caloimgs.shape[0]
-    X = torch.zeros((nsamples, num_nodes, num_node_features), dtype=torch.float32)
+
     caloimgs = np.swapaxes(caloimgs, 1, 3).reshape((nsamples, -1))
 
+    caloimg = caloimgs[0]
+    ### Reduce graph to the nonzero nodes
+
+    # generate a subsample of the adjecentcy matrix
+
+    adjmtxred = np.empty((2, 0), dtype=int)
+    for i in range(num_edges):
+        origin, target = adjmtx[:, i]
+        if caloimg[origin]:
+            if caloimg[target]:
+                adjmtxred = np.append(
+                    adjmtxred,
+                    adjmtx[:, i].reshape(2, 1),
+                    axis=1,
+                )
+
+    xred = caloimg[caloimg != 0]
+    print(foo)
+
+    X = torch.zeros((nsamples, xred.shape[0], num_node_features), dtype=torch.float32)
     X[:, :, 0] = torch.tensor(caloimgs, dtype=torch.float32)
     return X
 
 
+foo = reducegraph(excalimgs)
+
 # arr = np.zeros((10000, 50, 50, 25))
-# foo = h5torchtrans(arr)
+# foo = reducegraph(arr)
 
 # https://gist.github.com/branislav1991/4c143394bdad612883d148e0617bdccd#file-hdf5_dataset-py
 class HDF5Dataset(torch.utils.data.Dataset):
@@ -190,7 +226,7 @@ dataset = HDF5Dataset(
     file_path="wd/forward/Ele_FixedAngle",
     recursive=False,
     load_data=False,
-    transform=h5torchtrans,
+    transform=reducegraph,
     Xname="ECAL",
     yname="energy",
 )
