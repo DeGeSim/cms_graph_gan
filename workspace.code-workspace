@@ -5,7 +5,7 @@
 		}
 	],
 	"settings": {
-		"python.pythonPath": ".tox/py38/bin/python",
+		"python.pythonPath": ".tox/py38/bin/python3",
 		"python.formatting.blackPath": "~/.apps/pyenv/shims/black",
 		"python.linting.flake8Path": "~/.apps/pyenv/shims/flake8",
 		"python.linting.pylintEnabled": false,
@@ -29,6 +29,9 @@
 			"**/*.egg-info/**": true,
 			"**/venv/**": true,
 		},
+		"jupyter.jupyterLaunchRetries": 1,
+		"jupyter.jupyterServerType": "local",
+		"python.languageServer": "Pylance",
 	},
 	"launch": {
 		"version": "0.2.0",

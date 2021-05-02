@@ -3,35 +3,66 @@ from functools import reduce
 import torch
 import torch.nn.functional as F
 from torch_geometric.nn import GCNConv
+from torch_geometric.data import Data
 
 from ..config import conf, device
-from ..geo.fw_loader import graph, num_node_features
+from ..geo.graph import num_node_features
 
 imgpixels = reduce(lambda a, b: a * b, conf["mapper"]["calo_img_shape"])
-
-nlayers = 50
 
 
 class Net(torch.nn.Module):
     def __init__(self):
         super(Net, self).__init__()
-        torch.manual_seed(0)
         self.conv1 = GCNConv(num_node_features, num_node_features)
         self.conv2 = GCNConv(num_node_features, num_node_features)
         self.conv3 = GCNConv(num_node_features, 1)
-        self.edge_index = graph.edge_index.to(device)
 
     def forward(self, data):
-        x = data
-        x = self.conv1(x, self.edge_index)
-        x = F.relu(x)
-        x = F.dropout(x, training=self.training)
-        x = self.conv2(x, self.edge_index)
-        x = F.relu(x)
-        x = F.dropout(x, training=self.training)
-        x = self.conv3(x, self.edge_index)
-        x = torch.squeeze(x, dim=2)
-        return torch.sum(x, dim=1)
+        resL = []
+        for graphprops in data:
+            (
+                feature_mtx,
+                adj_mtx_coo,
+                _,# inner_edges_per_layer,
+                _,# forward_edges_per_layer,
+                _,# backward_edges_per_layer,
+            ) = graphprops
+            feature_mtx = feature_mtx.to(device)
+            adj_mtx_coo = adj_mtx_coo.to(device)
+            feature_mtx = torch.squeeze(feature_mtx)
+            adj_mtx_coo = torch.squeeze(adj_mtx_coo)
+
+            graph = Data(
+                x=feature_mtx.t().contiguous(), edge_index=adj_mtx_coo.t().contiguous()
+            )
+            x, edge_index = graph.x, graph.edge_index
+            num_nodes, num_node_features = feature_mtx.shape
+
+            # adj_sparse = torch.sparse.FloatTensor(
+            #     adj_mtx_coo,
+            #     torch.ones((adj_mtx_coo.shape[1]), device=device),
+            #     torch.Size((num_nodes, num_nodes)),
+            # )
+            # adj_sparse = torch.sparse_coo_tensor(
+            #     indices=adj_mtx_coo,
+            #     values=torch.ones((adj_mtx_coo.shape[1]), device=device),
+            #     size=torch.Size((num_nodes, num_nodes)),
+            #     # dtype=bool,
+            #     requires_grad=False,
+            # )
+            # feature_mtx = torch.tensor(feature_mtx,requires_grad=True)
+            # feature_mtx=feature_mtx.T
+            # d=adj_sparse.to_dense()
+            x = self.conv1(x.T, edge_index)
+            x = F.relu(x)
+            x = F.dropout(x, training=self.training)
+            x = self.conv2(x, edge_index)
+            x = F.relu(x)
+            x = F.dropout(x, training=self.training)
+            x = self.conv3(x, edge_index)
+            resL.append(torch.sum(x))
+        return torch.stack(resL)
 
         # for layer, sel in layerselmap:
         #     # 1 In layer Message pass

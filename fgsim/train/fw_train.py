@@ -14,7 +14,11 @@ def training_procedure(c: modelHolder):
         conf.model.gan[x] for x in ["batch_size", "n_epochs", "k", "nz", "sample_size"]
     )
 
-    train_loader = DataLoader(dataset, batch_size=batch_size, shuffle=True, num_workers=6)
+    train_loader = DataLoader(
+        dataset,
+        batch_size=1,
+        shuffle=True,  # num_workers=6
+    )
 
     # Initialize the training
     c.model = c.model.float().to(device)
@@ -27,10 +31,12 @@ def training_procedure(c: modelHolder):
 
         # Iterate over the batches
         # for local_batch, local_labels in train_loader:
+        # with (0, next(dataset)) as ibatch, data:
         for ibatch, data in tqdm(enumerate(train_loader)):
-            imgs, energies = data
+            graph_props, energies = data
+            # logger.info("Training - Got to the inner loop")
             c.optim.zero_grad()
-            out = c.model(imgs.to(device))
+            out = c.model(graph_props)
 
             loss = c.lossf(out, energies.to(device))
             loss.backward()

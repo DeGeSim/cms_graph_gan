@@ -1,12 +1,12 @@
 import os
-
+import torch
 from omegaconf import OmegaConf
 
 from .cli import args
 
 
 def get_device():
-    import torch
+    
 
     if torch.cuda.is_available():
         dev = torch.device("cuda")
@@ -14,7 +14,7 @@ def get_device():
     else:
         dev = torch.device("cpu")
     return dev
-
+torch.manual_seed(0)
 
 device = get_device()
 
