@@ -2,8 +2,8 @@ from functools import reduce
 
 import torch
 import torch.nn.functional as F
-from torch_geometric.nn import GCNConv
 from torch_geometric.data import Data
+from torch_geometric.nn import GCNConv
 
 from ..config import conf, device
 from ..geo.graph import num_node_features
@@ -24,43 +24,30 @@ class Net(torch.nn.Module):
             (
                 feature_mtx,
                 adj_mtx_coo,
-                _,# inner_edges_per_layer,
-                _,# forward_edges_per_layer,
-                _,# backward_edges_per_layer,
+                _,  # inner_edges_per_layer,
+                _,  # forward_edges_per_layer,
+                _,  # backward_edges_per_layer,
             ) = graphprops
             feature_mtx = feature_mtx.to(device)
             adj_mtx_coo = adj_mtx_coo.to(device)
             feature_mtx = torch.squeeze(feature_mtx)
-            adj_mtx_coo = torch.squeeze(adj_mtx_coo)
+            adj_mtx_coo = torch.squeeze(adj_mtx_coo).T
 
-            graph = Data(
-                x=feature_mtx.t().contiguous(), edge_index=adj_mtx_coo.t().contiguous()
-            )
-            x, edge_index = graph.x, graph.edge_index
-            num_nodes, num_node_features = feature_mtx.shape
+            # graph = Data(
+            #     x=feature_mtx.t().contiguous(), edge_index=adj_mtx_coo.t().contiguous()
+            # )
+            # x, edge_index = graph.x, graph.edge_index
+            # num_nodes, num_node_features = feature_mtx.shape
 
-            # adj_sparse = torch.sparse.FloatTensor(
-            #     adj_mtx_coo,
-            #     torch.ones((adj_mtx_coo.shape[1]), device=device),
-            #     torch.Size((num_nodes, num_nodes)),
-            # )
-            # adj_sparse = torch.sparse_coo_tensor(
-            #     indices=adj_mtx_coo,
-            #     values=torch.ones((adj_mtx_coo.shape[1]), device=device),
-            #     size=torch.Size((num_nodes, num_nodes)),
-            #     # dtype=bool,
-            #     requires_grad=False,
-            # )
-            # feature_mtx = torch.tensor(feature_mtx,requires_grad=True)
-            # feature_mtx=feature_mtx.T
-            # d=adj_sparse.to_dense()
-            x = self.conv1(x.T, edge_index)
+            # x = self.conv1(x.T, edge_index)
+
+            x = self.conv1(feature_mtx, adj_mtx_coo)
             x = F.relu(x)
             x = F.dropout(x, training=self.training)
-            x = self.conv2(x, edge_index)
+            x = self.conv2(x, adj_mtx_coo)
             x = F.relu(x)
             x = F.dropout(x, training=self.training)
-            x = self.conv3(x, edge_index)
+            x = self.conv3(x, adj_mtx_coo)
             resL.append(torch.sum(x))
         return torch.stack(resL)
 

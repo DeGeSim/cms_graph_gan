@@ -147,9 +147,9 @@ def grid_to_graph(caloimg):
     return (
         torch.tensor(feature_mtx, dtype=torch.float32),
         torch.tensor(adj_mtx_coo, dtype=torch.int64),
-        [torch.tensor(e,dtype=torch.int64) for e in inner_edges_per_layer],
-        [torch.tensor(e,dtype=torch.int64) for e in forward_edges_per_layer],
-        [torch.tensor(e,dtype=torch.int64) for e in backward_edges_per_layer],
+        [torch.tensor(e, dtype=torch.int64) for e in inner_edges_per_layer],
+        [torch.tensor(e, dtype=torch.int64) for e in forward_edges_per_layer],
+        [torch.tensor(e, dtype=torch.int64) for e in backward_edges_per_layer],
     )
 
 
