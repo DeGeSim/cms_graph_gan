@@ -1,9 +1,9 @@
 from pathlib import Path
 
 import h5py as h5
-import numpy as np
 import torch
 
+from .config import conf
 from .geo.graph import grid_to_graph
 
 
@@ -38,37 +38,61 @@ class HDF5Dataset(torch.utils.data.Dataset):
         self.transform = transform
         self.Xname = Xname
         self.yname = yname
+        self.chunksize = conf.model["batch_size"]
 
         # Search for all h5 files
         p = Path(file_path)
         assert p.is_dir()
         if recursive:
-            files = sorted(p.glob("**/*.h5"))
+            self.files = sorted(p.glob("**/*.h5"))
         else:
-            files = sorted(p.glob("*.h5"))
-        if len(files) < 1:
+            self.files = sorted(p.glob("*.h5"))
+        if len(self.files) < 1:
             raise RuntimeError("No hdf5 datasets found")
 
-        for h5dataset_fp in files:
+        for h5dataset_fp in self.files:
             self._add_data_infos(str(h5dataset_fp.resolve()), load_data)
+        # filename -> length
+        dslenD = {}
+        # [posinfilelist]-> startindex
+        self.fnidexstart = [0]
+        for i, fn in enumerate(self.files):
+            with h5.File(fn) as h5_file:
+                dslenD[fn] = len(h5_file["ECAL"])
+                self.fnidexstart.append(self.fnidexstart[-1] + dslenD[fn])
+
+        self.len = sum([dslenD[e] for e in dslenD])
+
+    # globalindexeventidx-> filename
+    def fn_of_idx(self, idx):
+        for i in range(len(self.fnidexstart)):
+            # at the end, return the last index
+            if i == len(self.fnidexstart) - 1:
+                return i
+            # check if the starting index of the next file is greater then the given value
+            # and return it if true
+            if self.fnidexstart[i + 1] > idx:
+                return i
+
+    def index_infile(self, idx, filenameidx):
+        return idx - self.fnidexstart[filenameidx]
 
     def __getitem__(self, index):
         # get data
-        caloimgs = self.get_data(self.Xname, index)
-        # x = [self.transform(e) for e in x]
-        # from multiprocessing import Pool
+        filenameidx = self.fn_of_idx(index)
+        idx_in_file = self.index_infile(index, filenameidx)
 
-        # with Pool(12) as p:
-        #     x = p.map(self.transform, x)
-        x = [self.transform(caloimgs[iimg]) for iimg in range(5)]
+        caloimg = self.get_data(self.Xname, filenameidx)[idx_in_file]
+        x = self.transform(caloimg)
+        # x = [self.transform(iimg) for iimg in caloimgs]
 
         # get label
-        y = self.get_data(self.yname, index)
-        y = torch.from_numpy(y[0:5]).float()
+        y = self.get_data(self.yname, filenameidx)[idx_in_file]
+        y = torch.tensor(y, dtype=torch.float32)  # .float()
         return (x, y)
 
     def __len__(self):
-        return len(self.get_data_infos(self.Xname))
+        return self.len
 
     def _add_data_infos(self, file_path, load_data):
         with h5.File(file_path) as h5_file:
@@ -115,7 +139,7 @@ class HDF5Dataset(torch.utils.data.Dataset):
             ]:
                 # add data to the data cache and retrieve
                 # the cache index
-                idx = self._add_to_cache(ds[0:5], file_path)
+                idx = self._add_to_cache(ds[:], file_path)
 
                 # find the beginning index of the hdf5 file we are looking for
                 file_idx = next(
@@ -183,4 +207,5 @@ dataset = HDF5Dataset(
     transform=grid_to_graph,
     Xname="ECAL",
     yname="energy",
+    data_cache_size=100,
 )

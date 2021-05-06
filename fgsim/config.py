@@ -1,5 +1,6 @@
 import os
 
+import numpy as np
 import torch
 from omegaconf import OmegaConf
 
@@ -17,6 +18,7 @@ def get_device():
 
 
 torch.manual_seed(0)
+np.random.seed(0)
 
 device = get_device()
 

@@ -33,14 +33,6 @@ class Net(torch.nn.Module):
             feature_mtx = torch.squeeze(feature_mtx)
             adj_mtx_coo = torch.squeeze(adj_mtx_coo).T
 
-            # graph = Data(
-            #     x=feature_mtx.t().contiguous(), edge_index=adj_mtx_coo.t().contiguous()
-            # )
-            # x, edge_index = graph.x, graph.edge_index
-            # num_nodes, num_node_features = feature_mtx.shape
-
-            # x = self.conv1(x.T, edge_index)
-
             x = self.conv1(feature_mtx, adj_mtx_coo)
             x = F.relu(x)
             x = F.dropout(x, training=self.training)
