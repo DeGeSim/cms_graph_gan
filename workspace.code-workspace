@@ -31,11 +31,12 @@
 		},
 		"jupyter.jupyterLaunchRetries": 1,
 		"jupyter.jupyterServerType": "local",
-		"python.languageServer": "Pylance",
+		"python.languageServer": "Jedi",
 	},
 	"launch": {
 		"version": "0.2.0",
 		"configurations": [
+
 			{
 				"name": "generate",
 				"type": "python",
@@ -78,6 +79,30 @@
 					"--tag",
 					"forward",
 					"generate",
+				]
+			},
+			{
+				"name": "fw/trytest",
+				"type": "python",
+				"request": "launch",
+				"module": "fgsim",
+				"args": [
+					"--tag",
+					"forward",
+					"--debug",
+					"trytest",
+				]
+			},
+			{
+				"name": "fw/write_sparse_ds",
+				"type": "python",
+				"request": "launch",
+				"module": "fgsim",
+				"args": [
+					"--tag",
+					"forward",
+					"--debug",
+					"write_sparse_ds",
 				]
 			},
 			{

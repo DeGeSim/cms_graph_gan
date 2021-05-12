@@ -42,6 +42,7 @@ def main():
     from .config import conf
 
     logger.info(f"Running command {conf['command']}")
+
     if conf["command"] == "train":
         from .train.fw_train import training_procedure
         from .train.holder import model_holder
@@ -53,6 +54,16 @@ def main():
         from .train.holder import model_holder
 
         generation_procedure(model_holder)
+
+    if conf["command"] == "trytest":
+        from .torchdata_loader import dataset
+
+        print(len(dataset))
+
+    if conf["command"] == "write_sparse_ds":
+        from .write_sparse_ds import write_sparse_ds
+
+        write_sparse_ds()
 
 
 if __name__ == "__main__":

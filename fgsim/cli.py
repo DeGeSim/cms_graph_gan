@@ -25,5 +25,8 @@ train_parser.add_argument(
 
 train_parser = subparsers.add_parser("generate")
 geo_parser = subparsers.add_parser("geo")
+trytest_parser = subparsers.add_parser("trytest")
+write_sparse_ds_parser = subparsers.add_parser("write_sparse_ds")
+
 
 args = parser.parse_args()
