@@ -5,14 +5,15 @@ from ..config import conf
 logger = logging.getLogger(__name__)
 
 if not logger.handlers:
-    format = "%(name)s - %(levelname)s - %(message)s"
+    # format = "%(name)s - %(levelname)s - %(message)s"
+    format = "fgsim - %(levelname)s - %(message)s"
 
     logging.basicConfig(
         filename=f"wd/{conf.tag}/log",
         filemode="w",
         format=format,
     )
-    logger.setLevel(logging.INFO)
+    logger.setLevel(logging.DEBUG if conf.debug else logging.INFO)
 
     streamhandler = logging.StreamHandler()
     formatter = logging.Formatter(format)
