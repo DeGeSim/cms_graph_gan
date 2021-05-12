@@ -1,14 +1,19 @@
+import logging
+import os
+import pickle
+from multiprocessing import Pool
 from pathlib import Path
 
 import h5py as h5
 import torch
 
 from .config import conf
-from .geo.graph import grid_to_graph
-
+from .utils.logger import logger
 
 # https://gist.github.com/branislav1991/4c143394bdad612883d148e0617bdccd#file-hdf5_dataset-py
-class HDF5Dataset(torch.utils.data.Dataset):
+
+
+class HDF5Dataset:
     """Represents an abstract HDF5 dataset.
 
     Input params:
@@ -43,6 +48,7 @@ class HDF5Dataset(torch.utils.data.Dataset):
             self.files = sorted(p.glob("*.h5"))
         if len(self.files) < 1:
             raise RuntimeError("No hdf5 datasets found")
+        self.files = self.files[0:20]
 
         # filename -> length
         dslenD = {}
@@ -54,6 +60,37 @@ class HDF5Dataset(torch.utils.data.Dataset):
                 self.fnidexstart.append(self.fnidexstart[-1] + dslenD[fn])
 
         self.len = sum([dslenD[e] for e in dslenD])
+        # Dict to store filename -> array for x
+        pickledsamplepath = f"wd/{conf.tag}/sample.pickle"
+        if not os.path.isfile(pickledsamplepath):
+
+            self.xD = {}
+            self.yD = {}
+            # with Pool(10) as p:
+            #     res = p.map(self.loadfile, self.files)
+            # for fn, ds in zip(self.files, res):
+            #     self.xD[fn] = ds[0]
+            #     self.yD[fn] = ds[1]
+
+            for ifile, fn in enumerate(self.files):
+                with h5.File(fn) as h5_file:
+                    logger.info(f"Loading with {fn} ({ifile+1}/{len(self.files)})")
+                    self.xD[fn] = h5_file[self.Xname][:]
+                    self.yD[fn] = h5_file[self.yname][:]
+            with open(pickledsamplepath, "wb") as file:
+                pickle.dump((self.xD, self.yD), file)
+        else:
+            with open(pickledsamplepath, "rb") as file:
+                (self.xD, self.yD) = pickle.load(file)
+        exit(0)
+
+    def loadfile(self, fn):
+        logger.info(f"Loading {fn}.")
+        with h5.File(fn) as h5_file:
+            x = h5_file[self.Xname][:]
+            y = h5_file[self.yname][:]
+        logger.info(f"Done with {fn}.")
+        return (x, y)
 
     # globalindexeventidx -> filename
     def fn_of_idx(self, idx):
@@ -74,12 +111,13 @@ class HDF5Dataset(torch.utils.data.Dataset):
         filenameidx = self.fn_of_idx(index)
         idx_in_file = self.index_infile(index, filenameidx)
 
-        with h5.File(self.files[filenameidx]) as h5_file:
-            caloimg = h5_file[self.Xname][idx_in_file]
-            y = h5_file[self.yname][idx_in_file]
+        caloimg = self.xD[self.files[filenameidx]][idx_in_file]
+        y = self.yD[self.files[filenameidx]][idx_in_file]
 
-        x = self.transform(caloimg)
-        y = torch.tensor(y, dtype=torch.float32)  # .float()
+        if callable(self.transform):
+            x = self.transform(caloimg)
+        else:
+            x = caloimg
         return (x, y)
 
     def __len__(self):
@@ -89,8 +127,7 @@ class HDF5Dataset(torch.utils.data.Dataset):
 dataset = HDF5Dataset(
     file_path="wd/forward/Ele_FixedAngle",
     recursive=False,
-    transform=grid_to_graph,
+    transform=None,
     Xname="ECAL",
     yname="energy",
 )
-foo = dataset[0]

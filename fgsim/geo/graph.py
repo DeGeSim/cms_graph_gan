@@ -1,3 +1,4 @@
+import awkward as ak
 import numpy as np
 import torch
 
@@ -25,7 +26,7 @@ def getNonZeroIdxs(arr):
     return torch.arange(len(arr))[arr != 0.0]
 
 
-def grid_to_graph(caloimg):
+def grid_to_graph(caloimg, outformat="python"):
     caloimg = np.swapaxes(caloimg, 0, 2)
     nlayers, nrows, ncolumns = caloimg.shape
 
@@ -143,14 +144,40 @@ def grid_to_graph(caloimg):
     #         for i in range(num_edges):
     #             ajdmtxi[ilayer][i][0] = globalid_to_indexD[ajdmtxi[ilayer][i][0]]
     #             ajdmtxi[ilayer][i][1] = globalid_to_indexD[ajdmtxi[ilayer][i][1]]
+    if outformat == "np":
+        return (
+            np.array(feature_mtx, dtype=object),
+            np.array(adj_mtx_coo, dtype=object),
+            [np.array(e, dtype=object) for e in inner_edges_per_layer],
+            [np.array(e, dtype=object) for e in forward_edges_per_layer],
+            [np.array(e, dtype=object) for e in backward_edges_per_layer],
+        )
+    elif outformat == "ak":
+        return ak.Array(
+            {
+                "feature_mtx": [feature_mtx],
+                "adj_mtx_coo": [adj_mtx_coo],
+                "inner_edges_per_layer": [inner_edges_per_layer],
+                "forward_edges_per_layer": [forward_edges_per_layer],
+                "backward_edges_per_layer": [backward_edges_per_layer],
+            }
+        )
 
     return (
-        torch.tensor(feature_mtx, dtype=torch.float32),
-        torch.tensor(adj_mtx_coo, dtype=torch.int64),
-        [torch.tensor(e, dtype=torch.int64) for e in inner_edges_per_layer],
-        [torch.tensor(e, dtype=torch.int64) for e in forward_edges_per_layer],
-        [torch.tensor(e, dtype=torch.int64) for e in backward_edges_per_layer],
+        feature_mtx,
+        adj_mtx_coo,
+        inner_edges_per_layer,
+        forward_edges_per_layer,
+        backward_edges_per_layer,
     )
+
+
+def grid_to_graph_np(caloimg):
+    return grid_to_graph(caloimg, outformat="np")
+
+
+def grid_to_graph_ak(caloimg):
+    return grid_to_graph(caloimg, outformat="ak")
 
 
 # import h5py as h5
