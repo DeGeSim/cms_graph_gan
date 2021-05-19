@@ -3,14 +3,14 @@ from torch_geometric.data import DataLoader
 from tqdm import tqdm
 
 from ..config import conf, device
-from ..fw_simple_dataloader import dataset
+from ..io.dataset import dataset
 from ..utils.logger import logger
 from .holder import modelHolder
 
 
 
 def training_procedure(c: modelHolder):
-    train_loader = DataLoader(dataset, batch_size=300, shuffle=True)
+    train_loader = DataLoader(dataset, batch_size=100, shuffle=True)
 
     # Initialize the training
     c.model = c.model.float().to(device)

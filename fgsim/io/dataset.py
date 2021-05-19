@@ -8,8 +8,8 @@ import h5py as h5
 import torch
 import torchdata
 
-from .config import conf
-from .utils.logger import logger
+from ..config import conf
+from ..utils.logger import logger
 
 # https://gist.github.com/branislav1991/4c143394bdad612883d148e0617bdccd#file-hdf5_dataset-py
 
@@ -108,7 +108,6 @@ dataset = HDF5Dataset(
     Xname="ECAL",
     yname="energy",
 )
-
-from .transform import transform
+from ..geo.transform import transform
 
 dataset = dataset.map(transform)

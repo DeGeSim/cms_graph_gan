@@ -4,7 +4,7 @@ import numpy as np
 import torch
 from omegaconf import OmegaConf
 
-from .cli import args
+from .utils.cli import args
 
 
 def get_device():

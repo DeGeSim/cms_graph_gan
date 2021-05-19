@@ -17,7 +17,7 @@ def main():
         # Never remove the upper packages
         "fgsim",
         # "fgsim.geo",
-        # "fgsim.train",
+        # "fgsim.model",
         # Always reload cli and config
         # "fgsim.cli",
         # "fgsim.config",
@@ -44,14 +44,14 @@ def main():
     logger.info(f"Running command {conf['command']}")
 
     if conf["command"] == "train":
-        from .train.fw_train import training_procedure
-        from .train.holder import model_holder
+        from .model.training import training_procedure
+        from .model.holder import model_holder
 
         training_procedure(model_holder)
 
     if conf["command"] == "generate":
-        from .train.generate import generation_procedure
-        from .train.holder import model_holder
+        from .model.generate import generation_procedure
+        from .model.holder import model_holder
 
         generation_procedure(model_holder)
 

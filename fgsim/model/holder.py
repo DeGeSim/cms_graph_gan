@@ -88,14 +88,5 @@ class modelHolder:
         )
         logger.warn(f"Saved model to checkpoint at epoch {self.metrics['epoch']}.")
 
-    # def run_training(self):
-    #     from .train import training_procedure
-
-    #     self.generator, self.discriminator = training_procedure(self)
-
-    #     logger.info("Training finished")
-    #     torch.save(self.generator.state_dict(), "output/generator.pth")
-    #     logger.info("Model saved")
-
 
 model_holder = modelHolder()
