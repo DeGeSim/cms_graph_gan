@@ -6,6 +6,7 @@ from pathlib import Path
 
 import h5py as h5
 import torch
+import torchdata
 
 from .config import conf
 from .utils.logger import logger
@@ -13,7 +14,7 @@ from .utils.logger import logger
 # https://gist.github.com/branislav1991/4c143394bdad612883d148e0617bdccd#file-hdf5_dataset-py
 
 
-class HDF5Dataset:
+class HDF5Dataset(torchdata.Dataset):
     """Represents an abstract HDF5 dataset.
 
     Input params:
@@ -48,49 +49,25 @@ class HDF5Dataset:
             self.files = sorted(p.glob("*.h5"))
         if len(self.files) < 1:
             raise RuntimeError("No hdf5 datasets found")
-        self.files = self.files[0:20]
+        self.files = self.files[0:3]
 
         # filename -> length
         dslenD = {}
         # [posinfilelist]-> startindex
         self.fnidexstart = [0]
-        for i, fn in enumerate(self.files):
+        # Dict to store filename -> array for x
+        self.xD = {}
+        self.yD = {}
+
+        for ifile, fn in enumerate(self.files):
+            logger.info(f"Loading with {fn} ({ifile+1}/{len(self.files)})")
             with h5.File(fn) as h5_file:
-                dslenD[fn] = len(h5_file["ECAL"])
+                self.xD[fn] = h5_file[self.Xname][0:300]
+                self.yD[fn] = h5_file[self.yname][0:300]
+                dslenD[fn] = len(self.xD[fn])
                 self.fnidexstart.append(self.fnidexstart[-1] + dslenD[fn])
 
         self.len = sum([dslenD[e] for e in dslenD])
-        # Dict to store filename -> array for x
-        pickledsamplepath = f"wd/{conf.tag}/sample.pickle"
-        if not os.path.isfile(pickledsamplepath):
-
-            self.xD = {}
-            self.yD = {}
-            # with Pool(10) as p:
-            #     res = p.map(self.loadfile, self.files)
-            # for fn, ds in zip(self.files, res):
-            #     self.xD[fn] = ds[0]
-            #     self.yD[fn] = ds[1]
-
-            for ifile, fn in enumerate(self.files):
-                with h5.File(fn) as h5_file:
-                    logger.info(f"Loading with {fn} ({ifile+1}/{len(self.files)})")
-                    self.xD[fn] = h5_file[self.Xname][:]
-                    self.yD[fn] = h5_file[self.yname][:]
-            with open(pickledsamplepath, "wb") as file:
-                pickle.dump((self.xD, self.yD), file)
-        else:
-            with open(pickledsamplepath, "rb") as file:
-                (self.xD, self.yD) = pickle.load(file)
-        exit(0)
-
-    def loadfile(self, fn):
-        logger.info(f"Loading {fn}.")
-        with h5.File(fn) as h5_file:
-            x = h5_file[self.Xname][:]
-            y = h5_file[self.yname][:]
-        logger.info(f"Done with {fn}.")
-        return (x, y)
 
     # globalindexeventidx -> filename
     def fn_of_idx(self, idx):
@@ -131,3 +108,7 @@ dataset = HDF5Dataset(
     Xname="ECAL",
     yname="energy",
 )
+
+from .transform import transform
+
+dataset = dataset.map(transform)

@@ -39,7 +39,7 @@ class sparseds(torchdata.Dataset):
 
     def __getitem__(self, index):
         if type(index) == np.ndarray:
-            index=index.tolist()
+            index = index.tolist()
         return self.ds[index]
 
     def __len__(self):

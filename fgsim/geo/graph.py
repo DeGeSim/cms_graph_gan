@@ -1,11 +1,13 @@
 import awkward as ak
 import numpy as np
 import torch
+from torch_geometric.data import Data
 
+from ..config import conf, device
 # Node features:
 # 0.Energy
 # 1-4 hidden
-num_node_features = 3
+num_node_features = 1
 num_edge_features = 1
 
 
@@ -162,6 +164,29 @@ def grid_to_graph(caloimg, outformat="python"):
                 "backward_edges_per_layer": [backward_edges_per_layer],
             }
         )
+    elif outformat == "geo":
+        feature_mtx = torch.tensor(feature_mtx, dtype=torch.float32, device=device)
+        adj_mtx_coo = torch.tensor(adj_mtx_coo, dtype=torch.int64, device=device)
+        inner_edges_per_layer = [
+            torch.tensor(e, dtype=torch.int64, device=device)
+            for e in inner_edges_per_layer
+        ]
+
+        forward_edges_per_layer = [
+            torch.tensor(e, dtype=torch.int64, device=device)
+            for e in forward_edges_per_layer
+        ]
+
+        backward_edges_per_layer = [
+            torch.tensor(e, dtype=torch.int64, device=device)
+            for e in backward_edges_per_layer
+        ]
+
+        graph = Data(x=feature_mtx, edge_index=adj_mtx_coo.T)
+        # graph.inner_edges_per_layer = inner_edges_per_layer
+        # graph.forward_edges_per_layer = forward_edges_per_layer
+        # graph.backward_edges_per_layer = backward_edges_per_layer
+        return graph
 
     return (
         feature_mtx,
@@ -178,6 +203,10 @@ def grid_to_graph_np(caloimg):
 
 def grid_to_graph_ak(caloimg):
     return grid_to_graph(caloimg, outformat="ak")
+
+
+def grid_to_graph_geo(caloimg):
+    return grid_to_graph(caloimg, outformat="geo")
 
 
 # import h5py as h5

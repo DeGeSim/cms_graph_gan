@@ -2,18 +2,24 @@ import multiprocessing
 
 import torch
 
-from .geo.graph import grid_to_graph
+from .geo.graph import grid_to_graph_geo
 from .utils.logger import logger
+
+# def transform(sample):
+#     (x, y) = sample
+#     try:
+#         res = (grid_to_graph(x), y)
+#     except:
+#         logger.warn(f"Error in for y {y} and x \n {x}")
+#         exit(1)
+#     return res
 
 
 def transform(sample):
     (x, y) = sample
-    try:
-        res = (grid_to_graph(x), y)
-    except:
-        logger.warn(f"Error in {id} for y {y} and x \n {x}")
-        exit(1)
-    return res
+    grap = grid_to_graph_geo(x)
+    grap.y = y
+    return grap
 
 
 # def transform(args):

@@ -1,12 +1,21 @@
 import torch
+from torch_geometric.data import DataLoader
 from tqdm import tqdm
 
 from ..config import conf, device
-from ..load_sparse_ds import dataset
+from ..fw_simple_dataloader import dataset
+# from ..load_sparse_ds import dataset
 from ..plot import plotlosses
 from ..utils.logger import logger
-from .fw_loader import costumLoader
+# from .fw_loader import costumLoader
 from .holder import modelHolder
+
+# graphlist=[dataset[i] for i in range(10)]
+# train_loader = DataLoader([graphlist[1] for _ in range(10)], batch_size=4, shuffle=True)
+train_loader = DataLoader(dataset, batch_size=4, shuffle=True)
+# for i in train_loader:
+#     examplebatch=i
+#     break
 
 
 def training_procedure(c: modelHolder):
@@ -16,7 +25,7 @@ def training_procedure(c: modelHolder):
     #     shuffle=True,
     #     # num_workers=6,
     # )
-    train_loader = costumLoader(dataset)
+    # train_loader = costumLoader(dataset)
 
     # Initialize the training
     c.model = c.model.float().to(device)
@@ -35,8 +44,7 @@ def training_procedure(c: modelHolder):
                 skipped_to_batch = True
                 c.metrics["batch"] = ibatch
 
-            energies = batch["energy"]
-            energies = torch.tensor(energies, dtype=torch.float32, device=device)
+            energies = torch.tensor(batch.y, dtype=torch.float32, device=device)
             c.optim.zero_grad()
             prediction = c.model(batch)
 
@@ -51,7 +59,7 @@ def training_procedure(c: modelHolder):
                 logger.info(
                     f"Epoch { c.metrics['epoch'] }/{conf.model['n_epochs']}: "
                     + f"\n\tLoss: {c.metrics['loss'][-1]:.1f}, "
-                    + f"\n\tLast batch: {prediction[-1]:.1f} vs {energies[-1]:.1f}."
+                    + f"\n\tLast batch: {float(prediction[-1]):.1f} vs {float(energies[-1]):.1f}."
                 )
             if c.metrics["grad_step"] % 50 == 0:
                 c.save_model()
