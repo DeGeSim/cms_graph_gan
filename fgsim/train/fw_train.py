@@ -4,28 +4,13 @@ from tqdm import tqdm
 
 from ..config import conf, device
 from ..fw_simple_dataloader import dataset
-# from ..load_sparse_ds import dataset
-from ..plot import plotlosses
 from ..utils.logger import logger
-# from .fw_loader import costumLoader
 from .holder import modelHolder
 
-# graphlist=[dataset[i] for i in range(10)]
-# train_loader = DataLoader([graphlist[1] for _ in range(10)], batch_size=4, shuffle=True)
-train_loader = DataLoader(dataset, batch_size=4, shuffle=True)
-# for i in train_loader:
-#     examplebatch=i
-#     break
 
 
 def training_procedure(c: modelHolder):
-    # train_loader = DataLoader(
-    #     dataset,
-    #     batch_size=conf.model["batch_size"],
-    #     shuffle=True,
-    #     # num_workers=6,
-    # )
-    # train_loader = costumLoader(dataset)
+    train_loader = DataLoader(dataset, batch_size=300, shuffle=True)
 
     # Initialize the training
     c.model = c.model.float().to(device)
@@ -44,11 +29,10 @@ def training_procedure(c: modelHolder):
                 skipped_to_batch = True
                 c.metrics["batch"] = ibatch
 
-            energies = torch.tensor(batch.y, dtype=torch.float32, device=device)
             c.optim.zero_grad()
-            prediction = c.model(batch)
+            prediction = torch.squeeze( c.model(batch).T) 
 
-            loss = c.lossf(prediction, energies)
+            loss = c.lossf(prediction, batch.y.float())
             loss.backward()
             c.optim.step()
 
@@ -59,9 +43,7 @@ def training_procedure(c: modelHolder):
                 logger.info(
                     f"Epoch { c.metrics['epoch'] }/{conf.model['n_epochs']}: "
                     + f"\n\tLoss: {c.metrics['loss'][-1]:.1f}, "
-                    + f"\n\tLast batch: {float(prediction[-1]):.1f} vs {float(energies[-1]):.1f}."
+                    + f"\n\tLast batch: {float(prediction[-1]):.1f} vs {float(batch.y[-1]):.1f}."
                 )
             if c.metrics["grad_step"] % 50 == 0:
                 c.save_model()
-
-    plotlosses({"loss": c.metrics["loss"], "accuracy": c.metrics["acc"]})
