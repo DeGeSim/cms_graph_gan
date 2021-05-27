@@ -12,13 +12,15 @@
 		"python.linting.flake8Enabled": true,
 		"python.linting.enabled": true,
 		"files.exclude": {
-			"**/.*": true,
-			"**/.*/**": true,
 			"**/__*__/**": true,
 			"**/_build/**": true,
-			"**/node_modules/*/**": true,
+			"**/.*": true,
+			"**/.*/**": true,
 			"**/*.egg-info/**": true,
-			"**/venv/**": true,
+			"**/node_modules/*/**": true,
+			"**/old/**": true,
+			"**/runs/**": true,
+			"**/venv/**": true
 		},
 		"files.watcherExclude": {
 			"**/.*": true,

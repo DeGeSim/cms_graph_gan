@@ -143,4 +143,3 @@ def training_procedure(c: modelHolder):
             from sys import exit
 
             exit(-1)
-    plotlosses(c.metrics["losses_g"], c.metrics["losses_d"])

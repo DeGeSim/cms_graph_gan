@@ -49,7 +49,7 @@ class HDF5Dataset(torchdata.Dataset):
             self.files = sorted(p.glob("*.h5"))
         if len(self.files) < 1:
             raise RuntimeError("No hdf5 datasets found")
-        self.files = self.files[0:3]
+        self.files = self.files[:10]
 
         # filename -> length
         dslenD = {}
@@ -62,8 +62,8 @@ class HDF5Dataset(torchdata.Dataset):
         for ifile, fn in enumerate(self.files):
             logger.info(f"Loading with {fn} ({ifile+1}/{len(self.files)})")
             with h5.File(fn) as h5_file:
-                self.xD[fn] = h5_file[self.Xname][0:300]
-                self.yD[fn] = h5_file[self.yname][0:300]
+                self.xD[fn] = h5_file[self.Xname][:]
+                self.yD[fn] = h5_file[self.yname][:]
                 dslenD[fn] = len(self.xD[fn])
                 self.fnidexstart.append(self.fnidexstart[-1] + dslenD[fn])
 

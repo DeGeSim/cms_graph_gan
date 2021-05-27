@@ -4,7 +4,7 @@ import torch
 import torch.nn.functional as F
 from torch.nn import Linear
 from torch_geometric.data import Data
-from torch_geometric.nn import GCNConv, global_add_pool,global_mean_pool
+from torch_geometric.nn import GCNConv, global_add_pool
 
 from ..config import conf, device
 from ..geo.graph import num_node_features

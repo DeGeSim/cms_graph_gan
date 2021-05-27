@@ -86,7 +86,7 @@ class modelHolder:
             },
             self.checkpoint_path,
         )
-        logger.warn(f"Saved model to checkpoint at epoch {self.metrics['epoch']}.")
+        logger.warn(f"Saved model to checkpoint at epoch {self.metrics['epoch']} / gradient step {self.metrics['grad_step']}.")
 
 
 model_holder = modelHolder()
