@@ -9,7 +9,7 @@ import math
 from ..config import conf
 from ..geo.transform import transform
 from ..utils.logger import logger
-from ..utils.thread_or_process import thread_or_process
+from ..utils.thread_or_process import pname
 
 
 class Chunk_Dataset(torch.utils.data.IterableDataset):
@@ -29,14 +29,14 @@ class Chunk_Dataset(torch.utils.data.IterableDataset):
 
     def _loadfile(self):
         logger.debug(
-            f"{thread_or_process()}: loading {h5.File(self.file_path)} chunk {self.chunk}"
+            f"{pname()}: loading {h5.File(self.file_path)} chunk {self.chunk}"
         )
         with h5.File(self.file_path) as h5_file:
             self.x = h5_file[conf.loader.xname][self.chunk[0] : self.chunk[1]]
             self.y = h5_file[conf.loader.yname][self.chunk[0] : self.chunk[1]]
 
         logger.debug(
-            f"{thread_or_process()}: done loading {h5.File(self.file_path)} chunk {self.chunk}"
+            f"{pname()}: done loading {h5.File(self.file_path)} chunk {self.chunk}"
         )
 
     def __getitem__(self, index):
