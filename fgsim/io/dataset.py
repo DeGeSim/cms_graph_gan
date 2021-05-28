@@ -1,113 +1,118 @@
-import logging
-import os
-import pickle
-from multiprocessing import Pool
 from pathlib import Path
 
 import h5py as h5
+import numpy as np
 import torch
-import torchdata
+import torch_geometric
+import math
 
 from ..config import conf
+from ..geo.transform import transform
 from ..utils.logger import logger
+from ..utils.thread_or_process import thread_or_process
 
-# https://gist.github.com/branislav1991/4c143394bdad612883d148e0617bdccd#file-hdf5_dataset-py
 
-
-class HDF5Dataset(torchdata.Dataset):
-    """Represents an abstract HDF5 dataset.
-
-    Input params:
-        file_path: Path to the folder containing the dataset (one or multiple HDF5 files).
-        recursive: If True, searches for h5 files in subdirectories.
-        load_data: If True, loads all the data immediately into RAM. Use this if
-            the dataset is fits into memory. Otherwise, leave this at false and
-            the data will load lazily.
-        data_cache_size: Number of HDF5 files that can be cached in the cache (default=3).
-        transform: PyTorch transform to apply to every data instance (default=None).
-    """
-
+class Chunk_Dataset(torch.utils.data.IterableDataset):
     def __init__(
         self,
         file_path,
-        recursive,
-        Xname,
-        yname,
+        chunk,
         transform,
     ):
         super().__init__()
+        self.file_path = file_path
         self.transform = transform
-        self.Xname = Xname
-        self.yname = yname
+        self.chunk = chunk
+        self.start = self.chunk[0]
+        self.end = self.chunk[1]
+        self.len = self.chunk[1] - self.chunk[0]
 
-        # Search for all h5 files
-        p = Path(file_path)
-        assert p.is_dir()
-        if recursive:
-            self.files = sorted(p.glob("**/*.h5"))
-        else:
-            self.files = sorted(p.glob("*.h5"))
-        if len(self.files) < 1:
-            raise RuntimeError("No hdf5 datasets found")
-        self.files = self.files[:10]
+    def _loadfile(self):
+        logger.debug(
+            f"{thread_or_process()}: loading {h5.File(self.file_path)} chunk {self.chunk}"
+        )
+        with h5.File(self.file_path) as h5_file:
+            self.x = h5_file[conf.loader.xname][self.chunk[0] : self.chunk[1]]
+            self.y = h5_file[conf.loader.yname][self.chunk[0] : self.chunk[1]]
 
-        # filename -> length
-        dslenD = {}
-        # [posinfilelist]-> startindex
-        self.fnidexstart = [0]
-        # Dict to store filename -> array for x
-        self.xD = {}
-        self.yD = {}
-
-        for ifile, fn in enumerate(self.files):
-            logger.info(f"Loading with {fn} ({ifile+1}/{len(self.files)})")
-            with h5.File(fn) as h5_file:
-                self.xD[fn] = h5_file[self.Xname][:]
-                self.yD[fn] = h5_file[self.yname][:]
-                dslenD[fn] = len(self.xD[fn])
-                self.fnidexstart.append(self.fnidexstart[-1] + dslenD[fn])
-
-        self.len = sum([dslenD[e] for e in dslenD])
-
-    # globalindexeventidx -> filename
-    def fn_of_idx(self, idx):
-        for i in range(len(self.fnidexstart)):
-            # at the end, return the last index
-            if i == len(self.fnidexstart) - 1:
-                return i
-            # check if the starting index of the next file is greater then the given value
-            # and return it if true
-            if self.fnidexstart[i + 1] > idx:
-                return i
-
-    def index_infile(self, idx, filenameidx):
-        return idx - self.fnidexstart[filenameidx]
+        logger.debug(
+            f"{thread_or_process()}: done loading {h5.File(self.file_path)} chunk {self.chunk}"
+        )
 
     def __getitem__(self, index):
-        # get data
-        filenameidx = self.fn_of_idx(index)
-        idx_in_file = self.index_infile(index, filenameidx)
+        if not hasattr(self,"x"):
+            self._loadfile()
 
-        caloimg = self.xD[self.files[filenameidx]][idx_in_file]
-        y = self.yD[self.files[filenameidx]][idx_in_file]
-
+        # logger.debug(f"{thread_or_process()}: tranforming {index}")
         if callable(self.transform):
-            x = self.transform(caloimg)
+            res = self.transform((self.x[index], self.y[index]))
         else:
-            x = caloimg
-        return (x, y)
+            res = (self.x[index], self.y[index])
+        # logger.debug(f"{thread_or_process()}: done tranforming {index}")
+        return res
 
     def __len__(self):
         return self.len
 
+    def __iter__(self):
+        worker_info = torch.utils.data.get_worker_info()
+        if worker_info is None:  # single-process data loading, return the full iterator
+            iter_start = self.start
+            iter_end = self.end
+        else:  # in a worker process
+            # split workload
+            per_worker = int(
+                math.ceil((self.end - self.start) / float(worker_info.num_workers))
+            )
+            worker_id = worker_info.id
+            iter_start = self.start + worker_id * per_worker
+            iter_end = min(iter_start + per_worker, self.end)
+        return iter((self[i - self.chunk[0]] for i in range(iter_start, iter_end)))
 
-dataset = HDF5Dataset(
-    file_path="wd/forward/Ele_FixedAngle",
-    recursive=False,
-    transform=None,
-    Xname="ECAL",
-    yname="energy",
+
+# %%
+# Search for all h5 files
+p = Path(conf.datasetpath)
+assert p.is_dir()
+files = sorted(p.glob("**/*.h5"))
+if len(files) < 1:
+    raise RuntimeError("No hdf5 datasets found")
+
+
+chunksize = conf.loader.chunksize
+nentries = 10000
+
+chunks = [
+    (i * chunksize, (i + 1) * chunksize) for i in range(nentries // chunksize)
+] + [(nentries // chunksize * chunksize, nentries)]
+
+# Data Loader copies the dataset once for each worker
+# Each chuck is read by each process
+# => Loading the file in __get_item__ of Chunk_Dataset does not work because 
+# each process gets copy of the BufferedShuffleDataset (ChainDataset(Chunk_Dataset))
+# and the are first evaluated at runtime
+# => Initializing the chunks in a generator passed to ChainDataset does not work 
+# because the generator is copied between the processes and evaluated separatly
+
+
+chunk_ds_L = [Chunk_Dataset(fn, chunk, transform) for chunk in chunks for fn in files]
+
+logger.debug("All datasets initialized")
+
+np.random.shuffle(chunk_ds_L)
+
+
+chained_ds = torch.utils.data.ChainDataset(chunk_ds_L)
+
+# Loader queries batch_size entries at once from the dataset => use buffer_size>> batch_size
+buffered_ds = torch.utils.data.BufferedShuffleDataset(
+    chained_ds, buffer_size=conf.loader.buffer_size
 )
-from ..geo.transform import transform
 
-dataset = dataset.map(transform)
+
+def get_loader():
+    loader = torch_geometric.data.DataLoader(
+        buffered_ds, batch_size=conf.loader.batch_size, num_workers=conf.loader.num_workers
+    )
+    return loader
+    # Dataset is copied for each process => Used memory: buffer_size * num_workers

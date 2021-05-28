@@ -1,15 +1,16 @@
-import torch
 import time
+
+import torch
+from torch.utils.tensorboard import SummaryWriter
 from torch_geometric.data import DataLoader
 from torch_geometric.nn import global_add_pool
-from torch.utils.tensorboard import SummaryWriter
 
 writer = SummaryWriter()
 
 from tqdm import tqdm
 
 from ..config import conf, device
-from ..io.dataset import dataset
+from ..io.dataset import get_loader
 from ..utils.logger import logger
 from .holder import modelHolder
 
@@ -19,7 +20,7 @@ def diffperc(a, b):
 
 
 def training_procedure(c: modelHolder):
-    train_loader = DataLoader(dataset, batch_size=conf.model.batch_size, shuffle=True)
+    train_loader = get_loader()
 
     # Initialize the training
     c.model = c.model.float().to(device)
@@ -30,7 +31,10 @@ def training_procedure(c: modelHolder):
     # Iterate over the Epochs
     for c.metrics["epoch"] in range(c.metrics["epoch"], conf.model["n_epochs"]):
         # Iterate over the batches
+        endbatchtime = time.time()
         for ibatch, batch in tqdm(enumerate(train_loader)):
+            startbatchtime = time.time()
+            iotime = startbatchtime - endbatchtime
             # skip to the correct batch
             # This construction allows restarting the training during an epoch.
             if ibatch != c.metrics["batch"] and not skipped_to_batch:
@@ -46,7 +50,17 @@ def training_procedure(c: modelHolder):
             loss.backward()
             c.optim.step()
 
+            endbatchtime = time.time()
+            grad_step_time = endbatchtime - startbatchtime
+
             c.metrics["grad_step"] = c.metrics["grad_step"] + 1
+
+            writer.add_scalar(
+                "training_time_ratio",
+                grad_step_time / (grad_step_time + iotime),
+                c.metrics["grad_step"],
+            )
+
             writer.add_scalar("loss", loss, c.metrics["grad_step"])
 
             nndiff = diffperc(prediction, batch.y.float())
@@ -65,7 +79,7 @@ def training_procedure(c: modelHolder):
             # save the generated torch tensor models to disk
             if c.metrics["grad_step"] % 10 == 0:
                 logger.info(
-                    f"Batch {ibatch}/{len(train_loader)} "
+                    f"Batch {ibatch} "
                     + f"Epoch { c.metrics['epoch'] }/{conf.model['n_epochs']}: "
                     + f"\n\tLoss: {nndiff}"
                 )

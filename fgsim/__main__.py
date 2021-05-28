@@ -44,8 +44,8 @@ def main():
     logger.info(f"Running command {conf['command']}")
 
     if conf["command"] == "train":
-        from .model.training import training_procedure
         from .model.holder import model_holder
+        from .model.training import training_procedure
 
         training_procedure(model_holder)
 
