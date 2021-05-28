@@ -107,5 +107,5 @@ output/
 out.png
 wd/
 wd
-tmptest*.py
+tmp*
 runs/
