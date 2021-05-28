@@ -2,6 +2,7 @@ import os
 
 import numpy as np
 import torch
+import random
 from omegaconf import OmegaConf
 
 from .utils.cli import args
@@ -17,9 +18,6 @@ def get_device():
     return dev
 
 
-torch.manual_seed(0)
-np.random.seed(0)
-
 device = get_device()
 
 fn = f"wd/{args.tag}/config.yaml"
@@ -30,3 +28,7 @@ with open(fn, "r") as fp:
     fileconf = OmegaConf.load(fp)
 
 conf = OmegaConf.merge(vars(args), fileconf)
+
+torch.manual_seed(conf.seed)
+np.random.seed(conf.seed)
+random.seed(conf.seed)
