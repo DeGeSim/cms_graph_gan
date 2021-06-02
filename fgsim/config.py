@@ -1,8 +1,8 @@
 import os
+import random
 
 import numpy as np
 import torch
-import random
 from omegaconf import OmegaConf
 
 from .utils.cli import args

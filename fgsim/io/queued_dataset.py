@@ -60,13 +60,12 @@ def zip_chunks(chunks):
 
 zip_chunks_step = qf.Process_Step(zip_chunks, 1, name="zip")
 zip_queue = multiprocessing.Queue(2)
+
 # Step 2
 # Spawn a Pool with 10 processes for the tranformation from numpy
 # Array to Graph
 
-
 transform_chunk_step = qf.Pool_Step(transform, nworkers=10, name="transform")
-
 list_of_graphs_queue = multiprocessing.Queue(4)
 
 ## Step3
@@ -79,7 +78,6 @@ def geo_batch(list_of_graphs):
 
 
 geo_batch_step = qf.Process_Step(geo_batch, 2, name="geo_batch")
-
 batch_prefetch_queue = multiprocessing.Queue(4)
 
 ## Collect the steps

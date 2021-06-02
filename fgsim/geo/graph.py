@@ -210,8 +210,6 @@ def grid_to_graph_geo(caloimg):
     return grid_to_graph(caloimg, outformat="geo")
 
 
-# import h5py as h5
-
 # with h5.File("wd/forward/Ele_FixedAngle/EleEscan_1_1.h5") as f:
 #     caloimgs = f["ECAL"][0:10]
 # (

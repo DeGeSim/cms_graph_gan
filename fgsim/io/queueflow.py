@@ -396,9 +396,7 @@ class Sequence:
         outstr = "Current Status of Processes and Queues:\n"
         for i in range(len(qs) + len(ps)):
             if i % 2 == 0:
-                outstr = (
-                    outstr + f"Queue:\t\t{qs[int(i/2)][0]}/{qs[int(i/2)][1]}\n"
-                )
+                outstr = outstr + f"Queue:\t\t{qs[int(i/2)][0]}/{qs[int(i/2)][1]}\n"
             else:
                 pscur = ps[i // 2]
                 pcur = self.processes[i // 2]

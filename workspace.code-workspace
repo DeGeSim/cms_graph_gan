@@ -54,7 +54,6 @@
 				"request": "launch",
 				"module": "fgsim",
 				"args": [
-					"--debug",
 					"train",
 					"--dump_model",
 				]
@@ -67,7 +66,6 @@
 				"args": [
 					"--tag",
 					"forward",
-					"--debug",
 					"train",
 					"--dump_model",
 				]

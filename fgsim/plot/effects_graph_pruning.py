@@ -1,11 +1,11 @@
 # %%
-import h5py as h5
+import h5py
 import matplotlib.pyplot as plt
 import networkx as nx
 import numpy as np
 
 # %%
-with h5.File("wd/forward/Ele_FixedAngle/EleEscan_1_1.h5") as f:
+with h5py.File("wd/forward/Ele_FixedAngle/EleEscan_1_1.h5") as f:
     excalimg = f["ECAL"][:]
 # %%
 componentsL = []
