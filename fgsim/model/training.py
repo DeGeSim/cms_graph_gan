@@ -10,7 +10,7 @@ writer = SummaryWriter()
 from tqdm import tqdm
 
 from ..config import conf, device
-from ..io.queued_ds import get_loader
+from ..io.queued_dataset import get_loader
 from ..utils.logger import logger
 from .holder import modelHolder
 
