@@ -4,6 +4,7 @@ import multiprocessing
 import multiprocessing.sharedctypes
 import time
 from collections.abc import Iterable
+from prettytable import PrettyTable
 
 import numpy as np
 
@@ -393,18 +394,17 @@ class Sequence:
     def flowstatus(self):
         qs = self.queue_status()
         ps = self.process_status()
-        outstr = "Current Status of Processes and Queues:\n"
+        table = PrettyTable()
+        table.title = 'Current Status of Processes and Queues'
+        table.field_names = ['Type','Saturation', 'Name']
         for i in range(len(qs) + len(ps)):
             if i % 2 == 0:
-                outstr = outstr + f"Queue:\t\t{qs[int(i/2)][0]}/{qs[int(i/2)][1]}\n"
+                table.add_row(["Queue",f"{qs[int(i/2)][0]}/{qs[int(i/2)][1]}",""])
             else:
                 pscur = ps[i // 2]
                 pcur = self.processes[i // 2]
-                outstr = outstr + f"Processes:\t{pscur[0]}/{pscur[1]}\t"
-                outstr = (
-                    outstr + f"({pcur.name if pcur.name is not None else type(pcur)})\n"
-                )
-        return outstr
+                table.add_row(["Process",f"{pscur[0]}/{pscur[1]}",pcur.name if pcur.name is not None else type(pcur) ])
+        return table
 
 
 # Usage example
