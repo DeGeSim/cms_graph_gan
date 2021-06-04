@@ -109,3 +109,5 @@ wd/
 wd
 tmp*
 runs/
+**/*.pth
+**/*.torch
