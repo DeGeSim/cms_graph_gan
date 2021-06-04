@@ -41,19 +41,6 @@ terminate_queue = TerminateQueue()
 
 print_lock = multiprocessing.Lock()
 
-
-def info_with_lock(*args, **kwargs):
-    print_lock.acquire()
-    logger.info(*args, **kwargs)
-    print_lock.release()
-
-
-def debug_with_lock(*args, **kwargs):
-    print_lock.acquire()
-    logger.debug(*args, **kwargs)
-    print_lock.release()
-
-
 def print_with_lock(*args, **kwargs):
     print_lock.acquire()
     print(*args, **kwargs)
@@ -73,7 +60,7 @@ class Input_Step:
         for e in self._iterable:
             self.outq.put(e)
             i = i + 1
-        debug_with_lock(f"Queuing {i} elements complete")
+        logger.debug(f"Queuing {i} elements complete")
         self.outq.put(TerminateQueue())
 
     def start(self):
@@ -162,23 +149,23 @@ class Process_Step(Step_Base):
 
     def _worker(self):
         name = multiprocessing.current_process().name
-        info_with_lock(f"{self.name} {name} start working")
+        logger.info(f"{self.name} {name} start working")
         with self.running_processes_counter.get_lock():
             self.running_processes_counter.value += 1
         while True:
-            debug_with_lock(
+            logger.debug(
                 f"{self.name} worker {name} reading from input queue {id(self.inq)}."
             )
             wkin = self.inq.get()
             if isinstance(wkin, torch.Tensor):
                 wkin = wkin.clone()
-            debug_with_lock(
+            logger.debug(
                 f"{self.name} worker {name} working on {id(wkin)} of type {type(wkin)}."
             )
             # If the process gets the terminate_queue object,
             # wait for the others and put it in the next queue
             if isinstance(wkin, TerminateQueue):
-                info_with_lock(f"{self.name} Worker {name} terminating")
+                logger.info(f"{self.name} Worker {name} terminating")
                 # Tell the other workers, that you are finished
                 with self.running_processes_counter.get_lock():
                     self.running_processes_counter.value -= 1
@@ -211,7 +198,7 @@ class Process_Step(Step_Base):
                     )
                     exit(1)
 
-                debug_with_lock(
+                logger.debug(
                     f"{self.name} worker {name} push single output of type {type(wkout)} into output queue {id(self.outq)}."
                 )
                 self.outq.put(wkout)
@@ -247,12 +234,12 @@ class Pool_Step(Step_Base):
 
     def _worker(self):
         name = multiprocessing.current_process().name
-        info_with_lock(
+        logger.info(
             f"{self.name} pool ({name}) initalizing with {self.nworkers} subprocesses"
         )
         self.pool = multiprocessing.Pool(self.nworkers)
         while True:
-            debug_with_lock(
+            logger.debug(
                 f"{self.name} worker {name} reading from input queue {id(self.inq)}."
             )
             wkin = self.inq.get()
@@ -262,13 +249,13 @@ class Pool_Step(Step_Base):
             # it terminates the pool and and puts the terminal element in
             # in the outgoing queue.
             if isinstance(wkin, TerminateQueue):
-                info_with_lock(f"{self.name} Worker {name} terminating")
+                logger.info(f"{self.name} Worker {name} terminating")
                 self.outq.put(TerminateQueue())
                 self.pool.terminate()
                 break
             else:
                 assert isinstance(wkin, Iterable)
-                debug_with_lock(
+                logger.debug(
                     f"{self.name} worker {name} got element {id(wkin)} of element type {type(wkin)}."
                 )
                 try:
@@ -278,7 +265,7 @@ class Pool_Step(Step_Base):
                         f"{self.name} worker {name} failer on element of type of type {type(wkin)}.\n\n{wkin}"
                     )
                     exit(1)
-                debug_with_lock(
+                logger.debug(
                     f"{self.name} push pool output list {id(wkout)}  with element type {type(wkin)} into output queue {id(self.outq)}."
                 )
                 self.outq.put(wkout)
@@ -300,26 +287,26 @@ class Unpack_Step(Step_Base):
 
     def _worker(self):
         name = multiprocessing.current_process().name
-        info_with_lock(f"{self.name} {name} start working")
+        logger.info(f"{self.name} {name} start working")
         while True:
-            debug_with_lock(
+            logger.debug(
                 f"{self.name} worker {name} reading from input queue {id(self.inq)}."
             )
             wkin = self.inq.get()
             if isinstance(wkin, TerminateQueue):
-                debug_with_lock(
+                logger.debug(
                     f"{self.name} push terminal element of type {type(wkin)} into output queue {id(self.outq)}."
                 )
                 self.outq.put(TerminateQueue())
-                debug_with_lock(f"{self.name} Worker {name} terminating")
+                logger.debug(f"{self.name} Worker {name} terminating")
                 break
             else:
                 assert isinstance(wkin, Iterable)
-                debug_with_lock(
+                logger.debug(
                     f"{self.name} worker {name} got element {id(wkin)} of element type {type(wkin)}."
                 )
                 for e in wkin:
-                    debug_with_lock(
+                    logger.debug(
                         f"{self.name} push element of type {type(wkin)} into output queue {id(self.outq)}."
                     )
                     if isinstance(e, torch.Tensor):
@@ -345,14 +332,14 @@ class Pack_Step(Step_Base):
 
     def _worker(self):
         name = multiprocessing.current_process().name
-        info_with_lock(f"{self.name} {name} start working")
+        logger.info(f"{self.name} {name} start working")
         collected_elements = []
         while True:
-            debug_with_lock(
+            logger.debug(
                 f"{self.name} worker {name} reading from input queue {id(self.inq)}."
             )
             wkin = self.inq.get()
-            debug_with_lock(
+            logger.debug(
                 f"{self.name} worker {name} got element {id(wkin)} of element type {type(wkin)}."
             )
             if isinstance(wkin, torch.Tensor):
@@ -363,15 +350,15 @@ class Pack_Step(Step_Base):
                         f"{self.name} terminal element of type {type(wkin)} into output queue {id(self.outq)}."
                     )
                     self.outq.put(collected_elements)
-                info_with_lock(f"{self.name} Worker {name} terminating")
+                logger.info(f"{self.name} Worker {name} terminating")
                 self.outq.put(TerminateQueue())
                 break
             else:
-                debug_with_lock(f"{self.name} storing {id(wkin)} of type {type(wkin)}.")
+                logger.debug(f"{self.name} storing {id(wkin)} of type {type(wkin)}.")
                 collected_elements.append(wkin)
 
                 if len(collected_elements) == self.nelements:
-                    debug_with_lock(
+                    logger.debug(
                         f"{self.name} push list of type {type(collected_elements[-1])} into output queue {id(self.outq)}."
                     )
                     self.outq.put(collected_elements)
@@ -396,14 +383,14 @@ class Repack_Step(Step_Base):
 
     def _worker(self):
         name = multiprocessing.current_process().name
-        info_with_lock(f"{self.name} {name} start working")
+        logger.info(f"{self.name} {name} start working")
         collected_elements = []
         while True:
-            debug_with_lock(
+            logger.debug(
                 f"{self.name} worker {name} reading from input queue {id(self.inq)}."
             )
             wkin = self.inq.get()
-            info_with_lock(
+            logger.info(
                 f"{self.name} worker {name} got element {id(wkin)} of element type {type(wkin)}."
             )
             if isinstance(wkin, TerminateQueue):
@@ -412,12 +399,12 @@ class Repack_Step(Step_Base):
                         f"{self.name} terminal element of type {type(wkin)} into output queue {id(self.outq)}."
                     )
                     self.outq.put(collected_elements)
-                info_with_lock(f"{self.name} Worker {name} terminating")
+                logger.info(f"{self.name} Worker {name} terminating")
                 self.outq.put(TerminateQueue())
                 break
             else:
                 assert hasattr(wkin, "__iter__")
-                info_with_lock(
+                logger.info(
                     f"{self.name} storing {id(wkin)} of type {type(wkin)} "
                     + f"(len {len(wkin) if hasattr(wkin,'__len__') else '?'})."
                 )
@@ -426,7 +413,7 @@ class Repack_Step(Step_Base):
                         e = e.clone()
                     collected_elements.append(e)
                     if len(collected_elements) == self.nelements:
-                        info_with_lock(
+                        logger.info(
                             f"{self.name} push list of type {type(collected_elements[-1])} with {self.nelements} elements into output queue {id(self.outq)}."
                         )
                         self.outq.put(collected_elements)
