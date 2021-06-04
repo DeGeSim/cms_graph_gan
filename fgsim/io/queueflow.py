@@ -1,15 +1,37 @@
 # %%
 import ctypes
-import multiprocessing
 import multiprocessing.sharedctypes
 import time
 from collections.abc import Iterable
-from prettytable import PrettyTable
 
 import numpy as np
+import torch
+import torch.multiprocessing
+from prettytable import PrettyTable
 
 from ..utils.logger import logger
 
+
+# Make it work ()
+import resource
+# Two recommendations by 
+# https://github.com/pytorch/pytorch/issues/973
+# 1. (not needed for the moment)
+# rlimit = resource.getrlimit(resource.RLIMIT_NOFILE)
+# resource.setrlimit(resource.RLIMIT_NOFILE, (2048, rlimit[1]))
+
+# 2.
+# Without the following option it crashes with 
+#   File "/home/mscham/.apps/pyenv/versions/3.8.6/lib/python3.8/multiprocessing/reduction.py", line 164, in recvfds
+#     raise RuntimeError('received %d items of ancdata' %
+# RuntimeError: received 0 items of ancdata
+torch.multiprocessing.set_sharing_strategy("file_system")
+
+# Reworked according to the recommendations in 
+# https://pytorch.org/docs/stable/multiprocessing.html
+
+# It works event though multiprocessing with these input is not
+#  torch.multiprocessing but just the standard multiprocessing.
 
 class TerminateQueue:
     pass
@@ -52,7 +74,7 @@ class Input_Step:
             self.outq.put(e)
             i = i + 1
         debug_with_lock(f"Queuing {i} elements complete")
-        self.outq.put(terminate_queue)
+        self.outq.put(TerminateQueue())
 
     def start(self):
         self.process.daemon = True
@@ -148,6 +170,8 @@ class Process_Step(Step_Base):
                 f"{self.name} worker {name} reading from input queue {id(self.inq)}."
             )
             wkin = self.inq.get()
+            if isinstance(wkin, torch.Tensor):
+                wkin = wkin.clone()
             debug_with_lock(
                 f"{self.name} worker {name} working on {id(wkin)} of type {type(wkin)}."
             )
@@ -175,15 +199,23 @@ class Process_Step(Step_Base):
                         time.sleep(0.01)
                     # Get the remaining the terminal element from the input queue
                     self.inq.get()
-                    self.outq.put(terminate_queue)
+                    self.outq.put(TerminateQueue())
 
                 break
             else:
-                wkout = self.workerfn(wkin)
+                try:
+                    wkout = self.workerfn(wkin)
+                except:
+                    logger.error(
+                        f"{self.name} worker {name} failer on element of type of type {type(wkin)}.\n\n{wkin}"
+                    )
+                    exit(1)
+
                 debug_with_lock(
                     f"{self.name} worker {name} push single output of type {type(wkout)} into output queue {id(self.outq)}."
                 )
                 self.outq.put(wkout)
+                del wkin
 
 
 class Pool_Step(Step_Base):
@@ -220,29 +252,37 @@ class Pool_Step(Step_Base):
         )
         self.pool = multiprocessing.Pool(self.nworkers)
         while True:
-            info_with_lock(
+            debug_with_lock(
                 f"{self.name} worker {name} reading from input queue {id(self.inq)}."
             )
             wkin = self.inq.get()
-
+            if isinstance(wkin, torch.Tensor):
+                wkin = wkin.clone()
             # If the process gets the terminate_queue object,
             # it terminates the pool and and puts the terminal element in
             # in the outgoing queue.
             if isinstance(wkin, TerminateQueue):
                 info_with_lock(f"{self.name} Worker {name} terminating")
-                self.outq.put(terminate_queue)
+                self.outq.put(TerminateQueue())
                 self.pool.terminate()
                 break
             else:
                 assert isinstance(wkin, Iterable)
-                info_with_lock(
+                debug_with_lock(
                     f"{self.name} worker {name} got element {id(wkin)} of element type {type(wkin)}."
                 )
-                wkout = self.pool.map(self.workerfn, wkin)
-                info_with_lock(
+                try:
+                    wkout = self.pool.map(self.workerfn, wkin)
+                except:
+                    logger.error(
+                        f"{self.name} worker {name} failer on element of type of type {type(wkin)}.\n\n{wkin}"
+                    )
+                    exit(1)
+                debug_with_lock(
                     f"{self.name} push pool output list {id(wkout)}  with element type {type(wkin)} into output queue {id(self.outq)}."
                 )
                 self.outq.put(wkout)
+                del wkin
 
 
 class Unpack_Step(Step_Base):
@@ -270,19 +310,22 @@ class Unpack_Step(Step_Base):
                 debug_with_lock(
                     f"{self.name} push terminal element of type {type(wkin)} into output queue {id(self.outq)}."
                 )
-                self.outq.put(terminate_queue)
+                self.outq.put(TerminateQueue())
                 debug_with_lock(f"{self.name} Worker {name} terminating")
                 break
             else:
                 assert isinstance(wkin, Iterable)
-                info_with_lock(
+                debug_with_lock(
                     f"{self.name} worker {name} got element {id(wkin)} of element type {type(wkin)}."
                 )
                 for e in wkin:
                     debug_with_lock(
                         f"{self.name} push element of type {type(wkin)} into output queue {id(self.outq)}."
                     )
+                    if isinstance(e, torch.Tensor):
+                        e = e.clone()
                     self.outq.put(e)
+                del wkin
 
 
 class Pack_Step(Step_Base):
@@ -312,24 +355,83 @@ class Pack_Step(Step_Base):
             debug_with_lock(
                 f"{self.name} worker {name} got element {id(wkin)} of element type {type(wkin)}."
             )
+            if isinstance(wkin, torch.Tensor):
+                wkin = wkin.clone()
             if isinstance(wkin, TerminateQueue):
                 if len(collected_elements) > 0:
-                    print_with_lock(
+                    logger.info(
                         f"{self.name} terminal element of type {type(wkin)} into output queue {id(self.outq)}."
                     )
                     self.outq.put(collected_elements)
                 info_with_lock(f"{self.name} Worker {name} terminating")
-                self.outq.put(terminate_queue)
+                self.outq.put(TerminateQueue())
                 break
             else:
                 debug_with_lock(f"{self.name} storing {id(wkin)} of type {type(wkin)}.")
                 collected_elements.append(wkin)
+
                 if len(collected_elements) == self.nelements:
                     debug_with_lock(
-                        f"{self.name} push list of type {type(wkin)} into output queue {id(self.outq)}."
+                        f"{self.name} push list of type {type(collected_elements[-1])} into output queue {id(self.outq)}."
                     )
                     self.outq.put(collected_elements)
                     collected_elements = []
+            del wkin
+
+
+class Repack_Step(Step_Base):
+    """Takes an iterable from the incoming queue,
+    collects n elements and packs them as a list in the outgoing queue."""
+
+    def __init__(
+        self,
+        nelements,
+        *args,
+        **kwargs,
+    ):
+        if "name" not in kwargs:
+            kwargs["name"] = f"Repack({nelements})"
+        super().__init__(*args, **kwargs)
+        self.nelements = nelements
+
+    def _worker(self):
+        name = multiprocessing.current_process().name
+        info_with_lock(f"{self.name} {name} start working")
+        collected_elements = []
+        while True:
+            debug_with_lock(
+                f"{self.name} worker {name} reading from input queue {id(self.inq)}."
+            )
+            wkin = self.inq.get()
+            info_with_lock(
+                f"{self.name} worker {name} got element {id(wkin)} of element type {type(wkin)}."
+            )
+            if isinstance(wkin, TerminateQueue):
+                if len(collected_elements) > 0:
+                    logger.info(
+                        f"{self.name} terminal element of type {type(wkin)} into output queue {id(self.outq)}."
+                    )
+                    self.outq.put(collected_elements)
+                info_with_lock(f"{self.name} Worker {name} terminating")
+                self.outq.put(TerminateQueue())
+                break
+            else:
+                assert hasattr(wkin, "__iter__")
+                info_with_lock(
+                    f"{self.name} storing {id(wkin)} of type {type(wkin)} "
+                    + f"(len {len(wkin) if hasattr(wkin,'__len__') else '?'})."
+                )
+                for e in wkin:
+                    if isinstance(e, torch.Tensor):
+                        e = e.clone()
+                    collected_elements.append(e)
+                    if len(collected_elements) == self.nelements:
+                        info_with_lock(
+                            f"{self.name} push list of type {type(collected_elements[-1])} with {self.nelements} elements into output queue {id(self.outq)}."
+                        )
+                        self.outq.put(collected_elements)
+                        collected_elements = []
+            del wkin
 
 
 class Sequence:
@@ -395,15 +497,21 @@ class Sequence:
         qs = self.queue_status()
         ps = self.process_status()
         table = PrettyTable()
-        table.title = 'Current Status of Processes and Queues'
-        table.field_names = ['Type','Saturation', 'Name']
+        table.title = "Current Status of Processes and Queues"
+        table.field_names = ["Type", "Saturation", "Name"]
         for i in range(len(qs) + len(ps)):
             if i % 2 == 0:
-                table.add_row(["Queue",f"{qs[int(i/2)][0]}/{qs[int(i/2)][1]}",""])
+                table.add_row(["Queue", f"{qs[int(i/2)][0]}/{qs[int(i/2)][1]}", ""])
             else:
                 pscur = ps[i // 2]
                 pcur = self.processes[i // 2]
-                table.add_row(["Process",f"{pscur[0]}/{pscur[1]}",pcur.name if pcur.name is not None else type(pcur) ])
+                table.add_row(
+                    [
+                        "Process",
+                        f"{pscur[0]}/{pscur[1]}",
+                        pcur.name if pcur.name is not None else type(pcur),
+                    ]
+                )
         return table
 
 
