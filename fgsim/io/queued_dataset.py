@@ -44,33 +44,27 @@ def read_chunk(inp):
 
 
 # two processes reading from the filesystem
-read_chunk_step = qf.Process_Step(read_chunk, 4, name="read_chunk")
+read_chunk_step = qf.Process_Step(read_chunk, 3, name="read_chunk")
 # run until 10 chunks are in the queue
-chunks_queue = multiprocessing.Queue(5)
 
 # Step 1.5
 # In the input is now [(x,y), ... (x [300 * 51 * 51 * 25], y [300,1] ), (x,y)]
 # For these elements to be processed by each of the workers in the following pool
 # they need to be (x [51 * 51 * 25], y [1] ):
-
-
 def zip_chunks(chunks):
     return zip(*chunks)
 
 
 zip_chunks_step = qf.Process_Step(zip_chunks, 1, name="zip")
-zip_queue = multiprocessing.Queue(2)
 
 # Step 2
 # Spawn a Pool with 10 processes for the tranformation from numpy
 # Array to Graph
+transform_chunk_step = qf.Pool_Step(transform, nworkers=20, name="transform")
 
-transform_chunk_step = qf.Pool_Step(transform, nworkers=10, name="transform")
-list_of_graphs_queue = multiprocessing.Queue(4)
 
-## Step3
-unpack = qf.Unpack_Step()
-pack = qf.Pack_Step(conf.loader.batch_size)
+## Step 2.5
+repack = qf.Repack_Step(conf.loader.batch_size)
 
 ## Step 3
 def geo_batch(list_of_graphs):
@@ -78,20 +72,19 @@ def geo_batch(list_of_graphs):
 
 
 geo_batch_step = qf.Process_Step(geo_batch, 2, name="geo_batch")
-batch_prefetch_queue = multiprocessing.Queue(4)
 
 ## Collect the steps
 process_seq = qf.Sequence(
     read_chunk_step,
-    chunks_queue,
+    multiprocessing.Queue(5),
     zip_chunks_step,
-    zip_queue,
+    multiprocessing.Queue(1),
     transform_chunk_step,
-    list_of_graphs_queue,
-    unpack,
-    pack,
+    multiprocessing.Queue(2),
+    repack,
+    multiprocessing.Queue(1),
     geo_batch_step,
-    batch_prefetch_queue,
+    multiprocessing.Queue(conf.loader.prefetch_batches),
 )
 
 
@@ -100,13 +93,11 @@ def printflowstatus():
     while True:
         newflowstatus = process_seq.flowstatus()
         if newflowstatus != oldflowstatus:
-            qf.print_with_lock(newflowstatus)
+            logger.info("\n"+str(newflowstatus))
             oldflowstatus = newflowstatus
         time.sleep(5)
 
-
 import threading
-
 status_printer_thread = threading.Thread(target=printflowstatus)
 status_printer_thread.start()
 
