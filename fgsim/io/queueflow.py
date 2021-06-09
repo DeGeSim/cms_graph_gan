@@ -1,6 +1,8 @@
 # %%
 import ctypes
 import multiprocessing.sharedctypes
+# Make it work ()
+import resource
 import time
 from collections.abc import Iterable
 
@@ -11,27 +13,25 @@ from prettytable import PrettyTable
 
 from ..utils.logger import logger
 
-
-# Make it work ()
-import resource
-# Two recommendations by 
+# Two recommendations by
 # https://github.com/pytorch/pytorch/issues/973
 # 1. (not needed for the moment)
 # rlimit = resource.getrlimit(resource.RLIMIT_NOFILE)
 # resource.setrlimit(resource.RLIMIT_NOFILE, (2048, rlimit[1]))
 
 # 2.
-# Without the following option it crashes with 
+# Without the following option it crashes with
 #   File "/home/mscham/.apps/pyenv/versions/3.8.6/lib/python3.8/multiprocessing/reduction.py", line 164, in recvfds
 #     raise RuntimeError('received %d items of ancdata' %
 # RuntimeError: received 0 items of ancdata
 torch.multiprocessing.set_sharing_strategy("file_system")
 
-# Reworked according to the recommendations in 
+# Reworked according to the recommendations in
 # https://pytorch.org/docs/stable/multiprocessing.html
 
 # It works event though multiprocessing with these input is not
 #  torch.multiprocessing but just the standard multiprocessing.
+
 
 class TerminateQueue:
     pass
@@ -40,6 +40,7 @@ class TerminateQueue:
 terminate_queue = TerminateQueue()
 
 print_lock = multiprocessing.Lock()
+
 
 def print_with_lock(*args, **kwargs):
     print_lock.acquire()

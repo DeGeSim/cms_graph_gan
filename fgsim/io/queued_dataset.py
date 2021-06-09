@@ -6,7 +6,8 @@ import h5py as h5
 import numpy as np
 import torch_geometric
 
-from ..config import conf
+from ..config import conf, device
+from ..geo.batch_stack import stack_batch_edge_indexes
 from ..geo.transform import transform
 from ..utils.logger import logger
 from ..utils.thread_or_process import pname
@@ -68,10 +69,20 @@ repack = qf.Repack_Step(conf.loader.batch_size)
 
 ## Step 3
 def geo_batch(list_of_graphs):
-    return torch_geometric.data.Batch().from_data_list(list_of_graphs)
+    batch = torch_geometric.data.Batch().from_data_list(list_of_graphs)
+    batch = stack_batch_edge_indexes(batch)
+    batch = batch
+    return batch
 
 
 geo_batch_step = qf.Process_Step(geo_batch, 2, name="geo_batch")
+
+
+def to_gpu(batch):
+    return batch.to(device)
+
+
+to_gpu_step = qf.Process_Step(to_gpu, 1, name="to_gpu")
 
 ## Collect the steps
 process_seq = qf.Sequence(
@@ -85,19 +96,23 @@ process_seq = qf.Sequence(
     multiprocessing.Queue(1),
     geo_batch_step,
     multiprocessing.Queue(conf.loader.prefetch_batches),
+    to_gpu_step,
+    multiprocessing.Queue(1),
 )
 
 
 def printflowstatus():
     oldflowstatus = ""
     while True:
-        newflowstatus = process_seq.flowstatus()
+        newflowstatus = str(process_seq.flowstatus())
         if newflowstatus != oldflowstatus:
-            logger.info("\n"+str(newflowstatus))
+            logger.debug("\n" + newflowstatus)
             oldflowstatus = newflowstatus
         time.sleep(5)
 
+
 import threading
+
 status_printer_thread = threading.Thread(target=printflowstatus)
 status_printer_thread.start()
 
