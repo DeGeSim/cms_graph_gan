@@ -38,32 +38,12 @@
 	"launch": {
 		"version": "0.2.0",
 		"configurations": [
-
-			{
-				"name": "generate",
-				"type": "python",
-				"request": "launch",
-				"module": "fgsim",
-				"args": [
-					"generate"
-				]
-			},
 			{
 				"name": "train",
 				"type": "python",
 				"request": "launch",
 				"module": "fgsim",
 				"args": [
-					"train",
-					"--dump_model",
-				]
-			},
-			{
-				"name": "fw/train",
-				"type": "python",
-				"request": "launch",
-				"module": "fgsim",
-				"args": [
 					"--tag",
 					"forward",
 					"train",
@@ -71,18 +51,7 @@
 				]
 			},
 			{
-				"name": "fw/gen",
-				"type": "python",
-				"request": "launch",
-				"module": "fgsim",
-				"args": [
-					"--tag",
-					"forward",
-					"generate",
-				]
-			},
-			{
-				"name": "fw/trytest",
+				"name": "loadfile",
 				"type": "python",
 				"request": "launch",
 				"module": "fgsim",
@@ -90,19 +59,8 @@
 					"--tag",
 					"forward",
 					"--debug",
-					"trytest",
-				]
-			},
-			{
-				"name": "fw/write_sparse_ds",
-				"type": "python",
-				"request": "launch",
-				"module": "fgsim",
-				"args": [
-					"--tag",
-					"forward",
-					"--debug",
-					"write_sparse_ds",
+					"importfile",
+					"${file}",
 				]
 			},
 			{
