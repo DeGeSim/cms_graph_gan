@@ -1,11 +1,10 @@
-
+import math
 from pathlib import Path
 
 import h5py as h5
 import numpy as np
 import torch
 import torch_geometric
-import math
 
 from ..config import conf
 from ..geo.transform import transform
@@ -29,9 +28,7 @@ class Chunk_Dataset(torch.utils.data.IterableDataset):
         self.len = self.chunk[1] - self.chunk[0]
 
     def _loadfile(self):
-        logger.debug(
-            f"{pname()}: loading {h5.File(self.file_path)} chunk {self.chunk}"
-        )
+        logger.debug(f"{pname()}: loading {h5.File(self.file_path)} chunk {self.chunk}")
         with h5.File(self.file_path) as h5_file:
             self.x = h5_file[conf.loader.xname][self.chunk[0] : self.chunk[1]]
             self.y = h5_file[conf.loader.yname][self.chunk[0] : self.chunk[1]]
@@ -41,7 +38,7 @@ class Chunk_Dataset(torch.utils.data.IterableDataset):
         )
 
     def __getitem__(self, index):
-        if not hasattr(self,"x"):
+        if not hasattr(self, "x"):
             self._loadfile()
 
         # logger.debug(f"{thread_or_process()}: tranforming {index}")
@@ -89,10 +86,10 @@ chunks = [
 
 # Data Loader copies the dataset once for each worker
 # Each chuck is read by each process
-# => Loading the file in __get_item__ of Chunk_Dataset does not work because 
+# => Loading the file in __get_item__ of Chunk_Dataset does not work because
 # each process gets copy of the BufferedShuffleDataset (ChainDataset(Chunk_Dataset))
 # and the are first evaluated at runtime
-# => Initializing the chunks in a generator passed to ChainDataset does not work 
+# => Initializing the chunks in a generator passed to ChainDataset does not work
 # because the generator is copied between the processes and evaluated separatly
 
 
@@ -113,7 +110,9 @@ buffered_ds = torch.utils.data.BufferedShuffleDataset(
 
 def get_loader():
     loader = torch_geometric.data.DataLoader(
-        buffered_ds, batch_size=conf.loader.batch_size, num_workers=conf.loader.num_workers
+        buffered_ds,
+        batch_size=conf.loader.batch_size,
+        num_workers=conf.loader.num_workers,
     )
     return loader
     # Dataset is copied for each process => Used memory: buffer_size * num_workers
@@ -124,7 +123,7 @@ def dataset_generator():
     for ch_ds in chunk_ds_L:
         for e in ch_ds:
             collected_e.append(e)
-            if len(collected_e)==conf.loader.batch_size:
-                res=torch_geometric.data.Batch().from_data_list(collected_e)
-                collected_e=[]
+            if len(collected_e) == conf.loader.batch_size:
+                res = torch_geometric.data.Batch().from_data_list(collected_e)
+                collected_e = []
                 yield res
