@@ -347,7 +347,7 @@ class Pack_Step(Step_Base):
                 wkin = wkin.clone()
             if isinstance(wkin, TerminateQueue):
                 if len(collected_elements) > 0:
-                    logger.info(
+                    logger.debug(
                         f"{self.name} terminal element of type {type(wkin)} into output queue {id(self.outq)}."
                     )
                     self.outq.put(collected_elements)
@@ -391,7 +391,7 @@ class Repack_Step(Step_Base):
                 f"{self.name} worker {name} reading from input queue {id(self.inq)}."
             )
             wkin = self.inq.get()
-            logger.info(
+            logger.debug(
                 f"{self.name} worker {name} got element {id(wkin)} of element type {type(wkin)}."
             )
             if isinstance(wkin, TerminateQueue):
@@ -405,7 +405,7 @@ class Repack_Step(Step_Base):
                 break
             else:
                 assert hasattr(wkin, "__iter__")
-                logger.info(
+                logger.debug(
                     f"{self.name} storing {id(wkin)} of type {type(wkin)} "
                     + f"(len {len(wkin) if hasattr(wkin,'__len__') else '?'})."
                 )
@@ -414,7 +414,7 @@ class Repack_Step(Step_Base):
                         e = e.clone()
                     collected_elements.append(e)
                     if len(collected_elements) == self.nelements:
-                        logger.info(
+                        logger.debug(
                             f"{self.name} push list of type {type(collected_elements[-1])} with {self.nelements} elements into output queue {id(self.outq)}."
                         )
                         self.outq.put(collected_elements)
