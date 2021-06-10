@@ -47,14 +47,14 @@ def main():
     logger.info(f"Running command {conf['command']}")
 
     if conf["command"] == "train":
-        from .model.holder import model_holder
-        from .model.training import training_procedure
+        from .ml.holder import model_holder
+        from .ml.training import training_procedure
 
         training_procedure(model_holder)
 
     if conf["command"] == "generate":
-        from .model.generate import generation_procedure
-        from .model.holder import model_holder
+        from .ml.generate import generation_procedure
+        from .ml.holder import model_holder
 
         generation_procedure(model_holder)
 

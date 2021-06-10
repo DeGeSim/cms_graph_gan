@@ -6,8 +6,10 @@ from omegaconf import OmegaConf
 from ..config import conf, device
 from ..utils.count_parameters import count_parameters
 from ..utils.logger import logger
-from .model import Net
+import importlib
 
+# Import the specified model
+ModelClass = importlib.import_module(f'..models.{conf.model.name}','fgsim.models').ModelClass
 
 class modelHolder:
     def __init__(self) -> None:
@@ -19,7 +21,7 @@ class modelHolder:
 
         # self.discriminator = Discriminator().to(device)
         # self.generator = Generator(conf.model.gan.nz).to(device)
-        self.model = Net().to(device)
+        self.model = ModelClass().to(device)
 
         # count_parameters(self.generator)
         # count_parameters(self.discriminator)

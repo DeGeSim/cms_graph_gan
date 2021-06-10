@@ -102,7 +102,7 @@ ENV/
 
 # IDE settings
 .vscode/
-data/
+data
 output/
 out.png
 wd/
