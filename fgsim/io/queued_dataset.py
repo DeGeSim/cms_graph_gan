@@ -33,7 +33,7 @@ chunk_coords = [(fn, chunk_split) for chunk_split in chunk_splits for fn in file
 
 np.random.shuffle(chunk_coords)
 
-## Step 1
+# Step 1
 def read_chunk(inp):
     file_path, chunk = inp
     logger.debug(f"{pname()}: loading {file_path} chunk {chunk}")
@@ -64,10 +64,10 @@ zip_chunks_step = qf.Process_Step(zip_chunks, 1, name="zip")
 transform_chunk_step = qf.Pool_Step(transform, nworkers=20, name="transform")
 
 
-## Step 2.5
+# Step 2.5
 repack = qf.Repack_Step(conf.loader.batch_size)
 
-## Step 3
+# Step 3
 def geo_batch(list_of_graphs):
     batch = torch_geometric.data.Batch().from_data_list(list_of_graphs)
     batch = stack_batch_edge_indexes(batch)
@@ -84,7 +84,7 @@ def to_gpu(batch):
 
 to_gpu_step = qf.Process_Step(to_gpu, 1, name="to_gpu")
 
-## Collect the steps
+# Collect the steps
 process_seq = qf.Sequence(
     read_chunk_step,
     multiprocessing.Queue(5),
@@ -100,15 +100,16 @@ process_seq = qf.Sequence(
     multiprocessing.Queue(1),
 )
 
-
+# Print the status of the queue once in while
 def printflowstatus():
     oldflowstatus = ""
+    sleeptime = 5 if conf.debug else 60
     while True:
         newflowstatus = str(process_seq.flowstatus())
         if newflowstatus != oldflowstatus:
-            logger.debug("\n" + newflowstatus)
+            logger.info("\n" + newflowstatus)
             oldflowstatus = newflowstatus
-        time.sleep(5)
+        time.sleep(sleeptime)
 
 
 import threading
@@ -117,5 +118,26 @@ status_printer_thread = threading.Thread(target=printflowstatus)
 status_printer_thread.start()
 
 
-def get_loader():
-    return process_seq(chunk_coords)
+# define the function that provides the validation set
+# and the iterable over the batches
+def get_loader(events_processed=0):
+    # Setup the validation set
+    n_validation_batches = conf.loader.validation_set_size // conf.loader.batch_size
+    if conf.loader.validation_set_size % conf.loader.batch_size != 0:
+        n_validation_batches += 1
+    n_skip_chunks = events_processed // conf.loader.chunksize
+    logger.info(
+        f"Using the first {n_validation_batches} batches for validation,"
+        + f" skipping {n_skip_chunks} batches for training."
+    )
+
+    validation_chunks = chunk_coords[:n_validation_batches]
+    training_chunks = chunk_coords[n_validation_batches + n_skip_chunks :]
+
+    qfseq = process_seq(validation_chunks + training_chunks)
+
+    # get the validation batches out
+    validation_batches = [
+        next(iter(qfseq)).to("cpu") for i in range(n_validation_batches)
+    ]
+    return (validation_batches, qfseq)
