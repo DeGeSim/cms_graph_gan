@@ -1,14 +1,15 @@
 import os
 import pickle
-import yaml
+
 import awkward as ak
 import numpy as np
-import uproot
 import torch
-from ..config import conf
-from ..utils.logger import logger
+import uproot
+import yaml
 from torch_geometric.data import Data
 
+from ..config import conf
+from ..utils.logger import logger
 
 # load the root table
 fnlup = conf["luppath"]

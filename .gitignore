@@ -107,3 +107,7 @@ output/
 out.png
 wd/
 wd
+tmp*
+runs/
+**/*.pth
+**/*.torch

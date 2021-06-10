@@ -5,20 +5,22 @@
 		}
 	],
 	"settings": {
-		"python.pythonPath": ".tox/py38/bin/python",
+		"python.pythonPath": ".tox/py38/bin/python3",
 		"python.formatting.blackPath": "~/.apps/pyenv/shims/black",
 		"python.linting.flake8Path": "~/.apps/pyenv/shims/flake8",
 		"python.linting.pylintEnabled": false,
 		"python.linting.flake8Enabled": true,
 		"python.linting.enabled": true,
 		"files.exclude": {
-			"**/.*": true,
-			"**/.*/**": true,
 			"**/__*__/**": true,
 			"**/_build/**": true,
-			"**/node_modules/*/**": true,
+			"**/.*": true,
+			"**/.*/**": true,
 			"**/*.egg-info/**": true,
-			"**/venv/**": true,
+			"**/node_modules/*/**": true,
+			"**/old/**": true,
+			"**/runs/**": true,
+			"**/venv/**": true
 		},
 		"files.watcherExclude": {
 			"**/.*": true,
@@ -29,29 +31,47 @@
 			"**/*.egg-info/**": true,
 			"**/venv/**": true,
 		},
+		"jupyter.jupyterLaunchRetries": 1,
+		"jupyter.jupyterServerType": "local",
+		"python.languageServer": "Jedi",
+		"python.formatting.provider": "black",
+		"python.linting.flake8Args": [
+			" \"--ignore=E203,E302\""
+		]
 	},
 	"launch": {
 		"version": "0.2.0",
 		"configurations": [
-			{
-				"name": "generate",
-				"type": "python",
-				"request": "launch",
-				"module": "fgsim",
-				"args": [
-					"generate"
-				]
-			},
 			{
 				"name": "train",
 				"type": "python",
 				"request": "launch",
 				"module": "fgsim",
 				"args": [
-					"--debug",
+					"--tag",
+					"forward",
 					"train",
 					"--dump_model",
 				]
+			},
+			{
+				"name": "loadfile",
+				"type": "python",
+				"request": "launch",
+				"module": "fgsim",
+				"args": [
+					"--tag",
+					"forward",
+					"--debug",
+					"importfile",
+					"${file}",
+				]
+			},
+			{
+				"name": "runfile",
+				"type": "python",
+				"request": "launch",
+				"program": "${file}",
 			},
 		]
 	},

@@ -1,6 +1,8 @@
 """Main module."""
 import sys
+
 import pretty_errors
+from omegaconf import OmegaConf
 
 from .utils.logger import logger
 
@@ -16,7 +18,7 @@ def main():
         # Never remove the upper packages
         "fgsim",
         # "fgsim.geo",
-        # "fgsim.train",
+        # "fgsim.model",
         # Always reload cli and config
         # "fgsim.cli",
         # "fgsim.config",
@@ -40,19 +42,31 @@ def main():
     logger.info("Unloading complete")
     from .config import conf
 
+    logger.info("Configuration:\n" + OmegaConf.to_yaml(conf))
+
     logger.info(f"Running command {conf['command']}")
+
     if conf["command"] == "train":
-        from .geo.loader import graph
-        from .train.holder import model_holder
-        from .train.train import training_procedure
+        from .model.holder import model_holder
+        from .model.training import training_procedure
 
         training_procedure(model_holder)
 
     if conf["command"] == "generate":
-        from .train.generate import generation_procedure
-        from .train.holder import model_holder
+        from .model.generate import generation_procedure
+        from .model.holder import model_holder
 
         generation_procedure(model_holder)
+
+    if conf["command"] == "trytest":
+        from .torchdata_loader import dataset
+
+        print(len(dataset))
+
+    if conf["command"] == "write_sparse_ds":
+        from .write_sparse_ds import write_sparse_ds
+
+        write_sparse_ds()
 
 
 if __name__ == "__main__":

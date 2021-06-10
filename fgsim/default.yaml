@@ -3,6 +3,7 @@ loglevel: 1
 luppath: 'wd/default/DetIdLUT.root'
 geoyamlpath: 'wd/default/geometry.yaml'
 graphpath: 'wd/default/graph.pth'
+seed: 0
 mapper:
   threshold: 1e-02
   nevents: 1000

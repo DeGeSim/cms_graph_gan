@@ -3,7 +3,7 @@ from ..data_dumper import dump_generated_events
 from ..geo.mapback import mapBack
 from ..utils.logger import logger
 from .holder import modelHolder
-from .train import create_noise
+from .model import create_noise
 
 
 def generation_procedure(c: modelHolder):

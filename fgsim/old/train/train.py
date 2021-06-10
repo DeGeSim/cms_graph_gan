@@ -7,8 +7,8 @@ from tqdm import tqdm
 
 from ..config import conf, device
 from ..plot import plotlosses
-from ..utils.memory import memGB, memReport
 from ..utils.logger import logger
+from ..utils.memory import memGB, memReport
 from .holder import modelHolder
 
 
@@ -30,7 +30,7 @@ def create_noise(sample_size, nz):
 
 
 # function to train the discriminator network
-def train_discriminator(discriminator, optimizer, criterion, data_real, data_fake):
+def train_discriminator(discriminator, optimizer, lossf, data_real, data_fake):
     b_size = data_real.size(0)
     real_label = label_real(b_size)
     fake_label = label_fake(b_size)
@@ -38,10 +38,10 @@ def train_discriminator(discriminator, optimizer, criterion, data_real, data_fak
     optimizer.zero_grad()
 
     output_real = discriminator(data_real)
-    loss_real = criterion(output_real, real_label)
+    loss_real = lossf(output_real, real_label)
 
     output_fake = discriminator(data_fake)
-    loss_fake = criterion(output_fake, fake_label)
+    loss_fake = lossf(output_fake, fake_label)
 
     loss_real.backward()
     loss_fake.backward()
@@ -51,14 +51,14 @@ def train_discriminator(discriminator, optimizer, criterion, data_real, data_fak
 
 
 # function to train the generator network
-def train_generator(generator, discriminator, optimizer, criterion, data_fake):
+def train_generator(generator, discriminator, optimizer, lossf, data_fake):
     b_size = data_fake.size(0)
     real_label = label_real(b_size)
 
     optimizer.zero_grad()
 
     output = discriminator(data_fake)
-    loss = criterion(output, real_label)
+    loss = lossf(output, real_label)
 
     loss.backward()
     optimizer.step()
@@ -101,7 +101,7 @@ def training_procedure(c: modelHolder):
                 loss_d += train_discriminator(
                     c.discriminator,
                     c.optim_d,
-                    c.criterion,
+                    c.lossf,
                     data_real,
                     data_fake,
                 ).item()
@@ -110,7 +110,7 @@ def training_procedure(c: modelHolder):
             data_fake = c.generator(create_noise(b_size, nz))
             # train the generator network
             loss_g += train_generator(
-                c.generator, c.discriminator, c.optim_g, c.criterion, data_fake
+                c.generator, c.discriminator, c.optim_g, c.lossf, data_fake
             ).item()
 
             if bi % 3 == 0:
@@ -143,4 +143,3 @@ def training_procedure(c: modelHolder):
             from sys import exit
 
             exit(-1)
-    plotlosses(c.metrics["losses_g"], c.metrics["losses_d"])
