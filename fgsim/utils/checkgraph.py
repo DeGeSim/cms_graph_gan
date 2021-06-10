@@ -3,12 +3,14 @@ import torch
 # Collection of functions to check if inner/forward/backward
 # edges have been batched correctly.
 
+
 def filter_edge_index_for_graph(batch, edge_index, igraph=0):
     return edge_index[
         :,
         (batch.ptr[igraph] <= edge_index[0, :])
         & (edge_index[0, :] < batch.ptr[igraph + 1]),
     ]
+
 
 def change_ptrs(x):
     res = [0]
@@ -23,15 +25,15 @@ def change_ptrs(x):
     return torch.tensor(res)
 
 
-# get the vector giving the start and stop position for 
-# each layer in the batch 
+# get the vector giving the start and stop position for
+# each layer in the batch
 #  nlayer+1 elements, starts at 0
 # aquivalent for layers what batch.ptr is for batches
 def get_layer_ptr(batch, igraph=0):
     # Slice the layer vector with for the current graph
     layer_of_graph = batch.layers[batch.ptr[igraph] : batch.ptr[igraph + 1]]
     res = change_ptrs(layer_of_graph)
-    return res+batch.ptr[igraph]
+    return res + batch.ptr[igraph]
 
 
 def checkgraph(batch, igraph=0):
