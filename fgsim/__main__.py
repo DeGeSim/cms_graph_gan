@@ -2,6 +2,7 @@
 import sys
 
 import pretty_errors
+from omegaconf import OmegaConf
 
 from .utils.logger import logger
 
@@ -40,6 +41,8 @@ def main():
         del sys.modules[modulename]
     logger.info("Unloading complete")
     from .config import conf
+
+    logger.info("Configuration:\n" + OmegaConf.to_yaml(conf))
 
     logger.info(f"Running command {conf['command']}")
 
