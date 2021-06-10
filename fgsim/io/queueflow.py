@@ -427,14 +427,14 @@ class Sequence:
         self._iterable_is_set = False
         self.seq = [Input_Step(), *seq, Output_Step()]
 
-        self.processes = [p for p in self.seq if isinstance(p, Step_Base)]
+        self.steps = [p for p in self.seq if isinstance(p, Step_Base)]
         # Chain the processes and queues
         i = 1
         while i < len(self.seq):
             if isinstance(self.seq[i], (Step_Base, Output_Step)):
                 # Connect output of the previous process step to
                 #  the input of the current process step
-                new_queue = multiprocessing.Queue()
+                new_queue = multiprocessing.Queue(1)
                 self.seq[i - 1].outq = new_queue
                 self.seq[i].inq = new_queue
             elif isinstance(self.seq[i], multiprocessing.queues.Queue):
@@ -479,7 +479,7 @@ class Sequence:
         ]
 
     def process_status(self):
-        return [p.process_status() for p in self.processes]
+        return [p.process_status() for p in self.steps]
 
     def flowstatus(self):
         qs = self.queue_status()
@@ -492,7 +492,7 @@ class Sequence:
                 table.add_row(["Queue", f"{qs[int(i/2)][0]}/{qs[int(i/2)][1]}", ""])
             else:
                 pscur = ps[i // 2]
-                pcur = self.processes[i // 2]
+                pcur = self.steps[i // 2]
                 table.add_row(
                     [
                         "Process",
