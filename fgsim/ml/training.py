@@ -1,9 +1,10 @@
+import sys
 import time
 from datetime import datetime
 
 import torch
-from torch.utils.tensorboard import SummaryWriter
 from omegaconf import OmegaConf
+from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
 
 from ..config import conf, device
@@ -12,7 +13,7 @@ from ..utils.logger import logger
 from .holder import modelHolder
 
 writer = SummaryWriter(
-    f"runs/{conf.log_name}/" + datetime.now().strftime("%Y-%m-%d-%H:%M/")
+    f"runs/{conf.tensorboard_name}/" + datetime.now().strftime("%Y-%m-%d-%H:%M/")
 )
 
 
@@ -45,7 +46,10 @@ def training_step(holder, batch):
 
 
 def validate(holder):
-    if holder.state["grad_step"] % 10 == 0:
+    if (
+        holder.state["grad_step"] != 0
+        and holder.state["grad_step"] % conf.training.validation_interval == 0
+    ):
         losses = []
         for batch in holder.validation_batches:
             batch = batch.to(device)
@@ -67,7 +71,10 @@ def validate(holder):
 
 
 def early_stopping(holder):
-    if holder.state["grad_step"] % 10 == 0:
+    if (
+        holder.state["grad_step"] != 0
+        and holder.state["grad_step"] % conf.training.validation_interval == 0
+    ):
         # the the most recent losses
         # dont stop for the first epochs
         if len(holder.state.val_losses) < conf.training.early_stopping:
@@ -79,12 +86,13 @@ def early_stopping(holder):
             holder.save_model()
             holder.save_best_model()
             logger.warn("Early Stopping criteria fullfilled")
-            exit(0)
+            holder.qfseq.stop()
+            sys.exit()
 
 
 def training_procedure(holder: modelHolder):
     logger.warn("Starting training with state\n" + OmegaConf.to_yaml(holder.state))
-    holder.validation_batches, train_loader = get_loader(holder.state.processed_events)
+    holder.validation_batches, holder.qfseq = get_loader(holder.state.processed_events)
     # Initialize the training
     holder.model = holder.model.float().to(device)
     holder.model.train()
@@ -95,7 +103,7 @@ def training_procedure(holder: modelHolder):
         holder.state.batch_start_time = time.time()
         holder.state.saving_start_time = time.time()
         for holder.state.ibatch, batch in enumerate(
-            tqdm(train_loader), start=holder.state.ibatch
+            tqdm(holder.qfseq), start=holder.state.ibatch
         ):
             holder.state.model_start_time = time.time()
 
