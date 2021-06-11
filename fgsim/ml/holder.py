@@ -1,3 +1,4 @@
+import importlib
 import os
 
 import torch
@@ -6,10 +7,12 @@ from omegaconf import OmegaConf
 from ..config import conf, device
 from ..utils.count_parameters import count_parameters
 from ..utils.logger import logger
-import importlib
 
 # Import the specified model
-ModelClass = importlib.import_module(f'..models.{conf.model.name}','fgsim.models').ModelClass
+ModelClass = importlib.import_module(
+    f"..models.{conf.model.name}", "fgsim.models"
+).ModelClass
+
 
 class modelHolder:
     def __init__(self) -> None:

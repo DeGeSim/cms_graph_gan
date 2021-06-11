@@ -172,29 +172,22 @@ def grid_to_graph(caloimg, outformat="python"):
             }
         )
     elif outformat == "geo":
-        feature_mtx_dyn = torch.tensor(
-            feature_mtx_dyn, dtype=torch.float32, device="cpu"
-        )
-        feature_mtx_static = torch.tensor(
-            feature_mtx_static, dtype=torch.float32, device="cpu"
-        )
-        edge_index = torch.tensor(edge_index, dtype=torch.int64, device="cpu")
+        feature_mtx_dyn = torch.tensor(feature_mtx_dyn, dtype=torch.float32)
+        feature_mtx_static = torch.tensor(feature_mtx_static, dtype=torch.float32)
+        edge_index = torch.tensor(edge_index, dtype=torch.int64)
         inner_edges_per_layer = [
-            torch.tensor(e, dtype=torch.int64, device="cpu").T
-            for e in inner_edges_per_layer
+            torch.tensor(e, dtype=torch.int64).T for e in inner_edges_per_layer
         ]
 
         forward_edges_per_layer = [
-            torch.tensor(e, dtype=torch.int64, device="cpu").T
-            for e in forward_edges_per_layer
+            torch.tensor(e, dtype=torch.int64).T for e in forward_edges_per_layer
         ]
 
         backward_edges_per_layer = [
-            torch.tensor(e, dtype=torch.int64, device="cpu").T
-            for e in backward_edges_per_layer
+            torch.tensor(e, dtype=torch.int64).T for e in backward_edges_per_layer
         ]
 
-        layers = torch.tensor(layers, dtype=torch.int64, device="cpu")
+        layers = torch.tensor(layers, dtype=torch.int64)
 
         graph = Data(x=feature_mtx_dyn, edge_index=edge_index.T)
         graph.feature_mtx_static = feature_mtx_static
@@ -202,7 +195,7 @@ def grid_to_graph(caloimg, outformat="python"):
         graph.inner_edges_per_layer = inner_edges_per_layer
         graph.forward_edges_per_layer = forward_edges_per_layer
         graph.backward_edges_per_layer = backward_edges_per_layer
-        return graph
+        return graph.cpu()
 
     return (
         feature_mtx_dyn,

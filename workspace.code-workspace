@@ -49,9 +49,9 @@
 				"module": "fgsim",
 				"args": [
 					"--tag",
-					"forward",
+					"`ls ~/fgsim/wd | fzf`",
+					"--debug",
 					"train",
-					"--dump_model",
 				]
 			},
 			{

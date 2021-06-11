@@ -12,7 +12,7 @@ from ..utils.logger import logger
 from .holder import modelHolder
 
 writer = SummaryWriter(
-    f"runs/{conf.log_name}/" + datetime.now().strftime("%Y-%m-%d/%H:%M/")
+    f"runs/{conf.log_name}/" + datetime.now().strftime("%Y-%m-%d-%H:%M/")
 )
 
 

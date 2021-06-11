@@ -12,7 +12,6 @@ def get_device():
 
     if torch.cuda.is_available():
         dev = torch.device("cuda")
-        torch.cuda.set_device(3)
     else:
         dev = torch.device("cpu")
     return dev
@@ -21,8 +20,10 @@ def get_device():
 device = get_device()
 
 fn = f"wd/{args.tag}/config.yaml"
-if not os.path.isfile(fn):
+if not args.tag:
     fn = "fgsim/default.yaml"
+if not os.path.isfile(fn):
+    raise FileNotFoundError
 
 with open(fn, "r") as fp:
     fileconf = OmegaConf.load(fp)

@@ -71,7 +71,6 @@ repack = qf.Repack_Step(conf.loader.batch_size)
 def geo_batch(list_of_graphs):
     batch = torch_geometric.data.Batch().from_data_list(list_of_graphs)
     batch = stack_batch_edge_indexes(batch)
-    batch = batch
     return batch
 
 
@@ -114,9 +113,8 @@ def printflowstatus():
 
 import threading
 
-status_printer_thread = threading.Thread(target=printflowstatus)
+status_printer_thread = threading.Thread(target=printflowstatus, daemon=True)
 status_printer_thread.start()
-
 
 # define the function that provides the validation set
 # and the iterable over the batches
