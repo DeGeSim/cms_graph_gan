@@ -124,6 +124,11 @@ class Step_Base:
             p.daemon = self.deamonize
             p.start()
 
+    def stop(self):
+        for p in step.processes:
+            p.join(10)
+            p.terminate()
+
     def process_status(self):
         return (sum([p.is_alive() for p in self.processes]), self.nworkers)
 
@@ -471,6 +476,17 @@ class Sequence:
             if not isinstance(e, multiprocessing.queues.Queue):
                 e.start()
         return self
+
+    def stop(self):
+        for q in self.queues:
+            while not q.empty():
+                try:
+                    q.get(False)
+                except Empty:
+                    continue
+            q.put(TerminateQueue())
+        for step in self.steps:
+            step.stop()
 
     def queue_status(self):
         return [
