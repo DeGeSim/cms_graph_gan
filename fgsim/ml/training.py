@@ -66,8 +66,7 @@ def validate(holder):
             holder.best_state_optim = holder.optim.state_dict()
 
     if holder.state["grad_step"] % 50 == 0:
-        holder.save_model()
-        holder.save_best_model()
+        holder.save_checkpoint()
 
 
 def early_stopping(holder):
@@ -83,7 +82,6 @@ def early_stopping(holder):
         relative_improvement = 1 - (min(recent_losses) / recent_losses[0])
 
         if relative_improvement < conf.training.early_stopping_improvement:
-            holder.save_model()
             holder.save_best_model()
             logger.warn("Early Stopping criteria fullfilled")
             holder.qfseq.stop()
@@ -124,5 +122,5 @@ def training_procedure(holder: modelHolder):
             holder.state.batch_start_time = time.time()
 
         holder.state.ibatch = 0
-        holder.save_model()
+        holder.save_checkpoint()
         holder.save_best_model()

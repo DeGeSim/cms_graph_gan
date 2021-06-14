@@ -78,7 +78,7 @@ class modelHolder:
             + f" grad_step {self.state['grad_step']}."
         )
 
-    def save_model(self):
+    def save_checkpoint(self):
         # move the old checkpoint
         if os.path.isfile(self.checkpoint_path):
             if os.path.isfile(self.checkpoint_old_path):

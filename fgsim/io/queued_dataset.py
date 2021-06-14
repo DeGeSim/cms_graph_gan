@@ -45,7 +45,7 @@ def read_chunk(inp):
 
 
 # two processes reading from the filesystem
-read_chunk_step = qf.Process_Step(read_chunk, 3, name="read_chunk")
+read_chunk_step = qf.Process_Step(read_chunk, 1, name="read_chunk")
 # run until 10 chunks are in the queue
 
 # Step 1.5
@@ -74,7 +74,7 @@ def geo_batch(list_of_graphs):
     return batch
 
 
-geo_batch_step = qf.Process_Step(geo_batch, 2, name="geo_batch")
+geo_batch_step = qf.Process_Step(geo_batch, 1, name="geo_batch")
 
 
 def to_gpu(batch):
