@@ -1,18 +1,16 @@
 # %%
 import ctypes
 import multiprocessing.sharedctypes
-
 # Make it work ()
-import resource
+# import resource
 import time
 from collections.abc import Iterable
-from ..utils.count_iterations import Count_Iterations
 
-import numpy as np
 import torch
 import torch.multiprocessing
 from prettytable import PrettyTable
 
+from ..utils.count_iterations import Count_Iterations
 from ..utils.logger import logger
 
 # Two recommendations by
@@ -23,7 +21,7 @@ from ..utils.logger import logger
 
 # 2.
 # Without the following option it crashes with
-#   File "/home/mscham/.apps/pyenv/versions/3.8.6/lib/python3.8/multiprocessing/reduction.py", line 164, in recvfds
+#   File ".../multiprocessing/reduction.py", line 164, in recvfds
 #     raise RuntimeError('received %d items of ancdata' %
 # RuntimeError: received 0 items of ancdata
 torch.multiprocessing.set_sharing_strategy("file_system")
@@ -127,7 +125,7 @@ class Step_Base:
             p.start()
 
     def stop(self):
-        for p in step.processes:
+        for p in self.processes:
             p.join(10)
             p.terminate()
 
@@ -494,7 +492,7 @@ class Sequence:
             while not q.empty():
                 try:
                     q.get(False)
-                except Empty:
+                except multiprocessing.queues.Empty:
                     continue
             q.put(TerminateQueue())
         for step in self.steps:

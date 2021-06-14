@@ -1,5 +1,7 @@
 import torch
 
+from ..config import conf
+
 # Collection of functions to check if inner/forward/backward
 # edges have been batched correctly.
 

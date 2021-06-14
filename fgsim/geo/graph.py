@@ -3,8 +3,6 @@ import numpy as np
 import torch
 from torch_geometric.data import Data
 
-from ..config import device
-
 # Node features:
 # 0.Energy
 # 1-4 hidden
