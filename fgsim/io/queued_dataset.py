@@ -61,7 +61,7 @@ zip_chunks_step = qf.Process_Step(zip_chunks, 1, name="zip")
 # Step 2
 # Spawn a Pool with 10 processes for the tranformation from numpy
 # Array to Graph
-transform_chunk_step = qf.Pool_Step(transform, nworkers=20, name="transform")
+transform_chunk_step = qf.Pool_Step(transform, nworkers=conf.loader.transform_workers, name="transform")
 
 
 # Step 2.5

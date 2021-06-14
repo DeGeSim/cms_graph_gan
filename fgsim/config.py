@@ -19,16 +19,20 @@ def get_device():
 
 device = get_device()
 
-fn = f"wd/{args.tag}/config.yaml"
-if not args.tag:
-    fn = "fgsim/default.yaml"
-if not os.path.isfile(fn):
-    raise FileNotFoundError
+with open("fgsim/default.yaml", "r") as fp:
+    defaultconf = OmegaConf.load(fp)
 
-with open(fn, "r") as fp:
-    fileconf = OmegaConf.load(fp)
 
-conf = OmegaConf.merge(vars(args), fileconf)
+if args.tag:
+    fn = f"wd/{args.tag}/config.yaml"
+    if not os.path.isfile(fn):
+        raise FileNotFoundError
+    with open(fn, "r") as fp:
+        tagconf = OmegaConf.load(fp)
+else:
+    tagconf = OmegaConf.create({})
+
+conf = OmegaConf.merge(defaultconf, tagconf, vars(args))
 
 torch.manual_seed(conf.seed)
 np.random.seed(conf.seed)
