@@ -30,7 +30,7 @@ def stack_batch_edge_indexes(batch):
             res.append(torch.hstack(sel_edge_index_in_layerL))
         else:
             res.append(torch.empty((2, 0), dtype=torch.int64))
-    batch.inner_edges_per_layer = res.cpu()
+    batch.inner_edges_per_layer = res
 
     res = []
     for layer_edge_index in zip(*batch.forward_edges_per_layer):
@@ -44,7 +44,7 @@ def stack_batch_edge_indexes(batch):
             res.append(torch.hstack(sel_edge_index_in_layerL))
         else:
             res.append(torch.empty((2, 0), dtype=torch.int64))
-    batch.forward_edges_per_layer = res.cpu()
+    batch.forward_edges_per_layer = res
 
     res = []
     for layer_edge_index in zip(*batch.backward_edges_per_layer):
@@ -58,7 +58,7 @@ def stack_batch_edge_indexes(batch):
             res.append(torch.hstack(sel_edge_index_in_layerL))
         else:
             res.append(torch.empty((2, 0), dtype=torch.int64))
-    batch.backward_edges_per_layer = res.cpu()
+    batch.backward_edges_per_layer = res
 
     # assert (
     #     sum(
@@ -74,7 +74,7 @@ def stack_batch_edge_indexes(batch):
     #     == len(batch.edge_index.T)
     # )
 
-    return batch
+    return batch.cpu()
 
 
 # %%
