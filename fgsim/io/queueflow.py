@@ -1,10 +1,12 @@
 # %%
 import ctypes
 import multiprocessing.sharedctypes
+
 # Make it work ()
 import resource
 import time
 from collections.abc import Iterable
+from ..utils.count_iterations import Count_Iterations
 
 import numpy as np
 import torch
@@ -264,17 +266,27 @@ class Pool_Step(Step_Base):
                 logger.debug(
                     f"{self.name} worker {name} got element {id(wkin)} of element type {type(wkin)}."
                 )
+                wkin_iter = Count_Iterations(wkin)
+
                 try:
-                    wkout = self.pool.map(self.workerfn, wkin)
+                    wkout = self.pool.map(self.workerfn, wkin_iter)
                 except:
                     logger.error(
                         f"{self.name} worker {name} failer on element of type of type {type(wkin)}.\n\n{wkin}"
                     )
                     exit(1)
+                finally:
+                    if wkin_iter.count > 100:
+                        logger.warn(
+                            f"Giving large iterables ({wkin_iter.count}) to a Pool worker can lead to crashes."
+                            + "Lower the number here if you see an error like "
+                            + "'RuntimeError: unable to mmap x bytes from file </torch_x>: Cannot allocate memory'"
+                        )
                 logger.debug(
                     f"{self.name} push pool output list {id(wkout)}  with element type {type(wkin)} into output queue {id(self.outq)}."
                 )
                 self.outq.put(wkout)
+                del wkin_iter
                 del wkin
 
 
