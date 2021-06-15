@@ -16,9 +16,27 @@ from ..utils.logger import logger
 # Two recommendations by
 # https://github.com/pytorch/pytorch/issues/973
 # 1. (not needed for the moment)
+# Traceback (most recent call last):
+#   File "$pythonlibpath/threading.py", line 932, in _bootstrap_inner
+#     self.run()
+#   File "$pythonlibpath/threading.py", line 870, in run
+#     self._target(*self._args, **self._kwargs)
+#   File "$pythonlibpath/multiprocessing/pool.py", line 576, in _handle_results
+#     task = get()
+#   File "$pythonlibpath/multiprocessing/connection.py", line 251, in recv
+#     return _ForkingPickler.loads(buf.getbuffer())
+#   File "$pythonlibpath/site-packages/torch/multiprocessing/reductions.py", line 282, in rebuild_storage_fd
+#     fd = df.detach()
+#   File "$pythonlibpath/multiprocessing/resource_sharer.py", line 58, in detach
+#     return reduction.recv_handle(conn)
+#   File "$pythonlibpath/multiprocessing/reduction.py", line 189, in recv_handle
+#     return recvfds(s, 1)[0]
+#   File "$pythonlibpath/multiprocessing/reduction.py", line 164, in recvfds
+#     raise RuntimeError('received %d items of ancdata' %
+# RuntimeError: received 0 items of ancdata
 # rlimit = resource.getrlimit(resource.RLIMIT_NOFILE)
 # resource.setrlimit(resource.RLIMIT_NOFILE, (2048, rlimit[1]))
-
+# resource.setrlimit(resource.RLIMIT_NOFILE, (2000 , rlimit[1]))
 # 2.
 # Without the following option it crashes with
 #   File ".../multiprocessing/reduction.py", line 164, in recvfds
@@ -35,17 +53,6 @@ torch.multiprocessing.set_sharing_strategy("file_system")
 
 class TerminateQueue:
     pass
-
-
-terminate_queue = TerminateQueue()
-
-print_lock = multiprocessing.Lock()
-
-
-def print_with_lock(*args, **kwargs):
-    print_lock.acquire()
-    print(*args, **kwargs)
-    print_lock.release()
 
 
 class Input_Step:
@@ -177,7 +184,7 @@ class Process_Step(Step_Base):
                     self.running_processes_counter.value -= 1
 
                 # Put the terminal element back in the input queue
-                self.inq.put(terminate_queue)
+                self.inq.put(TerminateQueue())
 
                 # Make the first worker to reach the terminal element
                 # aquires the lock and waits for the other processes
@@ -202,6 +209,7 @@ class Process_Step(Step_Base):
                     logger.error(
                         f"{self.name} worker {name} failer on element of type of type {type(wkin)}.\n\n{wkin}"
                     )
+                    raise Exception
                     exit(1)
 
                 logger.debug(
@@ -251,7 +259,7 @@ class Pool_Step(Step_Base):
             wkin = self.inq.get()
             if isinstance(wkin, torch.Tensor):
                 wkin = wkin.clone()
-            # If the process gets the terminate_queue object,
+            # If the process gets a TerminateQueue object,
             # it terminates the pool and and puts the terminal element in
             # in the outgoing queue.
             if isinstance(wkin, TerminateQueue):
@@ -426,8 +434,10 @@ class Repack_Step(Step_Base):
                 )
                 for e in wkin:
                     if isinstance(e, torch.Tensor):
-                        e = e.clone()
-                    collected_elements.append(e)
+                        e_cloned = e.clone()
+                        collected_elements.append(e_cloned)
+                    else:
+                        collected_elements.append(e)
                     if len(collected_elements) == self.nelements:
                         logger.debug(
                             f"{self.name} push list of type {type(collected_elements[-1])} with {self.nelements} elements into output queue {id(self.outq)}."
@@ -507,23 +517,32 @@ class Sequence:
     def process_status(self):
         return [p.process_status() for p in self.steps]
 
+    def process_names(self):
+        return [
+            ",".join([p.name.split("-")[1] for p in step.processes])
+            for step in self.steps
+        ]
+
     def flowstatus(self):
         qs = self.queue_status()
         ps = self.process_status()
+        pn = self.process_names()
         table = PrettyTable()
         table.title = "Current Status of Processes and Queues"
-        table.field_names = ["Type", "Saturation", "Name"]
+        table.field_names = ["Type", "Saturation", "Name", "Process names"]
         for i in range(len(qs) + len(ps)):
             if i % 2 == 0:
-                table.add_row(["Queue", f"{qs[int(i/2)][0]}/{qs[int(i/2)][1]}", ""])
+                table.add_row(["Queue", f"{qs[int(i/2)][0]}/{qs[int(i/2)][1]}", "", ""])
             else:
                 pscur = ps[i // 2]
+                pncur = pn[i // 2]
                 pcur = self.steps[i // 2]
                 table.add_row(
                     [
                         "Process",
                         f"{pscur[0]}/{pscur[1]}",
                         pcur.name if pcur.name is not None else type(pcur),
+                        pncur,
                     ]
                 )
         return table
