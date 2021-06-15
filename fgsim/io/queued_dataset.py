@@ -1,4 +1,3 @@
-import multiprocessing
 import threading
 import time
 from pathlib import Path
@@ -6,9 +5,10 @@ from pathlib import Path
 import h5py as h5
 import numpy as np
 import torch_geometric
+from torch.multiprocessing import Queue
 
 from ..config import conf, device
-from ..geo.batch_stack import stack_batch_edge_indexes
+from ..geo.batch_stack import split_layer_subgraphs
 from ..geo.transform import transform
 from ..utils.logger import logger
 from ..utils.thread_or_process import pname
@@ -73,11 +73,15 @@ repack = qf.Repack_Step(conf.loader.batch_size)
 # Step 3
 def geo_batch(list_of_graphs):
     batch = torch_geometric.data.Batch().from_data_list(list_of_graphs)
-    batch = stack_batch_edge_indexes(batch)
     return batch
 
 
 geo_batch_step = qf.Process_Step(geo_batch, 1, name="geo_batch")
+
+
+split_layer_subgraphs_step = qf.Process_Step(
+    split_layer_subgraphs, 1, name="split_layer_subgraphs"
+)
 
 
 def to_gpu(batch):
@@ -89,17 +93,19 @@ to_gpu_step = qf.Process_Step(to_gpu, 1, name="to_gpu")
 # Collect the steps
 process_seq = qf.Sequence(
     read_chunk_step,
-    multiprocessing.Queue(5),
+    Queue(5),
     zip_chunks_step,
-    multiprocessing.Queue(1),
+    Queue(1),
     transform_chunk_step,
-    multiprocessing.Queue(2),
+    Queue(2),
     repack,
-    multiprocessing.Queue(1),
+    Queue(1),
     geo_batch_step,
-    multiprocessing.Queue(conf.loader.prefetch_batches),
+    Queue(1),
+    split_layer_subgraphs_step,
+    Queue(conf.loader.prefetch_batches),
     to_gpu_step,
-    multiprocessing.Queue(1),
+    Queue(1),
 )
 
 # Print the status of the queue once in while

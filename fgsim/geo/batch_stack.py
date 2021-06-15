@@ -1,80 +1,76 @@
 import torch
-import torch_geometric
+
+from ..config import conf
+from ..utils.checkgraph import checkgraph
+from ..utils.logger import logger
 
 
-def stack_batch_edge_indexes(batch):
-    res = []
-    # We want to have a adjectentcy matrix in the from of
-    # batch.forward_edges_per_layer[ilayer] available in
-    # the same stacked format as the full adjectency matrix.
+def split_layer_subgraphs(batch):
+    # provide masks for the layers
+    batch.layermask = torch.vstack(
+        [batch.layers == ilayer for ilayer in range(conf.nlayers)]
+    )
 
-    # batch.forward_edges_per_layer is at this point
-    # batch_size x nlayer as list of a list.
-    # We need to join them for each of the sample,
-    # so we need to repack them to nlayer x batch_size.
-    layer_adj_list = list(zip(*batch.inner_edges_per_layer))
+    batch.inner_edges_per_layer = []
+    batch.forward_edges_per_layer = []
+    batch.backward_edges_per_layer = []
 
-    # For a batch:
-    # Join the edge indexes of the partial adjectency matrices
-    # in the same way as for the proper adj matrix
-    # -> add the start number of the batch to the indices
-    # and stack them
-    for layer_edge_index in layer_adj_list:
-        sel_edge_index_in_layerL = [
-            e + start  # shift the index of the nodes up
-            # by the number of nodes of the already added graphs
-            for e, start in zip(layer_edge_index, batch.ptr[:-1])
-            if e.shape != torch.Size([0])  # remove empty layers
-        ]
-        if sel_edge_index_in_layerL != []:
-            res.append(torch.hstack(sel_edge_index_in_layerL))
+    batch.mask_node_inner_per_layer = []
+    batch.mask_node_forward_per_layer = []
+    batch.mask_node_backward_per_layer = []
+    for ilayer in range(conf.nlayers):
+        # Create the mask for the nodes in the current/next/previous layer
+        mask_cur_layer = batch.layermask[ilayer]
+        if ilayer == 0:
+            mask_previous_layer = torch.zeros(mask_cur_layer.shape, dtype=torch.bool)
         else:
-            res.append(torch.empty((2, 0), dtype=torch.int64))
-    batch.inner_edges_per_layer = res
-
-    res = []
-    for layer_edge_index in zip(*batch.forward_edges_per_layer):
-        sel_edge_index_in_layerL = [
-            e + start  # shift the index of the nodes up
-            # by the number of nodes of the already added graphs
-            for e, start in zip(layer_edge_index, batch.ptr[:-1])
-            if e.shape != torch.Size([0])  # remove empty layers
-        ]
-        if sel_edge_index_in_layerL != []:
-            res.append(torch.hstack(sel_edge_index_in_layerL))
+            mask_previous_layer = batch.layermask[ilayer - 1]
+        if ilayer == conf.nlayers - 1:
+            mask_next_layer = torch.zeros(mask_cur_layer.shape, dtype=torch.bool)
         else:
-            res.append(torch.empty((2, 0), dtype=torch.int64))
-    batch.forward_edges_per_layer = res
+            mask_next_layer = batch.layermask[ilayer + 1]
 
-    res = []
-    for layer_edge_index in zip(*batch.backward_edges_per_layer):
-        sel_edge_index_in_layerL = [
-            e + start  # shift the index of the nodes up
-            # by the number of nodes of the already added graphs
-            for e, start in zip(layer_edge_index, batch.ptr[:-1])
-            if e.shape != torch.Size([0])  # remove empty layers
-        ]
-        if sel_edge_index_in_layerL != []:
-            res.append(torch.hstack(sel_edge_index_in_layerL))
-        else:
-            res.append(torch.empty((2, 0), dtype=torch.int64))
-    batch.backward_edges_per_layer = res
+        mask_node_inner, edge_index_inner = edge_index_on_subgraph(
+            batch.edge_index, mask_cur_layer, mask_cur_layer
+        )
+        mask_node_forward, edge_index_forward = edge_index_on_subgraph(
+            batch.edge_index, mask_cur_layer, mask_next_layer
+        )
+        mask_node_backward, edge_index_backwards = edge_index_on_subgraph(
+            batch.edge_index,
+            mask_cur_layer,
+            mask_previous_layer,
+        )
 
-    # assert (
-    #     sum(
-    #         [
-    #             sum([len(e_idx.T) for e_idx in llidx])
-    #             for llidx in (
-    #                 batch.forward_edges_per_layer,
-    #                 batch.backward_edges_per_layer,
-    #                 batch.inner_edges_per_layer,
-    #             )
-    #         ]
-    #     )
-    #     == len(batch.edge_index.T)
-    # )
+        batch.inner_edges_per_layer.append(edge_index_inner)
+        batch.forward_edges_per_layer.append(edge_index_forward)
+        batch.backward_edges_per_layer.append(edge_index_backwards)
 
-    return batch.cpu()
+        batch.mask_node_inner_per_layer.append(mask_node_inner)
+        batch.mask_node_forward_per_layer.append(mask_node_forward)
+        batch.mask_node_backward_per_layer.append(mask_node_backward)
+
+    checkgraph(batch)
+
+    return batch
+
+
+def edge_index_on_subgraph(edge_index, node_mask_from, node_mask_to):
+    # filter the nodes
+    node_mask = node_mask_from | node_mask_to
+
+    # generate a mask for the edge index
+    mask_edge_index = node_mask_from[edge_index[0]] & node_mask_to[edge_index[1]]
+
+    # filter the edge index
+    filtered_edge_index = edge_index[:, mask_edge_index]
+
+    # provide a mapping that allows mapping the edge indices from the full batch
+    # to the batch reduced to the layer-subgraphs
+    # node_index_to_subgraph_index_map = torch.cumsum(node_mask)
+    # edge_index = node_index_to_subgraph_index_map[edge_index]
+
+    return (node_mask, filtered_edge_index)
 
 
 # %%
