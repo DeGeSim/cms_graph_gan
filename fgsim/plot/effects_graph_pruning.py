@@ -3,6 +3,7 @@ import h5py
 import matplotlib.pyplot as plt
 import networkx as nx
 import numpy as np
+from matplotlib.pyplot import figure
 
 # %%
 with h5py.File("wd/forward/Ele_FixedAngle/EleEscan_1_1.h5") as f:
@@ -14,14 +15,13 @@ energyL = []
 energy_fractionL = []
 largest_graph_energy_fraction = []
 nnodes = []
-#%%
-from matplotlib.pyplot import figure
+# %%
 
 figure(figsize=(5, 5), dpi=300)
 a = np.swapaxes(excalimg[0], 0, 2)
 plt.imshow(a[15] != 0)
 plt.savefig("/home/mscham/occupation_pruning.pdf")
-#%%
+# %%
 for i in range(100):
     a = np.swapaxes(excalimg[i], 0, 2)
 
@@ -66,7 +66,8 @@ plt.yscale("log")
 plt.hist(componentsL)
 plt.title("Histogram of the Size of the subgraphs")
 plt.suptitle(
-    f"Average size fraction for the largest subgraph: {np.round(np.mean(size_fractionL)*100)}%\n"
+    "Average size fraction for the largest subgraph:"
+    + f" {np.round(np.mean(size_fractionL)*100)}%\n"
 )
 plt.yscale("log")
 # %%
@@ -80,7 +81,8 @@ ax1.set_yscale("log")
 plt.text(
     1,
     1,
-    f"Average energy fraction\n for the largest subgraph {np.round(np.mean(energy_fractionL)*100)}%",
+    "Average energy fraction\n for the "
+    + f"largest subgraph {np.round(np.mean(energy_fractionL)*100)}%",
     horizontalalignment="right",
     verticalalignment="top",
     transform=ax1.transAxes,
@@ -92,7 +94,8 @@ ax2.set_title("Histogram of the Size of the subgraphs")
 plt.text(
     1,
     1,
-    f"Average size fraction\n for the largest subgraph: {np.round(np.mean(size_fractionL)*100)}%",
+    "Average size fraction\n for the "
+    + f"largest subgraph: {np.round(np.mean(size_fractionL)*100)}%",
     horizontalalignment="right",
     verticalalignment="top",
     transform=ax2.transAxes,
@@ -102,7 +105,7 @@ ax2.set_yscale("log")
 plt.savefig("/home/mscham/res_graph_pruning.pdf")
 # plt.tight_layout()
 
-#%%
+# %%
 
 
 def get_layer_subgraph(G, layer):
@@ -112,7 +115,6 @@ def get_layer_subgraph(G, layer):
 
 
 # %%
-import matplotlib.pyplot as plt
 
 plt.figure(figsize=(9, 9))
 # coordinate rotation

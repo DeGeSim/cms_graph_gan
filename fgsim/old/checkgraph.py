@@ -38,6 +38,7 @@ def get_layer_ptr(batch, igraph=0):
     return res + batch.ptr[igraph]
 
 
+# no longer usable if the edge_indexes are shifted
 def checkgraph(batch, igraph=0):
     layerpos = get_layer_ptr(batch, igraph)
     # inner

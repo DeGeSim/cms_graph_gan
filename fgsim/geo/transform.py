@@ -1,9 +1,4 @@
-import multiprocessing
-
-import torch
-
 from ..geo.graph import grid_to_graph
-from ..utils.logger import logger
 
 
 def transform(sample):

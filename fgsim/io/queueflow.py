@@ -1,5 +1,4 @@
-# %%
-import ctypes
+# import ctypes
 import multiprocessing.sharedctypes
 # Make it work ()
 # import resource
@@ -16,26 +15,6 @@ from ..utils.logger import logger
 # Two recommendations by
 # https://github.com/pytorch/pytorch/issues/973
 # 1. (not needed for the moment)
-# Traceback (most recent call last):
-#   File "$pythonlibpath/threading.py", line 932, in _bootstrap_inner
-#     self.run()
-#   File "$pythonlibpath/threading.py", line 870, in run
-#     self._target(*self._args, **self._kwargs)
-#   File "$pythonlibpath/multiprocessing/pool.py", line 576, in _handle_results
-#     task = get()
-#   File "$pythonlibpath/multiprocessing/connection.py", line 251, in recv
-#     return _ForkingPickler.loads(buf.getbuffer())
-#   File "$pythonlibpath/site-packages/torch/multiprocessing/reductions.py", line 282, in rebuild_storage_fd
-#     fd = df.detach()
-#   File "$pythonlibpath/multiprocessing/resource_sharer.py", line 58, in detach
-#     return reduction.recv_handle(conn)
-#   File "$pythonlibpath/multiprocessing/reduction.py", line 189, in recv_handle
-#     return recvfds(s, 1)[0]
-#   File "$pythonlibpath/multiprocessing/reduction.py", line 164, in recvfds
-#     raise RuntimeError('received %d items of ancdata' %
-# RuntimeError: received 0 items of ancdata
-# rlimit = resource.getrlimit(resource.RLIMIT_NOFILE)
-# resource.setrlimit(resource.RLIMIT_NOFILE, (2048, rlimit[1]))
 # resource.setrlimit(resource.RLIMIT_NOFILE, (2000 , rlimit[1]))
 # 2.
 # Without the following option it crashes with
@@ -145,7 +124,8 @@ class Step_Base:
 
 class Process_Step(Step_Base):
     """Class for simple processing steps.
-    Each incoming object is processed by a single worker into a single outgoing element."""
+    Each incoming object is processed by a
+    single worker into a single outgoing element."""
 
     def __init__(
         self,
@@ -205,15 +185,16 @@ class Process_Step(Step_Base):
             else:
                 try:
                     wkout = self.workerfn(wkin)
-                except:
+                except Exception:
                     logger.error(
-                        f"{self.name} worker {name} failer on element of type of type {type(wkin)}.\n\n{wkin}"
+                        f"{self.name} worker {name} failed "
+                        + f"on element of type of type {type(wkin)}.\n\n{wkin}"
                     )
                     raise Exception
-                    exit(1)
 
                 logger.debug(
-                    f"{self.name} worker {name} push single output of type {type(wkout)} into output queue {id(self.outq)}."
+                    f"{self.name} worker {name} push single "
+                    + f"output of type {type(wkout)} into output queue {id(self.outq)}."
                 )
                 self.outq.put(wkout)
                 del wkin
@@ -270,26 +251,31 @@ class Pool_Step(Step_Base):
             else:
                 assert isinstance(wkin, Iterable)
                 logger.debug(
-                    f"{self.name} worker {name} got element {id(wkin)} of element type {type(wkin)}."
+                    f"{self.name} worker {name} got element"
+                    + f" {id(wkin)} of element type {type(wkin)}."
                 )
                 wkin_iter = Count_Iterations(wkin)
 
                 try:
                     wkout = self.pool.map(self.workerfn, wkin_iter)
-                except:
+                except Exception:
                     logger.error(
-                        f"{self.name} worker {name} failer on element of type of type {type(wkin)}.\n\n{wkin}"
+                        f"{self.name} worker {name} failer on element"
+                        + f" of type of type {type(wkin)}.\n\n{wkin}"
                     )
                     exit(1)
                 finally:
-                    if wkin_iter.count > 100:
+                    if wkin_iter.count > 200:
                         logger.warn(
-                            f"Giving large iterables ({wkin_iter.count}) to a Pool worker can lead to crashes."
-                            + "Lower the number here if you see an error like "
-                            + "'RuntimeError: unable to mmap x bytes from file </torch_x>: Cannot allocate memory'"
+                            f"""Giving large iterables ({wkin_iter.count})
+to a worker can lead to crashes.
+Lower the number here if you see an error like
+'RuntimeError: unable to mmap x bytes from file </torch_x>:
+Cannot allocate memory'"""
                         )
                 logger.debug(
-                    f"{self.name} push pool output list {id(wkout)}  with element type {type(wkin)} into output queue {id(self.outq)}."
+                    f"{self.name} push pool output list {id(wkout)}"
+                    + f"  with element type {type(wkin)} into output queue {id(self.outq)}."
                 )
                 self.outq.put(wkout)
                 del wkin_iter
@@ -319,7 +305,8 @@ class Unpack_Step(Step_Base):
             wkin = self.inq.get()
             if isinstance(wkin, TerminateQueue):
                 logger.debug(
-                    f"{self.name} push terminal element of type {type(wkin)} into output queue {id(self.outq)}."
+                    f"{self.name} push terminal element of type "
+                    + f"{type(wkin)} into output queue {id(self.outq)}."
                 )
                 self.outq.put(TerminateQueue())
                 logger.debug(f"{self.name} Worker {name} terminating")
@@ -327,11 +314,13 @@ class Unpack_Step(Step_Base):
             else:
                 assert isinstance(wkin, Iterable)
                 logger.debug(
-                    f"{self.name} worker {name} got element {id(wkin)} of element type {type(wkin)}."
+                    f"{self.name} worker {name} got element "
+                    + f"{id(wkin)} of element type {type(wkin)}."
                 )
                 for e in wkin:
                     logger.debug(
-                        f"{self.name} push element of type {type(wkin)} into output queue {id(self.outq)}."
+                        f"{self.name} push element of type "
+                        + f"{type(wkin)} into output queue {id(self.outq)}."
                     )
                     if isinstance(e, torch.Tensor):
                         e = e.clone()
@@ -360,18 +349,21 @@ class Pack_Step(Step_Base):
         collected_elements = []
         while True:
             logger.debug(
-                f"{self.name} worker {name} reading from input queue {id(self.inq)}."
+                f"{self.name} worker {name} reading "
+                + f"from input queue {id(self.inq)}."
             )
             wkin = self.inq.get()
             logger.debug(
-                f"{self.name} worker {name} got element {id(wkin)} of element type {type(wkin)}."
+                f"{self.name} worker {name} got element "
+                + f"{id(wkin)} of element type {type(wkin)}."
             )
             if isinstance(wkin, torch.Tensor):
                 wkin = wkin.clone()
             if isinstance(wkin, TerminateQueue):
                 if len(collected_elements) > 0:
                     logger.debug(
-                        f"{self.name} terminal element of type {type(wkin)} into output queue {id(self.outq)}."
+                        f"{self.name} terminal element of type"
+                        + f" {type(wkin)} into output queue {id(self.outq)}."
                     )
                     self.outq.put(collected_elements)
                 logger.info(f"{self.name} Worker {name} terminating")
@@ -383,7 +375,8 @@ class Pack_Step(Step_Base):
 
                 if len(collected_elements) == self.nelements:
                     logger.debug(
-                        f"{self.name} push list of type {type(collected_elements[-1])} into output queue {id(self.outq)}."
+                        f"{self.name} push list of type {type(collected_elements[-1])}"
+                        + f" into output queue {id(self.outq)}."
                     )
                     self.outq.put(collected_elements)
                     collected_elements = []
@@ -415,12 +408,14 @@ class Repack_Step(Step_Base):
             )
             wkin = self.inq.get()
             logger.debug(
-                f"{self.name} worker {name} got element {id(wkin)} of element type {type(wkin)}."
+                f"{self.name} worker {name} got element {id(wkin)} "
+                + f"of element type {type(wkin)}."
             )
             if isinstance(wkin, TerminateQueue):
                 if len(collected_elements) > 0:
                     logger.info(
-                        f"{self.name} terminal element of type {type(wkin)} into output queue {id(self.outq)}."
+                        f"{self.name} terminal element of type {type(wkin)} "
+                        + f"into output queue {id(self.outq)}."
                     )
                     self.outq.put(collected_elements)
                 logger.info(f"{self.name} Worker {name} terminating")
@@ -440,7 +435,9 @@ class Repack_Step(Step_Base):
                         collected_elements.append(e)
                     if len(collected_elements) == self.nelements:
                         logger.debug(
-                            f"{self.name} push list of type {type(collected_elements[-1])} with {self.nelements} elements into output queue {id(self.outq)}."
+                            f"{self.name} push list of type \
+{type(collected_elements[-1])} with {self.nelements} \
+elements into output queue {id(self.outq)}."
                         )
                         self.outq.put(collected_elements)
                         collected_elements = []
@@ -550,7 +547,8 @@ class Sequence:
 
 # Usage example
 # This only run as a standalone file because the function given to pool must be pickleable,
-# and if this is called from another file, the defined function has no connection to the top level module and therefore cannot be pickled.s
+# and if this is called from another file, the defined function has no connection
+#  to the top level module and therefore cannot be pickled.s
 # https://stackoverflow.com/questions/8804830/python-multiprocessing-picklingerror-cant-pickle-type-function
 
 # def sleep_times_two(inp):

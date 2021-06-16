@@ -1,13 +1,12 @@
-#%%
+# %%
 # %%
 # %cd ~/fgsim
 import numpy as np
 import pandas as pd
-import seaborn as sns
 from matplotlib import pyplot as plt
 from matplotlib.colors import ColorConverter
 from matplotlib.pyplot import figure
-from scipy.interpolate import BSpline, make_interp_spline
+from scipy.interpolate import make_interp_spline
 from tensorboard.backend.event_processing.event_accumulator import \
     EventAccumulator
 
