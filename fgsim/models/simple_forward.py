@@ -1,6 +1,5 @@
 import torch
 import torch.nn.functional as F
-import torch_geometric
 from torch.nn import Linear
 from torch_geometric.nn import GCNConv, global_add_pool
 
@@ -24,45 +23,54 @@ class ModelClass(torch.nn.Module):
 
         # forward_edges_per_layer[i] map i->i+1 last layer empty
         # backward_edges_per_layer[i] map i->i-1 first first empty
-        def addstatic(x):
-            return torch.hstack((x, batch.feature_mtx_static))
+        def addstatic(x, mask=torch.ones(len(batch.x))):
+            return torch.hstack((x[mask], batch.feature_mtx_static[mask]))
 
         for _ in range(conf.model.nprop):
 
             for ilayer in range(conf.nlayers):
                 # forwards
                 # the last time is just inlayer MPL
-                layermask = batch.layers == ilayer
+                inner_inp_mask = batch.mask_inp_innerL[ilayer]
+                inner_outp_mask = batch.mask_outp_innerL[ilayer]
 
                 partial_inner = self.inlayer_conv(
-                    addstatic(x), batch.inner_edges_per_layer[ilayer]
+                    addstatic(x, inner_inp_mask), batch.inner_edges_per_layer[ilayer]
                 )
-                x[layermask] = partial_inner[layermask]
+                x[batch.layers == ilayer] = partial_inner[inner_outp_mask]
 
-                next_layer_mask = batch.layers == (ilayer + 1)
+                if ilayer == conf.nlayers - 1:
+                    continue
+                forward_inp_mask = batch.mask_inp_forwardL[ilayer]
+                forward_outp_mask = batch.mask_outp_forwardL[ilayer]
                 partial_forward = self.forward_conv(
-                    addstatic(x), batch.forward_edges_per_layer[ilayer]
+                    addstatic(x, forward_inp_mask),
+                    batch.forward_edges_per_layer[ilayer],
                 )
-                x[next_layer_mask] = partial_forward[next_layer_mask]
+                x[batch.layers == ilayer + 1] = partial_forward[forward_outp_mask]
 
             x = F.relu(x)
 
-            # backwards
-            for ilayer in range(conf.nlayers - 1, -1, -1):
-                # backwards
+            # backward
+            # ilayer goes from nlayers - 1 to nlayers - 2 to ... 1
+            for ilayer in range(conf.nlayers - 1, 0, -1):
+                # backward
                 # the last time is just inlayer MPL
-                previous_layer_mask = batch.layers == (ilayer - 1)
-                partial_forward = self.forward_conv(
-                    addstatic(x), batch.backward_edges_per_layer[ilayer]
+                backward_inp_mask = batch.mask_inp_backwardL[ilayer]
+                backward_outp_mask = batch.mask_outp_backwardL[ilayer]
+                partial_backward = self.backward_conv(
+                    addstatic(x, backward_inp_mask),
+                    batch.backward_edges_per_layer[ilayer],
                 )
-                x[previous_layer_mask] = partial_inner[previous_layer_mask]
+                x[batch.layers == ilayer - 1] = partial_backward[backward_outp_mask]
 
-                # in layer
-                layermask = batch.layers == ilayer
-                partial_backward = self.inlayer_conv(
-                    addstatic(x), batch.inner_edges_per_layer[ilayer]
+                inner_inp_mask = batch.mask_inp_innerL[ilayer - 1]
+                inner_outp_mask = batch.mask_outp_innerL[ilayer - 1]
+                partial_inner = self.inlayer_conv(
+                    addstatic(x, inner_inp_mask),
+                    batch.inner_edges_per_layer[ilayer - 1],
                 )
-                x[layermask] = partial_backward[layermask]
+                x[batch.layers == ilayer - 1] = partial_inner[inner_outp_mask]
 
             x = F.relu(x)
 

@@ -32,8 +32,9 @@ class modelHolder:
         # optimizers
         # self.optim_g = optim.Adam(self.generator.parameters(), lr=conf.model.gan.lr)
         # self.optim_d = optim.Adam(self.discriminator.parameters(), lr=conf.model.gan.lr)
+
         self.optim = torch.optim.Adam(
-            self.model.parameters(), lr=0.01, weight_decay=5e-4
+            self.model.parameters(), lr=conf.model.lr, weight_decay=1e-5
         )
         # loss function
         # self.lossf = torch.nn.BCELoss().to(device)
