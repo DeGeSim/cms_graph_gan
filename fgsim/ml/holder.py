@@ -42,14 +42,18 @@ class modelHolder:
         self.load_checkpoint()
 
         # state when training is started new
-        for k, v in {
-            "epoch": 0,
-            "processed_events": 0,
-            "ibatch": 0,
-            "grad_step": 0,
-            "val_losses": [],
-        }.items():
-            self.state[k] = self.state[k] or v
+        self.state = OmegaConf.merge(
+            OmegaConf.create(
+                {
+                    "epoch": 0,
+                    "processed_events": 0,
+                    "ibatch": 0,
+                    "grad_step": 0,
+                    "val_losses": [],
+                }
+            ),
+            self.state,
+        )
 
     def load_checkpoint(self):
         if (
