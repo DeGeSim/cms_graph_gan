@@ -1,6 +1,6 @@
 import torch
 import torch.nn.functional as F
-import torch_geometric
+# import torch_geometric
 from torch.nn import Linear
 from torch_geometric.nn import GCNConv, global_add_pool
 
@@ -17,7 +17,7 @@ class ModelClass(torch.nn.Module):
         self.conv1 = GCNConv(nfeatures, conf.model.dyn_features)
         self.conv2 = GCNConv(nfeatures, conf.model.dyn_features)
         self.conv3 = GCNConv(nfeatures, conf.model.dyn_features)
-        self.lin = Linear(nfeatures, 1)
+        self.lin = Linear(conf.model.dyn_features, 1)
 
     def forward(self, batch):
         def addstatic(x):
