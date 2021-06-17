@@ -5,12 +5,13 @@
 		}
 	],
 	"settings": {
+		"python.envFile": "${workspaceFolder}/.env",
 		"python.pythonPath": ".tox/py38/bin/python3",
 		"python.formatting.blackPath": "~/.apps/pyenv/shims/black",
 		"python.linting.flake8Path": "~/.apps/pyenv/shims/flake8",
-		"python.linting.pylintEnabled": false,
-		"python.linting.flake8Enabled": true,
-		"python.linting.enabled": true,
+		"python.linting.pylintArgs": [
+			"--generated-members=numpy.* ,torch.*"
+		],
 		"files.exclude": {
 			"**/__*__/**": true,
 			"**/_build/**": true,
@@ -50,8 +51,21 @@
 				"args": [
 					"--tag",
 					"`ls ~/fgsim/wd | fzf`",
-					"--debug",
+					// "simple_forward",
+					// "--debug",
 					"train",
+					"--dump_model",
+				]
+			},
+			{
+				"name": "predict",
+				"type": "python",
+				"request": "launch",
+				"module": "fgsim",
+				"args": [
+					"--tag",
+					"`ls ~/fgsim/wd | fzf`",
+					"predict",
 				]
 			},
 			{
@@ -61,17 +75,10 @@
 				"module": "fgsim",
 				"args": [
 					"--tag",
-					"forward",
-					"--debug",
-					"importfile",
+					"`ls ~/fgsim/wd | fzf`",
+					"loadfile",
 					"${file}",
 				]
-			},
-			{
-				"name": "runfile",
-				"type": "python",
-				"request": "launch",
-				"program": "${file}",
 			},
 		]
 	},

@@ -22,11 +22,11 @@ train_parser.add_argument(
     default=False,
     required=False,
 )
-
-train_parser = subparsers.add_parser("generate")
-geo_parser = subparsers.add_parser("geo")
-trytest_parser = subparsers.add_parser("trytest")
-write_sparse_ds_parser = subparsers.add_parser("write_sparse_ds")
-
+predict_parser = subparsers.add_parser("predict")
+loadfile_parser = subparsers.add_parser("loadfile")
+loadfile_parser.add_argument(
+    'file_to_load',
+    help="python file to load",
+    )
 
 args = parser.parse_args()

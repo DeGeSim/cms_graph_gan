@@ -2,6 +2,7 @@
 import sys
 
 import pretty_errors
+import importlib
 from omegaconf import OmegaConf
 
 from .utils.logger import logger
@@ -48,25 +49,24 @@ def main():
 
     if conf["command"] == "train":
         from .ml.holder import model_holder
+        model_holder.load_checkpoint()
         from .ml.training import training_procedure
 
         training_procedure(model_holder)
 
-    if conf["command"] == "generate":
-        from .ml.generate import generation_procedure
+    if conf["command"] == "predict":
         from .ml.holder import model_holder
+        model_holder.load_best_model()
+        from .ml.predict import prediction_procedure
 
-        generation_procedure(model_holder)
-
-    if conf["command"] == "trytest":
-        from .torchdata_loader import dataset
-
-        print(len(dataset))
-
-    if conf["command"] == "write_sparse_ds":
-        from .write_sparse_ds import write_sparse_ds
-
-        write_sparse_ds()
+        prediction_procedure(model_holder)
+    
+    if conf["command"] == "loadfile":
+        fn=str(conf.file_to_load)
+        import re 
+        fn=re.sub('.*fgsim/(.*?).py','.\\1',fn)
+        fn=re.sub('/','.',fn)
+        importlib.import_module(fn, "fgsim")
 
 
 if __name__ == "__main__":
