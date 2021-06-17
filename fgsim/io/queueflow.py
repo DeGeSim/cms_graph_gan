@@ -280,6 +280,7 @@ Cannot allocate memory'"""
                 self.outq.put(wkout)
                 del wkin_iter
                 del wkin
+        self.pool.terminate()
 
 
 class Unpack_Step(Step_Base):

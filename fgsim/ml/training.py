@@ -39,7 +39,6 @@ def writelogs(holder):
 def training_step(holder, batch):
     holder.optim.zero_grad()
     prediction = torch.squeeze(holder.model(batch).T)
-
     holder.loss = holder.lossf(prediction, batch.y.float())
     holder.loss.backward()
     holder.optim.step()
@@ -83,13 +82,18 @@ def early_stopping(holder):
 
         if relative_improvement < conf.training.early_stopping_improvement:
             holder.save_best_model()
+            writer.flush()
+            writer.close()
             logger.warn("Early Stopping criteria fullfilled")
-            holder.qfseq.stop()
+            if hasattr(holder, "qfseq"):
+                holder.qfseq.stop()
+                holder.qfseq.flowstatus()
             sys.exit()
 
 
 def training_procedure(holder: modelHolder):
     logger.warn("Starting training with state\n" + OmegaConf.to_yaml(holder.state))
+    early_stopping(holder)
     holder.validation_batches, holder.qfseq = get_loader(holder.state.processed_events)
     # Initialize the training
     holder.model = holder.model.float().to(device)
