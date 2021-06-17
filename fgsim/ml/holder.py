@@ -73,13 +73,18 @@ class modelHolder:
         # self.generator.eval()
         # self.optim_d.load_state_dict(checkpoint["optim_d"])
         # self.optim_g.load_state_dict(checkpoint["optim_g"])
+
         self.model.load_state_dict(checkpoint["model"])
         self.model.eval()
+        self.best_state_model = self.model.state_dict()
+
         self.optim.load_state_dict(checkpoint["optim"])
+        self.best_state_optim = self.optim.state_dict()
+
         logger.warn(
             "Loading model from checkpoint at"
             + f" epoch {self.state['epoch']}"
-            + f" batch {self.state['batch']}"
+            + f" batch {self.state['ibatch']}"
             + f" grad_step {self.state['grad_step']}."
         )
 
