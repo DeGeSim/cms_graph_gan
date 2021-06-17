@@ -1,5 +1,6 @@
 # import ctypes
 import multiprocessing.sharedctypes
+
 # Make it work ()
 # import resource
 import time
@@ -496,13 +497,16 @@ class Sequence:
         return self
 
     def stop(self):
-        for q in self.queues:
-            while not q.empty():
-                try:
-                    q.get(False)
-                except multiprocessing.queues.Empty:
-                    continue
-            q.put(TerminateQueue())
+        terminal_pos = -1
+        while terminal_pos < len(self.queues)-1:
+            for iqueue in range(terminal_pos + 1, len(self.queues)):
+                q = self.queues[iqueue]
+                while not q.empty():
+                    out = q.get()
+                    if isinstance(out, TerminateQueue):
+                        terminal_pos=iqueue
+                        q.put(TerminateQueue())
+                        continue
         for step in self.steps:
             step.stop()
 
