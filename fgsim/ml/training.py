@@ -58,7 +58,10 @@ def validate(holder):
         holder.state.val_losses.append(float(mean_loss))
         writer.add_scalar("val_loss", mean_loss, holder.state["grad_step"])
         mean_loss = float(mean_loss)
-        if holder.state.min_val_loss is None or holder.state.min_val_loss > mean_loss:
+        if (
+            not hasattr(holder.state, "min_val_loss")
+            or holder.state.min_val_loss > mean_loss
+        ):
             holder.state.min_val_loss = mean_loss
             holder.best_grad_step = holder.state["grad_step"]
             holder.best_state_model = holder.model.state_dict()
