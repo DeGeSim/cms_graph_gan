@@ -1,5 +1,3 @@
-import threading
-import time
 from pathlib import Path
 
 import h5py as h5
@@ -16,23 +14,7 @@ from . import queueflow as qf
 
 # %%
 # Search for all h5 files
-p = Path(conf.datasetpath)
-assert p.is_dir()
-files = sorted(p.glob("**/*.h5"))
-if len(files) < 1:
-    raise RuntimeError("No hdf5 datasets found")
 
-
-chunksize = conf.loader.chunksize
-nentries = 10000
-
-chunk_splits = [
-    (i * chunksize, (i + 1) * chunksize) for i in range(nentries // chunksize)
-] + [(nentries // chunksize * chunksize, nentries)]
-
-chunk_coords = [(fn, chunk_split) for chunk_split in chunk_splits for fn in files]
-
-np.random.shuffle(chunk_coords)
 
 # Step 1
 def read_chunk(inp):
@@ -108,41 +90,53 @@ process_seq = qf.Sequence(
     Queue(1),
 )
 
-# Print the status of the queue once in while
-def printflowstatus():
-    oldflowstatus = ""
-    sleeptime = 5 if conf.debug else 60
-    while True:
-        newflowstatus = str(process_seq.flowstatus())
-        if newflowstatus != oldflowstatus:
-            logger.info("\n" + newflowstatus)
-            oldflowstatus = newflowstatus
-        time.sleep(sleeptime)
 
+class queued_data_loader:
+    def __init__(self):
+        p = Path(conf.datasetpath)
+        assert p.is_dir()
+        self.files = sorted(p.glob("**/*.h5"))
+        if len(self.files) < 1:
+            raise RuntimeError("No hdf5 datasets found")
 
-status_printer_thread = threading.Thread(target=printflowstatus, daemon=True)
-status_printer_thread.start()
+        chunksize = conf.loader.chunksize
+        nentries = 10000
 
-# define the function that provides the validation set
-# and the iterable over the batches
-def get_loader(events_processed=0):
-    # Setup the validation set
-    n_validation_batches = conf.loader.validation_set_size // conf.loader.batch_size
-    if conf.loader.validation_set_size % conf.loader.batch_size != 0:
-        n_validation_batches += 1
-    n_skip_chunks = events_processed // conf.loader.chunksize
-    logger.info(
-        f"Using the first {n_validation_batches} batches for validation,"
-        + f" skipping {n_skip_chunks} batches for training."
-    )
+        chunk_splits = [
+            (i * chunksize, (i + 1) * chunksize) for i in range(nentries // chunksize)
+        ] + [(nentries // chunksize * chunksize, nentries)]
 
-    validation_chunks = chunk_coords[:n_validation_batches]
-    training_chunks = chunk_coords[n_validation_batches + n_skip_chunks :]
+        self.chunk_coords = [
+            (fn, chunk_split) for chunk_split in chunk_splits for fn in self.files
+        ]
 
-    qfseq = process_seq(validation_chunks + training_chunks)
+        np.random.shuffle(self.chunk_coords)
 
-    # get the validation batches out
-    validation_batches = [
-        next(iter(qfseq)).to("cpu") for i in range(n_validation_batches)
-    ]
-    return (validation_batches, qfseq)
+        n_validation_batches = conf.loader.validation_set_size // conf.loader.batch_size
+        if conf.loader.validation_set_size % conf.loader.batch_size != 0:
+            n_validation_batches += 1
+
+        logger.info(f"Using the first {n_validation_batches} batches for validation.")
+
+        self.validation_chunks = self.chunk_coords[:n_validation_batches]
+        self.training_chunks = self.chunk_coords[n_validation_batches:]
+
+    def start_epoch(self, n_skip_events=0):
+        n_skip_chunks = n_skip_events // conf.loader.chunksize
+        n_skip_chunks = n_skip_chunks % (len(self.files) * conf.loader.chunksize)
+
+        logger.info(f" skipping {n_skip_chunks} batches for training.")
+
+        self.epoch_chunks = self.training_chunks[n_skip_chunks:]
+        self.epoch_gen = process_seq(self.epoch_chunks)
+
+    def get_epoch_generator(self):
+        assert hasattr(self, "epoch_gen"), "Call start_epoch first"
+        return self.epoch_gen
+
+    def get_validation_batches(self):
+        if not hasattr(self, "validation_batches"):
+            qfseq = process_seq(self.validation_chunks)
+            # get the validation batches out
+            self.validation_batches = [batch.to("cpu") for batch in qfseq]
+        return self.validation_batches

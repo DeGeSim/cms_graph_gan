@@ -8,12 +8,12 @@ from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
 
 from ..config import conf, device
-from ..io.queued_dataset import get_loader
+from ..io.queued_dataset import queued_data_loader
 from ..utils.logger import logger
 from .holder import modelHolder
 
 writer = SummaryWriter(
-    f"runs/{conf.tensorboard_name}/" + datetime.now().strftime("%Y-%m-%d-%H:%M/")
+    f"runs/{conf.tag}" # + datetime.now().strftime("%Y-%m-%d-%H:%M/")
 )
 
 
@@ -50,7 +50,7 @@ def validate(holder):
         and holder.state["grad_step"] % conf.training.validation_interval == 0
     ):
         losses = []
-        for batch in holder.validation_batches:
+        for batch in holder.loader.get_validation_batches():
             batch = batch.to(device)
             prediction = torch.squeeze(holder.model(batch).T)
             losses.append(holder.lossf(prediction, batch.y.float()))
@@ -97,18 +97,20 @@ def early_stopping(holder):
 def training_procedure(holder: modelHolder):
     logger.warn("Starting training with state\n" + OmegaConf.to_yaml(holder.state))
     early_stopping(holder)
-    holder.validation_batches, holder.qfseq = get_loader(holder.state.processed_events)
+
     # Initialize the training
     holder.model = holder.model.float().to(device)
     holder.model.train()
     holder.state.global_start_time = time.time()
+    holder.loader = queued_data_loader()
     # Iterate over the Epochs
     for holder.state.epoch in range(holder.state.epoch, conf.model["n_epochs"]):
         # Iterate over the batches
         holder.state.batch_start_time = time.time()
         holder.state.saving_start_time = time.time()
+        holder.loader.start_epoch(holder.state.processed_events)
         for holder.state.ibatch, batch in enumerate(
-            tqdm(holder.qfseq), start=holder.state.ibatch
+            tqdm(holder.loader.get_epoch_generator()), start=holder.state.ibatch
         ):
             holder.state.model_start_time = time.time()
 

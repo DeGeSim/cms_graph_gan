@@ -1,6 +1,6 @@
 # import ctypes
 import multiprocessing.sharedctypes
-
+import threading
 # Make it work ()
 # import resource
 import time
@@ -10,6 +10,7 @@ import torch
 import torch.multiprocessing
 from prettytable import PrettyTable
 
+from ..config import conf
 from ..utils.count_iterations import Count_Iterations
 from ..utils.logger import logger
 
@@ -482,6 +483,11 @@ class Sequence:
             else:
                 self.queues.append(e.outq)
 
+        self.status_printer_thread = threading.Thread(
+            target=self.printflowstatus, daemon=True
+        )
+        self.stop_printer_thread = False
+
     def __iter__(self):
         assert (
             self._iterable_is_set
@@ -494,21 +500,34 @@ class Sequence:
         for e in self.seq:
             if not isinstance(e, multiprocessing.queues.Queue):
                 e.start()
+        # Print the status of the queue once in while
+        self.status_printer_thread.start()
         return self
+
+    def printflowstatus(self):
+        oldflowstatus = ""
+        sleeptime = 5 if conf.debug else 10
+        while not getattr(self, "stop_printer_thread", True):
+            newflowstatus = str(self.flowstatus())
+            if newflowstatus != oldflowstatus:
+                logger.info("\n" + newflowstatus)
+                oldflowstatus = newflowstatus
+            time.sleep(sleeptime)
 
     def stop(self):
         terminal_pos = -1
-        while terminal_pos < len(self.queues)-1:
+        while terminal_pos < len(self.queues) - 1:
             for iqueue in range(terminal_pos + 1, len(self.queues)):
                 q = self.queues[iqueue]
                 while not q.empty():
                     out = q.get()
                     if isinstance(out, TerminateQueue):
-                        terminal_pos=iqueue
+                        terminal_pos = iqueue
                         q.put(TerminateQueue())
                         continue
         for step in self.steps:
             step.stop()
+        self.stop_printer_thread = True
 
     def queue_status(self):
         return [
