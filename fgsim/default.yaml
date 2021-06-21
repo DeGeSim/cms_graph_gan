@@ -16,10 +16,16 @@ nlayers: 25
 model:
   name: "default"
   n_epochs : 10
-  lr : 0.0002
   dyn_features: 10
   static_features: 3
 training:
   validation_interval: 50
-  early_stopping: 5
+  early_stopping: 7
   early_stopping_improvement: 0.02
+loss: 
+  name: MSELoss
+optimizer:
+  name: Adam
+  parameters:
+    weight_decay: 0.00001
+    lr : 0.0002

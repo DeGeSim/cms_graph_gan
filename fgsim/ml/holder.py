@@ -33,21 +33,21 @@ class modelHolder:
         # self.optim_g = optim.Adam(self.generator.parameters(), lr=conf.model.gan.lr)
         # self.optim_d = optim.Adam(self.discriminator.parameters(), lr=conf.model.gan.lr)
 
-        self.optim = torch.optim.Adam(
-            self.model.parameters(), lr=conf.model.lr, weight_decay=1e-5
+        self.optim = getattr(torch.optim, conf.optimizer.name)(
+            self.model.parameters(), **conf.optimizer.parameters
         )
+
         # loss function
-        # self.lossf = torch.nn.BCELoss().to(device)
-        self.lossf = torch.nn.MSELoss().to(device)
+        self.lossf = getattr(torch.nn, conf.loss.name)().to(device)
         self.state = OmegaConf.create(
-                {
-                    "epoch": 0,
-                    "processed_events": 0,
-                    "ibatch": 0,
-                    "grad_step": 0,
-                    "val_losses": [],
-                }
-            )
+            {
+                "epoch": 0,
+                "processed_events": 0,
+                "ibatch": 0,
+                "grad_step": 0,
+                "val_losses": [],
+            }
+        )
 
     def load_checkpoint(self):
         if (
@@ -113,11 +113,13 @@ class modelHolder:
             },
             self.best_model_path,
         )
+
     def load_best_model(self):
         # checkpoint = torch.load(self.best_model_path)
         checkpoint = torch.load(self.best_model_path)
 
         self.model.load_state_dict(checkpoint["model"])
         self.model.eval()
+
 
 model_holder = modelHolder()
