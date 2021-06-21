@@ -25,8 +25,8 @@ train_parser.add_argument(
 predict_parser = subparsers.add_parser("predict")
 loadfile_parser = subparsers.add_parser("loadfile")
 loadfile_parser.add_argument(
-    'file_to_load',
+    "file_to_load",
     help="python file to load",
-    )
+)
 
 args = parser.parse_args()

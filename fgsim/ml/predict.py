@@ -1,5 +1,5 @@
-import torch
 import pandas as pd
+import torch
 
 from ..config import conf, device
 from ..io.queued_dataset import get_loader
