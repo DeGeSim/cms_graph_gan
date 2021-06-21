@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 
 import h5py as h5
@@ -10,7 +11,7 @@ from ..geo.batch_stack import split_layer_subgraphs
 from ..geo.transform import transform
 from ..utils.logger import logger
 from ..utils.thread_or_process import pname
-from . import queueflow as qf
+from . import qf
 
 # %%
 # Search for all h5 files
@@ -116,10 +117,27 @@ class queued_data_loader:
         if conf.loader.validation_set_size % conf.loader.batch_size != 0:
             n_validation_batches += 1
 
-        logger.info(f"Using the first {n_validation_batches} batches for validation.")
+        n_test_batches = conf.loader.test_set_size // conf.loader.batch_size
+        if conf.loader.test_set_size % conf.loader.batch_size != 0:
+            n_test_batches += 1
+
+        logger.info(
+            f"Using the first {n_validation_batches} batches for "
+            + f"validation and the next {n_test_batches} batches for testing."
+        )
 
         self.validation_chunks = self.chunk_coords[:n_validation_batches]
-        self.training_chunks = self.chunk_coords[n_validation_batches:]
+        self.testing_chunks = self.chunk_coords[
+            n_validation_batches : n_validation_batches + n_test_batches
+        ]
+        self.training_chunks = self.chunk_coords[
+            n_validation_batches + n_test_batches :
+        ]
+
+        validation_fn = f"wd/{conf.tag}/validation.torch"
+        test_fn = f"wd/{conf.tag}/test.torch"
+        if not os.path.isfile(test_fn) or not os.path.isfile(validation_fn):
+            pass
 
     def start_epoch(self, n_skip_events=0):
         n_skip_chunks = n_skip_events // conf.loader.chunksize
@@ -139,4 +157,5 @@ class queued_data_loader:
             qfseq = process_seq(self.validation_chunks)
             # get the validation batches out
             self.validation_batches = [batch.to("cpu") for batch in qfseq]
+            qfseq.stop()
         return self.validation_batches
