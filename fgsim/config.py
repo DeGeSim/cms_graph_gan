@@ -34,6 +34,9 @@ else:
 
 conf = OmegaConf.merge(defaultconf, tagconf, vars(args))
 
+if conf.command == 'train':
+    OmegaConf.save(conf, conf.path.train_config)
+
 torch.manual_seed(conf.seed)
 np.random.seed(conf.seed)
 random.seed(conf.seed)

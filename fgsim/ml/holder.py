@@ -16,12 +16,6 @@ ModelClass = importlib.import_module(
 
 class modelHolder:
     def __init__(self) -> None:
-        self.state_path = f"wd/{conf.tag}/state.yaml"
-        self.state_old_path = f"wd/{conf.tag}/state_old.yaml"
-        self.checkpoint_path = f"wd/{conf.tag}/checkpoint.torch"
-        self.checkpoint_old_path = f"wd/{conf.tag}/checkpoint_old.torch"
-        self.best_model_path = f"wd/{conf.tag}/best_model.torch"
-
         # self.discriminator = Discriminator().to(device)
         # self.generator = Generator(conf.model.gan.nz).to(device)
         self.model = ModelClass().to(device)
@@ -51,14 +45,14 @@ class modelHolder:
 
     def load_checkpoint(self):
         if (
-            not os.path.isfile(self.checkpoint_path)
-            or not os.path.isfile(self.state_path)
+            not os.path.isfile(conf.path.checkpoint)
+            or not os.path.isfile(conf.path.state)
             or conf["dump_model"]
         ):
             logger.warn("Dumping model.")
             return
-        self.state = OmegaConf.load(self.state_path)
-        checkpoint = torch.load(self.checkpoint_path)
+        self.state = OmegaConf.load(conf.path.state)
+        checkpoint = torch.load(conf.path.checkpoint)
 
         self.model.load_state_dict(checkpoint["model"])
         self.model.eval()
@@ -76,10 +70,10 @@ class modelHolder:
 
     def save_checkpoint(self):
         # move the old checkpoint
-        if os.path.isfile(self.checkpoint_path):
-            if os.path.isfile(self.checkpoint_old_path):
-                os.remove(self.checkpoint_old_path)
-            os.rename(self.checkpoint_path, self.checkpoint_old_path)
+        if os.path.isfile(conf.path.checkpoint):
+            if os.path.isfile(conf.path.checkpoint_old):
+                os.remove(conf.path.checkpoint_old)
+            os.rename(conf.path.checkpoint, conf.path.checkpoint_old)
 
         torch.save(
             # {
@@ -93,13 +87,13 @@ class modelHolder:
                 "model": self.model.state_dict(),
                 "optim": self.optim.state_dict(),
             },
-            self.checkpoint_path,
+            conf.path.checkpoint,
         )
-        if os.path.isfile(self.state_path):
-            if os.path.isfile(self.state_old_path):
-                os.remove(self.state_old_path)
-            os.rename(self.state_path, self.state_old_path)
-        OmegaConf.save(self.state, self.state_path)
+        if os.path.isfile(conf.path.state):
+            if os.path.isfile(conf.path.state_old):
+                os.remove(conf.path.state_old)
+            os.rename(conf.path.state, conf.path.state_old)
+        OmegaConf.save(self.state, conf.path.state)
         logger.warn(
             f"Saved model to checkpoint at epoch {self.state['epoch']} /"
             + f" gradient step {self.state['grad_step']}."
@@ -111,12 +105,12 @@ class modelHolder:
                 "model": self.best_state_model,
                 "optim": self.best_state_optim,
             },
-            self.best_model_path,
+            conf.path.best_model,
         )
 
     def load_best_model(self):
-        # checkpoint = torch.load(self.best_model_path)
-        checkpoint = torch.load(self.best_model_path)
+        # checkpoint = torch.load(conf.path.best_model)
+        checkpoint = torch.load(conf.path.best_model)
 
         self.model.load_state_dict(checkpoint["model"])
         self.model.eval()

@@ -5,11 +5,10 @@ from ..config import conf
 logger = logging.getLogger(__name__)
 
 if not logger.handlers:
-    # format = "%(name)s - %(levelname)s - %(message)s"
     format = "fgsim - %(levelname)s - %(message)s"
 
     logging.basicConfig(
-        filename=f"wd/{conf.tag}/log",
+        filename=conf.path.log,
         filemode="w",
         format=format,
     )

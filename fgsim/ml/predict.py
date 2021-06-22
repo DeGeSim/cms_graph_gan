@@ -22,4 +22,4 @@ def prediction_procedure(holder: modelHolder):
     ys = torch.hstack(ys).detach().to("cpu").numpy()
     yhats = torch.hstack(yhats).detach().to("cpu").numpy()
     df = pd.DataFrame({"Energy ": ys, "Prediction": yhats})
-    df.to_csv(f"wd/{conf.tag}/prediction.csv")
+    df.to_csv(conf.path.predict_csv)

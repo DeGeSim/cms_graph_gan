@@ -11,9 +11,7 @@ from ..io.queued_dataset import QueuedDataLoader
 from ..utils.logger import logger
 from .holder import modelHolder
 
-writer = SummaryWriter(
-    f"runs/{conf.tag}"  # + datetime.now().strftime("%Y-%m-%d-%H:%M/")
-)
+writer = SummaryWriter(conf.path.tensorboard)
 
 
 def writelogs(holder):
