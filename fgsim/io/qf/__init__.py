@@ -1,10 +1,10 @@
 from torch import multiprocessing
 
-from .pack import Pack_Step, Repack_Step, Unpack_Step
+from .pack import PackStep, RepackStep, UnpackStep
 from .pool import Pool_Step
 from .process_step import Process_Step
-from .step_base import Step_Base
 from .sequence import Sequence
+
 # Two recommendations by
 # https://github.com/pytorch/pytorch/issues/973
 # 1. (not needed for the moment)
@@ -27,7 +27,7 @@ multiprocessing.set_sharing_strategy("file_system")
 #  torch.multiprocessing but just the standard multiprocessing.
 
 
-__all__ = ["pack", "process_step", "step_base", "step_base", "in_out", "pool"]
+__all__ = ["pack", "process_step", "sequence", "pool"]
 
 
 # Usage example

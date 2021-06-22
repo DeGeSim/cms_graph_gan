@@ -1,15 +1,15 @@
-from multiprocessing import sharedctypes
 import time
+from multiprocessing import sharedctypes
 
 import torch
 from torch import multiprocessing
 
 from ...utils.logger import logger
-from .step_base import Step_Base
+from .step_base import StepBase
 from .terminate_queue import TerminateQueue
 
 
-class Process_Step(Step_Base):
+class Process_Step(StepBase):
     """Class for simple processing steps.
     Each incoming object is processed by a
     single worker into a single outgoing element."""
@@ -67,7 +67,7 @@ class Process_Step(Step_Base):
                     # Get the remaining the terminal element from the input queue
                     self.inq.get()
                     self.outq.put(TerminateQueue())
-
+                    self.first_to_finish_lock.release()
                 break
             else:
                 try:

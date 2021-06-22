@@ -4,37 +4,23 @@ from ...utils.logger import logger
 from .terminate_queue import TerminateQueue
 
 
-class Input_Step:
+class InputStep:
     """Internal class to read in the iterable into a the first queue"""
 
-    def __init__(self, iterable=(), outq=multiprocessing.Queue()):
-        self._iterable = iterable
+    def __init__(self, outq=multiprocessing.Queue()):
         self.outq = outq
-        self.process = multiprocessing.Process(target=self.load_queue)
 
-    def load_queue(self):
+    def queue_iterable(self, iterable_object):
+        assert hasattr(iterable_object, "__iter__")
         i = 0
-        for e in self._iterable:
-            self.outq.put(e)
+        for element in iterable_object:
+            self.outq.put(element)
             i = i + 1
         logger.debug(f"Queuing {i} elements complete")
         self.outq.put(TerminateQueue())
 
-    def start(self):
-        self.process.daemon = True
-        self.process.start()
 
-    @property
-    def iterable(self):
-        return self._iterable
-
-    @iterable.setter
-    def iterable(self, iterable):
-        assert hasattr(iterable, "__iter__")
-        self._iterable = iterable
-
-
-class Output_Step:
+class OutputStep:
     # Ag generator reads from the queue
     def __init__(self, inq=multiprocessing.Queue()):
         self.inq = inq

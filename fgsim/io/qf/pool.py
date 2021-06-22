@@ -5,11 +5,11 @@ from torch import multiprocessing
 
 from ...utils.count_iterations import Count_Iterations
 from ...utils.logger import logger
-from .step_base import Step_Base
+from .step_base import StepBase
 from .terminate_queue import TerminateQueue
 
 
-class Pool_Step(Step_Base):
+class Pool_Step(StepBase):
     """Class for simple processing steps pooled over multiple workes.
     Each incoming object is processed by a multiple subprocesses
     per worker into a single outgoing element."""
@@ -25,23 +25,39 @@ class Pool_Step(Step_Base):
 
         # Make sure the contructor of the base class only initializes
         # one process that manages the pool
-        nworkers = kwargs["nworkers"]
+        self.n_pool_workers = kwargs["nworkers"]
         kwargs["nworkers"] = 1
         super().__init__(*args, **kwargs)
-        self.nworkers = nworkers
+
+    def start(self):
+        # enable restarting
+        exitcodes = [process.exitcode for process in self.processes]
+        assert all([code == 0 for code in exitcodes]) or all(
+            [code is None for code in exitcodes]
+        )
+        if all([code == 0 for code in exitcodes]):
+            # Restart the processes
+            self.processes = [
+                multiprocessing.Process(target=self._worker)
+                for _ in range(1)
+            ]
+
+        for p in self.processes:
+            p.daemon = self.deamonize
+            p.start()
 
     def process_status(self):
         return (
-            sum([p.is_alive() for p in self.processes]) * self.nworkers,
-            self.nworkers,
+            sum([p.is_alive() for p in self.processes]) * self.n_pool_workers,
+            self.n_pool_workers,
         )
 
     def _worker(self):
         name = multiprocessing.current_process().name
         logger.info(
-            f"{self.name} pool ({name}) initalizing with {self.nworkers} subprocesses"
+            f"{self.name} pool ({name}) initalizing with {self.n_pool_workers} subprocesses"
         )
-        self.pool = multiprocessing.Pool(self.nworkers)
+        self.pool = multiprocessing.Pool(self.n_pool_workers)
         while True:
             logger.debug(
                 f"{self.name} worker {name} reading from input queue {id(self.inq)}."

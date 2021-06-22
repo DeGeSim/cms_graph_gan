@@ -1,6 +1,5 @@
 import sys
 import time
-from datetime import datetime
 
 import torch
 from omegaconf import OmegaConf
@@ -8,12 +7,12 @@ from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
 
 from ..config import conf, device
-from ..io.queued_dataset import queued_data_loader
+from ..io.queued_dataset import QueuedDataLoader
 from ..utils.logger import logger
 from .holder import modelHolder
 
 writer = SummaryWriter(
-    f"runs/{conf.tag}" # + datetime.now().strftime("%Y-%m-%d-%H:%M/")
+    f"runs/{conf.tag}"  # + datetime.now().strftime("%Y-%m-%d-%H:%M/")
 )
 
 
@@ -50,7 +49,7 @@ def validate(holder):
         and holder.state["grad_step"] % conf.training.validation_interval == 0
     ):
         losses = []
-        for batch in holder.loader.get_validation_batches():
+        for batch in holder.loader.validation_batches:
             batch = batch.to(device)
             prediction = torch.squeeze(holder.model(batch).T)
             losses.append(holder.lossf(prediction, batch.y.float()))
@@ -88,9 +87,7 @@ def early_stopping(holder):
             writer.flush()
             writer.close()
             logger.warn("Early Stopping criteria fullfilled")
-            if hasattr(holder, "qfseq"):
-                holder.qfseq.stop()
-                holder.qfseq.flowstatus()
+            holder.loader.qfseq.drain_seq()
             sys.exit()
 
 
@@ -102,15 +99,19 @@ def training_procedure(holder: modelHolder):
     holder.model = holder.model.float().to(device)
     holder.model.train()
     holder.state.global_start_time = time.time()
-    holder.loader = queued_data_loader()
+    holder.loader = QueuedDataLoader()
     # Iterate over the Epochs
     for holder.state.epoch in range(holder.state.epoch, conf.model["n_epochs"]):
         # Iterate over the batches
         holder.state.batch_start_time = time.time()
         holder.state.saving_start_time = time.time()
-        holder.loader.start_epoch(holder.state.processed_events)
         for holder.state.ibatch, batch in enumerate(
-            tqdm(holder.loader.get_epoch_generator()), start=holder.state.ibatch
+            tqdm(
+                holder.loader.get_epoch_generator(
+                    n_skip_events=holder.state.processed_events
+                )
+            ),
+            start=holder.state.ibatch,
         ):
             holder.state.model_start_time = time.time()
 

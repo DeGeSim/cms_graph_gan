@@ -4,11 +4,11 @@ import torch
 from torch import multiprocessing
 
 from ...utils.logger import logger
-from .step_base import Step_Base
+from .step_base import StepBase
 from .terminate_queue import TerminateQueue
 
 
-class Unpack_Step(Step_Base):
+class UnpackStep(StepBase):
     """A single process takes an iterable from the incoming queue and
     puts the elements one-by-one in the outgoing queue."""
 
@@ -43,18 +43,18 @@ class Unpack_Step(Step_Base):
                     f"{self.name} worker {name} got element "
                     + f"{id(wkin)} of element type {type(wkin)}."
                 )
-                for e in wkin:
+                for element in wkin:
                     logger.debug(
                         f"{self.name} push element of type "
                         + f"{type(wkin)} into output queue {id(self.outq)}."
                     )
-                    if isinstance(e, torch.Tensor):
-                        e = e.clone()
-                    self.outq.put(e)
+                    if isinstance(element, torch.Tensor):
+                        element = element.clone()
+                    self.outq.put(element)
                 del wkin
 
 
-class Pack_Step(Step_Base):
+class PackStep(StepBase):
     """Takes an iterable from the incoming queue and
     puts the elements one-by-one in the outgoing queue."""
 
@@ -109,7 +109,7 @@ class Pack_Step(Step_Base):
             del wkin
 
 
-class Repack_Step(Step_Base):
+class RepackStep(StepBase):
     """Takes an iterable from the incoming queue,
     collects n elements and packs them as a list in the outgoing queue."""
 
@@ -153,12 +153,12 @@ class Repack_Step(Step_Base):
                     f"{self.name} storing {id(wkin)} of type {type(wkin)} "
                     + f"(len {len(wkin) if hasattr(wkin,'__len__') else '?'})."
                 )
-                for e in wkin:
-                    if isinstance(e, torch.Tensor):
-                        e_cloned = e.clone()
+                for element in wkin:
+                    if isinstance(element, torch.Tensor):
+                        e_cloned = element.clone()
                         collected_elements.append(e_cloned)
                     else:
-                        collected_elements.append(e)
+                        collected_elements.append(element)
                     if len(collected_elements) == self.nelements:
                         logger.debug(
                             f"{self.name} push list of type \

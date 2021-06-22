@@ -3,6 +3,7 @@ from pathlib import Path
 
 import h5py as h5
 import numpy as np
+import torch
 import torch_geometric
 from torch.multiprocessing import Queue
 
@@ -22,10 +23,10 @@ def read_chunk(inp):
     file_path, chunk = inp
     logger.debug(f"{pname()}: loading {file_path} chunk {chunk}")
     with h5.File(file_path) as h5_file:
-        x = h5_file[conf.loader.xname][chunk[0] : chunk[1]]
-        y = h5_file[conf.loader.yname][chunk[0] : chunk[1]]
+        x_vector = h5_file[conf.loader.xname][chunk[0] : chunk[1]]
+        y_vector = h5_file[conf.loader.yname][chunk[0] : chunk[1]]
     logger.debug(f"{pname()}: done loading {file_path} chunk {chunk}")
-    return (x, y)
+    return (x_vector, y_vector)
 
 
 # two processes reading from the filesystem
@@ -51,7 +52,7 @@ transform_chunk_step = qf.Pool_Step(
 
 
 # Step 2.5
-repack = qf.Repack_Step(conf.loader.batch_size)
+repack = qf.RepackStep(conf.loader.batch_size)
 
 # Step 3
 def geo_batch(list_of_graphs):
@@ -92,11 +93,11 @@ process_seq = qf.Sequence(
 )
 
 
-class queued_data_loader:
+class QueuedDataLoader:
     def __init__(self):
-        p = Path(conf.datasetpath)
-        assert p.is_dir()
-        self.files = sorted(p.glob("**/*.h5"))
+        ds_path = Path(conf.path.dataset)
+        assert ds_path.is_dir()
+        self.files = sorted(ds_path.glob("**/*.h5"))
         if len(self.files) < 1:
             raise RuntimeError("No hdf5 datasets found")
 
@@ -134,28 +135,34 @@ class queued_data_loader:
             n_validation_batches + n_test_batches :
         ]
 
-        validation_fn = f"wd/{conf.tag}/validation.torch"
-        test_fn = f"wd/{conf.tag}/test.torch"
-        if not os.path.isfile(test_fn) or not os.path.isfile(validation_fn):
-            pass
+        self.qfseq = process_seq
 
-    def start_epoch(self, n_skip_events=0):
+        self.__setup_validation_testing()
+
+    def __setup_validation_testing(self):
+        if not os.path.isfile(conf.path.test) or not os.path.isfile(
+            conf.path.validation
+        ):
+            logger.warn("Processing Validation and training batches")
+
+            self.qfseq.queue_iterable(self.validation_chunks)
+            self.validation_batches = [batch.to("cpu") for batch in self.qfseq]
+            torch.save(self.validation_batches,conf.path.validation)
+
+            self.qfseq.queue_iterable(self.testing_chunks)
+            self.testing_batches = [batch.to("cpu") for batch in self.qfseq]
+            torch.save(self.testing_batches, conf.path.test)
+
+            logger.warn("Validation and training batches pickled.")
+        else:
+            self.validation_batches = torch.load(conf.path.validation)
+
+    def get_epoch_generator(self, n_skip_events=0):
         n_skip_chunks = n_skip_events // conf.loader.chunksize
         n_skip_chunks = n_skip_chunks % (len(self.files) * conf.loader.chunksize)
 
         logger.info(f" skipping {n_skip_chunks} batches for training.")
 
         self.epoch_chunks = self.training_chunks[n_skip_chunks:]
-        self.epoch_gen = process_seq(self.epoch_chunks)
-
-    def get_epoch_generator(self):
-        assert hasattr(self, "epoch_gen"), "Call start_epoch first"
-        return self.epoch_gen
-
-    def get_validation_batches(self):
-        if not hasattr(self, "validation_batches"):
-            qfseq = process_seq(self.validation_chunks)
-            # get the validation batches out
-            self.validation_batches = [batch.to("cpu") for batch in qfseq]
-            qfseq.stop()
-        return self.validation_batches
+        self.qfseq.queue_iterable(self.epoch_chunks)
+        return self.qfseq

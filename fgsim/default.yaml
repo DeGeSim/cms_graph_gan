@@ -1,7 +1,10 @@
 tag: default
 tensorboard_name: default
 loglevel: 1
-datasetpath: 'data/clic'
+path:
+  dataset: 'data/clic'
+  validation: 'data/clic_valtest/validation.torch'
+  test: 'data/clic_valtest/test.torch'
 seed: 0
 loader:
   xname: "ECAL"
@@ -11,6 +14,7 @@ loader:
   batch_size : 100
   num_workers: 8
   validation_set_size: 1000
+  test_set_size: 6000
   transform_workers: 20
 nlayers: 25
 model:
