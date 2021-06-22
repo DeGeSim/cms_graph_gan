@@ -48,20 +48,14 @@ def main():
     logger.info(f"Running command {conf['command']}")
 
     if conf["command"] == "train":
-        from .ml.holder import model_holder
-
-        model_holder.load_checkpoint()
         from .ml.training import training_procedure
 
-        training_procedure(model_holder)
+        training_procedure()
 
     if conf["command"] == "predict":
-        from .ml.holder import model_holder
-
-        model_holder.load_best_model()
         from .ml.predict import prediction_procedure
 
-        prediction_procedure(model_holder)
+        prediction_procedure()
 
     if conf["command"] == "loadfile":
         fn = str(conf.file_to_load)
@@ -73,6 +67,7 @@ def main():
 
     if conf["command"] == "dump":
         from .utils import dump_training
+
 
 if __name__ == "__main__":
     main()

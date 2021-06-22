@@ -14,24 +14,16 @@ ModelClass = importlib.import_module(
 ).ModelClass
 
 
-class modelHolder:
+class ModelHolder:
     def __init__(self) -> None:
-        # self.discriminator = Discriminator().to(device)
-        # self.generator = Generator(conf.model.gan.nz).to(device)
         self.model = ModelClass().to(device)
 
-        # count_parameters(self.generator)
-        # count_parameters(self.discriminator)
         count_parameters(self.model)
-        # optimizers
-        # self.optim_g = optim.Adam(self.generator.parameters(), lr=conf.model.gan.lr)
-        # self.optim_d = optim.Adam(self.discriminator.parameters(), lr=conf.model.gan.lr)
 
         self.optim = getattr(torch.optim, conf.optimizer.name)(
             self.model.parameters(), **conf.optimizer.parameters
         )
 
-        # loss function
         self.lossf = getattr(torch.nn, conf.loss.name)().to(device)
         self.state = OmegaConf.create(
             {
@@ -42,24 +34,25 @@ class modelHolder:
                 "val_losses": [],
             }
         )
+        self.load_models()
 
-    def load_checkpoint(self):
+    def save_models(self):
+        self.__save_state()
+        self.__save_checkpoint()
+        self.__save_best_model()
+
+    def load_models(self):
         if (
             not os.path.isfile(conf.path.checkpoint)
             or not os.path.isfile(conf.path.state)
+            or not os.path.isfile(conf.path.best_model)
             or conf["dump_model"]
         ):
-            logger.warn("Dumping model.")
+            logger.warn("Proceeding without checkpoint.")
             return
-        self.state = OmegaConf.load(conf.path.state)
-        checkpoint = torch.load(conf.path.checkpoint)
-
-        self.model.load_state_dict(checkpoint["model"])
-        self.model.eval()
-        self.best_state_model = self.model.state_dict()
-
-        self.optim.load_state_dict(checkpoint["optim"])
-        self.best_state_optim = self.optim.state_dict()
+        self.__load_state()
+        self.__load_checkpoint()
+        self.__load_best_model()
 
         logger.warn(
             "Loading model from checkpoint at"
@@ -68,7 +61,22 @@ class modelHolder:
             + f" grad_step {self.state['grad_step']}."
         )
 
-    def save_checkpoint(self):
+    def __load_state(self):
+        self.state = OmegaConf.load(conf.path.state)
+
+    def __load_checkpoint(self):
+        checkpoint = torch.load(conf.path.checkpoint)
+
+        self.model.load_state_dict(checkpoint["model"])
+        self.model.eval()
+
+        self.optim.load_state_dict(checkpoint["optim"])
+
+    def __load_best_model(self):
+        checkpoint = torch.load(conf.path.best_model)
+        self.best_model_state = checkpoint["model"]
+
+    def __save_checkpoint(self):
         # move the old checkpoint
         if os.path.isfile(conf.path.checkpoint):
             if os.path.isfile(conf.path.checkpoint_old):
@@ -76,19 +84,14 @@ class modelHolder:
             os.rename(conf.path.checkpoint, conf.path.checkpoint_old)
 
         torch.save(
-            # {
-            #     "discriminator": self.discriminator.state_dict(),
-            #     "generator": self.generator.state_dict(),
-            #     "optim_d": self.optim_d.state_dict(),
-            #     "optim_g": self.optim_g.state_dict(),
-            #     "metrics": self.state,
-            # },
             {
                 "model": self.model.state_dict(),
                 "optim": self.optim.state_dict(),
             },
             conf.path.checkpoint,
         )
+
+    def __save_state(self):
         if os.path.isfile(conf.path.state):
             if os.path.isfile(conf.path.state_old):
                 os.remove(conf.path.state_old)
@@ -99,21 +102,13 @@ class modelHolder:
             + f" gradient step {self.state['grad_step']}."
         )
 
-    def save_best_model(self):
+    def __save_best_model(self):
         torch.save(
             {
-                "model": self.best_state_model,
-                "optim": self.best_state_optim,
+                "model": self.best_model_state,
             },
             conf.path.best_model,
         )
 
-    def load_best_model(self):
-        # checkpoint = torch.load(conf.path.best_model)
-        checkpoint = torch.load(conf.path.best_model)
 
-        self.model.load_state_dict(checkpoint["model"])
-        self.model.eval()
-
-
-model_holder = modelHolder()
+model_holder = ModelHolder()

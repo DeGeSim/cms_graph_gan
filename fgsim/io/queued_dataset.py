@@ -147,7 +147,7 @@ class QueuedDataLoader:
 
             self.qfseq.queue_iterable(self.validation_chunks)
             self.validation_batches = [batch.to("cpu") for batch in self.qfseq]
-            torch.save(self.validation_batches,conf.path.validation)
+            torch.save(self.validation_batches, conf.path.validation)
 
             self.qfseq.queue_iterable(self.testing_chunks)
             self.testing_batches = [batch.to("cpu") for batch in self.qfseq]

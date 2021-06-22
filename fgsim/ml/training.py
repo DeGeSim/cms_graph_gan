@@ -9,12 +9,12 @@ from tqdm import tqdm
 from ..config import conf, device
 from ..io.queued_dataset import QueuedDataLoader
 from ..utils.logger import logger
-from .holder import modelHolder
+from .holder import model_holder as holder
 
 writer = SummaryWriter(conf.path.tensorboard)
 
 
-def writelogs(holder):
+def writelogs():
     writer.add_scalars(
         "times",
         {
@@ -33,7 +33,7 @@ def writelogs(holder):
     writer.flush()
 
 
-def training_step(holder, batch):
+def training_step(batch):
     holder.optim.zero_grad()
     prediction = torch.squeeze(holder.model(batch).T)
     holder.loss = holder.lossf(prediction, batch.y.float())
@@ -41,7 +41,7 @@ def training_step(holder, batch):
     holder.optim.step()
 
 
-def validate(holder):
+def validate():
     if (
         holder.state["grad_step"] != 0
         and holder.state["grad_step"] % conf.training.validation_interval == 0
@@ -61,14 +61,16 @@ def validate(holder):
         ):
             holder.state.min_val_loss = mean_loss
             holder.best_grad_step = holder.state["grad_step"]
-            holder.best_state_model = holder.model.state_dict()
-            holder.best_state_optim = holder.optim.state_dict()
+            holder.best_model_state = holder.model.state_dict()
 
-    if holder.state["grad_step"] % 50 == 0:
-        holder.save_checkpoint()
+    if (
+        holder.state["grad_step"] != 0
+        and holder.state["grad_step"] % conf.training.checkpoint_interval == 0
+    ):
+        holder.save_models()
 
 
-def early_stopping(holder):
+def early_stopping():
     if (
         holder.state["grad_step"] != 0
         and holder.state["grad_step"] % conf.training.validation_interval == 0
@@ -81,7 +83,7 @@ def early_stopping(holder):
         relative_improvement = 1 - (min(recent_losses) / recent_losses[0])
 
         if relative_improvement < conf.training.early_stopping_improvement:
-            holder.save_best_model()
+            holder.save_models()
             writer.flush()
             writer.close()
             logger.warn("Early Stopping criteria fullfilled")
@@ -89,9 +91,10 @@ def early_stopping(holder):
             sys.exit()
 
 
-def training_procedure(holder: modelHolder):
+def training_procedure():
     logger.warn("Starting training with state\n" + OmegaConf.to_yaml(holder.state))
-    early_stopping(holder)
+    # Check if the training already has finished:
+    early_stopping()
 
     # Initialize the training
     holder.model = holder.model.float().to(device)
@@ -107,22 +110,23 @@ def training_procedure(holder: modelHolder):
             tqdm(
                 holder.loader.get_epoch_generator(
                     n_skip_events=holder.state.processed_events
-                )
+                ),
+                initial=holder.state.ibatch,
             ),
             start=holder.state.ibatch,
         ):
             holder.state.model_start_time = time.time()
 
-            training_step(holder, batch)
+            training_step(batch)
 
             holder.state.saving_start_time = time.time()
 
             # save the generated torch tensor models to disk
-            validate(holder)
+            validate()
 
-            writelogs(holder)
+            writelogs()
 
-            early_stopping(holder)
+            early_stopping()
 
             # preparatoin for next step
             holder.state.processed_events += conf.loader.batch_size

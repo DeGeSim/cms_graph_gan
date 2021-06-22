@@ -57,7 +57,6 @@ class Sequence:
         return self
 
     def __next__(self):
-        logger.warn("Sequence __next__")
         if self.__iterables_queued == 0:
             raise BufferError(
                 "No iterable queued: call queueflow.queue_iterable(iterable)"

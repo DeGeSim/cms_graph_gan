@@ -3,17 +3,20 @@ import torch
 
 from ..config import conf, device
 from ..io.queued_dataset import get_loader
-from .holder import modelHolder
+from .holder import model_holder as holder
 
 
-def prediction_procedure(holder: modelHolder):
+def prediction_procedure():
     holder.validation_batches, holder.qfseq = get_loader()
     holder.qfseq.stop()
 
     # Initialize the training
     ys = []
     yhats = []
-    holder.model = holder.model.float().to(device)
+
+    holder.model.load_state_dict(holder.best_model_state)
+    holder.model.eval()
+
     for batch in holder.validation_batches:
         batch = batch.to(device)
         prediction = torch.squeeze(holder.model(batch).T)

@@ -38,8 +38,7 @@ class Pool_Step(StepBase):
         if all([code == 0 for code in exitcodes]):
             # Restart the processes
             self.processes = [
-                multiprocessing.Process(target=self._worker)
-                for _ in range(1)
+                multiprocessing.Process(target=self._worker) for _ in range(1)
             ]
 
         for p in self.processes:

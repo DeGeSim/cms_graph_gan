@@ -32,6 +32,7 @@ model:
   static_features: 3
 training:
   validation_interval: 50
+  checkpoint_interval: 200
   early_stopping: 7
   early_stopping_improvement: 0.02
 loss: 
