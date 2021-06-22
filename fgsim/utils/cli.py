@@ -23,6 +23,7 @@ train_parser.add_argument(
     required=False,
 )
 predict_parser = subparsers.add_parser("predict")
+dump_parser = subparsers.add_parser("dump")
 loadfile_parser = subparsers.add_parser("loadfile")
 loadfile_parser.add_argument(
     "file_to_load",

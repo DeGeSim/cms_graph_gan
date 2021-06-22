@@ -71,6 +71,8 @@ def main():
         fn = re.sub("/", ".", fn)
         importlib.import_module(fn, "fgsim")
 
+    if conf["command"] == "dump":
+        from .utils import dump_training
 
 if __name__ == "__main__":
     main()
