@@ -10,7 +10,8 @@
 		"python.formatting.blackPath": "~/.apps/pyenv/shims/black",
 		"python.linting.flake8Path": "~/.apps/pyenv/shims/flake8",
 		"python.linting.pylintArgs": [
-			"--generated-members=numpy.* ,torch.*"
+			"--generated-members=numpy.* ,torch.*",
+			"--disable=E0402,C0116",
 		],
 		"files.exclude": {
 			"**/__*__/**": true,
@@ -51,10 +52,8 @@
 				"args": [
 					"--tag",
 					"`ls ~/fgsim/wd | fzf`",
-					// "simple_forward",
 					// "--debug",
 					"train",
-					"--dump_model",
 				]
 			},
 			{
