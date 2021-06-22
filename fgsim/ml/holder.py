@@ -16,14 +16,18 @@ ModelClass = importlib.import_module(
 
 class ModelHolder:
     def __init__(self) -> None:
-        self.model = ModelClass().to(device)
+        self.model = ModelClass()
 
         count_parameters(self.model)
 
         self.optim = getattr(torch.optim, conf.optimizer.name)(
-            self.model.parameters(), **conf.optimizer.parameters
+            self.model.parameters(),
+            **(
+                conf.optimizer.parameters
+                if conf.optimizer.parameters is not None
+                else {}
+            ),
         )
-
         self.lossf = getattr(torch.nn, conf.loss.name)().to(device)
         self.state = OmegaConf.create(
             {
@@ -34,17 +38,13 @@ class ModelHolder:
                 "val_losses": [],
             }
         )
-        self.load_models()
+        self.__load_models()
+        self.model = self.model.float().to(device)
 
-    def save_models(self):
-        self.__save_state()
-        self.__save_checkpoint()
-        self.__save_best_model()
-
-    def load_models(self):
+    def __load_models(self):
         if (
-            not os.path.isfile(conf.path.checkpoint)
-            or not os.path.isfile(conf.path.state)
+            not os.path.isfile(conf.path.state)
+            or not os.path.isfile(conf.path.checkpoint)
             or not os.path.isfile(conf.path.best_model)
             or conf["dump_model"]
         ):
@@ -65,23 +65,22 @@ class ModelHolder:
         self.state = OmegaConf.load(conf.path.state)
 
     def __load_checkpoint(self):
-        checkpoint = torch.load(conf.path.checkpoint)
+        checkpoint = torch.load(conf.path.checkpoint, map_location=device)
 
         self.model.load_state_dict(checkpoint["model"])
-        self.model.eval()
-
         self.optim.load_state_dict(checkpoint["optim"])
 
     def __load_best_model(self):
-        checkpoint = torch.load(conf.path.best_model)
+        checkpoint = torch.load(conf.path.best_model, map_location=device)
         self.best_model_state = checkpoint["model"]
 
+    def save_models(self):
+        self.__save_state()
+        self.__save_checkpoint()
+        self.__save_best_model()
+
     def __save_checkpoint(self):
-        # move the old checkpoint
-        if os.path.isfile(conf.path.checkpoint):
-            if os.path.isfile(conf.path.checkpoint_old):
-                os.remove(conf.path.checkpoint_old)
-            os.rename(conf.path.checkpoint, conf.path.checkpoint_old)
+        self.__push_to_old(conf.path.checkpoint, conf.path.checkpoint_old)
 
         torch.save(
             {
@@ -92,10 +91,7 @@ class ModelHolder:
         )
 
     def __save_state(self):
-        if os.path.isfile(conf.path.state):
-            if os.path.isfile(conf.path.state_old):
-                os.remove(conf.path.state_old)
-            os.rename(conf.path.state, conf.path.state_old)
+        self.__push_to_old(conf.path.state, conf.path.state_old)
         OmegaConf.save(self.state, conf.path.state)
         logger.warn(
             f"Saved model to checkpoint at epoch {self.state['epoch']} /"
@@ -109,6 +105,12 @@ class ModelHolder:
             },
             conf.path.best_model,
         )
+
+    def __push_to_old(self, path_new, path_old):
+        if os.path.isfile(path_new):
+            if os.path.isfile(path_old):
+                os.remove(path_old)
+            os.rename(path_new, path_old)
 
 
 model_holder = ModelHolder()

@@ -5,6 +5,7 @@ import torch
 from omegaconf import OmegaConf
 from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
+from copy import deepcopy
 
 from ..config import conf, device
 from ..io.queued_dataset import QueuedDataLoader
@@ -61,7 +62,7 @@ def validate():
         ):
             holder.state.min_val_loss = mean_loss
             holder.best_grad_step = holder.state["grad_step"]
-            holder.best_model_state = holder.model.state_dict()
+            holder.best_model_state = deepcopy(holder.model.state_dict())
 
     if (
         holder.state["grad_step"] != 0
@@ -97,7 +98,7 @@ def training_procedure():
     early_stopping()
 
     # Initialize the training
-    holder.model = holder.model.float().to(device)
+    # switch model in training mode
     holder.model.train()
     holder.state.global_start_time = time.time()
     holder.loader = QueuedDataLoader()
