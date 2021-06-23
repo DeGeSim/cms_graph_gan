@@ -43,7 +43,7 @@ def main():
     logger.info("Unloading complete")
     from .config import conf
 
-    logger.info("Configuration:\n" + OmegaConf.to_yaml(conf,resolve=True))
+    logger.info("Configuration:\n" + OmegaConf.to_yaml(conf, resolve=True))
 
     logger.info(f"Running command {conf['command']}")
 

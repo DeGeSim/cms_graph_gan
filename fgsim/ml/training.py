@@ -1,14 +1,15 @@
 import sys
 import time
+from copy import deepcopy
 
 import torch
 from omegaconf import OmegaConf
 from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
-from copy import deepcopy
 
 from ..config import conf, device
 from ..io.queued_dataset import QueuedDataLoader
+from ..utils.check_for_nans import check_chain_for_nans
 from ..utils.logger import logger
 from .holder import model_holder as holder
 
@@ -40,6 +41,7 @@ def training_step(batch):
     holder.loss = holder.lossf(prediction, batch.y.float())
     holder.loss.backward()
     holder.optim.step()
+    check_chain_for_nans((batch , prediction,holder.loss, holder.model))
 
 
 def validate():

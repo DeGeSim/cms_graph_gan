@@ -7,6 +7,7 @@ from omegaconf import OmegaConf
 from ..config import conf, device
 from ..utils.count_parameters import count_parameters
 from ..utils.logger import logger
+from ..utils.check_for_nans import contains_nans
 
 # Import the specified model
 ModelClass = importlib.import_module(
@@ -66,12 +67,14 @@ class ModelHolder:
 
     def __load_checkpoint(self):
         checkpoint = torch.load(conf.path.checkpoint, map_location=device)
+        assert not contains_nans(checkpoint)
 
         self.model.load_state_dict(checkpoint["model"])
         self.optim.load_state_dict(checkpoint["optim"])
 
     def __load_best_model(self):
         checkpoint = torch.load(conf.path.best_model, map_location=device)
+        assert not contains_nans(checkpoint)
         self.best_model_state = checkpoint["model"]
 
     def save_models(self):
