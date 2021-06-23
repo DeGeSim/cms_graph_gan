@@ -67,14 +67,14 @@ class ModelHolder:
 
     def __load_checkpoint(self):
         checkpoint = torch.load(conf.path.checkpoint, map_location=device)
-        assert not contains_nans(checkpoint)
+        assert not contains_nans(checkpoint)[0]
 
         self.model.load_state_dict(checkpoint["model"])
         self.optim.load_state_dict(checkpoint["optim"])
 
     def __load_best_model(self):
         checkpoint = torch.load(conf.path.best_model, map_location=device)
-        assert not contains_nans(checkpoint)
+        assert not contains_nans(checkpoint)[0]
         self.best_model_state = checkpoint["model"]
 
     def save_models(self):

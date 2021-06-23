@@ -24,6 +24,8 @@ def contains_nans(inp, string=""):
         return (res, string)
     elif isinstance(inp, (int, float)):
         return((False,string))
+    elif inp is None:
+        return((False,string))
     else:
         raise Exception
 
