@@ -76,4 +76,5 @@ class ModelClass(torch.nn.Module):
 
         x = global_add_pool(x, batch.batch)
         x = self.lin(x)
+        feature_mtx = F.relu(feature_mtx)
         return x

@@ -45,10 +45,7 @@ def training_step(batch):
 
 
 def validate():
-    if (
-        holder.state["grad_step"] != 0
-        and holder.state["grad_step"] % conf.training.validation_interval == 0
-    ):
+    if holder.state["grad_step"] % conf.training.validation_interval == 0:
         losses = []
         for batch in holder.loader.validation_batches:
             batch = batch.to(device)

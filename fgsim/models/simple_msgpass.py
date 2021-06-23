@@ -20,8 +20,8 @@ class ModelClass(torch.nn.Module):
         self.lin = Linear(conf.model.dyn_features, 1)
 
     def forward(self, batch):
-        def addstatic(x):
-            return torch.hstack((x, batch.feature_mtx_static))
+        def addstatic(feature_mtx):
+            return torch.hstack((feature_mtx, batch.feature_mtx_static))
 
         x = self.upscale_conv(batch.x, batch.edge_index)
 
@@ -36,4 +36,5 @@ class ModelClass(torch.nn.Module):
 
         x = global_add_pool(x, batch.batch)
         x = self.lin(x)
+        x = F.relu(x)
         return x
