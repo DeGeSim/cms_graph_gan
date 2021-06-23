@@ -87,7 +87,8 @@ def early_stopping():
             writer.flush()
             writer.close()
             logger.warn("Early Stopping criteria fullfilled")
-            holder.loader.qfseq.drain_seq()
+            if hasattr(holder,'loader'):
+                holder.loader.qfseq.drain_seq()
             sys.exit()
 
 
