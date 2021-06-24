@@ -24,7 +24,7 @@ with open("fgsim/default.yaml", "r") as fp:
     defaultconf = OmegaConf.load(fp)
 
 
-if args.tag:
+if args.tag != 'default':
     fn = f"wd/{args.tag}/config.yaml"
     if not os.path.isfile(fn):
         raise FileNotFoundError
