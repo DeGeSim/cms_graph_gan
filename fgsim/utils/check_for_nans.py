@@ -51,11 +51,22 @@ def check_chain_for_nans(chain):
                     f"Nan in elem number {0} in the chain of type {type(chain[0])}"
                     f" {'concerning' if oldstr else ''} {oldstr}."
                 )
+                raise ValueError
         if not problem and nan_detected:
             logger.error(
                 f"Nan in elem number {i+1} in the chain of type {type(chain[i+1])}"
                 f" {'concerning' if oldstr else ''} {oldstr}."
             )
             raise ValueError
-        else:
-            break
+
+
+# import numpy as np
+
+# check_chain_for_nans(
+#     (
+#         torch.tensor([2, np.nan]),
+#         torch.tensor([2, 2]),
+#         torch.tensor([2, 2]),
+#     )
+# )
+#  should raise ERROR - Nan in elem number 0 in the chain of type <class 'torch.Tensor'>  .
