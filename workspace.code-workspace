@@ -11,7 +11,7 @@
 		"python.linting.flake8Path": "~/.apps/pyenv/shims/flake8",
 		"python.linting.pylintArgs": [
 			"--generated-members=numpy.* ,torch.*",
-			"--disable=E0402,C0116",
+			"--disable=E0402,C0116,logging-fstring-interpolation",
 		],
 		"files.exclude": {
 			"**/__*__/**": true,
@@ -39,11 +39,24 @@
 		"python.formatting.provider": "black",
 		"python.linting.flake8Args": [
 			" \"--ignore=E203,E302\""
-		]
+		],
+		"debug.console.closeOnEnd": true,
+		"debug.terminal.clearBeforeReusing": true
 	},
 	"launch": {
 		"version": "0.2.0",
 		"configurations": [
+			{
+				"name": "t msgpass",
+				"type": "python",
+				"request": "launch",
+				"module": "fgsim",
+				"args": [
+					"--tag",
+					"msgpass_sgd",
+					"train",
+				]
+			},
 			{
 				"name": "train",
 				"type": "python",
