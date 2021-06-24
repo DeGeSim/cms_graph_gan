@@ -2,6 +2,7 @@
 import importlib
 import sys
 
+import comet_ml
 import pretty_errors
 from omegaconf import OmegaConf
 

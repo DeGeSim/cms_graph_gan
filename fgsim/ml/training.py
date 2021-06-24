@@ -3,15 +3,22 @@ import time
 from copy import deepcopy
 
 import torch
+from comet_ml import Experiment
 from omegaconf import OmegaConf
 from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
 
-from ..config import conf, device
+from ..config import comet_conf, conf, device, hyperparameters
 from ..io.queued_dataset import QueuedDataLoader
 from ..utils.check_for_nans import check_chain_for_nans
 from ..utils.logger import logger
 from .holder import model_holder as holder
+
+# Create an experiment with your api key
+experiment = Experiment(**comet_conf)
+
+experiment.log_parameters(hyperparameters)
+
 
 writer = SummaryWriter(conf.path.tensorboard)
 
@@ -29,10 +36,23 @@ def writelogs():
         },
         holder.state["grad_step"],
     )
-
     writer.add_scalar("loss", holder.loss, holder.state["grad_step"])
-
     writer.flush()
+
+    experiment.log_metrics(
+        dic={
+            "batch_start_time": holder.state.batch_start_time
+            - holder.state.global_start_time,
+            "model_start_time": holder.state.model_start_time
+            - holder.state.global_start_time,
+            "batchtotal": holder.state.saving_start_time
+            - holder.state.global_start_time,
+        },
+        prefix="times",
+        step=holder.state.grad_step,
+        epoch=holder.state.epoch,
+    )
+    experiment.log_metric("loss", holder.loss, holder.state["grad_step"])
 
 
 def training_step(batch):
@@ -41,7 +61,7 @@ def training_step(batch):
     holder.loss = holder.lossf(prediction, batch.y.float())
     holder.loss.backward()
     holder.optim.step()
-    check_chain_for_nans((batch , prediction,holder.loss, holder.model))
+    check_chain_for_nans((batch, prediction, holder.loss, holder.model))
 
 
 def validate():
@@ -53,7 +73,10 @@ def validate():
             losses.append(holder.lossf(prediction, batch.y.float()))
         mean_loss = torch.mean(torch.tensor(losses))
         holder.state.val_losses.append(float(mean_loss))
+
         writer.add_scalar("val_loss", mean_loss, holder.state["grad_step"])
+        experiment.log_metric("val_loss", mean_loss, holder.state["grad_step"])
+
         mean_loss = float(mean_loss)
         if (
             not hasattr(holder.state, "min_val_loss")
@@ -87,7 +110,7 @@ def early_stopping():
             writer.flush()
             writer.close()
             logger.warn("Early Stopping criteria fullfilled")
-            if hasattr(holder,'loader'):
+            if hasattr(holder, "loader"):
                 holder.loader.qfseq.drain_seq()
             sys.exit()
 

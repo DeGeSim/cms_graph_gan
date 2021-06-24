@@ -1,18 +1,19 @@
 tag: default
 loglevel: 1
 path:
-  log: "wd/${tag}/log"
   dataset: 'data/clic'
   validation: 'data/clic_valtest/validation.torch'
   test: 'data/clic_valtest/test.torch'
-  train_config: "wd/${tag}/resulting_train_config.yaml"
-  tensorboard: "runs/${tag}"
-  state: "wd/${tag}/state.yaml"
-  state_old: "wd/${tag}/state_old.yaml"
-  checkpoint: "wd/${tag}/checkpoint.torch"
-  checkpoint_old: "wd/${tag}/checkpoint_old.torch"
-  best_model: "wd/${tag}/best_model.torch"
-  predict_csv: "wd/${tag}/prediction.csv"
+  run_path: 'wd/${tag}/${hash}'
+  log: "${path.run_path}/log"
+  train_config: "${path.run_path}/resulting_train_config.yaml"
+  tensorboard: "runs/${path.run_path}"
+  state: "${path.run_path}/state.yaml"
+  state_old: "${path.run_path}/state_old.yaml"
+  checkpoint: "${path.run_path}/checkpoint.torch"
+  checkpoint_old: "${path.run_path}/checkpoint_old.torch"
+  best_model: "${path.run_path}/best_model.torch"
+  predict_csv: "${path.run_path}/prediction.csv"
 seed: 0
 loader:
   xname: "ECAL"

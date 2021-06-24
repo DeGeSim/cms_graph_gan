@@ -2,6 +2,7 @@ import torch
 
 from .logger import logger
 
+
 def contains_nans(inp, string=""):
     if isinstance(inp, torch.Tensor):
         res = torch.any(torch.isnan(inp))
@@ -12,20 +13,20 @@ def contains_nans(inp, string=""):
         return contains_nans(inp.to_dict())
     elif hasattr(inp, "items"):
         for k, elem in inp.items():
-            res,string = contains_nans(elem, str(k) + " " + string)
+            res, string = contains_nans(elem, str(k) + " " + string)
             if res:
                 return (res, string)
         return (res, string)
     elif hasattr(inp, "__iter__"):
         for k, elem in enumerate(inp):
-            res,string = contains_nans(elem, str(k) + " " + string)
+            res, string = contains_nans(elem, str(k) + " " + string)
             if res:
                 return (res, string)
         return (res, string)
     elif isinstance(inp, (int, float)):
-        return((False,string))
+        return (False, string)
     elif inp is None:
-        return((False,string))
+        return (False, string)
     else:
         raise Exception
 

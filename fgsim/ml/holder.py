@@ -5,9 +5,9 @@ import torch
 from omegaconf import OmegaConf
 
 from ..config import conf, device
+from ..utils.check_for_nans import contains_nans
 from ..utils.count_parameters import count_parameters
 from ..utils.logger import logger
-from ..utils.check_for_nans import contains_nans
 
 # Import the specified model
 ModelClass = importlib.import_module(
