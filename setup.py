@@ -22,29 +22,22 @@ install_requirements = [
     "omegaconf",
     "pretty-errors",
     "prettytable",
-    #  "pybind11",
     "setuptools",
-    #  "torch",
+    "torch",
     "torch-geometric",
     "torch-sparse",
     "torch-scatter",
-    #  "torch==1.8.1",
-    #  "torchdata==0.2.0",
-    #  "torch-cluster==1.5.9",
-    #  "torch-geometric==1.7.0",
-    #  "torch-scatter==2.0.6",
-    #  "torch-sparse==0.6.9",
-    #  "torch-spline-conv==1.2.1",
-    #  "torchvision==0.9.1",
-    "tox",
+    "torch-spline-conv",
     "tqdm",
-    "uproot",
-    "uproot3",
     "h5py",
+    "comet-ml",
+    "tensorboard",
+    "toml",
 ]
 
 extras = {
     "test": [
+        "tox",
         "coverage",
         "flake8",
         "isort",
@@ -52,6 +45,7 @@ extras = {
         "pytest",
         "pytest-runner",
     ],
+    "code": ["pylint", "jedi", "rope"],
 }
 
 ext_modules = [
