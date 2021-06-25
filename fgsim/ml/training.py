@@ -3,24 +3,27 @@ import time
 from copy import deepcopy
 
 import torch
-from comet_ml import Experiment
 from omegaconf import OmegaConf
 from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
 
-from ..config import comet_conf, conf, device, hyperparametersD
+from ..cometml import get_experiment
+from ..config import conf, device
 from ..io.queued_dataset import QueuedDataLoader
 from ..utils.check_for_nans import check_chain_for_nans
 from ..utils.logger import logger
 from .holder import model_holder as holder
 
 # Create an experiment with your api key
-experiment = Experiment(**comet_conf)
-
-experiment.log_parameters(hyperparametersD)
+if hasattr(holder.state, "comet_experiment_key"):
+    experiment = get_experiment(holder.state.comet_experiment_key)
+else:
+    experiment = get_experiment("8e58f175c26e447aa87c9f988df3e99f")
+    holder.state.comet_experiment_key = experiment.get_key()
 
 
 writer = SummaryWriter(conf.path.tensorboard)
+experiment.set_model_graph(str(holder.model))
 
 
 def writelogs():

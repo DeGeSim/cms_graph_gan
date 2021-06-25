@@ -5,6 +5,7 @@ path:
   validation: 'data/clic_valtest/validation.torch'
   test: 'data/clic_valtest/test.torch'
   run_path: 'wd/${tag}/${hash}'
+  comet_exp_key: "${path.run_path}/comet_experiment_key"
   log: "${path.run_path}/log"
   train_config: "${path.run_path}/resulting_train_config.yaml"
   tensorboard: "runs/${path.run_path}"
