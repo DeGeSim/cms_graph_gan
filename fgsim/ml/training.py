@@ -8,7 +8,7 @@ from omegaconf import OmegaConf
 from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
 
-from ..config import comet_conf, conf, device, hyperparameters
+from ..config import comet_conf, conf, device, hyperparametersD
 from ..io.queued_dataset import QueuedDataLoader
 from ..utils.check_for_nans import check_chain_for_nans
 from ..utils.logger import logger
@@ -17,7 +17,7 @@ from .holder import model_holder as holder
 # Create an experiment with your api key
 experiment = Experiment(**comet_conf)
 
-experiment.log_parameters(hyperparameters)
+experiment.log_parameters(hyperparametersD)
 
 
 writer = SummaryWriter(conf.path.tensorboard)
