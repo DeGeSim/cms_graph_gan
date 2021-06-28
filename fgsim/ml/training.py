@@ -142,6 +142,7 @@ def training_procedure():
             ),
             start=holder.state.ibatch,
         ):
+            batch = batch.to(device)
             holder.state.model_start_time = time.time()
 
             training_step(batch)

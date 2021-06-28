@@ -82,12 +82,16 @@ class Pool_Step(StepBase):
 
                 try:
                     wkout = self.pool.map(self.workerfn, wkin_iter)
-                except Exception:
+                except Exception as ex:
                     logger.error(
                         f"{self.name} worker {name} failer on element"
                         + f" of type of type {type(wkin)}.\n\n{wkin}"
                     )
-                    exit(1)
+                    try:
+                        for e in wkin_iter:
+                            print(e)
+                    finally:
+                        raise ex
                 finally:
                     if wkin_iter.count > 200:
                         logger.warn(

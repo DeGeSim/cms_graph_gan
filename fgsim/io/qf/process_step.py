@@ -72,12 +72,15 @@ class Process_Step(StepBase):
             else:
                 try:
                     wkout = self.workerfn(wkin)
-                except Exception:
+                except Exception as ex:
                     logger.error(
                         f"{self.name} worker {name} failed "
                         + f"on element of type of type {type(wkin)}.\n\n{wkin}"
                     )
-                    raise Exception
+                    try:
+                        print(wkin)
+                    finally:
+                        raise ex
 
                 logger.debug(
                     f"{self.name} worker {name} push single "

@@ -82,9 +82,18 @@ class Sequence:
 
     def __start(self):
         logger.debug("Before Sequence Start\n" + str(self.flowstatus()))
+
         for seq_elem in self.__seq:
             if isinstance(seq_elem, StepBase):
                 seq_elem.start()
+        for step in self.__seq:
+            logger.debug(
+                (   
+                    step.name if hasattr(step, "name") else None,
+                    id(step.inq) if hasattr(step, "inq") else None,
+                    id(step.outq) if hasattr(step, "outq") else None,
+                )
+            )
         # Print the status of the queue once in while
         self.status_printer_thread = threading.Thread(
             target=self.printflowstatus, daemon=True

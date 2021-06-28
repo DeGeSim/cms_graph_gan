@@ -7,7 +7,7 @@ import torch
 import torch_geometric
 from torch.multiprocessing import Queue
 
-from ..config import conf, device
+from ..config import conf
 from ..geo.batch_stack import split_layer_subgraphs
 from ..geo.transform import transform
 from ..utils.logger import logger
@@ -21,11 +21,9 @@ from . import qf
 # Step 1
 def read_chunk(inp):
     file_path, chunk = inp
-    logger.debug(f"{pname()}: loading {file_path} chunk {chunk}")
     with h5.File(file_path) as h5_file:
         x_vector = h5_file[conf.loader.xname][chunk[0] : chunk[1]]
         y_vector = h5_file[conf.loader.yname][chunk[0] : chunk[1]]
-    logger.debug(f"{pname()}: done loading {file_path} chunk {chunk}")
     return (x_vector, y_vector)
 
 
@@ -67,13 +65,6 @@ split_layer_subgraphs_step = qf.Process_Step(
     split_layer_subgraphs, 1, name="split_layer_subgraphs"
 )
 
-
-def to_gpu(batch):
-    return batch.to(device)
-
-
-to_gpu_step = qf.Process_Step(to_gpu, 1, name="to_gpu")
-
 # Collect the steps
 process_seq = qf.Sequence(
     read_chunk_step,
@@ -88,8 +79,6 @@ process_seq = qf.Sequence(
     Queue(1),
     split_layer_subgraphs_step,
     Queue(conf.loader.prefetch_batches),
-    to_gpu_step,
-    Queue(1),
 )
 
 
