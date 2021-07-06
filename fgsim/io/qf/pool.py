@@ -1,15 +1,15 @@
 from collections.abc import Iterable
+from multiprocessing.queues import Empty
 
-import torch
-from torch import multiprocessing
+from torch import multiprocessing as mp
 
-from ...utils.count_iterations import Count_Iterations
+from ...utils.count_iterations import CountIterations
 from ...utils.logger import logger
 from .step_base import StepBase
 from .terminate_queue import TerminateQueue
 
 
-class Pool_Step(StepBase):
+class PoolStep(StepBase):
     """Class for simple processing steps pooled over multiple workes.
     Each incoming object is processed by a multiple subprocesses
     per worker into a single outgoing element."""
@@ -17,33 +17,29 @@ class Pool_Step(StepBase):
     def __init__(
         self,
         *args,
+        nworkers: int,
         **kwargs,
     ):
         # Spawn only one process with deamonize false that can spawn the Pool
         kwargs["deamonize"] = False
-        assert "nworkers" in kwargs, "Pool_Step needs nworkers argument"
 
         # Make sure the contructor of the base class only initializes
         # one process that manages the pool
-        self.n_pool_workers = kwargs["nworkers"]
+        self.n_pool_workers = nworkers
         kwargs["nworkers"] = 1
         super().__init__(*args, **kwargs)
 
     def start(self):
-        # enable restarting
-        exitcodes = [process.exitcode for process in self.processes]
-        assert all([code == 0 for code in exitcodes]) or all(
-            [code is None for code in exitcodes]
-        )
-        if all([code == 0 for code in exitcodes]):
-            # Restart the processes
-            self.processes = [
-                multiprocessing.Process(target=self._worker) for _ in range(1)
-            ]
-
         for p in self.processes:
             p.daemon = self.deamonize
             p.start()
+
+    def stop(self):
+        for p in self.processes:
+            p.join(60)
+            if p.exitcode is None:
+                raise RuntimeError
+        self._close_queues()
 
     def process_status(self):
         return (
@@ -51,61 +47,79 @@ class Pool_Step(StepBase):
             self.n_pool_workers,
         )
 
+    def propagete_error(self, element, error=Exception):
+        workermsg = f"""{self.workername} failed on element of type {type(element)}."""
+        self.error_queue.put((workermsg, element, error))
+
     def _worker(self):
-        name = multiprocessing.current_process().name
+        self.set_workername()
         logger.info(
-            f"{self.name} pool ({name}) initalizing with {self.n_pool_workers} subprocesses"
+            f"{self.workername} pool  initalizing with {self.n_pool_workers} subprocesses"
         )
-        self.pool = multiprocessing.Pool(self.n_pool_workers)
+        self.pool = mp.Pool(self.n_pool_workers)
+
         while True:
+            if self.shutdown_event.is_set():
+                break
+            try:
+                wkin = self.inq.get(block=True, timeout=0.005)
+            except Empty:
+                continue
             logger.debug(
-                f"{self.name} worker {name} reading from input queue {id(self.inq)}."
+                f"""{self.workername} working on {id(wkin)} of type {type(wkin)} from queue {id(self.inq)}."""
             )
-            wkin = self.inq.get()
-            if isinstance(wkin, torch.Tensor):
-                wkin = wkin.clone()
+            wkin = self._clone_tensors(wkin)
             # If the process gets a TerminateQueue object,
             # it terminates the pool and and puts the terminal element in
             # in the outgoing queue.
             if isinstance(wkin, TerminateQueue):
-                logger.info(f"{self.name} Worker {name} terminating")
+                logger.info(f"{self.workername} terminating")
                 self.outq.put(TerminateQueue())
                 self.pool.terminate()
                 break
             else:
                 assert isinstance(wkin, Iterable)
                 logger.debug(
-                    f"{self.name} worker {name} got element"
+                    f"{self.workername} got element"
                     + f" {id(wkin)} of element type {type(wkin)}."
                 )
-                wkin_iter = Count_Iterations(wkin)
+                wkin_iter = CountIterations(wkin)
 
                 try:
-                    wkout = self.pool.map(self.workerfn, wkin_iter)
-                except Exception as ex:
-                    logger.error(
-                        f"{self.name} worker {name} failer on element"
-                        + f" of type of type {type(wkin)}.\n\n{wkin}"
+                    wkout_async_res = self.pool.map_async(
+                        self.workerfn, wkin_iter, error_callback=self.propagete_error
                     )
-                    try:
-                        for e in wkin_iter:
-                            print(e)
-                    finally:
-                        raise ex
+                    while True:
+                        if wkout_async_res.ready():
+                            wkout = wkout_async_res.get()
+                            break
+                        elif self.shutdown_event.is_set():
+                            break
+                        wkout_async_res.wait(1)
+                    if self.shutdown_event.is_set():
+                        break
+
+                except Exception as error:
+                    self.propagete_error(wkin, error)
+                    break
                 finally:
                     if wkin_iter.count > 200:
                         logger.warn(
-                            f"""Giving large iterables ({wkin_iter.count})
+                            f"""\
+Giving large iterables ({wkin_iter.count})\
 to a worker can lead to crashes.
-Lower the number here if you see an error like
+Lower the number here if you see an error like \
 'RuntimeError: unable to mmap x bytes from file </torch_x>:
 Cannot allocate memory'"""
                         )
                 logger.debug(
-                    f"{self.name} push pool output list {id(wkout)}"
-                    + f"  with element type {type(wkin)} into output queue {id(self.outq)}."
+                    f"""\
+{self.workername} push pool output list {id(wkout)} with \
+element type {type(wkin)} into output queue {id(self.outq)}."""
                 )
                 self.outq.put(wkout)
                 del wkin_iter
                 del wkin
+        self.pool.close()
         self.pool.terminate()
+        self._close_queues()

@@ -1,9 +1,6 @@
 import torch
-import torch_geometric
 
 from ..config import conf
-
-# from ..utils.logger import logger
 
 
 def split_layer_subgraphs(batch):
@@ -167,70 +164,70 @@ def edge_index_on_subgraph(edge_index, node_mask_from, node_mask_to):
     return (node_mask_input, node_mask_output, shifted_edge_index)
 
 
-# Test
-# Stack Graph 0--1--2--3
-# In layers   0  1  1  2
+# # Test
+# # Stack Graph 0--1--2--3
+# # In layers   0  1  1  2
 
-g = torch_geometric.data.Data(
-    x=torch.tensor([[1], [2], [3], [4]]),
-    edge_index=torch.tensor(
-        [
-            [0, 1, 1, 2, 2, 3],
-            [1, 0, 2, 1, 3, 2],
-        ]
-    ),
-)
-g.layers = torch.tensor([0, 1, 1, 2])
+# g = torch_geometric.data.Data(
+#     x=torch.tensor([[1], [2], [3], [4]]),
+#     edge_index=torch.tensor(
+#         [
+#             [0, 1, 1, 2, 2, 3],
+#             [1, 0, 2, 1, 3, 2],
+#         ]
+#     ),
+# )
+# g.layers = torch.tensor([0, 1, 1, 2])
 
-g = split_layer_subgraphs(g)
+# g = split_layer_subgraphs(g)
 
-# check the masks
-for ilayer in range(conf.nlayers):
-    for direction in ("forward", "inner", "backward"):
-        for in_or_out in ("inp", "outp"):
-            mask = getattr(g, f"mask_{in_or_out}_{direction}L")[ilayer]
-            if in_or_out == "inp":
-                if direction == "inner":
-                    assert torch.equal(mask, g.layers == ilayer)
-                if direction == "forward":
-                    assert torch.equal(
-                        mask, (g.layers == ilayer) | (g.layers == ilayer + 1)
-                    )
-                if direction == "backward":
-                    assert torch.equal(
-                        mask, (g.layers == ilayer) | (g.layers == ilayer - 1)
-                    )
-            if in_or_out == "outp":
-                if direction == "inner":
-                    assert torch.equal(mask, (g.layers == ilayer)[(g.layers == ilayer)])
-                if direction == "forward":
-                    assert torch.equal(
-                        mask,
-                        (g.layers == ilayer + 1)[
-                            (g.layers == ilayer) | (g.layers == ilayer + 1)
-                        ],
-                    )
-                if direction == "backward":
-                    assert torch.equal(
-                        mask,
-                        (g.layers == ilayer - 1)[
-                            (g.layers == ilayer - 1) | (g.layers == ilayer)
-                        ],
-                    )
+# # check the masks
+# for ilayer in range(conf.nlayers):
+#     for direction in ("forward", "inner", "backward"):
+#         for in_or_out in ("inp", "outp"):
+#             mask = getattr(g, f"mask_{in_or_out}_{direction}L")[ilayer]
+#             if in_or_out == "inp":
+#                 if direction == "inner":
+#                     assert torch.equal(mask, g.layers == ilayer)
+#                 if direction == "forward":
+#                     assert torch.equal(
+#                         mask, (g.layers == ilayer) | (g.layers == ilayer + 1)
+#                     )
+#                 if direction == "backward":
+#                     assert torch.equal(
+#                         mask, (g.layers == ilayer) | (g.layers == ilayer - 1)
+#                     )
+#             if in_or_out == "outp":
+#                 if direction == "inner":
+#                     assert torch.equal(mask, (g.layers == ilayer)[(g.layers == ilayer)])
+#                 if direction == "forward":
+#                     assert torch.equal(
+#                         mask,
+#                         (g.layers == ilayer + 1)[
+#                             (g.layers == ilayer) | (g.layers == ilayer + 1)
+#                         ],
+#                     )
+#                 if direction == "backward":
+#                     assert torch.equal(
+#                         mask,
+#                         (g.layers == ilayer - 1)[
+#                             (g.layers == ilayer - 1) | (g.layers == ilayer)
+#                         ],
+#                     )
 
 
-empty_edge_index = torch.tensor([[], []], dtype=torch.int64)
+# empty_edge_index = torch.tensor([[], []], dtype=torch.int64)
 
-assert torch.equal(g.forward_edges_per_layer[0], torch.tensor([[0], [1]]))
-assert torch.equal(g.forward_edges_per_layer[1], torch.tensor([[1], [2]]))
-assert torch.equal(g.forward_edges_per_layer[2], empty_edge_index)
+# assert torch.equal(g.forward_edges_per_layer[0], torch.tensor([[0], [1]]))
+# assert torch.equal(g.forward_edges_per_layer[1], torch.tensor([[1], [2]]))
+# assert torch.equal(g.forward_edges_per_layer[2], empty_edge_index)
 
-assert torch.equal(g.inner_edges_per_layer[0], empty_edge_index)
-assert torch.equal(g.inner_edges_per_layer[1], torch.tensor([[0, 1], [1, 0]]))
-assert torch.equal(g.inner_edges_per_layer[2], empty_edge_index)
+# assert torch.equal(g.inner_edges_per_layer[0], empty_edge_index)
+# assert torch.equal(g.inner_edges_per_layer[1], torch.tensor([[0, 1], [1, 0]]))
+# assert torch.equal(g.inner_edges_per_layer[2], empty_edge_index)
 
-assert torch.equal(g.backward_edges_per_layer[0], empty_edge_index)
-assert torch.equal(g.backward_edges_per_layer[1], torch.tensor([[1], [0]]))
-assert torch.equal(g.backward_edges_per_layer[2], torch.tensor([[2], [1]]))
+# assert torch.equal(g.backward_edges_per_layer[0], empty_edge_index)
+# assert torch.equal(g.backward_edges_per_layer[1], torch.tensor([[1], [0]]))
+# assert torch.equal(g.backward_edges_per_layer[2], torch.tensor([[2], [1]]))
 
-assert g.layermask.long().sum() == len(g.x)
+# assert g.layermask.long().sum() == len(g.x)

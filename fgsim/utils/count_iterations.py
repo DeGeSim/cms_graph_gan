@@ -1,4 +1,4 @@
-class Count_Iterations:
+class CountIterations:
     def __init__(self, iterable):
         self.iterator = iter(iterable)
         self.completed = False

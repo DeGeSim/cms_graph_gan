@@ -1,8 +1,8 @@
-from torch import multiprocessing
+from torch import multiprocessing as mp
 
 from .pack import PackStep, RepackStep, UnpackStep
-from .pool import Pool_Step
-from .process_step import Process_Step
+from .pool import PoolStep
+from .process_step import ProcessStep
 from .sequence import Sequence
 
 # Two recommendations by
@@ -18,7 +18,7 @@ from .sequence import Sequence
 
 # Make it work ()
 # import resource
-multiprocessing.set_sharing_strategy("file_system")
+mp.set_sharing_strategy("file_system")
 
 # Reworked according to the recommendations in
 # https://pytorch.org/docs/stable/multiprocessing.html
@@ -51,9 +51,6 @@ __all__ = ["pack", "process_step", "sequence", "pool"]
 # def printqueue(inp):
 #     print_with_lock(inp)
 #     return inp
-
-
-# print("Starting queue example")
 
 # process_seq = Sequence(
 #     Pack_Step(8),

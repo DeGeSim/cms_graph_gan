@@ -9,6 +9,7 @@
 		"python.pythonPath": ".tox/py38/bin/python3",
 		"python.formatting.blackPath": "~/.apps/pyenv/shims/black",
 		"python.linting.flake8Path": "~/.apps/pyenv/shims/flake8",
+		"python.linting.mypyEnabled": true,
 		"python.linting.pylintArgs": [
 			"--generated-members=numpy.* ,torch.*",
 			"--disable=E0402,C0116,logging-fstring-interpolation",
@@ -47,6 +48,18 @@
 		"version": "0.2.0",
 		"configurations": [
 			{
+				"name": "t forward-lin",
+				"type": "python",
+				"request": "launch",
+				"module": "fgsim",
+				"args": [
+					"--tag",
+					"forward_lin",
+					// "--debug",
+					"train",
+				]
+			},
+			{
 				"name": "t msgpass",
 				"type": "python",
 				"request": "launch",
@@ -58,14 +71,14 @@
 				]
 			},
 			{
-				"name": "train",
+				"name": "t forward",
 				"type": "python",
 				"request": "launch",
 				"module": "fgsim",
 				"args": [
 					"--tag",
-					"`ls ~/fgsim/wd | fzf`",
-					// "--debug",
+					"forward_sgd",
+					"--debug",
 					"train",
 				]
 			},
@@ -86,8 +99,6 @@
 				"request": "launch",
 				"module": "fgsim",
 				"args": [
-					"--tag",
-					"`ls ~/fgsim/wd | fzf`",
 					"loadfile",
 					"${file}",
 				]

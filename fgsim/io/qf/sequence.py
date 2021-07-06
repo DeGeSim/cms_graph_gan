@@ -1,9 +1,10 @@
 import threading
 import time
+from multiprocessing.queues import Empty
 from multiprocessing.queues import Queue as queues_class
 
 from prettytable import PrettyTable
-from torch import multiprocessing
+from torch import multiprocessing as mp
 
 from ...config import conf
 from ...utils.logger import logger
@@ -13,11 +14,30 @@ from .terminate_queue import TerminateQueue
 
 
 class Sequence:
+    """
+    Initialize with a sequence of qf steps (ProcessStep, PoolStep, RePack, Pack).
+    Iterables a given into this sequence with the `queue_iterable` function.
+    Processes the steps sequentially, iterating over instances of this class will
+    yield the outpus as soon as available.
+
+    BUG: If torch_geometric batches are passed from one process to another,
+     the subprocesses recieving the batch will crash hard under the following conditions:
+     - This class is initialized more than one time.
+     - The machine has CUDA not available.
+     The for the process reading the batches from the queue the tensors of the batch will be
+     printable and accessing single element (eg `batch.x[0][0]+1`) will be possible,
+     but `batch.x.clone()` or `batch.x + 1` will lead to a crash.
+     This problem may or may not go way by spawning the subprocesses instead of forking them,
+     as recommended in the torch.multiprocessing package.
+    """
+
     def __init__(self, *seq):
         self.__iterables_queued = False
         self._started = False
         self.__seq = [InputStep(), *seq, OutputStep()]
 
+        self.shutdown_event = mp.Event()
+        self.error_queue = mp.Queue()
         # Chain the processes and queues
 
         for elem in self.__seq:
@@ -29,29 +49,49 @@ class Sequence:
                 if not isinstance(self.__seq[i + 1], queues_class):
                     # Allow the InputQueue to be infinitly big
                     if isinstance(self.__seq[i], InputStep):
-                        new_queue = multiprocessing.Queue()
+                        new_queue = mp.Queue()
                     # Standard for all other steps
                     else:
-                        new_queue = multiprocessing.Queue(1)
+                        new_queue = mp.Queue(1)
                     self.__seq.insert(i + 1, new_queue)
             i += 1
         for i, elem in enumerate(self.__seq):
             if i % 2 == 0:
                 continue
             assert isinstance(elem, queues_class)
-        # Connect the queues
-        for i in range(len(self.__seq)):
-            if isinstance(self.__seq[i], queues_class):
-                # Make sure we are not connecting queues with each other
-                assert isinstance(self.__seq[i + 1], (StepBase, OutputStep))
-                assert isinstance(self.__seq[i - 1], (StepBase, InputStep))
-                # Connect output of the previous process step to the current pipe
-                self.__seq[i - 1].outq = self.__seq[i]
-                self.__seq[i + 1].inq = self.__seq[i]
 
-        # Make the sequence of queues accessable
         self.queues = [q for q in self.__seq if isinstance(q, queues_class)]
         self.steps = [p for p in self.__seq if isinstance(p, StepBase)]
+        # Connect the input:
+        self.__seq[0].outq = self.__seq[1]
+        # Connect the output:
+        self.__seq[-1].inq = self.__seq[-2]
+        # Set up the processes
+        for i, step in enumerate(self.__seq):
+            if not isinstance(step, StepBase):
+                continue
+            step.connect_to_sequence(
+                input_queue=self.__seq[i - 1],
+                output_queue=self.__seq[i + 1],
+                error_queue=self.error_queue,
+                shutdown_event=self.shutdown_event,
+            )
+
+        # make sure everything is connected properly
+        for i in range(len(self.__seq) - 1):
+            if isinstance(self.__seq[i], queues_class):
+                continue
+            assert self.__seq[i].outq is self.__seq[i + 2].inq
+            assert self.__seq[i].outq is self.__seq[i + 1]
+
+            # Print the status of the queue once in while
+        self.status_printer_thread = threading.Thread(
+            target=self.printflowstatus, daemon=True
+        )
+        # Print the status of the queue once in while
+        self.error_queue_thread = threading.Thread(
+            target=self.read_error_queue, daemon=True
+        )
 
     def __iter__(self):
         return self
@@ -70,9 +110,12 @@ class Sequence:
         except StopIteration:
             logger.debug("Sequence: Stop Iteration encountered.")
             self.__iterables_queued -= 1
-            self.__stop()
+            self.shutdown_event.set()
+            self._stop()
             for queue in self.queues:
-                assert queue.empty()
+                if queue._closed:
+                    continue
+                assert queue.empty(), "Some queue is not empty."
             self._started = False
             raise StopIteration
 
@@ -88,40 +131,64 @@ class Sequence:
                 seq_elem.start()
         for step in self.__seq:
             logger.debug(
-                (   
+                (
                     step.name if hasattr(step, "name") else None,
                     id(step.inq) if hasattr(step, "inq") else None,
                     id(step.outq) if hasattr(step, "outq") else None,
                 )
             )
-        # Print the status of the queue once in while
-        self.status_printer_thread = threading.Thread(
-            target=self.printflowstatus, daemon=True
-        )
-        self.stop_printer_thread = False
+
         self.status_printer_thread.start()
+        self.error_queue_thread.start()
+
         return self
 
-    def __stop(self):
+    def _stop(self):
         logger.debug("Before Sequence Stop\n" + str(self.flowstatus()))
+        self.shutdown_event.set()
+
         for step in self.steps:
             step.stop()
-        self.stop_printer_thread = True
-        self.status_printer_thread.join()
+        
+        self.queues[1].close()
+        self.queues[1].join_thread()
+        self.queues[-1].close()
+        self.queues[-1].join_thread()
+        self.error_queue.close()
+        self.error_queue.join_thread()
+        self.error_queue_thread.join()
 
     def drain_seq(self):
+        logger.warning("qf Sequence is being drained.")
         terminal_pos = -1
         while terminal_pos < len(self.queues) - 1:
             for iqueue in range(terminal_pos + 1, len(self.queues)):
                 queue = self.queues[iqueue]
-                while not queue.empty():
+                while not queue._closed and not queue.empty():
                     out = queue.get()
                     if isinstance(out, TerminateQueue):
                         terminal_pos = iqueue
                         queue.put(TerminateQueue())
+                        queue.close()
+                        queue.join_thread()
                         continue
-        self.__stop()
+        self._stop()
         logger.debug("\n" + str(self.flowstatus()))
+
+    def read_error_queue(self):
+        threading.current_thread().setName("readErrorQueue")
+        while not self.shutdown_event.is_set():
+            try:
+                workermsg, wkin, error = self.error_queue.get(block=True, timeout=0.005)
+                # If there is an error, stop eveything
+                self.shutdown_event.set()
+                logger.error(workermsg)
+                try:
+                    logger.error(wkin)
+                finally:
+                    raise error
+            except Empty:
+                continue
 
     def queue_status(self):
         return [
@@ -170,9 +237,10 @@ class Sequence:
         return table
 
     def printflowstatus(self):
+        threading.current_thread().setName("flowstatusPrinter")
         oldflowstatus = ""
         sleeptime = 5 if conf.debug else 10
-        while not getattr(self, "stop_printer_thread", True):
+        while not self.shutdown_event.is_set():
             newflowstatus = str(self.flowstatus())
             if newflowstatus != oldflowstatus:
                 logger.info("\n" + newflowstatus)

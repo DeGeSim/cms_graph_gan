@@ -1,5 +1,6 @@
 import torch
 from torch import multiprocessing as mp
+
 from .terminate_queue import TerminateQueue
 
 # def to_gpu_fct(workername, inq, outq, device, TerminateQueue, logger):

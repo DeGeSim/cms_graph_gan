@@ -1,4 +1,4 @@
-from torch import multiprocessing
+from torch import multiprocessing as mp
 
 from ...utils.logger import logger
 from .terminate_queue import TerminateQueue
@@ -7,8 +7,9 @@ from .terminate_queue import TerminateQueue
 class InputStep:
     """Internal class to read in the iterable into a the first queue"""
 
-    def __init__(self, outq=multiprocessing.Queue()):
+    def __init__(self, outq=mp.Queue()):
         self.outq = outq
+        self.name = "input step"
 
     def queue_iterable(self, iterable_object):
         assert hasattr(iterable_object, "__iter__")
@@ -21,9 +22,11 @@ class InputStep:
 
 
 class OutputStep:
-    # Ag generator reads from the queue
-    def __init__(self, inq=multiprocessing.Queue()):
+    """Internal generator class to returning the outputs from the last queue."""
+
+    def __init__(self, inq=mp.Queue()):
         self.inq = inq
+        self.name = "output step"
 
     def start(self):
         pass

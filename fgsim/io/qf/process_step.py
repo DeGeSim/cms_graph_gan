@@ -1,15 +1,15 @@
 import time
 from multiprocessing import sharedctypes
+from multiprocessing.queues import Empty
 
-import torch
-from torch import multiprocessing
+from torch import multiprocessing as mp
 
 from ...utils.logger import logger
 from .step_base import StepBase
 from .terminate_queue import TerminateQueue
 
 
-class Process_Step(StepBase):
+class ProcessStep(StepBase):
     """Class for simple processing steps.
     Each incoming object is processed by a
     single worker into a single outgoing element."""
@@ -20,71 +20,94 @@ class Process_Step(StepBase):
         **kwargs,
     ):
         super().__init__(*args, **kwargs)
-        self.running_processes_counter = multiprocessing.Value(
-            sharedctypes.ctypes.c_uint
-        )
+        self.running_processes_counter = mp.Value(sharedctypes.ctypes.c_uint)
         with self.running_processes_counter.get_lock():
             self.running_processes_counter.value = 0
-        self.first_to_finish_lock = multiprocessing.RLock()
+        self.first_to_finish_lock = mp.RLock()
+
+    def _terminate(self, workername):
+        logger.info(f"{workername}  trying to terminate")
+        # Tell the other workers, that you are finished
+        with self.running_processes_counter.get_lock():
+            self.running_processes_counter.value -= 1
+
+        # Put the terminal element back in the input queue
+        self.inq.put(TerminateQueue())
+
+        # Make the first worker to reach the terminal element
+        # aquires the lock and waits for the other processes
+        # processes to finish and  reduce the number of running processes to 0
+        # then it moves the terminal object from the incoming queue to the
+        # outgoing one and exits.
+        if self.first_to_finish_lock.acquire(block=False):
+            logger.info(
+                f"{workername} first to encounter"
+                f" Terminal element, waiting for the other processes."
+            )
+            while True:
+                with self.running_processes_counter.get_lock():
+                    if self.running_processes_counter.value == 0:
+                        break
+                time.sleep(0.01)
+            # Get the remaining the terminal element from the input queue
+            self.inq.get()
+            self.outq.put(TerminateQueue())
+
+            logger.info(f"{workername} put terminal element in outq.")
+            self.first_to_finish_lock.release()
+        self._close_queues()
+        logger.info(f"{workername} terminating")
+
+    # def _debugtarget(self):
+    #     return "do_nothing1" in self.workername and (
+    #         int(self.workername.split("-")[-1]) > 38
+    #     )
+    #     if self._debugtarget():
+    #         logger.setLevel(10)
 
     def _worker(self):
-        name = multiprocessing.current_process().name
-        logger.info(f"{self.name} {name} start working")
+        self.set_workername()
+
+        logger.info(f"{self.workername} start working")
         with self.running_processes_counter.get_lock():
             self.running_processes_counter.value += 1
+
+        logger.debug(f"{self.workername} reading from input queue {id(self.inq)}.")
         while True:
+            if self.shutdown_event.is_set():
+                break
+            try:
+                wkin = self.inq.get(block=True, timeout=0.005)
+            except Empty:
+                continue
             logger.debug(
-                f"{self.name} worker {name} reading from input queue {id(self.inq)}."
-            )
-            wkin = self.inq.get()
-            if isinstance(wkin, torch.Tensor):
-                wkin = wkin.clone()
-            logger.debug(
-                f"{self.name} worker {name} working on {id(wkin)} of type {type(wkin)}."
+                f"""{self.workername} working on {id(wkin)} of type {type(wkin)} from queue {id(self.inq)}."""
             )
             # If the process gets the terminate_queue object,
             # wait for the others and put it in the next queue
             if isinstance(wkin, TerminateQueue):
-                logger.info(f"{self.name} Worker {name} terminating")
-                # Tell the other workers, that you are finished
-                with self.running_processes_counter.get_lock():
-                    self.running_processes_counter.value -= 1
-
-                # Put the terminal element back in the input queue
-                self.inq.put(TerminateQueue())
-
-                # Make the first worker to reach the terminal element
-                # aquires the lock and waits for the other processes
-                # processes to finish and  reduce the number of running processes to 0
-                # then it moves the terminal object from the incoming queue to the
-                # outgoing one and exits.
-                if self.first_to_finish_lock.acquire(block=False):
-                    while True:
-                        with self.running_processes_counter.get_lock():
-                            if self.running_processes_counter.value == 0:
-                                break
-                        time.sleep(0.01)
-                    # Get the remaining the terminal element from the input queue
-                    self.inq.get()
-                    self.outq.put(TerminateQueue())
-                    self.first_to_finish_lock.release()
                 break
-            else:
-                try:
-                    wkout = self.workerfn(wkin)
-                except Exception as ex:
-                    logger.error(
-                        f"{self.name} worker {name} failed "
-                        + f"on element of type of type {type(wkin)}.\n\n{wkin}"
-                    )
-                    try:
-                        print(wkin)
-                    finally:
-                        raise ex
+                # We need to overwrite the method of cloning the batches
+                # because we have list of tensors as attibutes of the batch.
+                # If copy.deepcopy is called on this object
+            wkin = self._clone_tensors(wkin)
 
-                logger.debug(
-                    f"{self.name} worker {name} push single "
-                    + f"output of type {type(wkout)} into output queue {id(self.outq)}."
+            try:
+                wkout = self.workerfn(wkin)
+
+            # Catch Errors in the worker function
+            except Exception as error:
+                workermsg = (
+                    f"{self.workername} failed "
+                    f"on element of type of type {type(wkin)}.\n\n{wkin}"
                 )
-                self.outq.put(wkout)
-                del wkin
+                self.error_queue.put((workermsg, wkin, error))
+                break
+
+            logger.debug(
+                f"{self.workername} push single "
+                + f"output of type {type(wkout)} into output queue {id(self.outq)}."
+            )
+            self.outq.put(wkout)
+            del wkin
+        self._terminate(self.workername)
