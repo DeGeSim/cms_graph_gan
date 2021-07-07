@@ -20,7 +20,7 @@ def setup_experiment_and_writer():
     if hasattr(model_holder.state, "comet_experiment_key"):
         experiment = get_experiment(model_holder.state.comet_experiment_key)
     else:
-        experiment = get_experiment("8e58f175c26e447aa87c9f988df3e99f")
+        experiment = get_experiment()
         model_holder.state.comet_experiment_key = experiment.get_key()
 
     writer = SummaryWriter(conf.path.tensorboard)
