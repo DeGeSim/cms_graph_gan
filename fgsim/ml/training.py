@@ -7,7 +7,7 @@ from omegaconf import OmegaConf
 from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
 
-from ..cometml import get_experiment
+from ..cometml import Experiment, comet_conf, get_experiment
 from ..config import conf, device
 from ..io.queued_dataset import QueuedDataLoader
 from ..utils.check_for_nans import check_chain_for_nans
@@ -20,7 +20,7 @@ def setup_experiment_and_writer():
     if hasattr(model_holder.state, "comet_experiment_key"):
         experiment = get_experiment(model_holder.state.comet_experiment_key)
     else:
-        experiment = get_experiment()
+        experiment = Experiment(**comet_conf)
         model_holder.state.comet_experiment_key = experiment.get_key()
 
     writer = SummaryWriter(conf.path.tensorboard)
@@ -40,11 +40,11 @@ def writelogs():
         times[itime] - times[itime - 1] for itime in range(1, len(times))
     ]
     timesD = {
-            "iotime": iotime,
-            "traintime": traintime,
-            "valtime": valtime,
-            "esttime": esttime,
-        }
+        "iotime": iotime,
+        "traintime": traintime,
+        "valtime": valtime,
+        "esttime": esttime,
+    }
 
     model_holder.writer.add_scalars(
         "times",
@@ -67,11 +67,9 @@ def writelogs():
     )
 
 
-from torch.profiler import profile, record_function, ProfilerActivity
-
-
 def training_step(batch):
     model_holder.optim.zero_grad()
+    # from torch.profiler import ProfilerActivity, profile, record_function
     # logger.warning('Starting profiling.')
 
     # with profile(
@@ -99,6 +97,7 @@ def validate():
             batch = batch.to(device)
             prediction = torch.squeeze(model_holder.model(batch).T)
             losses.append(model_holder.lossf(prediction, batch.y.float()))
+
         mean_loss = torch.mean(torch.tensor(losses))
         model_holder.state.val_losses.append(float(mean_loss))
 
@@ -211,6 +210,6 @@ def training_procedure():
             model_holder.save_checkpoint()
             model_holder.save_best_model()
     except Exception as error:
-        logger.error('Error detected, stopping qfseq.')
+        logger.error("Error detected, stopping qfseq.")
         model_holder.loader.qfseq._stop()
         raise error
