@@ -29,16 +29,26 @@ def setup_experiment_and_writer():
 
 
 def writelogs():
+    times = [
+        model_holder.state.batch_start_time,
+        model_holder.state.time_io_done,
+        model_holder.state.time_training_done,
+        model_holder.state.time_validation_done,
+        model_holder.state.time_early_stopping_done,
+    ]
+    (iotime, traintime, valtime, esttime) = [
+        times[itime] - times[itime - 1] for itime in range(1, len(times))
+    ]
+    timesD = {
+            "iotime": iotime,
+            "traintime": traintime,
+            "valtime": valtime,
+            "esttime": esttime,
+        }
+
     model_holder.writer.add_scalars(
         "times",
-        {
-            "batch_start_time": model_holder.state.batch_start_time
-            - model_holder.state.global_start_time,
-            "model_start_time": model_holder.state.model_start_time
-            - model_holder.state.global_start_time,
-            "batchtotal": model_holder.state.saving_start_time
-            - model_holder.state.global_start_time,
-        },
+        timesD,
         model_holder.state["grad_step"],
     )
     model_holder.writer.add_scalar(
@@ -47,14 +57,7 @@ def writelogs():
     model_holder.writer.flush()
 
     model_holder.experiment.log_metrics(
-        dic={
-            "batch_start_time": model_holder.state.batch_start_time
-            - model_holder.state.global_start_time,
-            "model_start_time": model_holder.state.model_start_time
-            - model_holder.state.global_start_time,
-            "batchtotal": model_holder.state.saving_start_time
-            - model_holder.state.global_start_time,
-        },
+        dic=timesD,
         prefix="times",
         step=model_holder.state.grad_step,
         epoch=model_holder.state.epoch,
@@ -64,18 +67,24 @@ def writelogs():
     )
 
 
+from torch.profiler import profile, record_function, ProfilerActivity
+
+
 def training_step(batch):
     model_holder.optim.zero_grad()
-    with torch.profiler.profile(
-        activities=[
-            torch.profiler.ProfilerActivity.CPU,
-        ],
-        profile_memory=True, record_shapes=True
-    ) as prof:
-        output = model_holder.model(batch)
-    
-    print(prof.key_averages().table(sort_by="cpu_memory_usage"))
-    exit(0)
+    # logger.warning('Starting profiling.')
+
+    # with profile(
+    #     activities=[ProfilerActivity.CPU, ProfilerActivity.CUDA],
+    #     profile_memory=True,
+    #     record_shapes=True,
+    # ) as prof:
+    output = model_holder.model(batch)
+    # logger.warning('Profiling done.')
+
+    # print(prof.key_averages().table(sort_by="cpu_memory_usage"))
+    # print(prof.key_averages().table(sort_by="cuda_memory_usage"))
+    # exit(0)
     prediction = torch.squeeze(output.T)
     model_holder.loss = model_holder.lossf(prediction, batch.y.float())
     model_holder.loss.backward()
@@ -156,7 +165,6 @@ def training_procedure():
     # Initialize the training
     # switch model in training mode
     model_holder.model.train()
-    model_holder.state.global_start_time = time.time()
     model_holder.loader = QueuedDataLoader()
     model_holder.writer, model_holder.experiment = setup_experiment_and_writer()
     try:
@@ -166,10 +174,9 @@ def training_procedure():
         ):
             # Iterate over the batches
             model_holder.state.batch_start_time = time.time()
-            model_holder.state.saving_start_time = time.time()
             model_holder.loader.queue_epoch(
-                        n_skip_events=model_holder.state.processed_events
-                    ),
+                n_skip_events=model_holder.state.processed_events
+            ),
             for model_holder.state.ibatch, batch in enumerate(
                 tqdm(
                     model_holder.loader,
@@ -178,18 +185,22 @@ def training_procedure():
                 start=model_holder.state.ibatch,
             ):
                 batch = batch.to(device)
-                model_holder.state.model_start_time = time.time()
+                model_holder.state.time_io_done = time.time()
 
                 training_step(batch)
-                
-                model_holder.state.saving_start_time = time.time()
+
+                model_holder.state.time_training_done = time.time()
 
                 # save the generated torch tensor models to disk
                 validate()
 
-                writelogs()
+                model_holder.state.time_validation_done = time.time()
 
                 early_stopping()
+
+                model_holder.state.time_early_stopping_done = time.time()
+
+                writelogs()
 
                 # preparatoin for next step
                 model_holder.state.processed_events += conf.loader.batch_size
@@ -200,5 +211,6 @@ def training_procedure():
             model_holder.save_checkpoint()
             model_holder.save_best_model()
     except Exception as error:
+        logger.error('Error detected, stopping qfseq.')
         model_holder.loader.qfseq._stop()
         raise error
