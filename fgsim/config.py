@@ -12,7 +12,10 @@ from .utils.cli import args
 def get_device():
 
     if torch.cuda.is_available():
-        dev = torch.device("cuda")
+        if torch.cuda.device_count()>1:
+            dev = torch.device("cuda:"+str(torch.cuda.device_count()-1))
+        else:
+            dev = torch.device("cuda")
     else:
         dev = torch.device("cpu")
     return dev
