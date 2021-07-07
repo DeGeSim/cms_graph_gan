@@ -133,6 +133,7 @@ class RepackStep(StepBase):
             )
             self.outq.put(self.collected_elements)
         logger.info(f"{self.workername} terminating")
+        self.outq.put(TerminateQueue())
         self._close_queues()
 
     def _worker(self):

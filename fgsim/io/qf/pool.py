@@ -86,18 +86,19 @@ class PoolStep(StepBase):
                 wkin_iter = CountIterations(wkin)
 
                 try:
-                    wkout_async_res = self.pool.map_async(
-                        self.workerfn, wkin_iter, error_callback=self.propagete_error
-                    )
-                    while True:
-                        if wkout_async_res.ready():
-                            wkout = wkout_async_res.get()
-                            break
-                        elif self.shutdown_event.is_set():
-                            break
-                        wkout_async_res.wait(1)
-                    if self.shutdown_event.is_set():
-                        break
+                    # wkout_async_res = self.pool.map_async(
+                    #     self.workerfn, wkin_iter,
+                    # )
+                    # while True:
+                    #     if wkout_async_res.ready():
+                    #         wkout = wkout_async_res.get()
+                    #         break
+                    #     elif self.shutdown_event.is_set():
+                    #         break
+                    #     wkout_async_res.wait(1)
+                    # if self.shutdown_event.is_set():
+                    #     break
+                    wkout = self.pool.map(self.workerfn, wkin_iter)
 
                 except Exception as error:
                     self.propagete_error(wkin, error)
