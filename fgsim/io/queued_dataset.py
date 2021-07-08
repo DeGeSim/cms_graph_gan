@@ -7,7 +7,7 @@ import torch
 import torch_geometric
 from torch.multiprocessing import Queue
 
-from ..config import conf
+from ..config import conf, device
 from ..geo.batch_stack import split_layer_subgraphs
 from ..geo.transform import transform
 from ..utils.logger import logger
@@ -41,13 +41,11 @@ def process_seq():
         # For these elements to be processed by each of the workers in the following
         # transformthey need to be (x [51 * 51 * 25], y [1] ):
         qf.ProcessStep(zip_chunks, 1, name="zip"),
-        qf.PoolStep(
-            transform, nworkers=conf.loader.transform_workers, name="transform"
-        ),
+        qf.PoolStep(transform, nworkers=7, name="transform"),
         Queue(2),
         qf.RepackStep(conf.loader.batch_size),
         qf.ProcessStep(geo_batch, 1, name="geo_batch"),
-        qf.ProcessStep(split_layer_subgraphs, 7, name="split_layer_subgraphs"),
+        qf.ProcessStep(split_layer_subgraphs, 5, name="split_layer_subgraphs"),
         Queue(conf.loader.prefetch_batches),
     )
 
@@ -117,12 +115,12 @@ class QueuedDataLoader:
 
             logger.warn("Validation and training batches pickled.")
         else:
-            self.validation_batches = torch.load(conf.path.validation)
+            self.validation_batches = torch.load(conf.path.validation, map_location=device)
 
         self.qfseq = qf.Sequence(*process_seq())
 
     def load_test_batches(self):
-        self.testing_batches = torch.load(conf.path.test)
+        self.testing_batches = torch.load(conf.path.test,map_location=device)
 
     def queue_epoch(self, n_skip_events=0):
         n_skip_chunks = n_skip_events // conf.loader.chunksize
