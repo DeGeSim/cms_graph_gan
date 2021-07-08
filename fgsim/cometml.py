@@ -38,7 +38,7 @@ def get_experiment(exp_key):
         experiment.set_name(hyperparameters["hash"])
         # Format the hyperparameter for comet
 
-        hyperparametersD = dict(dict_to_kv(hyperparameters))
+    hyperparametersD = dict(dict_to_kv(hyperparameters))
 
-        experiment.log_parameters(hyperparametersD)
+    experiment.log_parameters(hyperparametersD)
     return experiment
