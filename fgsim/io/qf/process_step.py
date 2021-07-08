@@ -32,7 +32,7 @@ class ProcessStep(StepBase):
             self.running_processes_counter.value -= 1
 
         # Put the terminal element back in the input queue
-        self.inq.put(TerminateQueue())
+        self.safe_put(self.inq, TerminateQueue())
 
         # Make the first worker to reach the terminal element
         # aquires the lock and waits for the other processes
@@ -51,7 +51,7 @@ class ProcessStep(StepBase):
                 time.sleep(0.01)
             # Get the remaining the terminal element from the input queue
             self.inq.get()
-            self.outq.put(TerminateQueue())
+            self.safe_put(self.outq, TerminateQueue())
 
             logger.info(f"{workername} put terminal element in outq.")
             self.first_to_finish_lock.release()
@@ -73,15 +73,14 @@ class ProcessStep(StepBase):
             self.running_processes_counter.value += 1
 
         logger.debug(f"{self.workername} reading from input queue {id(self.inq)}.")
-        while True:
-            if self.shutdown_event.is_set():
-                break
+        while not self.shutdown_event.is_set():
             try:
                 wkin = self.inq.get(block=True, timeout=0.005)
             except Empty:
                 continue
             logger.debug(
-                f"""{self.workername} working on {id(wkin)} of type {type(wkin)} from queue {id(self.inq)}."""
+                f"""\
+{self.workername} working on {id(wkin)} of type {type(wkin)} from queue {id(self.inq)}."""
             )
             # If the process gets the terminate_queue object,
             # wait for the others and put it in the next queue
@@ -97,10 +96,8 @@ class ProcessStep(StepBase):
 
             # Catch Errors in the worker function
             except Exception as error:
-                workermsg = (
-                    f"{self.workername} failed "
-                    f"on element of type of type {type(wkin)}.\n\n{wkin}"
-                )
+                workermsg = f"""
+{self.workername} failed on element of type of type {type(wkin)}.\n\n{wkin}"""
                 self.error_queue.put((workermsg, wkin, error))
                 break
 
@@ -108,6 +105,6 @@ class ProcessStep(StepBase):
                 f"{self.workername} push single "
                 + f"output of type {type(wkout)} into output queue {id(self.outq)}."
             )
-            self.outq.put(wkout)
+            self.safe_put(self.outq, wkout)
             del wkin
         self._terminate(self.workername)

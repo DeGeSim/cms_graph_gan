@@ -15,10 +15,10 @@ class InputStep:
         assert hasattr(iterable_object, "__iter__")
         i = 0
         for element in iterable_object:
-            self.outq.put(element)
+            self.safe_put(self.outq, element)
             i = i + 1
         logger.debug(f"Queuing {i} elements complete")
-        self.outq.put(TerminateQueue())
+        self.safe_put(self.outq, TerminateQueue())
 
 
 class OutputStep:
@@ -36,6 +36,7 @@ class OutputStep:
 
     def __next__(self):
         out = self.inq.get()
+        logger.debug("Sequence output ready.")
         if isinstance(out, TerminateQueue):
             raise StopIteration
         else:

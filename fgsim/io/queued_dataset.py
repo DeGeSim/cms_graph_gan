@@ -115,12 +115,14 @@ class QueuedDataLoader:
 
             logger.warn("Validation and training batches pickled.")
         else:
-            self.validation_batches = torch.load(conf.path.validation, map_location=device)
+            self.validation_batches = torch.load(
+                conf.path.validation, map_location=device
+            )
 
         self.qfseq = qf.Sequence(*process_seq())
 
     def load_test_batches(self):
-        self.testing_batches = torch.load(conf.path.test,map_location=device)
+        self.testing_batches = torch.load(conf.path.test, map_location=device)
 
     def queue_epoch(self, n_skip_events=0):
         n_skip_chunks = n_skip_events // conf.loader.chunksize

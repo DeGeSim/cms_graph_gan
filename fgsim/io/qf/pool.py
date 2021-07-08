@@ -39,7 +39,6 @@ class PoolStep(StepBase):
             p.join(60)
             if p.exitcode is None:
                 raise RuntimeError
-        self._close_queues()
 
     def process_status(self):
         return (
@@ -58,15 +57,14 @@ class PoolStep(StepBase):
         )
         self.pool = mp.Pool(self.n_pool_workers)
 
-        while True:
-            if self.shutdown_event.is_set():
-                break
+        while not self.shutdown_event.is_set():
             try:
                 wkin = self.inq.get(block=True, timeout=0.005)
             except Empty:
                 continue
             logger.debug(
-                f"""{self.workername} working on {id(wkin)} of type {type(wkin)} from queue {id(self.inq)}."""
+                f"""\
+{self.workername} working on {id(wkin)} of type {type(wkin)} from queue {id(self.inq)}."""
             )
             wkin = self._clone_tensors(wkin)
             # If the process gets a TerminateQueue object,
@@ -74,53 +72,58 @@ class PoolStep(StepBase):
             # in the outgoing queue.
             if isinstance(wkin, TerminateQueue):
                 logger.info(f"{self.workername} terminating")
-                self.outq.put(TerminateQueue())
-                self.pool.terminate()
+                self.safe_put(self.outq, TerminateQueue())
                 break
-            else:
-                assert isinstance(wkin, Iterable)
-                logger.debug(
-                    f"{self.workername} got element"
-                    + f" {id(wkin)} of element type {type(wkin)}."
+
+            assert isinstance(wkin, Iterable)
+            logger.debug(
+                f"{self.workername} got element"
+                + f" {id(wkin)} of element type {type(wkin)}."
+            )
+            wkin_iter = CountIterations(wkin)
+
+            try:
+                wkout_async_res = self.pool.map_async(
+                    self.workerfn,
+                    wkin_iter,
                 )
-                wkin_iter = CountIterations(wkin)
-
-                try:
-                    # wkout_async_res = self.pool.map_async(
-                    #     self.workerfn, wkin_iter,
-                    # )
-                    # while True:
-                    #     if wkout_async_res.ready():
-                    #         wkout = wkout_async_res.get()
-                    #         break
-                    #     elif self.shutdown_event.is_set():
-                    #         break
-                    #     wkout_async_res.wait(1)
-                    # if self.shutdown_event.is_set():
-                    #     break
-                    wkout = self.pool.map(self.workerfn, wkin_iter)
-
-                except Exception as error:
-                    self.propagete_error(wkin, error)
+                while True:
+                    if wkout_async_res.ready():
+                        wkout = wkout_async_res.get()
+                        break
+                    elif self.shutdown_event.is_set():
+                        break
+                    wkout_async_res.wait(1)
+                if self.shutdown_event.is_set():
                     break
-                finally:
-                    if wkin_iter.count > 200:
-                        logger.warn(
-                            f"""\
+
+            except Exception as error:
+                logger.warn(f"""{self.workername} got error""")
+                self.propagete_error(wkin, error)
+                break
+            finally:
+                if wkin_iter.count > 200:
+                    logger.warn(
+                        f"""\
 Giving large iterables ({wkin_iter.count})\
 to a worker can lead to crashes.
 Lower the number here if you see an error like \
 'RuntimeError: unable to mmap x bytes from file </torch_x>:
 Cannot allocate memory'"""
-                        )
-                logger.debug(
-                    f"""\
+                    )
+            logger.debug(
+                f"""\
 {self.workername} push pool output list {id(wkout)} with \
 element type {type(wkin)} into output queue {id(self.outq)}."""
-                )
-                self.outq.put(wkout)
-                del wkin_iter
-                del wkin
+            )
+            # Put while there is no shutdown event
+            self.safe_put(self.outq, wkout)
+            del wkin_iter
+            del wkin
+        logger.info(f"""{self.workername} closing pool""")
         self.pool.close()
         self.pool.terminate()
+        logger.info(f"""{self.workername} pool closed""")
+        self.outq.cancel_join_thread()
         self._close_queues()
+        logger.info(f"""{self.workername} queues closed""")

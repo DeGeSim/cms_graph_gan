@@ -17,7 +17,7 @@ class UnpackStep(StepBase):
         logger.debug(
             f"{self.workername} push terminal element into output queue {id(self.outq)}."
         )
-        self.outq.put(TerminateQueue())
+        self.safe_put(TerminateQueue())
         self._close_queues()
         logger.info(f"{self.workername} terminating")
 
@@ -32,7 +32,8 @@ class UnpackStep(StepBase):
             except Empty:
                 continue
             logger.debug(
-                f"""{self.workername} working on {id(wkin)} of type {type(wkin)} from queue {id(self.inq)}."""
+                f"""\
+{self.workername} working on {id(wkin)} of type {type(wkin)} from queue {id(self.inq)}."""
             )
             if isinstance(wkin, TerminateQueue):
                 break
@@ -55,7 +56,7 @@ class UnpackStep(StepBase):
                     )
                     if hasattr(element, "clone"):
                         element = self._clone_tensors(element)
-                    self.outq.put(element)
+                    self.safe_put(self.outq, element)
                 del wkin
         self._terminate()
 
@@ -75,12 +76,13 @@ class PackStep(StepBase):
     def _terminate(self):
         if len(self.collected_elements) > 0:
             logger.debug(
-                f"{self.workername} terminal element of type {type(self.collected_elements[0])}"
-                + f" into output queue {id(self.outq)}."
+                f"""\
+{self.workername} terminal element of type \
+{type(self.collected_elements[0])} into output queue {id(self.outq)}."""
             )
-            self.outq.put(self.collected_elements)
+            self.safe_put(self.outq, self.collected_elements)
         logger.info(f"{self.workername} terminating")
-        self.outq.put(TerminateQueue())
+        self.safe_put(self.outq, TerminateQueue())
         self._close_queues()
 
     def _worker(self):
@@ -94,7 +96,8 @@ class PackStep(StepBase):
             except Empty:
                 continue
             logger.debug(
-                f"{self.workername} working on {id(wkin)} of type {type(wkin)} from queue {id(self.inq)}."
+                f"""\
+{self.workername} working on {id(wkin)} of type {type(wkin)} from queue {id(self.inq)}."""
             )
             wkin = self._clone_tensors(wkin)
             if isinstance(wkin, TerminateQueue):
@@ -107,10 +110,11 @@ class PackStep(StepBase):
 
                 if len(self.collected_elements) == self.nelements:
                     logger.debug(
-                        f"{self.workername} push list of type {type(self.collected_elements[-1])}"
-                        + f" into output queue {id(self.outq)}."
+                        f"""\
+{self.workername} push list of type \
+{type(self.collected_elements[-1])} into output queue {id(self.outq)}."""
                     )
-                    self.outq.put(self.collected_elements)
+                    self.safe_put(self.outq, self.collected_elements)
                     self.collected_elements = []
             del wkin
         self._terminate()
@@ -128,12 +132,13 @@ class RepackStep(StepBase):
     def _terminate(self):
         if len(self.collected_elements) > 0:
             logger.debug(
-                f"{self.workername} terminal element of type {type(self.collected_elements[0])}"
-                + f" into output queue {id(self.outq)}."
+                f"""\
+{self.workername} terminal element of type \
+{type(self.collected_elements[0])} into output queue {id(self.outq)}."""
             )
-            self.outq.put(self.collected_elements)
+            self.safe_put(self.outq, self.collected_elements)
         logger.info(f"{self.workername} terminating")
-        self.outq.put(TerminateQueue())
+        self.safe_put(self.outq, TerminateQueue())
         self._close_queues()
 
     def _worker(self):
@@ -147,7 +152,9 @@ class RepackStep(StepBase):
             except Empty:
                 continue
             logger.debug(
-                f"{self.workername} working on {id(wkin)} of type {type(wkin)} from queue {id(self.inq)}."
+                f"""
+{self.workername} working on {id(wkin)} of \
+type {type(wkin)} from queue {id(self.inq)}."""
             )
             if isinstance(wkin, TerminateQueue):
                 break
@@ -169,11 +176,11 @@ class RepackStep(StepBase):
                     self.collected_elements.append(e_cloned)
                     if len(self.collected_elements) == self.nelements:
                         logger.debug(
-                            f"{self.workername} push list of type {type(self.collected_elements[-1])} "
-                            f"with {self.nelements} elements into"
-                            f" output queue {id(self.outq)}."
+                            f"""\
+{self.workername} push list of type {type(self.collected_elements[-1])} \
+with {self.nelements} elements into output queue {id(self.outq)}."""
                         )
-                        self.outq.put(self.collected_elements)
+                        self.safe_put(self.outq, self.collected_elements)
                         self.collected_elements = []
             del wkin
         self._terminate()

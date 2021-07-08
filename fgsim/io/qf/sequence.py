@@ -149,7 +149,7 @@ class Sequence:
 
         for step in self.steps:
             step.stop()
-        
+
         self.queues[1].close()
         self.queues[1].join_thread()
         self.queues[-1].close()

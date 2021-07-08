@@ -1,9 +1,13 @@
 import threading
+from multiprocessing.queues import Full
+from types import GeneratorType
 
 import torch
 import torch_geometric
 from torch import multiprocessing as mp
-from types import GeneratorType
+
+from ...utils.logger import logger
+
 
 class StepBase:
     """Base class"""
@@ -35,16 +39,19 @@ class StepBase:
     def _close_queues(self):
         self.outq.close()
         self.outq.join_thread()
+        logger.debug(f"""{self.workername} outq closed""")
         self.inq.close()
         self.inq.join_thread()
+        logger.debug(f"""{self.workername} inq closed""")
         self.error_queue.close()
         self.error_queue.join_thread()
+        logger.debug(f"""{self.workername} error_queue closed""")
 
     def _clone_tensors(self, wkin):
         if isinstance(wkin, list):
             wkin = [self._clone_tensors(e) for e in wkin]
         elif isinstance(wkin, GeneratorType):
-            return (self._clone_tensors(e) for e in wkin )
+            return (self._clone_tensors(e) for e in wkin)
         elif isinstance(wkin, torch_geometric.data.batch.Data):
 
             def clone_or_copy(e):
@@ -76,6 +83,14 @@ class StepBase:
     def stop(self):
         for p in self.processes:
             p.terminate()
+
+    def safe_put(self, queue, element):
+        while not self.shutdown_event.is_set():
+            try:
+                queue.put(element, True, 1)
+                break
+            except Full:
+                continue
 
     def process_status(self):
         return (sum([p.is_alive() for p in self.processes]), self.nworkers)
