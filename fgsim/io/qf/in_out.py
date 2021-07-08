@@ -1,14 +1,26 @@
-from torch import multiprocessing as mp
+from multiprocessing.queues import Full
 
 from ...utils.logger import logger
 from .terminate_queue import TerminateQueue
 
 
-class InputStep:
+class InOutStep:
+    def __init__(self):
+        pass
+
+    def safe_put(self, queue, element):
+        while not self.shutdown_event.is_set():
+            try:
+                queue.put(element, True, 1)
+                break
+            except Full:
+                continue
+
+
+class InputStep(InOutStep):
     """Internal class to read in the iterable into a the first queue"""
 
-    def __init__(self, outq=mp.Queue()):
-        self.outq = outq
+    def __init__(self):
         self.name = "input step"
 
     def queue_iterable(self, iterable_object):
@@ -20,12 +32,15 @@ class InputStep:
         logger.debug(f"Queuing {i} elements complete")
         self.safe_put(self.outq, TerminateQueue())
 
+    def connect_to_sequence(self, output_queue, shutdown_event):
+        self.outq = output_queue
+        self.shutdown_event = shutdown_event
 
-class OutputStep:
+
+class OutputStep(InOutStep):
     """Internal generator class to returning the outputs from the last queue."""
 
-    def __init__(self, inq=mp.Queue()):
-        self.inq = inq
+    def __init__(self):
         self.name = "output step"
 
     def start(self):
@@ -41,3 +56,7 @@ class OutputStep:
             raise StopIteration
         else:
             return out
+
+    def connect_to_sequence(self, input_queue, shutdown_event):
+        self.inq = input_queue
+        self.shutdown_event = shutdown_event

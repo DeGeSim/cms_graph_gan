@@ -63,9 +63,16 @@ class Sequence:
         self.queues = [q for q in self.__seq if isinstance(q, queues_class)]
         self.steps = [p for p in self.__seq if isinstance(p, StepBase)]
         # Connect the input:
-        self.__seq[0].outq = self.__seq[1]
+        self.__seq[0].connect_to_sequence(
+            output_queue=self.__seq[1],
+            shutdown_event=self.shutdown_event,
+        )
         # Connect the output:
-        self.__seq[-1].inq = self.__seq[-2]
+        self.__seq[-1].connect_to_sequence(
+            input_queue=self.__seq[-2],
+            shutdown_event=self.shutdown_event,
+        )
+
         # Set up the processes
         for i, step in enumerate(self.__seq):
             if not isinstance(step, StepBase):
