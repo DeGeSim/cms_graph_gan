@@ -8,20 +8,9 @@ from omegaconf import OmegaConf
 
 from .utils.cli import args
 
-
-def get_device():
-
-    if torch.cuda.is_available():
-        if torch.cuda.device_count()>1:
-            dev = torch.device("cuda:"+str(torch.cuda.device_count()-1))
-        else:
-            dev = torch.device("cuda")
-    else:
-        dev = torch.device("cpu")
-    return dev
-
-
-device = get_device()
+# Load the default settings, overwrite them
+# witht the tag-specific settings and then
+# overwrite those with cli arguments.
 
 with open("fgsim/default.yaml", "r") as fp:
     defaultconf = OmegaConf.load(fp)
@@ -38,6 +27,21 @@ else:
 
 conf = OmegaConf.merge(defaultconf, tagconf, vars(args))
 
+# Select the CPU/GPU
+
+
+def get_device():
+    if torch.cuda.is_available() and not conf.profile:
+        # if torch.cuda.device_count() > 1:
+        #     dev = torch.device("cuda:" + str(torch.cuda.device_count() - 1))
+        # else:
+        dev = torch.device("cuda")
+    else:
+        dev = torch.device("cpu")
+    return dev
+
+
+device = get_device()
 
 # Exclude the keys that do not affect the training
 hyperparameters = OmegaConf.masked_copy(
@@ -45,7 +49,7 @@ hyperparameters = OmegaConf.masked_copy(
     [
         k
         for k in conf.keys()
-        if k not in ["command", "dump_model", "debug", "loglevel", "path"]
+        if k not in ["command", "dump_model", "debug", "loglevel", "path", "profile"]
     ],
 )
 

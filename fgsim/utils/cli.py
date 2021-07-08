@@ -22,6 +22,13 @@ train_parser.add_argument(
     default=False,
     required=False,
 )
+train_parser.add_argument(
+    "--profile",
+    help="Profile the memory",
+    action="store_true",
+    default=False,
+    required=False,
+)
 predict_parser = subparsers.add_parser("predict")
 dump_parser = subparsers.add_parser("dump")
 loadfile_parser = subparsers.add_parser("loadfile")

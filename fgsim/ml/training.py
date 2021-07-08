@@ -69,20 +69,30 @@ def writelogs():
 
 def training_step(batch):
     model_holder.optim.zero_grad()
-    # from torch.profiler import ProfilerActivity, profile, record_function
-    # logger.warning('Starting profiling.')
+    from torch.profiler import ProfilerActivity, profile, record_function
 
-    # with profile(
-    #     activities=[ProfilerActivity.CPU, ProfilerActivity.CUDA],
-    #     profile_memory=True,
-    #     record_shapes=True,
-    # ) as prof:
-    output = model_holder.model(batch)
-    # logger.warning('Profiling done.')
+    logger.warning("Starting profiling.")
 
-    # print(prof.key_averages().table(sort_by="cpu_memory_usage"))
-    # print(prof.key_averages().table(sort_by="cuda_memory_usage"))
-    # exit(0)
+    if conf.profile:
+        with profile(
+            activities=[ProfilerActivity.CPU, ProfilerActivity.CUDA],
+            profile_memory=True,
+            record_shapes=True,
+            on_trace_ready=torch.profiler.tensorboard_trace_handler(
+                conf.path.tensorboard
+            ),
+        ) as prof:
+            output = model_holder.model(batch)
+        logger.warning("Profiling done.")
+        print(prof.key_averages().table(sort_by="cuda_time_total", row_limit=10))
+        print(prof.key_averages().table(sort_by="self_cpu_memory_usage", row_limit=10))
+        print(prof.key_averages().table(sort_by="cpu_memory_usage", row_limit=10))
+
+        model_holder.loader.qfseq._stop()
+        exit(0)
+    else:
+        output = model_holder.model(batch)
+
     prediction = torch.squeeze(output.T)
     model_holder.loss = model_holder.lossf(prediction, batch.y.float())
     model_holder.loss.backward()
