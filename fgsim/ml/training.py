@@ -4,28 +4,14 @@ from copy import deepcopy
 
 import torch
 from omegaconf import OmegaConf
-from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
 
-from ..cometml import Experiment, comet_conf, get_experiment
 from ..config import conf, device
 from ..io.queued_dataset import QueuedDataLoader
+from ..monitor import setup_experiment, setup_writer
 from ..utils.check_for_nans import check_chain_for_nans
 from ..utils.logger import logger
 from .holder import model_holder
-
-
-def setup_experiment_and_writer():
-    # Create an experiment with your api key
-    if hasattr(model_holder.state, "comet_experiment_key"):
-        experiment = get_experiment(model_holder.state.comet_experiment_key)
-    else:
-        experiment = Experiment(**comet_conf)
-        model_holder.state.comet_experiment_key = experiment.get_key()
-
-    writer = SummaryWriter(conf.path.tensorboard)
-    experiment.set_model_graph(str(model_holder.model))
-    return (writer, experiment)
 
 
 def writelogs():
@@ -69,29 +55,7 @@ def writelogs():
 
 def training_step(batch):
     model_holder.optim.zero_grad()
-    from torch.profiler import ProfilerActivity, profile, record_function
-
-    logger.warning("Starting profiling.")
-
-    if conf.profile:
-        with profile(
-            activities=[ProfilerActivity.CPU, ProfilerActivity.CUDA],
-            profile_memory=True,
-            record_shapes=True,
-            on_trace_ready=torch.profiler.tensorboard_trace_handler(
-                conf.path.tensorboard
-            ),
-        ) as prof:
-            output = model_holder.model(batch)
-        logger.warning("Profiling done.")
-        print(prof.key_averages().table(sort_by="cuda_time_total", row_limit=10))
-        print(prof.key_averages().table(sort_by="self_cpu_memory_usage", row_limit=10))
-        print(prof.key_averages().table(sort_by="cpu_memory_usage", row_limit=10))
-
-        model_holder.loader.qfseq._stop()
-        exit(0)
-    else:
-        output = model_holder.model(batch)
+    output = model_holder.model(batch)
 
     prediction = torch.squeeze(output.T)
     model_holder.loss = model_holder.lossf(prediction, batch.y.float())
@@ -164,10 +128,12 @@ def early_stopping():
 #     experiment: BaseExperiment
 
 
-def training_procedure():
+def training_procedure() -> None:
     logger.warn(
         "Starting training with state\n" + OmegaConf.to_yaml(model_holder.state)
     )
+    model_holder.writer = setup_writer()
+    model_holder.experiment = setup_experiment(model_holder)
     # Check if the training already has finished:
     early_stopping()
 
@@ -175,7 +141,7 @@ def training_procedure():
     # switch model in training mode
     model_holder.model.train()
     model_holder.loader = QueuedDataLoader()
-    model_holder.writer, model_holder.experiment = setup_experiment_and_writer()
+
     try:
         # Iterate over the Epochs
         for model_holder.state.epoch in range(

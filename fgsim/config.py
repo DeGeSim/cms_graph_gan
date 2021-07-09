@@ -31,7 +31,7 @@ conf = OmegaConf.merge(defaultconf, tagconf, vars(args))
 
 
 def get_device():
-    if torch.cuda.is_available() and not conf.profile:
+    if torch.cuda.is_available():  # and not conf.profile:
         # if torch.cuda.device_count() > 1:
         #     dev = torch.device("cuda:" + str(torch.cuda.device_count() - 1))
         # else:
@@ -46,11 +46,7 @@ device = get_device()
 # Exclude the keys that do not affect the training
 hyperparameters = OmegaConf.masked_copy(
     conf,
-    [
-        k
-        for k in conf.keys()
-        if k not in ["command", "dump_model", "debug", "loglevel", "path", "profile"]
-    ],
+    [k for k in conf.keys() if k not in ["command", "debug", "loglevel", "path"]],
 )
 
 OmegaConf.resolve(hyperparameters)

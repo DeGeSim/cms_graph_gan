@@ -58,6 +58,11 @@ def main():
 
         prediction_procedure()
 
+    if conf["command"] == "profile":
+        from .ml.profile import profile_procedure
+
+        profile_procedure()
+
     if conf["command"] == "loadfile":
         fn = str(conf.file_to_load)
         import re

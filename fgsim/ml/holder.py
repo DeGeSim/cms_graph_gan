@@ -47,7 +47,6 @@ class ModelHolder:
             not os.path.isfile(conf.path.state)
             or not os.path.isfile(conf.path.checkpoint)
             or not os.path.isfile(conf.path.best_model)
-            or conf["dump_model"]
         ):
             logger.warn("Proceeding without checkpoint.")
             return
@@ -70,7 +69,7 @@ class ModelHolder:
         assert not contains_nans(checkpoint)[0]
 
         self.model.load_state_dict(checkpoint["model"])
-        if device.type == 'cuda':
+        if device.type == "cuda":
             self.model = self.model.cuda()
         else:
             self.model = self.model.cpu()

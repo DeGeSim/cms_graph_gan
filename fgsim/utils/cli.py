@@ -14,21 +14,7 @@ parser.add_argument(
 subparsers = parser.add_subparsers(help="Available Commands", dest="command")
 
 train_parser = subparsers.add_parser("train")
-train_parser.add_argument(
-    "-d",
-    "--dump_model",
-    help="Dump the old model",
-    action="store_true",
-    default=False,
-    required=False,
-)
-train_parser.add_argument(
-    "--profile",
-    help="Profile the memory",
-    action="store_true",
-    default=False,
-    required=False,
-)
+predict_parser = subparsers.add_parser("profile")
 predict_parser = subparsers.add_parser("predict")
 dump_parser = subparsers.add_parser("dump")
 loadfile_parser = subparsers.add_parser("loadfile")

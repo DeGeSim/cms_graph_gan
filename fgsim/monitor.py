@@ -1,7 +1,8 @@
 from comet_ml import ExistingExperiment, Experiment
 from omegaconf import OmegaConf
+from torch.utils.tensorboard import SummaryWriter
 
-from .config import hyperparameters
+from .config import conf, hyperparameters
 
 comet_conf = OmegaConf.load("fgsim/comet.yaml")
 
@@ -52,4 +53,20 @@ def get_experiment(exp_key):
 
     hyperparametersD = dict(dict_to_kv(hyperparameters))
     experiment.log_parameters(hyperparametersD)
+    return experiment
+
+
+def setup_writer():
+    return SummaryWriter(conf.path.tensorboard)
+
+
+def setup_experiment(model_holder):
+    # Create an experiment with your api key
+    if hasattr(model_holder.state, "comet_experiment_key"):
+        experiment = get_experiment(model_holder.state.comet_experiment_key)
+    else:
+        experiment = Experiment(**comet_conf)
+        model_holder.state.comet_experiment_key = experiment.get_key()
+
+    experiment.set_model_graph(str(model_holder.model))
     return experiment
