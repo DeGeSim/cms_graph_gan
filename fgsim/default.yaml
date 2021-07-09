@@ -8,7 +8,7 @@ path:
   comet_exp_key: "${path.run_path}/comet_experiment_key"
   log: "${path.run_path}/log"
   train_config: "${path.run_path}/resulting_train_config.yaml"
-  tensorboard: "runs/${path.run_path}"
+  tensorboard: "runs/${tag}/${hash}"
   state: "${path.run_path}/state.yaml"
   state_old: "${path.run_path}/state_old.yaml"
   checkpoint: "${path.run_path}/checkpoint.torch"
