@@ -1,4 +1,5 @@
 from multiprocessing.queues import Full
+from multiprocessing.queues import Empty
 
 from ...utils.logger import logger
 from .terminate_queue import TerminateQueue
@@ -50,12 +51,16 @@ class OutputStep(InOutStep):
         return self
 
     def __next__(self):
-        out = self.inq.get()
-        logger.debug("Sequence output ready.")
-        if isinstance(out, TerminateQueue):
-            raise StopIteration
-        else:
-            return out
+        while not self.shutdown_event.is_set():
+            try:
+                out = self.inq.get(block=True, timeout=0.005)
+                if isinstance(out, TerminateQueue):
+                    break
+                return out
+            except Empty:
+                continue
+            logger.debug("Sequence output ready.")
+        raise StopIteration
 
     def connect_to_sequence(self, input_queue, shutdown_event):
         self.inq = input_queue
