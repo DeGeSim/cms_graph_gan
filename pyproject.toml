@@ -1,26 +1,53 @@
-[tool.black]
-line-length = 88
-target-version = ['py38']
-include = '\.pyi?$'
+[tool.isort]
+multi_line_output = 3
+include_trailing_comma = true
+force_grid_wrap = 0
+use_parentheses = true
+line_length = 84
 exclude = '''
 
 (
   /(
-      \.eggs         # exclude a few common directories in the
-    | \.git          # root of the project
-    | \.hg
-    | \.mypy_cache
-    | \.tox
-    | \.venv
+      \..*
     | _build
     | buck-out
     | build
     | dist
-    | fgsim/geo/libs 
+    | fgsim/geo/libs
   )
 )
 '''
 
+[tool.black]
+line-length = 84
+target-version = ['py38']
+include = '.*\.pyi?$'
+exclude = '''
+
+(
+  /(
+      \..*
+    | _build
+    | buck-out
+    | build
+    | dist
+    | fgsim/geo/libs
+  )
+)
+'''
+
+
 [build-system]
 requires = ["setuptools", "wheel", 'pybind11==2.6.1','numpy==1.19.4']
 build-backend = "setuptools.build_meta"
+
+[mypy]
+python_version = 38
+strict_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+disallow_any_generics = true
+check_untyped_defs = true
+no_implicit_reexport = true
+disallow_untyped_defs = true
+ignore_missing_imports = true

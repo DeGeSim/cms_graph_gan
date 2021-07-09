@@ -4,7 +4,7 @@
 
 https://github.com/pytorch/pytorch/issues/13246
 
-Quote: mprostock 
+Quote: mprostock
 
 I don't know how multiprocessing really works under the hood of pytorch, but we have extensively discussed this "Memory Leak" issue (which probably isn't a memory leak!) on the fast.ai forums (https://forums.fast.ai/t/runtimeerror-dataloader-worker-is-killed-by-signal/31277/55?u=marcmuc). Preliminary findings which hopefully add some insight here (if this does NOT apply, please comment!):
 
