@@ -40,7 +40,9 @@ def grid_to_graph(caloimg, outformat="python"):
                 features_dyn = np.array([caloimg[ilayer, jrow, kcolumn]])
                 feature_mtx_dyn.append(features_dyn)
 
-                features_static = np.array([float(ilayer), float(jrow), float(kcolumn)])
+                features_static = np.array(
+                    [float(ilayer), float(jrow), float(kcolumn)]
+                )
                 feature_mtx_static.append(features_static)
 
                 layers.append(ilayer)
@@ -56,7 +58,10 @@ def grid_to_graph(caloimg, outformat="python"):
 
                     num_edges = num_edges + 1
                 # down
-                if jrow != caloimg.shape[1] - 1 and caloimg[ilayer, jrow + 1, kcolumn]:
+                if (
+                    jrow != caloimg.shape[1] - 1
+                    and caloimg[ilayer, jrow + 1, kcolumn]
+                ):
                     targetid = arrpos(ilayer, jrow + 1, kcolumn, caloimg.shape)
                     edge = np.array([curid, targetid])
                     edge_index.append(edge)

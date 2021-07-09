@@ -35,7 +35,8 @@ class ModelClass(torch.nn.Module):
                 inner_outp_mask = batch.mask_outp_innerL[ilayer]
 
                 partial_inner = self.inlayer_conv(
-                    addstatic(x, inner_inp_mask), batch.inner_edges_per_layer[ilayer]
+                    addstatic(x, inner_inp_mask),
+                    batch.inner_edges_per_layer[ilayer],
                 )
                 x[batch.layers == ilayer] = partial_inner[inner_outp_mask]
 

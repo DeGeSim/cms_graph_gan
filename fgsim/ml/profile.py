@@ -30,7 +30,9 @@ def profile_procedure() -> None:
         activities=[ProfilerActivity.CPU, ProfilerActivity.CUDA],
         profile_memory=True,
         record_shapes=True,
-        on_trace_ready=torch.profiler.tensorboard_trace_handler(conf.path.tensorboard),
+        on_trace_ready=torch.profiler.tensorboard_trace_handler(
+            conf.path.tensorboard
+        ),
     ) as prof:
         _ = model_holder.model(batch)
     logger.warning("Profiling done.")

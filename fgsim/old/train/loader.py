@@ -19,7 +19,8 @@ class MyGen:
             [
                 self.idxs[i * self.batch_size : (i + 1) * self.batch_size]
                 for i in range(
-                    len(ds) // self.batch_size + (1 if len(ds) % self.batch_size else 0)
+                    len(ds) // self.batch_size
+                    + (1 if len(ds) % self.batch_size else 0)
                 )
             ],
             dtype=object,
@@ -36,7 +37,9 @@ class MyGen:
 
         self.tasks = []
         for i in range(3):
-            task = asyncio.create_task(self.worker(self.inputqueue, self.outputqueue))
+            task = asyncio.create_task(
+                self.worker(self.inputqueue, self.outputqueue)
+            )
             self.tasks.append(task)
 
     def _queuebatches(self):

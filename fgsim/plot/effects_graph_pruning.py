@@ -34,7 +34,9 @@ for i in range(100):
             G.remove_node(node)
     nnodes.append(len(G.nodes))
 
-    components = list(nx.connected_components(G))  # list because it returns a generator
+    components = list(
+        nx.connected_components(G)
+    )  # list because it returns a generator
     complensL = [len(e) for e in components]
     componentsL = componentsL + complensL
     size_fractionL.append(np.max(complensL) / np.sum(complensL))

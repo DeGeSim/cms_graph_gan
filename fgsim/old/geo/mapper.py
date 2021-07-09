@@ -37,7 +37,8 @@ class Geomapper:
             )
 
         self.binbordersD = {
-            v: self.__cellaxis_to_binborders(self.cell_posD[v]) for v in conf.mapper.xyz
+            v: self.__cellaxis_to_binborders(self.cell_posD[v])
+            for v in conf.mapper.xyz
         }
 
         caloimg_shape = [len(self.cell_posD[v]) for v in conf.mapper.xyz]

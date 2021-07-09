@@ -4,6 +4,7 @@ from torch_geometric.nn import GCNConv, global_add_pool
 
 from ..config import conf
 from ..geo.graph import num_node_dyn_features as initial_dyn_features
+from ..utils.cuda_clear import cuda_clear
 
 nfeatures = conf.model.dyn_features + conf.model.static_features
 
@@ -42,10 +43,12 @@ class ModelClass(torch.nn.Module):
                 inner_outp_mask = batch.mask_outp_innerL[ilayer]
 
                 partial_inner = self.inlayer_conv(
-                    addstatic(x, inner_inp_mask), batch.inner_edges_per_layer[ilayer]
+                    addstatic(x, inner_inp_mask),
+                    batch.inner_edges_per_layer[ilayer],
                 )
                 x[batch.layers == ilayer] = partial_inner[inner_outp_mask]
                 del partial_inner, inner_inp_mask, inner_outp_mask
+                cuda_clear()
 
                 if ilayer == conf.nlayers - 1:
                     continue
@@ -57,6 +60,7 @@ class ModelClass(torch.nn.Module):
                 )
                 x[batch.layers == ilayer + 1] = partial_forward[forward_outp_mask]
                 del partial_forward, forward_inp_mask, forward_outp_mask
+                cuda_clear()
 
             x = nn.functional.relu(x)
 
@@ -73,6 +77,7 @@ class ModelClass(torch.nn.Module):
                 )
                 x[batch.layers == ilayer - 1] = partial_backward[backward_outp_mask]
                 del partial_backward, backward_inp_mask, backward_outp_mask
+                cuda_clear()
 
                 inner_inp_mask = batch.mask_inp_innerL[ilayer - 1]
                 inner_outp_mask = batch.mask_outp_innerL[ilayer - 1]
@@ -82,6 +87,7 @@ class ModelClass(torch.nn.Module):
                 )
                 x[batch.layers == ilayer - 1] = partial_inner[inner_outp_mask]
                 del partial_inner, inner_inp_mask, inner_outp_mask
+                cuda_clear()
 
             x = nn.functional.relu(x)
 

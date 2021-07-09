@@ -17,7 +17,9 @@ from .holder import model_holder
 from .train_state import TrainState
 
 
-def training_step(batch: torch_geometric.data.Batch, train_state: TrainState) -> None:
+def training_step(
+    batch: torch_geometric.data.Batch, train_state: TrainState
+) -> None:
     train_state.holder.optim.zero_grad()
     output = train_state.holder.model(batch)
 
@@ -75,7 +77,9 @@ def early_stopping(train_state: TrainState) -> None:
         # dont stop for the first epochs
         if len(train_state.state.val_losses) < conf.training.early_stopping:
             return
-        recent_losses = train_state.state.val_losses[-conf.training.early_stopping :]
+        recent_losses = train_state.state.val_losses[
+            -conf.training.early_stopping :
+        ]
         relative_improvement = 1 - (min(recent_losses) / recent_losses[0])
 
         if relative_improvement < conf.training.early_stopping_improvement:

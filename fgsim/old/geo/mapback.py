@@ -94,7 +94,9 @@ def map_calo_to_hitsB(eventNumber: int, caloimg: np.ndarray):
     nhits = len(idxs)
 
     arrD = {}
-    arrD["eventNumber"] = ak.layout.NumpyArray(eventNumber_field(nhits, eventNumber))
+    arrD["eventNumber"] = ak.layout.NumpyArray(
+        eventNumber_field(nhits, eventNumber)
+    )
 
     coord_arr = coordinate_fieldB(idxs, nhits, cellposD, caloimg)
 

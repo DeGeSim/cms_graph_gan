@@ -24,7 +24,9 @@ def to_gpu_fct(workername, inq, outq, device, TerminateQueue, logger):
     name = mp.current_process().name
     logger.info(f"{workername} {name} start working")
     while True:
-        logger.debug(f"{workername} worker {name} reading from input queue {id(inq)}.")
+        logger.debug(
+            f"{workername} worker {name} reading from input queue {id(inq)}."
+        )
         wkin = inq.get()
 
         if isinstance(wkin, torch.Tensor):

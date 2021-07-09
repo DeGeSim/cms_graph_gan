@@ -47,7 +47,9 @@ class PoolStep(StepBase):
         )
 
     def propagete_error(self, element, error=Exception):
-        workermsg = f"""{self.workername} failed on element of type {type(element)}."""
+        workermsg = (
+            f"""{self.workername} failed on element of type {type(element)}."""
+        )
         self.error_queue.put((workermsg, element, error))
 
     def _worker(self):

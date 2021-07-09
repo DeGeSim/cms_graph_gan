@@ -62,7 +62,8 @@ class QueuedDataLoader:
         nentries = 10000
 
         chunk_splits = [
-            (i * chunksize, (i + 1) * chunksize) for i in range(nentries // chunksize)
+            (i * chunksize, (i + 1) * chunksize)
+            for i in range(nentries // chunksize)
         ] + [(nentries // chunksize * chunksize, nentries)]
 
         self.chunk_coords = [
@@ -71,7 +72,9 @@ class QueuedDataLoader:
 
         np.random.shuffle(self.chunk_coords)
 
-        n_validation_batches = conf.loader.validation_set_size // conf.loader.batch_size
+        n_validation_batches = (
+            conf.loader.validation_set_size // conf.loader.batch_size
+        )
         if conf.loader.validation_set_size % conf.loader.batch_size != 0:
             n_validation_batches += 1
 

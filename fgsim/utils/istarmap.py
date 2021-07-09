@@ -13,7 +13,9 @@ def istarmap(self, func, iterable, chunksize=1):
     result = mpp.IMapIterator(self)
     self._taskqueue.put(
         (
-            self._guarded_task_generation(result._job, mpp.starmapstar, task_batches),
+            self._guarded_task_generation(
+                result._job, mpp.starmapstar, task_batches
+            ),
             result._set_length,
         )
     )

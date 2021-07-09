@@ -7,8 +7,7 @@ from matplotlib import pyplot as plt
 from matplotlib.colors import ColorConverter
 from matplotlib.pyplot import figure
 from scipy.interpolate import make_interp_spline
-from tensorboard.backend.event_processing.event_accumulator import \
-    EventAccumulator
+from tensorboard.backend.event_processing.event_accumulator import EventAccumulator
 
 # %%
 event_acc = EventAccumulator("runs/May20_11-50-09_max-wgse002.desy.de")

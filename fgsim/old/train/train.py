@@ -1,6 +1,7 @@
 import gc
 
 import torch
+
 # import torch.autograd.profiler as profiler
 from torch.utils.data import DataLoader
 from tqdm import tqdm
@@ -69,7 +70,8 @@ def train_generator(generator, discriminator, optimizer, lossf, data_fake):
 def training_procedure(c: modelHolder):
     # Make the configuration locally available
     batch_size, n_epochs, k, nz, sample_size = (
-        conf.model.gan[x] for x in ["batch_size", "n_epochs", "k", "nz", "sample_size"]
+        conf.model.gan[x]
+        for x in ["batch_size", "n_epochs", "k", "nz", "sample_size"]
     )
 
     train_loader = DataLoader(c.train_data, batch_size=2, shuffle=True)

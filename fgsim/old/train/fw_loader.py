@@ -12,7 +12,9 @@ def costumLoader(ds):
     batched = np.array(
         [
             idxs[i * batch_size : (i + 1) * batch_size]
-            for i in range(len(ds) // batch_size + (1 if len(ds) % batch_size else 0))
+            for i in range(
+                len(ds) // batch_size + (1 if len(ds) % batch_size else 0)
+            )
         ],
         dtype=object,
     )

@@ -25,7 +25,9 @@ def split_layer_subgraphs(batch):
         # Create the mask for the nodes in the current/next/previous layer
         mask_cur_layer = batch.layermask[ilayer]
         if ilayer == 0:
-            mask_previous_layer = torch.zeros(mask_cur_layer.shape, dtype=torch.bool)
+            mask_previous_layer = torch.zeros(
+                mask_cur_layer.shape, dtype=torch.bool
+            )
         else:
             mask_previous_layer = batch.layermask[ilayer - 1]
         if ilayer == conf.nlayers - 1:
@@ -35,14 +37,18 @@ def split_layer_subgraphs(batch):
 
         # The masks for projecting out the relevant rows of the
         # feature array and the edge index that is shifted to this selection.
-        mask_input_inner, mask_output_inner, edge_index_inner = edge_index_on_subgraph(
-            batch.edge_index, mask_cur_layer, mask_cur_layer
-        )
+        (
+            mask_input_inner,
+            mask_output_inner,
+            edge_index_inner,
+        ) = edge_index_on_subgraph(batch.edge_index, mask_cur_layer, mask_cur_layer)
         (
             mask_input_forward,
             mask_output_forward,
             edge_index_forward,
-        ) = edge_index_on_subgraph(batch.edge_index, mask_cur_layer, mask_next_layer)
+        ) = edge_index_on_subgraph(
+            batch.edge_index, mask_cur_layer, mask_next_layer
+        )
         (
             mask_input_backward,
             mask_output_backward,
@@ -146,7 +152,9 @@ def edge_index_on_subgraph(edge_index, node_mask_from, node_mask_to):
     #  is connected to the 2nd (old 3rd).
     if shifted_edge_index.shape[1] > 0:
         assert 0 <= torch.min(shifted_edge_index)
-        assert torch.max(shifted_edge_index) <= torch.sum(node_mask_input.long()) - 1
+        assert (
+            torch.max(shifted_edge_index) <= torch.sum(node_mask_input.long()) - 1
+        )
 
     # Once the convolution  is completed, the output has len
     # sum(mask_node). To assign this output to the feature matrix,

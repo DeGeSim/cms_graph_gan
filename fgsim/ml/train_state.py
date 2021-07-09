@@ -48,4 +48,6 @@ class TrainState:
             step=self.state.grad_step,
             epoch=self.state.epoch,
         )
-        self.experiment.log_metric("loss", self.holder.loss, self.state["grad_step"])
+        self.experiment.log_metric(
+            "loss", self.holder.loss, self.state["grad_step"]
+        )

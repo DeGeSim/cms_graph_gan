@@ -28,7 +28,9 @@ class Chunk_Dataset(torch.utils.data.IterableDataset):
         self.len = self.chunk[1] - self.chunk[0]
 
     def _loadfile(self):
-        logger.debug(f"{pname()}: loading {h5.File(self.file_path)} chunk {self.chunk}")
+        logger.debug(
+            f"{pname()}: loading {h5.File(self.file_path)} chunk {self.chunk}"
+        )
         with h5.File(self.file_path) as h5_file:
             self.x = h5_file[conf.loader.xname][self.chunk[0] : self.chunk[1]]
             self.y = h5_file[conf.loader.yname][self.chunk[0] : self.chunk[1]]
@@ -54,7 +56,9 @@ class Chunk_Dataset(torch.utils.data.IterableDataset):
 
     def __iter__(self):
         worker_info = torch.utils.data.get_worker_info()
-        if worker_info is None:  # single-process data loading, return the full iterator
+        if (
+            worker_info is None
+        ):  # single-process data loading, return the full iterator
             iter_start = self.start
             iter_end = self.end
         else:  # in a worker process
@@ -93,7 +97,9 @@ chunks = [
 # because the generator is copied between the processes and evaluated separatly
 
 
-chunk_ds_L = [Chunk_Dataset(fn, chunk, transform) for chunk in chunks for fn in files]
+chunk_ds_L = [
+    Chunk_Dataset(fn, chunk, transform) for chunk in chunks for fn in files
+]
 
 logger.debug("All datasets initialized")
 
