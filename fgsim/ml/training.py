@@ -11,6 +11,7 @@ from ..io.queued_dataset import QueuedDataLoader
 from ..monitor import setup_experiment, setup_writer
 from ..utils.check_for_nans import check_chain_for_nans
 from ..utils.logger import logger
+from ..utils.move_batch_to_device import move_batch_to_device
 from .holder import model_holder
 
 
@@ -159,7 +160,8 @@ def training_procedure() -> None:
                 ),
                 start=model_holder.state.ibatch,
             ):
-                batch = batch.to(device)
+                batch = move_batch_to_device(batch, device)
+
                 model_holder.state.time_io_done = time.time()
 
                 training_step(batch)
