@@ -172,7 +172,10 @@ class Sequence:
             for iqueue in range(terminal_pos + 1, len(self.queues)):
                 queue = self.queues[iqueue]
                 while not queue._closed and not queue.empty():
-                    out = queue.get()
+                    try:
+                        out = queue.get(block=False)
+                    except Empty:
+                        continue
                     if isinstance(out, TerminateQueue):
                         terminal_pos = iqueue
                         queue.put(TerminateQueue())

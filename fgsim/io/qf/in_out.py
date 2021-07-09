@@ -1,5 +1,4 @@
-from multiprocessing.queues import Full
-from multiprocessing.queues import Empty
+from multiprocessing.queues import Empty, Full
 
 from ...utils.logger import logger
 from .terminate_queue import TerminateQueue
