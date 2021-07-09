@@ -30,7 +30,19 @@ def dict_to_kv(o, keystr=""):
 
 def get_experiment(exp_key):
     if exp_key is not None:
-        experiment = ExistingExperiment(previous_experiment=exp_key, **comet_conf)
+        experiment = ExistingExperiment(
+            previous_experiment=exp_key,
+            **comet_conf,
+            log_code=True,
+            log_graph=True,
+            parse_args=True,
+            log_env_details=True,
+            log_git_metadata=True,
+            log_git_patch=True,
+            log_env_gpu=True,
+            log_env_cpu=True,
+            log_env_host=True,
+        )
         experiment.set_name(hyperparameters["hash"])
     else:
         experiment = Experiment(**comet_conf)
@@ -39,6 +51,5 @@ def get_experiment(exp_key):
         # Format the hyperparameter for comet
 
     hyperparametersD = dict(dict_to_kv(hyperparameters))
-
     experiment.log_parameters(hyperparametersD)
     return experiment
