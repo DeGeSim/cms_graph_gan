@@ -24,16 +24,15 @@ def training_step(
     output = train_state.holder.model(batch)
 
     prediction = torch.squeeze(output.T)
-    train_state.holder.loss = train_state.holder.lossf(prediction, batch.y.float())
-    train_state.holder.loss.backward()
+    loss = train_state.holder.lossf(prediction, batch.y.float())
+    loss.backward()
+    train_state.state.loss = float(loss)
     train_state.holder.optim.step()
-    check_chain_for_nans(
-        (batch, prediction, train_state.holder.loss, train_state.holder.model)
-    )
 
 
 def validate(train_state: TrainState) -> None:
     if train_state.state["grad_step"] % conf.training.validation_interval == 0:
+        check_chain_for_nans((train_state.holder.model,))
         losses = []
         for batch in train_state.loader.validation_batches:
             batch = batch.to(device)
@@ -56,10 +55,11 @@ def validate(train_state: TrainState) -> None:
             or train_state.state.min_val_loss > mean_loss
         ):
             train_state.state.min_val_loss = mean_loss
-            train_state.best_grad_step = train_state.state["grad_step"]
-            train_state.best_model_state = deepcopy(
+            train_state.state.best_grad_step = train_state.state["grad_step"]
+            train_state.holder.best_model_state = deepcopy(
                 train_state.holder.model.state_dict()
             )
+        assert train_state.state is train_state.holder.state
 
     if (
         train_state.state["grad_step"] != 0

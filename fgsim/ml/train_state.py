@@ -10,6 +10,9 @@ from .holder import ModelHolder
 
 @dataclass
 class TrainState:
+    """This object holds everything needed in the training and is used
+    to access all needes objects. The state member is holder.state."""
+
     holder: ModelHolder
     state: omegaconf.omegaconf.Type
     loader: QueuedDataLoader
@@ -39,7 +42,7 @@ class TrainState:
             timesD,
             self.state["grad_step"],
         )
-        self.writer.add_scalar("loss", self.holder.loss, self.state["grad_step"])
+        self.writer.add_scalar("loss", self.state.loss, self.state["grad_step"])
         self.writer.flush()
 
         self.experiment.log_metrics(
@@ -48,6 +51,4 @@ class TrainState:
             step=self.state.grad_step,
             epoch=self.state.epoch,
         )
-        self.experiment.log_metric(
-            "loss", self.holder.loss, self.state["grad_step"]
-        )
+        self.experiment.log_metric("loss", self.state.loss, self.state["grad_step"])

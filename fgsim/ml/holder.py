@@ -16,6 +16,10 @@ ModelClass = importlib.import_module(
 
 
 class ModelHolder:
+    """ "This class holds the model the loss function and the optimizer.
+    It manages the checkpointing and holds a member 'state' that contains
+    information about the current state of the training"""
+
     def __init__(self) -> None:
         self.model = ModelClass()
 
