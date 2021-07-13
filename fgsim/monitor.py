@@ -1,4 +1,4 @@
-from comet_ml import ExistingExperiment, Experiment
+import comet_ml
 from omegaconf import OmegaConf
 from torch.utils.tensorboard import SummaryWriter
 
@@ -31,7 +31,7 @@ def dict_to_kv(o, keystr=""):
 
 def get_experiment(exp_key):
     if exp_key is not None:
-        experiment = ExistingExperiment(
+        experiment = comet_ml.ExistingExperiment(
             previous_experiment=exp_key,
             **comet_conf,
             log_code=True,
@@ -44,13 +44,13 @@ def get_experiment(exp_key):
             log_env_cpu=True,
             log_env_host=True,
         )
-        experiment.set_name(hyperparameters["hash"])
     else:
-        experiment = Experiment(**comet_conf)
+        experiment = comet_ml.Experiment(**comet_conf)
         exp_key = experiment.get_key()
-        experiment.set_name(hyperparameters["hash"])
+
         # Format the hyperparameter for comet
 
+    experiment.set_name(hyperparameters["hash"])
     hyperparametersD = dict(dict_to_kv(hyperparameters))
     experiment.log_parameters(hyperparametersD)
     return experiment
@@ -65,8 +65,10 @@ def setup_experiment(model_holder):
     if hasattr(model_holder.state, "comet_experiment_key"):
         experiment = get_experiment(model_holder.state.comet_experiment_key)
     else:
-        experiment = Experiment(**comet_conf)
+        experiment = comet_ml.Experiment(**comet_conf)
         model_holder.state.comet_experiment_key = experiment.get_key()
 
     experiment.set_model_graph(str(model_holder.model))
+    experiment.log_code(file_name=f"fgsim/models/{conf.model.name}.py")
+
     return experiment
