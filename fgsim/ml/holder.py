@@ -84,6 +84,13 @@ class ModelHolder:
         assert not contains_nans(checkpoint)[0]
         self.best_model_state = checkpoint["model"]
 
+    def select_best_model(self):
+        self.model.load_state_dict(self.best_model_state)
+        if device.type == "cuda":
+            self.model = self.model.cuda()
+        else:
+            self.model = self.model.cpu()
+
     def save_models(self):
         self.__save_state()
         self.__save_checkpoint()
