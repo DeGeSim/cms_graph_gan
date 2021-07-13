@@ -11,4 +11,4 @@ CUDA=111
 TORCH=1.9.0
 cd ~/fgsim
 source .tox/py38/bin/activate
-python3 -m fgsim --tag $1 train
+python3 -m fgsim $@
