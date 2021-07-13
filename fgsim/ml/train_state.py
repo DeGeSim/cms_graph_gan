@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from typing import Optional
 
 import omegaconf
 from comet_ml.experiment import BaseExperiment
@@ -16,8 +17,8 @@ class TrainState:
     holder: ModelHolder
     state: omegaconf.omegaconf.Type
     loader: QueuedDataLoader
-    writer: SummaryWriter
-    experiment: BaseExperiment
+    writer: Optional[SummaryWriter]
+    experiment: Optional[BaseExperiment]
 
     def writelogs(self) -> None:
         times = [
