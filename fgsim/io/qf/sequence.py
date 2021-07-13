@@ -187,10 +187,10 @@ class Sequence:
 
     def read_error_queue(self):
         threading.current_thread().setName("readErrorQueue")
-        while not self.shutdown_event.is_set():
+        while not self.shutdown_event.is_set() and not self.error_queue._closed:
             try:
                 workermsg, wkin, error = self.error_queue.get(
-                    block=True, timeout=0.005
+                    block=True, timeout=0.5
                 )
                 # If there is an error, stop eveything
                 self.shutdown_event.set()
