@@ -41,11 +41,17 @@ def process_seq():
         # For these elements to be processed by each of the workers in the following
         # transformthey need to be (x [51 * 51 * 25], y [1] ):
         qf.ProcessStep(zip_chunks, 1, name="zip"),
-        qf.PoolStep(transform, nworkers=7, name="transform"),
+        qf.PoolStep(
+            transform, nworkers=conf.loader.num_workers_transform, name="transform"
+        ),
         Queue(2),
         qf.RepackStep(conf.loader.batch_size),
         qf.ProcessStep(geo_batch, 1, name="geo_batch"),
-        qf.ProcessStep(split_layer_subgraphs, 5, name="split_layer_subgraphs"),
+        qf.ProcessStep(
+            split_layer_subgraphs,
+            conf.loader.num_workers_stack,
+            name="split_layer_subgraphs",
+        ),
         Queue(conf.loader.prefetch_batches),
     )
 

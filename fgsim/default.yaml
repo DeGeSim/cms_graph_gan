@@ -21,8 +21,9 @@ loader:
   yname: "energy"
   chunksize: 200
   prefetch_batches: 4
-  batch_size : 40
-  num_workers: 8
+  batch_size : 10
+  num_workers_transform: 6
+  num_workers_stack: 9
   validation_set_size: 1000
   test_set_size: 6000
   transform_workers: 15
