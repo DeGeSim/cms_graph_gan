@@ -37,8 +37,6 @@ def prediction_procedure():
 
         y = batch.y.detach().to("cpu").numpy()
         ys.append(y)
-        if ibatch > 3:
-            break
 
     logger.info("Done with batches.")
     ys = np.hstack(ys)
