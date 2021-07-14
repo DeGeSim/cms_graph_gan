@@ -162,9 +162,9 @@ class Sequence:
         self.queues[-1].close()
         self.queues[-1].join_thread()
 
-        self.error_queue.join_thread()
         self.error_queue_thread.join()
         self.error_queue.close()
+        self.error_queue.join_thread()
 
     def drain_seq(self):
         logger.warning("qf Sequence is being drained.")
