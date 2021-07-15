@@ -36,7 +36,7 @@ class PoolStep(StepBase):
 
     def stop(self):
         for p in self.processes:
-            p.join(60)
+            p.join(5)
             if p.exitcode is None:
                 raise RuntimeError
 

@@ -8,6 +8,7 @@ path:
   comet_exp_key: "${path.run_path}/comet_experiment_key"
   log: "${path.run_path}/log"
   train_config: "${path.run_path}/resulting_train_config.yaml"
+  full_config: "${path.run_path}/full_config.yaml"
   tensorboard: "runs/${tag}/${hash}"
   state: "${path.run_path}/state.yaml"
   state_old: "${path.run_path}/state_old.yaml"
@@ -34,7 +35,8 @@ model:
   dyn_features: 10
   static_features: 3
 training:
-  validation_interval: 50
+  events_processed_before_validation: 6000
+  validation_interval: '${div:${training.events_processed_before_validation},${loader.batch_size}}'
   checkpoint_interval: 50
   early_stopping: 7
   early_stopping_improvement: 0.02

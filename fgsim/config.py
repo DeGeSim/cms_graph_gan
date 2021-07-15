@@ -8,6 +8,18 @@ from omegaconf import OmegaConf
 
 from .utils.cli import args
 
+
+# Add a custum resolver to OmegaConf allowing for divisions
+# Give int back if you can:
+def divide(a, b):
+    if a // b == a / b:
+        return a // b
+    else:
+        return a / b
+
+
+OmegaConf.register_new_resolver("div", divide, replace=True)
+
 # Load the default settings, overwrite them
 # witht the tag-specific settings and then
 # overwrite those with cli arguments.
@@ -61,9 +73,10 @@ os.makedirs(conf.path.run_path, exist_ok=True)
 if conf.command == "train":
     OmegaConf.save(hyperparameters, conf.path.train_config)
 
+
 # Infer the parameters here
 OmegaConf.resolve(conf)
-
+OmegaConf.save(conf, conf.path.full_config)
 
 torch.manual_seed(conf.seed)
 np.random.seed(conf.seed)
