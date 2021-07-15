@@ -111,6 +111,10 @@ class QueuedDataLoader:
             ]
             torch.save(self.validation_batches, conf.path.validation)
             del valqfseq
+            logger.warn("Validation batches pickled.")
+            # Must restart after using qf.Sequence to avoid
+            # stange multiprocessing bugs
+            exit(1)
 
         if not os.path.isfile(conf.path.test):
             logger.warn("Processing testing batches")
@@ -121,8 +125,10 @@ class QueuedDataLoader:
             ]
             torch.save(self.testing_batches, conf.path.test)
             del testqfseq
-
-            logger.warn("Validation and training batches pickled.")
+            logger.warn("Testing batches pickled.")
+            # Must restart after using qf.Sequence to avoid
+            # stange multiprocessing bugs
+            exit(1)
         else:
             self.validation_batches = torch.load(
                 conf.path.validation, map_location=device
