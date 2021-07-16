@@ -3,7 +3,6 @@ from torch import nn
 from torch_geometric.nn import global_add_pool
 
 from ..config import conf
-from ..geo.graph import num_node_dyn_features as initial_dyn_features
 
 nfeatures = conf.model.dyn_features + conf.model.static_features
 
@@ -11,7 +10,7 @@ nfeatures = conf.model.dyn_features + conf.model.static_features
 class ModelClass(torch.nn.Module):
     def __init__(self):
         super(ModelClass, self).__init__()
-        self.end_lin = nn.Linear(initial_dyn_features, 1)
+        self.end_lin = nn.Linear(conf.model.dyn_features, 1)
 
     def forward(self, batch):
         x = global_add_pool(batch.x, batch.batch)

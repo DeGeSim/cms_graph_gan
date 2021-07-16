@@ -18,8 +18,16 @@ path:
   predict_csv: "${path.run_path}/prediction.csv"
 seed: 0
 loader:
-  xname: "ECAL"
-  yname: "energy"
+  keylist: [
+    "energy",
+    "ECAL",
+    "ECAL_E",
+    "HCAL",
+    "HCAL_E",
+    "recoEta",
+    "recoPhi",
+    "recoTheta",
+  ]
   chunksize: 200
   prefetch_batches: 4
   batch_size : 10

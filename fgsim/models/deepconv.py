@@ -3,7 +3,6 @@ from torch import nn
 from torch_geometric.nn import GCNConv, GINConv, global_add_pool
 
 from ..config import conf
-from ..geo.graph import num_node_dyn_features as initial_dyn_features
 
 nfeatures = conf.model.dyn_features + conf.model.static_features
 
@@ -23,7 +22,9 @@ def getconv():
 class ModelClass(torch.nn.Module):
     def __init__(self):
         super(ModelClass, self).__init__()
-        self.upscale_conv = GCNConv(initial_dyn_features, conf.model.dyn_features)
+        self.upscale_conv = GCNConv(
+            conf.model.dyn_features, conf.model.dyn_features
+        )
         self.inlayer_conv = getconv()
         self.forward_conv = getconv()
         self.backward_conv = getconv()

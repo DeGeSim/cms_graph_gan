@@ -5,9 +5,6 @@ from torch_geometric.data import Data
 # Node features:
 # 0.Energy
 # 1-4 hidden
-num_node_dyn_features = 1
-num_node_static_features = 3
-num_edge_features = 1
 
 
 def arrpos(ilayer, irow, icolumn, shape):
