@@ -82,7 +82,9 @@ class StepBase:
 
     def stop(self):
         for p in self.processes:
-            p.terminate()
+            if p.is_alive():
+                p.join(1)
+                p.terminate()
 
     def safe_put(self, queue, element):
         while not self.shutdown_event.is_set():
