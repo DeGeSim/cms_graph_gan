@@ -17,10 +17,9 @@ from . import qf
 # reading from the filesystem
 def read_chunk(inp):
     file_path, chunk = inp
+
     with h5.File(file_path) as h5_file:
-        x_vector = h5_file[conf.loader.xname][chunk[0] : chunk[1]]
-        y_vector = h5_file[conf.loader.yname][chunk[0] : chunk[1]]
-    return (x_vector, y_vector)
+        return [h5_file[k][chunk[0] : chunk[1]] for k in conf.loader.keylist]
 
 
 def zip_chunks(chunks):

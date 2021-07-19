@@ -33,6 +33,7 @@ install_requirements = [
     "comet-ml",
     "tensorboard",
     "toml",
+    "tblib",
 ]
 
 extras = {

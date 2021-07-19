@@ -2,10 +2,6 @@ import numpy as np
 import torch
 from torch_geometric.data import Data
 
-# Node features:
-# 0.Energy
-# 1-4 hidden
-
 
 def arrpos(ilayer, irow, icolumn, shape):
     return ilayer * shape[1] * shape[2] + irow * (shape[2]) + icolumn
@@ -25,7 +21,8 @@ def getNonZeroIdxs(arr):
 
 
 def grid_to_graph(caloimg):
-    caloimg = np.swapaxes(caloimg, 0, 2)
+    # columns rows layers -> layers rows columns
+    caloimg = caloimg.T
     nlayers, nrows, ncolumns = caloimg.shape
 
     # Node feature matrix
@@ -33,6 +30,8 @@ def grid_to_graph(caloimg):
     feature_mtx_static = []
     # layer node
     layers = []
+    rows = []
+    columns = []
 
     # Save the edges
     edge_index = []
@@ -63,6 +62,8 @@ def grid_to_graph(caloimg):
                 feature_mtx_static.append(features_static)
 
                 layers.append(ilayer)
+                rows.append(jrow)
+                columns.append(kcolumn)
 
                 # regular neighbors
                 # up if not top t
@@ -117,13 +118,24 @@ def grid_to_graph(caloimg):
         edge_index[i][0] = globalid_to_indexD[edge_index[i][0]]
         edge_index[i][1] = globalid_to_indexD[edge_index[i][1]]
 
-    feature_mtx_dyn = torch.tensor(feature_mtx_dyn, dtype=torch.float32)
-    feature_mtx_static = torch.tensor(feature_mtx_static, dtype=torch.float32)
+    feature_mtx_dyn = torch.tensor(feature_mtx_dyn, dtype=torch.float32).reshape(
+        -1, 1
+    )
+    feature_mtx_static = torch.tensor(
+        feature_mtx_static, dtype=torch.float32
+    ).reshape(-1, 1)
     edge_index = torch.tensor(edge_index, dtype=torch.int64)
-
-    layers = torch.tensor(layers, dtype=torch.int64)
 
     graph = Data(x=feature_mtx_dyn, edge_index=edge_index.T)
     graph.feature_mtx_static = feature_mtx_static
-    graph.layers = layers
+
+    graph.layers = torch.tensor(layers, dtype=torch.int64)
+    graph.nlayers = torch.tensor(nlayers, dtype=torch.int64)
+
+    graph.rows = torch.tensor(rows, dtype=torch.int64)
+    graph.nrows = torch.tensor(nrows, dtype=torch.int64)
+
+    graph.columns = torch.tensor(columns, dtype=torch.int64)
+    graph.ncolumns = torch.tensor(ncolumns, dtype=torch.int64)
+
     return graph.cpu()

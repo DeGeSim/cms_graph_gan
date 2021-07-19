@@ -1,9 +1,13 @@
+from tblib import pickling_support
 from torch import multiprocessing as mp
 
 from .pack import PackStep, RepackStep, UnpackStep
 from .pool import PoolStep
 from .process_step import ProcessStep
 from .sequence import Sequence
+
+pickling_support.install()
+
 
 # Two recommendations by
 # https://github.com/pytorch/pytorch/issues/973
