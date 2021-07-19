@@ -3,6 +3,7 @@ from omegaconf import OmegaConf
 from torch.utils.tensorboard import SummaryWriter
 
 from .config import conf, hyperparameters
+from .utils.logger import logger
 
 comet_conf = OmegaConf.load("fgsim/comet.yaml")
 
@@ -49,8 +50,8 @@ def get_experiment(exp_key):
         exp_key = experiment.get_key()
 
         # Format the hyperparameter for comet
-
-    experiment.set_name(hyperparameters["hash"])
+    exp_name = experiment.get_name()
+    logger.warn(f"Comet.ml Experiment name {exp_name}")
     hyperparametersD = dict(dict_to_kv(hyperparameters))
     experiment.log_parameters(hyperparametersD)
     return experiment
