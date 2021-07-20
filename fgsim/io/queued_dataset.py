@@ -105,10 +105,10 @@ class QueuedDataLoader:
 
             valqfseq = qf.Sequence(*process_seq())
             valqfseq.queue_iterable(self.validation_chunks)
-            self.validation_batches = [
+            self._validation_batches = [
                 batch.to("cpu").clone().contiguous() for batch in valqfseq
             ]
-            torch.save(self.validation_batches, conf.path.validation)
+            torch.save(self._validation_batches, conf.path.validation)
             del valqfseq
             logger.warn("Validation batches pickled.")
             # Must restart after using qf.Sequence to avoid
@@ -119,10 +119,10 @@ class QueuedDataLoader:
             logger.warn("Processing testing batches")
             testqfseq = qf.Sequence(*process_seq())
             testqfseq.queue_iterable(self.testing_chunks)
-            self.testing_batches = [
+            self._testing_batches = [
                 batch.to("cpu").clone().contiguous() for batch in testqfseq
             ]
-            torch.save(self.testing_batches, conf.path.test)
+            torch.save(self._testing_batches, conf.path.test)
             del testqfseq
             logger.warn("Testing batches pickled.")
             # Must restart after using qf.Sequence to avoid
@@ -134,15 +134,19 @@ class QueuedDataLoader:
     @property
     def validation_batches(self):
         if not hasattr(self, "_validation_batches"):
+            logger.warning("Validation batches not loaded, loading from disk.")
             self._validation_batches = torch.load(
                 conf.path.validation, map_location=device
             )
+            logger.warning("Finished loading.")
         return self._validation_batches
 
     @property
     def testing_batches(self):
         if not hasattr(self, "_testing_batches"):
+            logger.warning("Testing batches not loaded, loading from disk.")
             self._testing_batches = torch.load(conf.path.test, map_location=device)
+            logger.warning("Finished loading.")
         return self._testing_batches
 
     def load_test_batches(self):
