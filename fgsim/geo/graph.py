@@ -2,6 +2,8 @@ import numpy as np
 import torch
 from torch_geometric.data import Data
 
+from ..config import conf
+
 
 def arrpos(ilayer, irow, icolumn, shape):
     return ilayer * shape[1] * shape[2] + irow * (shape[2]) + icolumn
@@ -123,7 +125,7 @@ def grid_to_graph(caloimg):
     )
     feature_mtx_static = torch.tensor(
         feature_mtx_static, dtype=torch.float32
-    ).reshape(-1, 1)
+    ).reshape(feature_mtx_dyn.shape[0], conf.model.static_features)
     edge_index = torch.tensor(edge_index, dtype=torch.int64)
 
     graph = Data(x=feature_mtx_dyn, edge_index=edge_index.T)
