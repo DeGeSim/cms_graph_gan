@@ -60,8 +60,15 @@ def merge_graphs(ga: Data, gb: Data) -> Data:
         add_edge_index, dtype=torch.int64
     ).T.reshape(2, -1)
 
-    if ga.x.dim() != gb.x.dim() or ga.x.shape[1] != gb.x.shape[1]:
-        print("fuck")
+    assert not (ga.x.dim() != gb.x.dim() or ga.x.shape[1] != gb.x.shape[1])
+
+    assert ga.edge_index.dim() == gb.edge_index.dim() == connection_edge_index.dim()
+    assert (
+        ga.edge_index.shape[0]
+        == gb.edge_index.shape[0]
+        == connection_edge_index.shape[0]
+    )
+
     graph = Data(
         x=torch.vstack((ga.x, gb.x)),
         edge_index=torch.hstack(
@@ -73,11 +80,10 @@ def merge_graphs(ga: Data, gb: Data) -> Data:
         ),
     )
 
-    if (
+    assert not (
         ga.feature_mtx_static.dim() != gb.feature_mtx_static.dim()
         or ga.feature_mtx_static.shape[1] != gb.feature_mtx_static.shape[1]
-    ):
-        print("fuck")
+    )
 
     graph.feature_mtx_static = torch.vstack(
         (ga.feature_mtx_static, gb.feature_mtx_static)
