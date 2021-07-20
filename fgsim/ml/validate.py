@@ -12,6 +12,8 @@ def validate(train_state: TrainState) -> None:
     if train_state.state["grad_step"] % conf.training.validation_interval == 0:
         check_chain_for_nans((train_state.holder.model,))
         losses = []
+        # Make sure the batches are loaded
+        _ = train_state.loader.validation_batches
         for batch in tqdm(
             train_state.loader.validation_batches, postfix="validating"
         ):
