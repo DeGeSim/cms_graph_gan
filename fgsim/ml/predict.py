@@ -36,7 +36,7 @@ def prediction_procedure():
         yhat = prediction.detach().to("cpu").numpy()
         yhats.append(yhat)
 
-        y = batch.y.detach().to("cpu").numpy()
+        y = batch[conf.yvar].detach().to("cpu").numpy()
         ys.append(y)
 
     logger.info("Done with batches.")
