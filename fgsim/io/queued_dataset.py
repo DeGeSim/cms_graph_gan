@@ -128,12 +128,22 @@ class QueuedDataLoader:
             # Must restart after using qf.Sequence to avoid
             # stange multiprocessing bugs
             exit(1)
-        else:
-            self.validation_batches = torch.load(
-                conf.path.validation, map_location=device
-            )
 
         self.qfseq = qf.Sequence(*process_seq())
+
+    @property
+    def validation_batches(self):
+        if not hasattr(self, "_validation_batches"):
+            self._validation_batches = torch.load(
+                conf.path.validation, map_location=device
+            )
+        return self._validation_batches
+
+    @property
+    def testing_batches(self):
+        if not hasattr(self, "_testing_batches"):
+            self._testing_batches = torch.load(conf.path.test, map_location=device)
+        return self._testing_batches
 
     def load_test_batches(self):
         self.testing_batches = torch.load(conf.path.test, map_location=device)

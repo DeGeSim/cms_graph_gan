@@ -26,7 +26,8 @@ def prediction_procedure():
     ys = []
     yhats = []
 
-    train_state.loader.load_test_batches()
+    # Make sure the batches are loaded
+    _ = train_state.loader.testing_batches
     logger.info("Start iterating batches.")
     for ibatch, batch in enumerate(tqdm(train_state.loader.testing_batches)):
         batch = batch.to(device)
