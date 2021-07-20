@@ -259,3 +259,4 @@ class Sequence:
                 logger.info("\n" + newflowstatus)
                 oldflowstatus = newflowstatus
             time.sleep(sleeptime)
+        logger.info("\n" + self.flowstatus())
