@@ -1,5 +1,8 @@
 import logging
 
+from rich.highlighter import NullHighlighter
+from rich.logging import RichHandler
+
 from ..config import conf
 
 logger = logging.getLogger(__name__)
@@ -15,7 +18,7 @@ if not logger.handlers:
     )
     logger.setLevel(logging.DEBUG if conf.debug else logging.INFO)
 
-    streamhandler = logging.StreamHandler()
-    formatter = logging.Formatter(format, datefmt="%y-%m-%d %H:%M")
-    streamhandler.setFormatter(formatter)
+    streamhandler = RichHandler(
+        log_time_format="%y-%m-%d %H:%M", highlighter=NullHighlighter()
+    )
     logger.addHandler(streamhandler)
