@@ -126,9 +126,9 @@ def grid_to_graph(caloimg):
     feature_mtx_static = torch.tensor(
         feature_mtx_static, dtype=torch.float32
     ).reshape(feature_mtx_dyn.shape[0], conf.model.static_features)
-    edge_index = torch.tensor(edge_index, dtype=torch.int64)
+    edge_index = torch.tensor(edge_index, dtype=torch.int64).T.reshape(2, -1)
 
-    graph = Data(x=feature_mtx_dyn, edge_index=edge_index.T)
+    graph = Data(x=feature_mtx_dyn, edge_index=edge_index)
     graph.feature_mtx_static = feature_mtx_static
 
     graph.layers = torch.tensor(layers, dtype=torch.int64)
