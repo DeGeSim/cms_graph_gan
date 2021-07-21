@@ -5,8 +5,7 @@ from ..config import conf
 from ..geo.graph import grid_to_graph
 
 
-def transform(inp) -> Data:
-    data_dict = {k: v for k, v in zip(conf.loader.keylist, inp)}
+def transform(data_dict) -> Data:
     graph_ECAL = grid_to_graph(data_dict["ECAL"])
     graph_HCAL = grid_to_graph(data_dict["HCAL"])
     graph = merge_graphs(graph_ECAL, graph_HCAL)

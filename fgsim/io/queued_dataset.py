@@ -5,6 +5,7 @@ import h5py as h5
 import numpy as np
 import torch
 import torch_geometric
+import yaml
 from torch.multiprocessing import Queue
 
 from ..config import conf, device
@@ -15,15 +16,25 @@ from . import qf
 
 
 # reading from the filesystem
-def read_chunk(inp):
-    file_path, chunk = inp
+def read_chunk(chunkL):
+    data_dict = {k: [] for k in conf.loader.keylist}
+    for chunk in chunkL:
+        file_path, start, end = chunk
+        with h5.File(file_path) as h5_file:
+            for k in conf.loader.keylist:
+                data_dict[k].append(h5_file[k][start:end])
+    for k in conf.loader.keylist:
+        if len(data_dict[k][0].shape) == 1:
+            data_dict[k] = np.hstack(data_dict[k])
+        else:
+            data_dict[k] = np.vstack(data_dict[k])
 
-    with h5.File(file_path) as h5_file:
-        return [h5_file[k][chunk[0] : chunk[1]] for k in conf.loader.keylist]
-
-
-def zip_chunks(chunks):
-    return zip(*chunks)
+    # split up the events and pass them as a dict
+    output = [
+        {k: data_dict[k][ientry] for k in conf.loader.keylist}
+        for ientry in range(conf.loader.chunksize)
+    ]
+    return output
 
 
 def geo_batch(list_of_graphs):
@@ -35,11 +46,10 @@ def geo_batch(list_of_graphs):
 def process_seq():
     return (
         qf.ProcessStep(read_chunk, 1, name="read_chunk"),
-        Queue(5),
+        Queue(3),
         # In the input is now [(x,y), ... (x [300 * 51 * 51 * 25], y [300,1] ), (x,y)]
         # For these elements to be processed by each of the workers in the following
         # transformthey need to be (x [51 * 51 * 25], y [1] ):
-        qf.ProcessStep(zip_chunks, 1, name="zip"),
         qf.PoolStep(
             transform, nworkers=conf.loader.num_workers_transform, name="transform"
         ),
@@ -55,49 +65,88 @@ def process_seq():
     )
 
 
+ds_path = Path(conf.path.dataset)
+assert ds_path.is_dir()
+files = [str(e) for e in sorted(ds_path.glob("**/*.h5"))]
+if len(files) < 1:
+    raise RuntimeError("No hdf5 datasets found")
+
+
+# load lengths
+if not os.path.isfile(conf.path.ds_lenghts):
+    len_dict = {}
+    for fn in files:
+        with h5.File(fn) as h5_file:
+            len_dict[fn] = len(h5_file[conf.yvar])
+    with open(conf.path.ds_lenghts, "w") as f:
+        yaml.dump(len_dict, f, Dumper=yaml.SafeDumper)
+else:
+    with open(conf.path.ds_lenghts, "r") as f:
+        len_dict = yaml.load(f, Loader=yaml.SafeLoader)
+
+
 class QueuedDataLoader:
     def __init__(self):
-        ds_path = Path(conf.path.dataset)
-        assert ds_path.is_dir()
-        self.files = sorted(ds_path.glob("**/*.h5"))
-        if len(self.files) < 1:
-            raise RuntimeError("No hdf5 datasets found")
-
         chunksize = conf.loader.chunksize
-        nentries = 10000
+        batch_size = conf.loader.batch_size
 
-        chunk_splits = [
-            (i * chunksize, (i + 1) * chunksize)
-            for i in range(nentries // chunksize)
-        ] + [(nentries // chunksize * chunksize, nentries)]
+        chunk_coords = [[]]
+        ifile = 0
+        ielement = 0
+        current_chunck_elements = 0
+        while ifile < len(files):
+            elem_left_in_cur_file = len_dict[files[ifile]] - ielement
+            elem_to_add = chunksize - current_chunck_elements
+            if elem_left_in_cur_file > elem_to_add:
+                chunk_coords[-1].append(
+                    [files[ifile], ielement, ielement + elem_to_add]
+                )
+                ielement += elem_to_add
+                current_chunck_elements += elem_to_add
+            else:
+                chunk_coords[-1].append(
+                    [files[ifile], ielement, ielement + elem_left_in_cur_file]
+                )
+                ielement = 0
+                current_chunck_elements += elem_left_in_cur_file
+                ifile += 1
+            if current_chunck_elements == chunksize:
+                current_chunck_elements = 0
+                chunk_coords.append([])
 
-        self.chunk_coords = [
-            (fn, chunk_split) for chunk_split in chunk_splits for fn in self.files
-        ]
-
-        np.random.shuffle(self.chunk_coords)
-
-        n_validation_batches = (
-            conf.loader.validation_set_size // conf.loader.batch_size
+        # remove the last, uneven chunk
+        chunk_coords = list(
+            filter(
+                lambda chunk: sum([part[2] - part[1] for part in chunk])
+                == chunksize,
+                chunk_coords,
+            )
         )
-        if conf.loader.validation_set_size % conf.loader.batch_size != 0:
-            n_validation_batches += 1
 
-        n_test_batches = conf.loader.test_set_size // conf.loader.batch_size
-        if conf.loader.test_set_size % conf.loader.batch_size != 0:
-            n_test_batches += 1
+        np.random.shuffle(chunk_coords)
+
+        # Make sure the chunks can be split evenly into batches:
+        assert chunksize % batch_size == 0
+
+        assert conf.loader.validation_set_size % chunksize == 0
+        n_validation_batches = conf.loader.validation_set_size // batch_size
+        n_validation_chunks = conf.loader.validation_set_size // chunksize
+
+        assert conf.loader.test_set_size % chunksize == 0
+        n_test_batches = conf.loader.test_set_size // batch_size
+        n_testing_chunks = conf.loader.test_set_size // chunksize
 
         logger.info(
             f"Using the first {n_validation_batches} batches for "
             + f"validation and the next {n_test_batches} batches for testing."
         )
 
-        self.validation_chunks = self.chunk_coords[:n_validation_batches]
-        self.testing_chunks = self.chunk_coords[
-            n_validation_batches : n_validation_batches + n_test_batches
+        self.validation_chunks = chunk_coords[:n_validation_chunks]
+        self.testing_chunks = chunk_coords[
+            n_validation_chunks : n_validation_chunks + n_testing_chunks
         ]
-        self.training_chunks = self.chunk_coords[
-            n_validation_batches + n_test_batches :
+        self.training_chunks = chunk_coords[
+            n_validation_chunks + n_testing_chunks :
         ]
 
         if not os.path.isfile(conf.path.validation):
@@ -105,29 +154,39 @@ class QueuedDataLoader:
 
             valqfseq = qf.Sequence(*process_seq())
             valqfseq.queue_iterable(self.validation_chunks)
-            self._validation_batches = [
-                batch.to("cpu").clone().contiguous() for batch in valqfseq
-            ]
+            self._validation_batches = []
+            for _ in range(n_validation_batches):
+                batch = next(valqfseq).to("cpu").clone().contiguous()
+                self._validation_batches.append(batch)
+            # Drain the rest of the batches
+            for _ in valqfseq:
+                pass
             torch.save(self._validation_batches, conf.path.validation)
             del valqfseq
             logger.warn("Validation batches pickled.")
             # Must restart after using qf.Sequence to avoid
             # stange multiprocessing bugs
-            exit(1)
+            exit(0)
 
         if not os.path.isfile(conf.path.test):
             logger.warn("Processing testing batches")
             testqfseq = qf.Sequence(*process_seq())
             testqfseq.queue_iterable(self.testing_chunks)
-            self._testing_batches = [
-                batch.to("cpu").clone().contiguous() for batch in testqfseq
-            ]
+            logger.info(f"queing {len(self.testing_chunks)} chunks for testing ")
+            self._testing_batches = []
+            for ibatch in range(n_test_batches):
+                batch = next(testqfseq).to("cpu").clone().contiguous()
+                self._testing_batches.append(batch)
+            # Drain the rest of the batches
+            for _ in testqfseq:
+                pass
+
             torch.save(self._testing_batches, conf.path.test)
             del testqfseq
             logger.warn("Testing batches pickled.")
             # Must restart after using qf.Sequence to avoid
             # stange multiprocessing bugs
-            exit(1)
+            exit(0)
 
         self.qfseq = qf.Sequence(*process_seq())
 
@@ -154,7 +213,7 @@ class QueuedDataLoader:
 
     def queue_epoch(self, n_skip_events=0):
         n_skip_chunks = n_skip_events // conf.loader.chunksize
-        n_skip_chunks = n_skip_chunks % (len(self.files) * conf.loader.chunksize)
+        n_skip_chunks = n_skip_chunks % (len(files) * conf.loader.chunksize)
 
         logger.info(f" skipping {n_skip_chunks} batches for training.")
 

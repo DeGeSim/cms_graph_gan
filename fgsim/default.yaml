@@ -2,6 +2,7 @@ tag: default
 loglevel: 1
 path:
   dataset: 'data/clic'
+  ds_lenghts: '${path.dataset}/filelengths.yaml'
   validation: 'data/clic_valtest/validation.torch'
   test: 'data/clic_valtest/test.torch'
   run_path: 'wd/${tag}/${hash}'
@@ -28,10 +29,10 @@ loader:
     "recoPhi",
     "recoTheta",
   ]
-  chunksize: 200
+  chunksize: 1000
   prefetch_batches: 4
   batch_size : 10
-  num_workers_transform: 6
+  num_workers_transform: 10
   num_workers_stack: 9
   validation_set_size: 1000
   test_set_size: 6000
