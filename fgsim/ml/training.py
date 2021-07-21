@@ -41,57 +41,38 @@ def training_procedure() -> None:
         setup_experiment(model_holder),
     )
 
-    # Check if the training already has finished:
-    early_stopping(train_state)
-
     # Initialize the training
     # switch model in training mode
     train_state.holder.model.train()
-
+    # Queue that batches
+    train_state.loader.queue_epoch(n_skip_events=train_state.state.processed_events)
     try:
-        # Iterate over the Epochs
-        for train_state.state.epoch in range(
-            train_state.state.epoch, conf.model["n_epochs"]
-        ):
-            # Iterate over the batches
-            train_state.state.batch_start_time = time.time()
-            train_state.loader.queue_epoch(
-                n_skip_events=train_state.state.processed_events
-            ),
-            for train_state.state.ibatch, batch in enumerate(
-                tqdm(
-                    train_state.loader,
-                    initial=train_state.state.ibatch,
-                ),
-                start=train_state.state.ibatch,
+        while not early_stopping(train_state):
+            for _ in tqdm(
+                range(conf.training.validation_interval), postfix="training"
             ):
+                train_state.state.batch_start_time = time.time()
+                try:
+                    batch = next(train_state.loader.qfseq)
+                except StopIteration:
+                    # If there is no next batch go to the next epoch
+                    train_state.state.epoch += 1
+                    train_state.state.ibatch = 0
+                    train_state.loader.queue_epoch(
+                        n_skip_events=train_state.state.processed_events
+                    )
+                    batch = next(train_state.loader.qfseq)
                 batch = move_batch_to_device(batch, device)
-
                 train_state.state.time_io_done = time.time()
-
                 training_step(batch, train_state)
-
                 train_state.state.time_training_done = time.time()
-
-                # save the generated torch tensor models to disk
-                validate(train_state)
-
-                train_state.state.time_validation_done = time.time()
-
-                early_stopping(train_state)
-
-                train_state.state.time_early_stopping_done = time.time()
-
-                train_state.writelogs()
-
-                # preparatoin for next step
+                train_state.write_trainstep_logs()
+                train_state.state.ibatch += 1
                 train_state.state.processed_events += conf.loader.batch_size
                 train_state.state["grad_step"] += 1
-                train_state.state.batch_start_time = time.time()
 
-            train_state.state.ibatch = 0
-            train_state.save_checkpoint()
-            train_state.save_best_model()
+            validate(train_state)
+            train_state.holder.save_checkpoint()
     except Exception as error:
         logger.error("Error detected, stopping qfseq.")
         train_state.loader.qfseq._stop()

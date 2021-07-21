@@ -43,20 +43,31 @@ class ModelHolder:
                 "val_losses": [],
             }
         )
-        self.__load_models()
+        self.__load_checkpoint()
         self.model = self.model.float().to(device)
 
-    def __load_models(self):
+    def __load_checkpoint(self):
         if (
             not os.path.isfile(conf.path.state)
             or not os.path.isfile(conf.path.checkpoint)
             or not os.path.isfile(conf.path.best_model)
         ):
-            logger.warn("Proceeding without checkpoint.")
+            logger.warn("Proceeding without loading checkpoint.")
             return
-        self.__load_state()
-        self.__load_checkpoint()
-        self.__load_best_model()
+
+        checkpoint = torch.load(conf.path.checkpoint, map_location=device)
+
+        assert not contains_nans(checkpoint)[0]
+
+        self.state = checkpoint["state"]
+        self.model.load_state_dict(checkpoint["model"])
+        self.optim.load_state_dict(checkpoint["optim"])
+        self.best_model_state = checkpoint["best_model"]
+
+        if device.type == "cuda":
+            self.model = self.model.cuda()
+        else:
+            self.model = self.model.cpu()
 
         logger.warn(
             "Loading model from checkpoint at"
@@ -65,25 +76,6 @@ class ModelHolder:
             + f" grad_step {self.state['grad_step']}."
         )
 
-    def __load_state(self):
-        self.state = OmegaConf.load(conf.path.state)
-
-    def __load_checkpoint(self):
-        checkpoint = torch.load(conf.path.checkpoint, map_location=device)
-        assert not contains_nans(checkpoint)[0]
-
-        self.model.load_state_dict(checkpoint["model"])
-        if device.type == "cuda":
-            self.model = self.model.cuda()
-        else:
-            self.model = self.model.cpu()
-        self.optim.load_state_dict(checkpoint["optim"])
-
-    def __load_best_model(self):
-        checkpoint = torch.load(conf.path.best_model, map_location=device)
-        assert not contains_nans(checkpoint)[0]
-        self.best_model_state = checkpoint["model"]
-
     def select_best_model(self):
         self.model.load_state_dict(self.best_model_state)
         if device.type == "cuda":
@@ -91,36 +83,17 @@ class ModelHolder:
         else:
             self.model = self.model.cpu()
 
-    def save_models(self):
-        self.__save_state()
-        self.__save_checkpoint()
-        self.__save_best_model()
-
-    def __save_checkpoint(self):
+    def save_checkpoint(self):
         self.__push_to_old(conf.path.checkpoint, conf.path.checkpoint_old)
 
         torch.save(
             {
                 "model": self.model.state_dict(),
                 "optim": self.optim.state_dict(),
+                "state": self.state,
+                "best_model": self.best_model_state,
             },
             conf.path.checkpoint,
-        )
-
-    def __save_state(self):
-        self.__push_to_old(conf.path.state, conf.path.state_old)
-        OmegaConf.save(self.state, conf.path.state)
-        logger.warn(
-            f"Saved model to checkpoint at epoch {self.state['epoch']} /"
-            + f" gradient step {self.state['grad_step']}."
-        )
-
-    def __save_best_model(self):
-        torch.save(
-            {
-                "model": self.best_model_state,
-            },
-            conf.path.best_model,
         )
 
     def __push_to_old(self, path_new, path_old):

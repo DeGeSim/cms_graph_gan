@@ -49,4 +49,4 @@ def validate(train_state: TrainState) -> None:
         train_state.state["grad_step"] != 0
         and train_state.state["grad_step"] % conf.training.checkpoint_interval == 0
     ):
-        train_state.holder.save_models()
+        train_state.holder.save_checkpoint()
