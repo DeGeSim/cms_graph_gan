@@ -93,7 +93,7 @@ def merge_graphs(ga: Data, gb: Data) -> Data:
     return graph
 
 
-# print(f"""\
+# logger.info(f"""\
 # Adding edge_index from column \
 # {int(ga.columns[idx])}/{int(ga.ncolumns-1)} \
 # ({float(ga.columns[idx]/(ga.ncolumns - 1) *100)}%)\
@@ -110,10 +110,10 @@ def merge_graphs(ga: Data, gb: Data) -> Data:
 # newmtx = torch.ones((2,2))
 # idxs = mtx.nonzero()
 # pos=torch.floor(idxs/torch.tensor(mtx.shape)*torch.tensor(newmtx.shape))
-# print('col split')
-# print(pos[:,0].reshape((*mtx.shape)))
-# print('row split')
-# print(pos[:,1].reshape((*mtx.shape)))
+# logger.info('col split')
+# logger.info(pos[:,0].reshape((*mtx.shape)))
+# logger.info('row split')
+# logger.info(pos[:,1].reshape((*mtx.shape)))
 # pos.reshape((*mtx.shape,2))[0][-1] tensor([0., 1.])
 # pos.reshape((*mtx.shape,2))[-1][-1] == tensor([1., 1.])
 # pos.reshape((*mtx.shape,2))[-1][0] == tensor([1., 0.])

@@ -1,3 +1,6 @@
+from .logger import logger
+
+
 def timeit(func, n=1):
     import time
 
@@ -7,7 +10,7 @@ def timeit(func, n=1):
         for i in range(n):
             res = func(*arg, **kw)
         t2 = time.time()
-        print(func.__name__, (t2 - t1) / n)
+        logger.info(func.__name__, (t2 - t1) / n)
         return res
 
     return wrapper

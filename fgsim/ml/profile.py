@@ -36,6 +36,8 @@ def profile_procedure() -> None:
     ) as prof:
         _ = model_holder.model(batch)
     logger.warning("Profiling done.")
-    print(prof.key_averages().table(sort_by="cuda_time_total", row_limit=10))
-    print(prof.key_averages().table(sort_by="self_cpu_memory_usage", row_limit=10))
-    print(prof.key_averages().table(sort_by="cpu_memory_usage", row_limit=10))
+    logger.info(prof.key_averages().table(sort_by="cuda_time_total", row_limit=10))
+    logger.info(
+        prof.key_averages().table(sort_by="self_cpu_memory_usage", row_limit=10)
+    )
+    logger.info(prof.key_averages().table(sort_by="cpu_memory_usage", row_limit=10))
