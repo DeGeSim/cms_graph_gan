@@ -107,15 +107,15 @@ class PoolStep(StepBase):
                 self.propagete_error(wkin, error)
                 break
 
-            if wkin_iter.count > 200:
-                logger.warn(
-                    f"""\
-Giving large iterables ({wkin_iter.count})\
-to a worker can lead to crashes.
-Lower the number here if you see an error like \
-'RuntimeError: unable to mmap x bytes from file </torch_x>:
-Cannot allocate memory'"""
-                )
+            #             if wkin_iter.count > 200:
+            #                 logger.warn(
+            #                     f"""\
+            # Giving large iterables ({wkin_iter.count})\
+            # to a worker can lead to crashes.
+            # Lower the number here if you see an error like \
+            # 'RuntimeError: unable to mmap x bytes from file </torch_x>:
+            # Cannot allocate memory'"""
+            #                 )
             logger.debug(
                 f"""\
 {self.workername} push pool output list {id(wkout)} with \
