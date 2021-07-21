@@ -2,6 +2,7 @@ import logging
 
 from rich.highlighter import NullHighlighter
 from rich.logging import RichHandler
+from tqdm.contrib.logging import logging_redirect_tqdm
 
 from ..config import conf
 
@@ -22,3 +23,4 @@ if not logger.handlers:
         log_time_format="%y-%m-%d %H:%M", highlighter=NullHighlighter()
     )
     logger.addHandler(streamhandler)
+    logging_redirect_tqdm(logger)
