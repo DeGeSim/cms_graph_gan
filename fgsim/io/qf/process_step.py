@@ -27,6 +27,7 @@ class ProcessStep(StepBase):
 
     def _terminate(self, workername):
         logger.info(f"{workername}  trying to terminate")
+
         # Tell the other workers, that you are finished
         with self.running_processes_counter.get_lock():
             self.running_processes_counter.value -= 1
@@ -56,7 +57,7 @@ class ProcessStep(StepBase):
             logger.info(f"{workername} put terminal element in outq.")
             self.first_to_finish_lock.release()
         self._close_queues()
-        logger.info(f"{workername} terminating")
+        logger.info(f"{self.workername} terminating")
 
     # def _debugtarget(self):
     #     return "do_nothing1" in self.workername and (
@@ -86,9 +87,9 @@ class ProcessStep(StepBase):
             # wait for the others and put it in the next queue
             if isinstance(wkin, TerminateQueue):
                 break
-                # We need to overwrite the method of cloning the batches
-                # because we have list of tensors as attibutes of the batch.
-                # If copy.deepcopy is called on this object
+            # We need to overwrite the method of cloning the batches
+            # because we have list of tensors as attibutes of the batch.
+            # If copy.deepcopy is called on this object
             wkin = self._clone_tensors(wkin)
 
             try:

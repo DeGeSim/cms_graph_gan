@@ -69,7 +69,7 @@ class PoolStep(StepBase):
                 f"""\
 {self.workername} working on {id(wkin)} of type {type(wkin)} from queue {id(self.inq)}."""
             )
-            wkin = self._clone_tensors(wkin)
+
             # If the process gets a TerminateQueue object,
             # it terminates the pool and and puts the terminal element in
             # in the outgoing queue.
@@ -77,6 +77,8 @@ class PoolStep(StepBase):
                 logger.info(f"{self.workername} terminating")
                 self.safe_put(self.outq, TerminateQueue())
                 break
+
+            wkin = self._clone_tensors(wkin)
 
             assert isinstance(wkin, Iterable)
             logger.debug(
@@ -104,16 +106,16 @@ class PoolStep(StepBase):
                 logger.warn(f"""{self.workername} got error""")
                 self.propagete_error(wkin, error)
                 break
-            finally:
-                if wkin_iter.count > 200:
-                    logger.warn(
-                        f"""\
+
+            if wkin_iter.count > 200:
+                logger.warn(
+                    f"""\
 Giving large iterables ({wkin_iter.count})\
 to a worker can lead to crashes.
 Lower the number here if you see an error like \
 'RuntimeError: unable to mmap x bytes from file </torch_x>:
 Cannot allocate memory'"""
-                    )
+                )
             logger.debug(
                 f"""\
 {self.workername} push pool output list {id(wkout)} with \
@@ -123,7 +125,10 @@ element type {type(wkin)} into output queue {id(self.outq)}."""
             self.safe_put(self.outq, wkout)
             del wkin_iter
             del wkin
-        logger.info(f"""{self.workername} closing pool""")
+        self._terminate()
+
+    def _terminate(self):
+        logger.info(f"{self.workername} terminating")
         self.pool.close()
         self.pool.terminate()
         logger.info(f"""{self.workername} pool closed""")

@@ -116,8 +116,8 @@ class Sequence:
             return out
         except StopIteration:
             logger.debug("Sequence: Stop Iteration encountered.")
+
             self.__iterables_queued -= 1
-            self.shutdown_event.set()
             self._stop()
             for queue in self.queues:
                 if queue._closed:
@@ -151,7 +151,8 @@ class Sequence:
         return self
 
     def _stop(self):
-        logger.debug("Before Sequence Stop\n" + str(self.flowstatus()))
+        logger.info("Before Sequence Stop\n" + str(self.flowstatus()))
+        logger.warn("Setting shutdown event!")
         self.shutdown_event.set()
 
         for step in self.steps:
@@ -194,6 +195,7 @@ class Sequence:
                     block=True, timeout=0.5
                 )
                 # If there is an error, stop eveything
+                logger.error("Error, setting shutdown event!")
                 self.shutdown_event.set()
                 logger.error(workermsg)
                 try:
@@ -259,4 +261,3 @@ class Sequence:
                 logger.info("\n" + newflowstatus)
                 oldflowstatus = newflowstatus
             time.sleep(sleeptime)
-        logger.info("\n" + self.flowstatus())

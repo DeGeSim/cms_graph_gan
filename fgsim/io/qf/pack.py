@@ -99,23 +99,23 @@ class PackStep(StepBase):
                 f"""\
 {self.workername} working on {id(wkin)} of type {type(wkin)} from queue {id(self.inq)}."""
             )
-            wkin = self._clone_tensors(wkin)
             if isinstance(wkin, TerminateQueue):
                 break
-            else:
-                logger.debug(
-                    f"{self.workername} storing {id(wkin)} of type {type(wkin)}."
-                )
-                self.collected_elements.append(wkin)
+            wkin = self._clone_tensors(wkin)
 
-                if len(self.collected_elements) == self.nelements:
-                    logger.debug(
-                        f"""\
+            logger.debug(
+                f"{self.workername} storing {id(wkin)} of type {type(wkin)}."
+            )
+            self.collected_elements.append(wkin)
+
+            if len(self.collected_elements) == self.nelements:
+                logger.debug(
+                    f"""\
 {self.workername} push list of type \
 {type(self.collected_elements[-1])} into output queue {id(self.outq)}."""
-                    )
-                    self.safe_put(self.outq, self.collected_elements)
-                    self.collected_elements = []
+                )
+                self.safe_put(self.outq, self.collected_elements)
+                self.collected_elements = []
             del wkin
         self._terminate()
 
@@ -158,29 +158,27 @@ type {type(wkin)} from queue {id(self.inq)}."""
             )
             if isinstance(wkin, TerminateQueue):
                 break
-            else:
-                if not isinstance(wkin, Iterable):
-                    errormsg = (
-                        f"{self.workername} cannot iterate over "
-                        f" {id(wkin)} of element type {type(wkin)}."
-                    )
-                    self.error_queue.put((errormsg, wkin, ValueError))
-                    break
-
-                logger.debug(
-                    f"{self.workername} storing {id(wkin)} of type {type(wkin)} "
-                    + f"(len {len(wkin) if hasattr(wkin,'__len__') else '?'})."
+            if not isinstance(wkin, Iterable):
+                errormsg = (
+                    f"{self.workername} cannot iterate over "
+                    f" {id(wkin)} of element type {type(wkin)}."
                 )
-                for element in wkin:
-                    e_cloned = self._clone_tensors(element)
-                    self.collected_elements.append(e_cloned)
-                    if len(self.collected_elements) == self.nelements:
-                        logger.debug(
-                            f"""\
+                self.error_queue.put((errormsg, wkin, ValueError))
+                break
+            logger.debug(
+                f"{self.workername} storing {id(wkin)} of type {type(wkin)} "
+                + f"(len {len(wkin) if hasattr(wkin,'__len__') else '?'})."
+            )
+            for element in wkin:
+                e_cloned = self._clone_tensors(element)
+                self.collected_elements.append(e_cloned)
+                if len(self.collected_elements) == self.nelements:
+                    logger.debug(
+                        f"""\
 {self.workername} push list of type {type(self.collected_elements[-1])} \
 with {self.nelements} elements into output queue {id(self.outq)}."""
-                        )
-                        self.safe_put(self.outq, self.collected_elements)
-                        self.collected_elements = []
+                    )
+                    self.safe_put(self.outq, self.collected_elements)
+                    self.collected_elements = []
             del wkin
         self._terminate()
