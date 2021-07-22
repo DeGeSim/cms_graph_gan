@@ -48,7 +48,7 @@ training:
   early_stopping_improvement: 0.02
 yvar : "energy"
 loss:
-  name: MSELoss
+  name: L1Loss
 optimizer:
   name: Adam
   parameters: ${loss_params[${optimizer.name}]}

@@ -20,7 +20,9 @@ def validate(train_state: TrainState) -> None:
             batch = batch.to(device)
             prediction = torch.squeeze(train_state.holder.model(batch).T)
             losses.append(
-                train_state.holder.lossf(prediction, batch[conf.yvar].float())
+                train_state.holder.lossf(
+                    prediction, batch[conf.yvar].float() / prediction
+                )
             )
 
         mean_loss = torch.mean(torch.tensor(losses))

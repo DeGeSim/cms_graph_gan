@@ -23,10 +23,13 @@ def training_step(
     output = train_state.holder.model(batch)
 
     prediction = torch.squeeze(output.T)
-    loss = train_state.holder.lossf(prediction, batch[conf.yvar].float())
+    loss = train_state.holder.lossf(
+        prediction, batch[conf.yvar].float() / prediction
+    )
     loss.backward()
-    train_state.state.loss = float(loss)
     train_state.holder.optim.step()
+
+    train_state.state.loss = float(loss)
 
 
 def training_procedure() -> None:
