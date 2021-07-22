@@ -11,11 +11,8 @@ path:
   train_config: "${path.run_path}/resulting_train_config.yaml"
   full_config: "${path.run_path}/full_config.yaml"
   tensorboard: "runs/${tag}/${hash}"
-  state: "${path.run_path}/state.yaml"
-  state_old: "${path.run_path}/state_old.yaml"
   checkpoint: "${path.run_path}/checkpoint.torch"
   checkpoint_old: "${path.run_path}/checkpoint_old.torch"
-  best_model: "${path.run_path}/best_model.torch"
   predict_csv: "${path.run_path}/prediction.csv"
 seed: 0
 loader:

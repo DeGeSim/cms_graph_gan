@@ -8,11 +8,8 @@ filenames = [
     for key in [
         "log",
         "train_config",
-        "state",
-        "state_old",
         "checkpoint",
         "checkpoint_old",
-        "best_model",
         "predict_csv",
     ]
 ]
