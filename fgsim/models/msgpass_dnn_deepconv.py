@@ -6,7 +6,7 @@ from torch import nn
 from torch.nn import Linear
 from torch_geometric.nn import GINConv, global_add_pool
 
-from ..config import conf
+from ..config import conf, device
 
 nfeatures = conf.model.dyn_features + conf.model.static_features
 
@@ -31,11 +31,18 @@ class ModelClass(torch.nn.Module):
         self.lin = Linear(conf.model.dyn_features, 1)
 
     def forward(self, batch):
-        def addstatic(x, mask=torch.ones(len(batch.x), dtype=torch.bool)):
+        def addstatic(
+            x, mask=torch.ones(len(batch.x), dtype=torch.bool, device=device)
+        ):
             return torch.hstack((x[mask], batch.feature_mtx_static[mask]))
 
         x = torch.hstack(
-            (batch.x, torch.zeros((len(batch.x), conf.model.dyn_features - 1)))
+            (
+                batch.x,
+                torch.zeros(
+                    (len(batch.x), conf.model.dyn_features - 1), device=device
+                ),
+            )
         )
 
         for _ in range(conf.model.nprop):
