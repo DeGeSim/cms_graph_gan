@@ -34,6 +34,7 @@ class ModelHolder:
             ),
         )
         self.lossf = getattr(torch.nn, conf.loss.name)().to(device)
+
         self.state = OmegaConf.create(
             {
                 "epoch": 0,
@@ -45,29 +46,24 @@ class ModelHolder:
         )
         self.__load_checkpoint()
         self.model = self.model.float().to(device)
+        # Hack to move the optimizer parameters to the correct device
+        # https://github.com/pytorch/pytorch/issues/8741
+        self.optim.load_state_dict(self.optim.state_dict())
 
     def __load_checkpoint(self):
-        if (
-            not os.path.isfile(conf.path.state)
-            or not os.path.isfile(conf.path.checkpoint)
-            or not os.path.isfile(conf.path.best_model)
-        ):
+        if not os.path.isfile(conf.path.checkpoint):
             logger.warn("Proceeding without loading checkpoint.")
             return
 
         checkpoint = torch.load(conf.path.checkpoint, map_location=device)
 
-        assert not contains_nans(checkpoint)[0]
+        assert not contains_nans(checkpoint["model"])[0]
+        assert not contains_nans(checkpoint["best_model"])[0]
 
         self.state = checkpoint["state"]
         self.model.load_state_dict(checkpoint["model"])
         self.optim.load_state_dict(checkpoint["optim"])
         self.best_model_state = checkpoint["best_model"]
-
-        if device.type == "cuda":
-            self.model = self.model.cuda()
-        else:
-            self.model = self.model.cpu()
 
         logger.warn(
             "Loading model from checkpoint at"
@@ -78,10 +74,7 @@ class ModelHolder:
 
     def select_best_model(self):
         self.model.load_state_dict(self.best_model_state)
-        if device.type == "cuda":
-            self.model = self.model.cuda()
-        else:
-            self.model = self.model.cpu()
+        self.model = self.model.float().to(device)
 
     def save_checkpoint(self):
         self.__push_to_old(conf.path.checkpoint, conf.path.checkpoint_old)
