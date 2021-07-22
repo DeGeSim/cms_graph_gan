@@ -48,14 +48,13 @@
 		"version": "0.2.0",
 		"configurations": [
 			{
-				"name": "t forward-lin",
+				"name": "t forward",
 				"type": "python",
 				"request": "launch",
 				"module": "fgsim",
 				"args": [
 					"--tag",
-					"forward_lin",
-					// "--debug",
+					"forward",
 					"train",
 				]
 			},
@@ -66,19 +65,18 @@
 				"module": "fgsim",
 				"args": [
 					"--tag",
-					"msgpass_sgd",
+					"msgpass",
 					"train",
 				]
 			},
 			{
-				"name": "t forward",
+				"name": "t linreg",
 				"type": "python",
 				"request": "launch",
 				"module": "fgsim",
 				"args": [
 					"--tag",
-					"forward_sgd",
-					"--debug",
+					"linreg",
 					"train",
 				]
 			},

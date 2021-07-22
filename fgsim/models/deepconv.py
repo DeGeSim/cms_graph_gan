@@ -22,9 +22,7 @@ def getconv():
 class ModelClass(torch.nn.Module):
     def __init__(self):
         super(ModelClass, self).__init__()
-        self.upscale_conv = GCNConv(
-            conf.model.dyn_features, conf.model.dyn_features
-        )
+        self.upscale_conv = GCNConv(1, conf.model.dyn_features)
         self.inlayer_conv = getconv()
         self.forward_conv = getconv()
         self.backward_conv = getconv()

@@ -14,9 +14,7 @@ nfeatures = conf.model.dyn_features + conf.model.static_features
 class ModelClass(torch.nn.Module):
     def __init__(self):
         super(ModelClass, self).__init__()
-        self.upscale_conv = GCNConv(
-            conf.model.dyn_features, conf.model.dyn_features
-        )
+        self.upscale_conv = GCNConv(1, conf.model.dyn_features)
         self.conv1 = GCNConv(nfeatures, conf.model.dyn_features)
         self.conv2 = GCNConv(nfeatures, conf.model.dyn_features)
         self.conv3 = GCNConv(nfeatures, conf.model.dyn_features)

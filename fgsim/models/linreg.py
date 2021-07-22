@@ -10,7 +10,7 @@ nfeatures = conf.model.dyn_features + conf.model.static_features
 class ModelClass(torch.nn.Module):
     def __init__(self):
         super(ModelClass, self).__init__()
-        self.end_lin = nn.Linear(conf.model.dyn_features, 1)
+        self.end_lin = nn.Linear(1, 1)
 
     def forward(self, batch):
         x = global_add_pool(batch.x, batch.batch)
