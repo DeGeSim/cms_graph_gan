@@ -213,13 +213,25 @@ class QueuedDataLoader:
 
     def queue_epoch(self, n_skip_events=0):
         n_skip_chunks = n_skip_events // conf.loader.chunksize
-        n_skip_chunks = n_skip_chunks % (len(files) * conf.loader.chunksize)
+        # Cycle Epochs
+        n_skip_chunks % (len(files) * conf.loader.chunksize)
 
-        logger.info(f" skipping {n_skip_chunks} batches for training.")
+        n_skip_batches = (
+            n_skip_events % conf.loader.chunksize
+        ) // conf.loader.batch_size
 
+        if n_skip_events != 0:
+            logger.info(
+                f"""\
+Skipping {n_skip_events} => {n_skip_chunks} chunks and {n_skip_batches} batches."""
+            )
         self.epoch_chunks = self.training_chunks[n_skip_chunks:]
-
         self.qfseq.queue_iterable(self.epoch_chunks)
+
+        if n_skip_batches != 0:
+            for _ in range(n_skip_batches):
+                _ = next(self.qfseq)
+            logger.info(f"Skipped {n_skip_batches} batches.")
 
     def __iter__(self):
         return iter(self.qfseq)
