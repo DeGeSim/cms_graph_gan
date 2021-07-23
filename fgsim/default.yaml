@@ -26,7 +26,7 @@ loader:
     "recoPhi",
     "recoTheta",
   ]
-  chunksize: 500
+  chunksize: 100
   prefetch_batches: 4
   batch_size : 10
   num_workers_transform: 10
@@ -46,7 +46,7 @@ training:
   events_processed_before_validation: 20000
   validation_interval: '${div:${training.events_processed_before_validation},${loader.batch_size}}'
   checkpoint_interval: 50
-  early_stopping: 7
+  early_stopping: 5
   early_stopping_improvement: 0.02
 yvar : "energy"
 loss:
