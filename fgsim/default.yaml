@@ -31,8 +31,8 @@ loader:
   batch_size : 10
   num_workers_transform: 10
   num_workers_stack: 9
-  validation_set_size: 1000
-  test_set_size: 6000
+  validation_set_size: 5000
+  test_set_size: 30000
   transform_workers: 15
 nlayers: 25
 model:
@@ -43,7 +43,7 @@ model:
   deeplayer_nodes: 50
   nprop: 4
 training:
-  events_processed_before_validation: 6000
+  events_processed_before_validation: 20000
   validation_interval: '${div:${training.events_processed_before_validation},${loader.batch_size}}'
   checkpoint_interval: 50
   early_stopping: 7
