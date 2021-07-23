@@ -42,15 +42,13 @@ conf = OmegaConf.merge(defaultconf, tagconf, vars(args))
 # Select the CPU/GPU
 
 
-def get_device():
-    if torch.cuda.is_available():  # and not conf.profile:
-        # if torch.cuda.device_count() > 1:
-        #     dev = torch.device("cuda:" + str(torch.cuda.device_count() - 1))
-        # else:
-        dev = torch.device("cuda")
+def get_device() -> torch.device:
+    if torch.cuda.is_available():
+        dev = torch.device("cuda:" + str(torch.cuda.device_count() - 1))
+        torch.cuda.set_device(dev)
+        return dev
     else:
-        dev = torch.device("cpu")
-    return dev
+        return torch.device("cpu")
 
 
 device = get_device()
