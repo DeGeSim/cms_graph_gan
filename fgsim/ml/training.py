@@ -23,6 +23,10 @@ def training_step(
     output = train_state.holder.model(batch)
 
     prediction = torch.squeeze(output.T)
+    # Check for the global_add_pool bug in pytorch_geometric
+    # https://github.com/rusty1s/pytorch_geometric/issues/2895
+    if len(prediction) != len(batch[conf.yvar].float()):
+        return
     loss = train_state.holder.lossf(
         prediction, batch[conf.yvar].float() / prediction
     )
