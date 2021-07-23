@@ -1,9 +1,10 @@
 #!/bin/bash
 #SBATCH --partition=cms-desy
 #SBATCH --time=12:00:00
-#SBATCH --mail-type=START,END,FAIL
+#SBATCH --mail-type=ALL
 #SBATCH --nodes=1
 #SBATCH --constraint="P100"
+#SBATCH --output=wd/slurm-%j.out
 export LD_PRELOAD=""
 source /etc/profile.d/modules.sh
 
