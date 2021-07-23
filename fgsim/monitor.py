@@ -83,4 +83,6 @@ def setup_experiment(model_holder):
     experiment.set_model_graph(str(model_holder.model))
     experiment.log_code(file_name=f"fgsim/models/{conf.model.name}.py")
 
+    experiment.set_step(model_holder.state["grad_step"])
+    experiment.set_epoch(model_holder.state["epoch"])
     return experiment
