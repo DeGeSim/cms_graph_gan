@@ -28,7 +28,7 @@ def training_step(
     if len(prediction) != len(batch[conf.yvar].float()):
         return
     loss = train_state.holder.lossf(
-        prediction, batch[conf.yvar].float() / prediction
+        torch.ones_like(prediction), batch[conf.yvar].float() / prediction
     )
     loss.backward()
     train_state.holder.optim.step()
