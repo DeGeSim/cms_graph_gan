@@ -1,6 +1,9 @@
 import os
 import shutil
 
+import comet_ml
+from omegaconf import OmegaConf
+
 from ..config import conf
 
 filenames = [
@@ -20,3 +23,14 @@ for fn in filenames:
 
 if os.path.isdir(conf.path.tensorboard):
     shutil.rmtree(conf.path.tensorboard)
+
+
+comet_conf = OmegaConf.load("fgsim/comet.yaml")
+api = comet_ml.API(comet_conf.api_key)
+
+qres = api.query(
+    workspace=comet_conf.workspace,
+    project_name=comet_conf.project_name,
+    query=comet_ml.api.Parameter("hash") == conf.hash,
+)
+api.delete_experiments([exp.id for exp in qres])

@@ -3,8 +3,7 @@ from omegaconf import OmegaConf
 from torch.utils.tensorboard import SummaryWriter
 
 from .config import conf, hyperparameters
-
-comet_conf = OmegaConf.load("fgsim/comet.yaml")
+from .utils.logger import logger
 
 
 def dict_to_kv(o, keystr=""):
@@ -29,30 +28,43 @@ def dict_to_kv(o, keystr=""):
         raise ValueError
 
 
-def get_experiment(exp_key):
-    if exp_key is not None:
-        experiment = comet_ml.ExistingExperiment(
-            previous_experiment=exp_key,
-            **comet_conf,
-            log_code=True,
-            log_graph=True,
-            parse_args=True,
-            log_env_details=True,
-            log_git_metadata=True,
-            log_git_patch=True,
-            log_env_gpu=True,
-            log_env_cpu=True,
-            log_env_host=True,
+def get_experiment():
+    comet_conf = OmegaConf.load("fgsim/comet.yaml")
+    api = comet_ml.API(comet_conf.api_key)
+
+    qres = api.query(
+        workspace=comet_conf.workspace,
+        project_name=comet_conf.project_name,
+        query=comet_ml.api.Parameter("hash") == conf.hash,
+        archived=False,
+    )
+    # No experiment with the given hash:
+    if len(qres) == 0:
+        logger.warn("Creating new experiment.")
+        new_api_exp = api._create_experiment(
+            workspace=comet_conf.workspace, project_name=comet_conf.project_name
         )
+        exp_key = new_api_exp.id
+    elif len(qres) == 1:
+        logger.warn("Found existing experiment.")
+        exp_key = qres[0].id
     else:
-        experiment = comet_ml.Experiment(**comet_conf)
-        exp_key = experiment.get_key()
+        raise ValueError("More then one experiment with the given hash.")
+    print(f"Experiment ID {exp_key}")
 
-    # Format the hyperparameter for comet
-    hyperparametersD = dict(dict_to_kv(hyperparameters))
-    experiment.log_parameters(hyperparametersD)
-    experiment.set_name(hyperparameters["hash"])
-
+    experiment = comet_ml.ExistingExperiment(
+        previous_experiment=exp_key,
+        **comet_conf,
+        log_code=True,
+        log_graph=True,
+        parse_args=True,
+        log_env_details=True,
+        log_git_metadata=True,
+        log_git_patch=True,
+        log_env_gpu=True,
+        log_env_cpu=True,
+        log_env_host=True,
+    )
     return experiment
 
 
@@ -61,13 +73,13 @@ def setup_writer():
 
 
 def setup_experiment(model_holder):
-    # Create an experiment with your api key
-    if hasattr(model_holder.state, "comet_experiment_key"):
-        experiment = get_experiment(model_holder.state.comet_experiment_key)
-    else:
-        experiment = comet_ml.Experiment(**comet_conf)
-        model_holder.state.comet_experiment_key = experiment.get_key()
+    experiment = get_experiment()
 
+    # Format the hyperparameter for comet
+    hyperparametersD = dict(dict_to_kv(hyperparameters))
+    experiment.log_parameters(hyperparametersD)
+    for tag in set(conf.tag.split("_")) | set(conf.model.name.split("_")):
+        experiment.add_tag(tag)
     experiment.set_model_graph(str(model_holder.model))
     experiment.log_code(file_name=f"fgsim/models/{conf.model.name}.py")
 
