@@ -195,7 +195,7 @@ class QueuedDataLoader:
         if not hasattr(self, "_validation_batches"):
             logger.warning("Validation batches not loaded, loading from disk.")
             self._validation_batches = torch.load(
-                conf.path.validation, map_location=device
+                conf.path.validation, map_location=torch.device("cpu")
             )
             logger.warning("Finished loading.")
         return self._validation_batches
@@ -204,7 +204,9 @@ class QueuedDataLoader:
     def testing_batches(self):
         if not hasattr(self, "_testing_batches"):
             logger.warning("Testing batches not loaded, loading from disk.")
-            self._testing_batches = torch.load(conf.path.test, map_location=device)
+            self._testing_batches = torch.load(
+                conf.path.test, map_location=torch.device("cpu")
+            )
             logger.warning("Finished loading.")
         return self._testing_batches
 

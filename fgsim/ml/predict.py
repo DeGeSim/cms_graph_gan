@@ -6,6 +6,7 @@ from tqdm import tqdm
 from ..config import conf, device
 from ..io.queued_dataset import QueuedDataLoader
 from ..monitor import setup_experiment, setup_writer
+from ..utils.batch_utils import move_batch_to_device
 from ..utils.logger import logger
 from .holder import model_holder
 from .train_state import TrainState
@@ -30,7 +31,7 @@ def prediction_procedure():
     _ = train_state.loader.testing_batches
     logger.info("Start iterating batches.")
     for ibatch, batch in enumerate(tqdm(train_state.loader.testing_batches)):
-        batch = batch.to(device)
+        batch = move_batch_to_device(batch, device)
         prediction = torch.squeeze(train_state.holder.model(batch).T)
 
         yhat = prediction.detach().to("cpu").numpy()

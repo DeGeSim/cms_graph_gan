@@ -4,6 +4,7 @@ import torch
 from tqdm import tqdm
 
 from ..config import conf, device
+from ..utils.batch_utils import move_batch_to_device
 from ..utils.check_for_nans import check_chain_for_nans
 from .train_state import TrainState
 
@@ -17,7 +18,7 @@ def validate(train_state: TrainState) -> None:
         for batch in tqdm(
             train_state.loader.validation_batches, postfix="validating"
         ):
-            batch = batch.to(device)
+            batch = move_batch_to_device(batch, device)
             prediction = torch.squeeze(train_state.holder.model(batch).T)
             loss = train_state.holder.lossf(
                 torch.ones_like(prediction), batch[conf.yvar].float() / prediction
