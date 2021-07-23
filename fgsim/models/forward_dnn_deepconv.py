@@ -7,6 +7,7 @@ from torch.nn import Linear
 from torch_geometric.nn import GINConv, global_add_pool
 
 from ..config import conf, device
+from ..utils.cuda_clear import cuda_clear
 
 nfeatures = conf.model.dyn_features + conf.model.static_features
 
@@ -74,6 +75,7 @@ class ModelClass(torch.nn.Module):
                 x[targetlayermask] = partial_forward[forward_outp_mask]
                 del partial_forward, forward_inp_mask, forward_outp_mask
                 x[targetlayermask] = self.node_dnn(addstatic(x, targetlayermask))
+                cuda_clear()
 
             # backward
             # ilayer goes from nlayers - 1 to nlayers - 2 to ... 1
@@ -103,6 +105,7 @@ class ModelClass(torch.nn.Module):
                 del partial_inner, inner_inp_mask, inner_outp_mask
 
                 x[targetlayermask] = self.node_dnn(addstatic(x, targetlayermask))
+                cuda_clear()
 
         x = global_add_pool(x, batch.batch)
         x = self.lin(x)

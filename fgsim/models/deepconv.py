@@ -3,6 +3,7 @@ from torch import nn
 from torch_geometric.nn import GCNConv, GINConv, global_add_pool
 
 from ..config import conf, device
+from ..utils.cuda_clear import cuda_clear
 
 nfeatures = conf.model.dyn_features + conf.model.static_features
 
@@ -71,6 +72,7 @@ class ModelClass(torch.nn.Module):
                 )
                 x[batch.layers == ilayer + 1] = partial_forward[forward_outp_mask]
                 del partial_forward, forward_inp_mask, forward_outp_mask
+                cuda_clear()
 
             x = nn.functional.relu(x)
 
@@ -96,6 +98,7 @@ class ModelClass(torch.nn.Module):
                 )
                 x[batch.layers == ilayer - 1] = partial_inner[inner_outp_mask]
                 del partial_inner, inner_inp_mask, inner_outp_mask
+                cuda_clear()
 
             x = nn.functional.relu(x)
 

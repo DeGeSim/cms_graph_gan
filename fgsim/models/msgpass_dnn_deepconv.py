@@ -7,6 +7,7 @@ from torch.nn import Linear
 from torch_geometric.nn import GINConv, global_add_pool
 
 from ..config import conf, device
+from ..utils.cuda_clear import cuda_clear
 
 nfeatures = conf.model.dyn_features + conf.model.static_features
 
@@ -48,6 +49,7 @@ class ModelClass(torch.nn.Module):
         for _ in range(conf.model.nprop):
             x = self.deep_conv(addstatic(x), batch.edge_index)
             x = self.node_dnn(addstatic(x))
+            cuda_clear()
 
         x = global_add_pool(x, batch.batch)
         x = self.lin(x)
