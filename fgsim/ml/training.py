@@ -8,8 +8,8 @@ from tqdm import tqdm
 from ..config import conf, device
 from ..io.queued_dataset import QueuedDataLoader
 from ..monitor import setup_experiment, setup_writer
+from ..utils.batch_utils import move_batch_to_device
 from ..utils.logger import logger
-from ..utils.move_batch_to_device import move_batch_to_device
 from .early_stopping import early_stopping
 from .holder import model_holder
 from .train_state import TrainState

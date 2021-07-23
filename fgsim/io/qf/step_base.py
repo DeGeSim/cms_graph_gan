@@ -6,6 +6,7 @@ import torch
 import torch_geometric
 from torch import multiprocessing as mp
 
+from ...utils.batch_utils import clone_batch
 from ...utils.logger import logger
 
 
@@ -53,20 +54,7 @@ class StepBase:
         elif isinstance(wkin, GeneratorType):
             return (self._clone_tensors(e) for e in wkin)
         elif isinstance(wkin, torch_geometric.data.batch.Data):
-
-            def clone_or_copy(e):
-                if torch.is_tensor(e):
-                    return e.clone()
-                elif isinstance(e, list):
-                    return [clone_or_copy(ee) for ee in e]
-                elif e is None:
-                    return None
-                else:
-                    raise ValueError
-
-            wkin = torch_geometric.data.Batch().from_dict(
-                {k: clone_or_copy(v) for k, v in wkin.to_dict().items()}
-            )
+            return clone_batch(wkin)
         elif isinstance(wkin, torch.Tensor):
             wkin = wkin.clone()
         return wkin
