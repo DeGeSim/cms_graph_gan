@@ -45,7 +45,6 @@ conf = OmegaConf.merge(defaultconf, tagconf, vars(args))
 def get_device() -> torch.device:
     if torch.cuda.is_available():
         dev = torch.device("cuda:" + str(torch.cuda.device_count() - 1))
-        torch.cuda.set_device(dev)
         return dev
     else:
         return torch.device("cpu")
