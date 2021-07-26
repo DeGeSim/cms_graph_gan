@@ -26,18 +26,17 @@ loader:
     "recoPhi",
     "recoTheta",
   ]
-  chunksize: 100
+  chunksize: 200
   prefetch_batches: 4
-  batch_size : 10
+  batch_size : 200
   num_workers_transform: 10
-  num_workers_stack: 9
+  num_workers_stack: 4
   validation_set_size: 5000
   test_set_size: 30000
   transform_workers: 15
 nlayers: 25
 model:
   name: "default"
-  n_epochs : 10
   dyn_features: 10
   static_features: 3
   deeplayer_nodes: 50
