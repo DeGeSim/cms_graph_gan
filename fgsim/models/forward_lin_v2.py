@@ -93,7 +93,7 @@ class ModelClass(torch.nn.Module):
             # DNN on the feature matrix
             x = self.node_dnn(addstatic(x))
 
-        x = global_add_pool(x, batch.batch)
+        x = global_add_pool(x, batch.batch, size=batch.num_graphs)
         x = self.lin(x)
         x = nn.functional.relu(x)
         return x

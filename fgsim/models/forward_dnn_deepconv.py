@@ -107,7 +107,7 @@ class ModelClass(torch.nn.Module):
                 x[targetlayermask] = self.node_dnn(addstatic(x, targetlayermask))
                 cuda_clear()
 
-        x = global_add_pool(x, batch.batch)
+        x = global_add_pool(x, batch.batch, size=batch.num_graphs)
         x = self.lin(x)
         x = F.relu(x)
 

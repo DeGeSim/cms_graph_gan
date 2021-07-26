@@ -52,7 +52,7 @@ class ModelClass(torch.nn.Module):
         x = self.node_dnn(addstatic(x))
         x = F.relu(x)
 
-        x = global_add_pool(x, batch.batch)
+        x = global_add_pool(x, batch.batch, size=batch.num_graphs)
         x = self.lin(x)
         x = F.relu(x)
 

@@ -13,6 +13,6 @@ class ModelClass(torch.nn.Module):
         self.end_lin = nn.Linear(1, 1)
 
     def forward(self, batch):
-        x = global_add_pool(batch.x, batch.batch)
+        x = global_add_pool(batch.x, batch.batch, size=batch.num_graphs)
         x = self.end_lin(x)
         return x
