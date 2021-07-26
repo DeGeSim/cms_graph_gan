@@ -6,6 +6,7 @@ from tqdm import tqdm
 from ..config import conf, device
 from ..utils.batch_utils import move_batch_to_device
 from ..utils.check_for_nans import check_chain_for_nans
+from ..utils.logger import logger
 from .train_state import TrainState
 
 
@@ -17,7 +18,8 @@ def validate(train_state: TrainState) -> None:
     _ = train_state.loader.validation_batches
     for batch in tqdm(train_state.loader.validation_batches, postfix="validating"):
         batch_gpu = move_batch_to_device(batch, device)
-        prediction = torch.squeeze(train_state.holder.model(batch_gpu).detach().T)
+        with torch.no_grad():
+            prediction = torch.squeeze(train_state.holder.model(batch_gpu).T)
         loss = train_state.holder.lossf(
             torch.ones_like(prediction), batch_gpu[conf.yvar].float() / prediction
         )
@@ -25,6 +27,8 @@ def validate(train_state: TrainState) -> None:
         del batch_gpu
 
     mean_loss = torch.mean(torch.tensor(losses))
+
+    logger.info(f"Validation Loss: {mean_loss}")
     train_state.state.val_losses.append(float(mean_loss))
 
     train_state.writer.add_scalar(
@@ -45,8 +49,4 @@ def validate(train_state: TrainState) -> None:
             train_state.holder.model.state_dict()
         )
 
-    if (
-        train_state.state["grad_step"] != 0
-        and train_state.state["grad_step"] % conf.training.checkpoint_interval == 0
-    ):
-        train_state.holder.save_checkpoint()
+    train_state.holder.save_checkpoint()

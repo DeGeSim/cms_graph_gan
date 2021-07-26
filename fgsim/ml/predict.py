@@ -32,12 +32,12 @@ def prediction_procedure():
     logger.info("Start iterating batches.")
     for ibatch, batch in enumerate(tqdm(train_state.loader.testing_batches)):
         batch = move_batch_to_device(batch, device)
-        prediction = torch.squeeze(train_state.holder.model(batch).T)
+        with torch.no_grad():
+            prediction = torch.squeeze(train_state.holder.model(batch).T)
+            yhat = prediction.to("cpu").numpy()
+            y = batch[conf.yvar].to("cpu").numpy()
 
-        yhat = prediction.detach().to("cpu").numpy()
         yhats.append(yhat)
-
-        y = batch[conf.yvar].detach().to("cpu").numpy()
         ys.append(y)
 
     logger.info("Done with batches.")
