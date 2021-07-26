@@ -254,7 +254,7 @@ class Sequence:
     def printflowstatus(self):
         threading.current_thread().setName("flowstatusPrinter")
         oldflowstatus = ""
-        sleeptime = 5 if conf.debug else 10
+        sleeptime = 5 if conf.debug else 20 * 60
         while not self.shutdown_event.is_set():
             newflowstatus = str(self.flowstatus())
             if newflowstatus != oldflowstatus:
