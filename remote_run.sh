@@ -8,6 +8,7 @@
 export LD_PRELOAD=""
 source /etc/profile.d/modules.sh
 
+ulimit -n `ulimit -H -n`
 
 if ! command -v nvidia-smi &> /dev/null
 then
