@@ -49,12 +49,13 @@ def training_procedure() -> None:
     )
 
     # Initialize the training
-    # switch model in training mode
-    train_state.holder.model.train()
+
     # Queue that batches
     train_state.loader.queue_epoch(n_skip_events=train_state.state.processed_events)
     try:
         while not early_stopping(train_state):
+            # switch model in training mode
+            train_state.holder.model.train()
             for _ in tqdm(
                 range(conf.training.validation_interval), postfix="training"
             ):

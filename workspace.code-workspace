@@ -59,6 +59,17 @@
 				]
 			},
 			{
+				"name": "t deepconv",
+				"type": "python",
+				"request": "launch",
+				"module": "fgsim",
+				"args": [
+					"--tag",
+					"deepconv",
+					"train",
+				]
+			},
+			{
 				"name": "t msgpass",
 				"type": "python",
 				"request": "launch",
