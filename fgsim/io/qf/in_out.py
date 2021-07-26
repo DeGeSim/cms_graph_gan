@@ -1,5 +1,8 @@
 from multiprocessing.queues import Empty, Full
 
+import torch_geometric
+
+from ...utils.batch_utils import clone_batch
 from ...utils.logger import logger
 from .terminate_queue import TerminateQueue
 
@@ -55,6 +58,8 @@ class OutputStep(InOutStep):
                 out = self.inq.get(block=True, timeout=0.005)
                 if isinstance(out, TerminateQueue):
                     break
+                if isinstance(out, torch_geometric.data.Data):
+                    out = clone_batch(out)
                 return out
             except Empty:
                 continue

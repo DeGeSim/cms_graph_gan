@@ -150,17 +150,15 @@ class QueuedDataLoader:
         ]
 
         if not os.path.isfile(conf.path.validation):
-            logger.warn("Processing validation batches")
+            logger.warn(
+                f"""\
+Processing validation batches, queuing {len(self.validation_chunks)} batches"""
+            )
 
             valqfseq = qf.Sequence(*process_seq())
             valqfseq.queue_iterable(self.validation_chunks)
-            self._validation_batches = []
-            for _ in range(n_validation_batches):
-                batch = next(valqfseq).to("cpu").clone().contiguous()
-                self._validation_batches.append(batch)
-            # Drain the rest of the batches
-            for _ in valqfseq:
-                pass
+            self._validation_batches = [batch.contiguous() for batch in valqfseq]
+
             torch.save(self._validation_batches, conf.path.validation)
             del valqfseq
             logger.warn("Validation batches pickled.")
@@ -173,13 +171,7 @@ class QueuedDataLoader:
             testqfseq = qf.Sequence(*process_seq())
             testqfseq.queue_iterable(self.testing_chunks)
             logger.info(f"queing {len(self.testing_chunks)} chunks for testing ")
-            self._testing_batches = []
-            for ibatch in range(n_test_batches):
-                batch = next(testqfseq).to("cpu").clone().contiguous()
-                self._testing_batches.append(batch)
-            # Drain the rest of the batches
-            for _ in testqfseq:
-                pass
+            self._testing_batches = [batch.contiguous() for batch in testqfseq]
 
             torch.save(self._testing_batches, conf.path.test)
             del testqfseq

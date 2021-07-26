@@ -28,6 +28,8 @@ class StepBase:
             mp.Process(target=self._worker, daemon=self.deamonize)
             for _ in range(self.nworkers)
         ]
+        self.count_in = 0
+        self.count_out = 0
 
     def connect_to_sequence(
         self, input_queue, output_queue, error_queue, shutdown_event

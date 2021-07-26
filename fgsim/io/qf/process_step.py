@@ -28,10 +28,6 @@ class ProcessStep(StepBase):
     def _terminate(self, workername):
         logger.info(f"{workername}  trying to terminate")
 
-        # Tell the other workers, that you are finished
-        with self.running_processes_counter.get_lock():
-            self.running_processes_counter.value -= 1
-
         # Put the terminal element back in the input queue
         self.safe_put(self.inq, TerminateQueue())
 
@@ -47,7 +43,7 @@ class ProcessStep(StepBase):
             )
             while True:
                 with self.running_processes_counter.get_lock():
-                    if self.running_processes_counter.value == 0:
+                    if self.running_processes_counter.value == 1:
                         break
                 time.sleep(0.01)
             # Get the remaining the terminal element from the input queue
@@ -57,7 +53,12 @@ class ProcessStep(StepBase):
             logger.info(f"{workername} put terminal element in outq.")
             self.first_to_finish_lock.release()
         self._close_queues()
-        logger.info(f"{self.workername} terminating")
+        logger.warn(
+            f"{self.workername} terminating (in {self.count_in}/out {self.count_out})"
+        )
+        # Tell the other workers, that you are finished
+        with self.running_processes_counter.get_lock():
+            self.running_processes_counter.value -= 1
 
     # def _debugtarget(self):
     #     return "do_nothing1" in self.workername and (
@@ -87,6 +88,7 @@ class ProcessStep(StepBase):
             # wait for the others and put it in the next queue
             if isinstance(wkin, TerminateQueue):
                 break
+            self.count_in += 1
             # We need to overwrite the method of cloning the batches
             # because we have list of tensors as attibutes of the batch.
             # If copy.deepcopy is called on this object
@@ -107,5 +109,6 @@ class ProcessStep(StepBase):
                 + f"output of type {type(wkout)} into output queue {id(self.outq)}."
             )
             self.safe_put(self.outq, wkout)
+            self.count_out += 1
             del wkin
         self._terminate(self.workername)

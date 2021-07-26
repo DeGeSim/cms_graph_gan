@@ -76,7 +76,7 @@ class PoolStep(StepBase):
                 logger.info(f"{self.workername} terminating")
                 self.safe_put(self.outq, TerminateQueue())
                 break
-
+            self.count_in += 1
             wkin = self._clone_tensors(wkin)
 
             assert isinstance(wkin, Iterable)
@@ -122,12 +122,15 @@ element type {type(wkin)} into output queue {id(self.outq)}."""
             )
             # Put while there is no shutdown event
             self.safe_put(self.outq, wkout)
+            self.count_out += 1
             del wkin_iter
             del wkin
         self._terminate()
 
     def _terminate(self):
-        logger.info(f"{self.workername} terminating")
+        logger.warn(
+            f"{self.workername} terminating (in {self.count_in}/out {self.count_out})"
+        )
         self.pool.close()
         self.pool.terminate()
         logger.info(f"""{self.workername} pool closed""")
