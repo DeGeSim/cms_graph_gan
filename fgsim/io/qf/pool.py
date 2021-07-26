@@ -38,8 +38,7 @@ class PoolStep(StepBase):
         for p in self.processes:
             if p.is_alive():
                 p.join(5)
-            if p.exitcode is None:
-                raise RuntimeError
+                p.terminate()
 
     def process_status(self):
         return (
