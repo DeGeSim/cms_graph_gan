@@ -32,12 +32,23 @@ def get_experiment():
     comet_conf = OmegaConf.load("fgsim/comet.yaml")
     api = comet_ml.API(comet_conf.api_key)
 
-    qres = api.query(
-        workspace=comet_conf.workspace,
-        project_name=comet_conf.project_name,
-        query=comet_ml.api.Parameter("hash") == conf.hash,
-        archived=False,
-    )
+    # qres = api.query(
+    #     workspace=comet_conf.workspace,
+    #     project_name=comet_conf.project_name,
+    #     query=comet_ml.api.Parameter("hash") == conf.hash,
+    #     archived=False,
+    # )
+    experiments = [
+        exp
+        for exp in api.get(
+            workspace=comet_conf.workspace, project_name=comet_conf.project_name
+        )
+    ]
+    qres = [
+        exp
+        for exp in experiments
+        if exp.get_parameters_summary("hash")["valueCurrent"] == conf.hash
+    ]
     # No experiment with the given hash:
     if len(qres) == 0:
         logger.warn("Creating new experiment.")
