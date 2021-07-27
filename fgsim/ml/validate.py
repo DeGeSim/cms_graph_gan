@@ -20,9 +20,9 @@ def validate(train_state: TrainState) -> None:
         batch_gpu = move_batch_to_device(batch, device)
         with torch.no_grad():
             prediction = torch.squeeze(train_state.holder.model(batch_gpu).T)
-        loss = train_state.holder.lossf(
-            torch.ones_like(prediction), batch_gpu[conf.yvar].float() / prediction
-        )
+            loss = train_state.holder.lossf(
+                y=batch_gpu[conf.yvar].float(), yhat=prediction
+            )
         losses.append(loss)
         del batch_gpu
 
@@ -48,5 +48,3 @@ def validate(train_state: TrainState) -> None:
         train_state.holder.best_model_state = deepcopy(
             train_state.holder.model.state_dict()
         )
-
-    train_state.holder.save_checkpoint()

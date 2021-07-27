@@ -27,9 +27,7 @@ def training_step(
     # https://github.com/rusty1s/pytorch_geometric/issues/2895
     if len(prediction) != len(batch[conf.yvar].float()):
         return
-    loss = train_state.holder.lossf(
-        torch.ones_like(prediction), batch[conf.yvar].float() / prediction
-    )
+    loss = train_state.holder.lossf(y=batch[conf.yvar].float(), yhat=prediction)
     loss.backward()
     train_state.holder.optim.step()
 

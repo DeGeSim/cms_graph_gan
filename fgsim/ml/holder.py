@@ -33,7 +33,7 @@ class ModelHolder:
                 else {}
             ),
         )
-        self.lossf = getattr(torch.nn, conf.loss.name)().to(device)
+        self._lossf = getattr(torch.nn, conf.loss.name)().to(device)
 
         self.state = OmegaConf.create(
             {
@@ -49,6 +49,11 @@ class ModelHolder:
         # Hack to move the optimizer parameters to the correct device
         # https://github.com/pytorch/pytorch/issues/8741
         self.optim.load_state_dict(self.optim.state_dict())
+
+    def lossf(self, y, yhat):
+        loss = self._lossf(torch.ones_like(y), yhat / y) * 100
+        assert not contains_nans(loss)[0]
+        return loss
 
     def __load_checkpoint(self):
         if not os.path.isfile(conf.path.checkpoint):
