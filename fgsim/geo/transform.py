@@ -12,7 +12,7 @@ def transform(data_dict) -> Data:
     # Add the higher level variables to the grap
     for k in conf.loader.keylist:
         if k not in ["ECAL", "HCAL"]:
-            setattr(graph, k, torch.tensor(data_dict[k]))
+            setattr(graph, k, torch.tensor(data_dict[k]).float())
     return graph
 
 
