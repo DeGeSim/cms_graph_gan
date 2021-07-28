@@ -28,9 +28,15 @@ if os.path.isdir(conf.path.tensorboard):
 comet_conf = OmegaConf.load("fgsim/comet.yaml")
 api = comet_ml.API(comet_conf.api_key)
 
-qres = api.query(
-    workspace=comet_conf.workspace,
-    project_name=comet_conf.project_name,
-    query=comet_ml.api.Parameter("hash") == conf.hash,
-)
+experiments = [
+    exp
+    for exp in api.get(
+        workspace=comet_conf.workspace, project_name=comet_conf.project_name
+    )
+]
+qres = [
+    exp
+    for exp in experiments
+    if exp.get_parameters_summary("hash")["valueCurrent"] == conf.hash
+]
 api.delete_experiments([exp.id for exp in qres])
