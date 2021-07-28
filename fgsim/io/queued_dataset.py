@@ -45,7 +45,7 @@ def geo_batch(list_of_graphs):
 # Collect the steps
 def process_seq():
     return (
-        qf.ProcessStep(read_chunk, 1, name="read_chunk"),
+        qf.ProcessStep(read_chunk, 2, name="read_chunk"),
         Queue(3),
         # In the input is now [(x,y), ... (x [300 * 51 * 51 * 25], y [300,1] ), (x,y)]
         # For these elements to be processed by each of the workers in the following
@@ -220,6 +220,7 @@ Processing validation batches, queuing {len(self.validation_chunks)} batches"""
 Skipping {n_skip_events} => {n_skip_chunks} chunks and {n_skip_batches} batches."""
             )
         self.epoch_chunks = self.training_chunks[n_skip_chunks:]
+        np.random.shuffle(self.epoch_chunks)
         self.qfseq.queue_iterable(self.epoch_chunks)
 
         if n_skip_batches != 0:

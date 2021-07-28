@@ -23,7 +23,7 @@ def early_stopping(train_state: TrainState) -> bool:
             train_state.writer.close()
             logger.warn("Early Stopping criteria fullfilled")
             if hasattr(train_state, "loader"):
-                train_state.loader.qfseq.drain_seq()
+                train_state.loader.qfseq.stop()
             return True
     else:
         return False

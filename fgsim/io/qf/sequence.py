@@ -10,7 +10,6 @@ from ...config import conf
 from ...utils.logger import logger
 from .in_out import InputStep, OutputStep
 from .step_base import StepBase
-from .terminate_queue import TerminateQueue
 
 
 class Sequence:
@@ -33,7 +32,6 @@ class Sequence:
 
     def __init__(self, *seq):
         self.__iterables_queued = False
-        self._started = False
         self.__seq = [InputStep(), *seq, OutputStep()]
 
         self.shutdown_event = mp.Event()
@@ -99,18 +97,16 @@ class Sequence:
         self.error_queue_thread = threading.Thread(
             target=self.read_error_queue, daemon=True
         )
+        self.__start()
 
     def __iter__(self):
         return self
 
     def __next__(self):
-        if self.__iterables_queued == 0:
+        if self.__iterables_queued < 1:
             raise BufferError(
                 "No iterable queued: call queueflow.queue_iterable(iterable)"
             )
-        if not self._started:
-            self.__start()
-            self._started = True
         try:
             out = next(self.__seq[-1])
             return out
@@ -118,17 +114,11 @@ class Sequence:
             logger.debug("Sequence: Stop Iteration encountered.")
 
             self.__iterables_queued -= 1
-            self._stop()
-            for queue in self.queues:
-                if queue._closed:
-                    continue
-                assert queue.empty(), "Some queue is not empty."
-            self._started = False
             raise StopIteration
 
     def queue_iterable(self, iterable):
         self.__seq[0].queue_iterable(iterable)
-        self.__iterables_queued += True
+        self.__iterables_queued += 1
 
     def __start(self):
         logger.debug("Before Sequence Start\n" + str(self.flowstatus()))
@@ -150,7 +140,7 @@ class Sequence:
 
         return self
 
-    def _stop(self):
+    def stop(self):
         logger.info("Before Sequence Stop\n" + str(self.flowstatus()))
         logger.warn("Setting shutdown event!")
         self.shutdown_event.set()
@@ -166,26 +156,6 @@ class Sequence:
         self.error_queue_thread.join()
         self.error_queue.close()
         self.error_queue.join_thread()
-
-    def drain_seq(self):
-        logger.warning("qf Sequence is being drained.")
-        terminal_pos = -1
-        while terminal_pos < len(self.queues) - 1:
-            for iqueue in range(terminal_pos + 1, len(self.queues)):
-                queue = self.queues[iqueue]
-                while not queue._closed and not queue.empty():
-                    try:
-                        out = queue.get(block=False)
-                    except Empty:
-                        continue
-                    if isinstance(out, TerminateQueue):
-                        terminal_pos = iqueue
-                        queue.put(TerminateQueue())
-                        queue.close()
-                        queue.join_thread()
-                        continue
-        self._stop()
-        logger.debug("\n" + str(self.flowstatus()))
 
     def read_error_queue(self):
         threading.current_thread().setName("readErrorQueue")

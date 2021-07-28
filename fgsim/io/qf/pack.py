@@ -129,7 +129,7 @@ class RepackStep(StepBase):
         self.nelements = nelements
         self.collected_elements = []
 
-    def _terminate(self):
+    def __handle_terminal(self):
         if len(self.collected_elements) > 0:
             logger.debug(
                 f"""\
@@ -137,9 +137,8 @@ class RepackStep(StepBase):
 {type(self.collected_elements[0])} into output queue {id(self.outq)}."""
             )
             self.safe_put(self.outq, self.collected_elements)
-        logger.info(f"{self.workername} terminating")
+        logger.info(f"{self.workername} finished with iterable")
         self.safe_put(self.outq, TerminateQueue())
-        self._close_queues()
 
     def _worker(self):
         self.set_workername()
@@ -157,7 +156,8 @@ class RepackStep(StepBase):
 type {type(wkin)} from queue {id(self.inq)}."""
             )
             if isinstance(wkin, TerminateQueue):
-                break
+                self.__handle_terminal()
+                continue
             if not isinstance(wkin, Iterable):
                 errormsg = (
                     f"{self.workername} cannot iterate over "
@@ -181,4 +181,4 @@ with {self.nelements} elements into output queue {id(self.outq)}."""
                     self.safe_put(self.outq, self.collected_elements)
                     self.collected_elements = []
             del wkin
-        self._terminate()
+        self._close_queues()

@@ -25,6 +25,7 @@ class TrainState:
         iotime = self.state.time_io_done - self.state.batch_start_time
         utilisation = 1 - iotime / traintime
 
+        # Tensorboard
         self.writer.add_scalar(
             "batchtime",
             traintime,
@@ -43,13 +44,28 @@ class TrainState:
         self.writer.add_scalar("loss", self.state.loss, self.state["grad_step"])
         self.writer.flush()
 
-        self.experiment.log_metric("loss", self.state.loss, self.state["grad_step"])
+        # Comet.ml
         self.experiment.log_metric(
-            "utilisation", utilisation, self.state["grad_step"]
+            "loss",
+            self.state.loss,
+            step=self.state["grad_step"],
+            epoch=self.state["epoch"],
         )
-        self.experiment.log_metric("batchtime", traintime, self.state["grad_step"])
+        self.experiment.log_metric(
+            "utilisation",
+            utilisation,
+            step=self.state["grad_step"],
+            epoch=self.state["epoch"],
+        )
+        self.experiment.log_metric(
+            "batchtime",
+            traintime,
+            step=self.state["grad_step"],
+            epoch=self.state["epoch"],
+        )
         self.experiment.log_metric(
             "processed_events",
             self.state.processed_events,
-            self.state["grad_step"],
+            step=self.state["grad_step"],
+            epoch=self.state["epoch"],
         )

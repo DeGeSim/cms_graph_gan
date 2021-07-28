@@ -62,6 +62,10 @@ def training_procedure() -> None:
                     batch = next(train_state.loader.qfseq)
                 except StopIteration:
                     # If there is no next batch go to the next epoch
+                    train_state.experiment.log_epoch_end(
+                        train_state.state["epoch"],
+                        step=train_state.state["grad_step"],
+                    )
                     train_state.state.epoch += 1
                     train_state.state.ibatch = 0
                     train_state.loader.queue_epoch(
@@ -81,5 +85,6 @@ def training_procedure() -> None:
             train_state.holder.save_checkpoint()
     except Exception as error:
         logger.error("Error detected, stopping qfseq.")
-        train_state.loader.qfseq._stop()
+        train_state.loader.qfseq.stop()
         raise error
+    train_state.loader.qfseq.stop()

@@ -30,6 +30,7 @@ class StepBase:
         ]
         self.count_in = 0
         self.count_out = 0
+        self.marked_as_working = False
 
     def connect_to_sequence(
         self, input_queue, output_queue, error_queue, shutdown_event
