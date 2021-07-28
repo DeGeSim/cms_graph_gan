@@ -53,7 +53,7 @@ def process_seq():
         qf.PoolStep(
             transform, nworkers=conf.loader.num_workers_transform, name="transform"
         ),
-        Queue(2),
+        Queue(1),
         qf.RepackStep(conf.loader.batch_size),
         qf.ProcessStep(geo_batch, 1, name="geo_batch"),
         qf.ProcessStep(
