@@ -26,6 +26,11 @@ class TrainState:
         utilisation = 1 - iotime / traintime
 
         self.writer.add_scalar(
+            "batchtime",
+            traintime,
+            self.state["grad_step"],
+        )
+        self.writer.add_scalar(
             "utilisation",
             utilisation,
             self.state["grad_step"],
@@ -42,6 +47,7 @@ class TrainState:
         self.experiment.log_metric(
             "utilisation", utilisation, self.state["grad_step"]
         )
+        self.experiment.log_metric("batchtime", traintime, self.state["grad_step"])
         self.experiment.log_metric(
             "processed_events",
             self.state.processed_events,
