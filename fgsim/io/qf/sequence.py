@@ -199,8 +199,12 @@ class Sequence:
                 self.shutdown_event.set()
                 logger.error(workermsg)
                 try:
-                    logger.error(wkin)
+                    errstr = str(wkin)[:400]
+                    logger.error(errstr)
                 finally:
+                    logger.error(
+                        "Type of object causing the error:" + str(type(wkin))
+                    )
                     raise error
             except Empty:
                 continue
