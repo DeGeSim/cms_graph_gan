@@ -33,6 +33,7 @@ experiments = [
     for exp in api.get(
         workspace=comet_conf.workspace, project_name=comet_conf.project_name
     )
+    if exp.get_parameters_summary("hash") != []
 ]
 qres = [
     exp
