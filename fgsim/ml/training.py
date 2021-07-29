@@ -50,6 +50,10 @@ def training_procedure() -> None:
 
     # Queue that batches
     train_state.loader.queue_epoch(n_skip_events=train_state.state.processed_events)
+    if train_state.experiment.ended:
+        logger.warning("Training has been completed, stopping.")
+        train_state.loader.qfseq.stop()
+        exit(0)
     try:
         while not early_stopping(train_state):
             # switch model in training mode

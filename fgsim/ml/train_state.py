@@ -16,7 +16,7 @@ class TrainState:
 
     holder: ModelHolder
     state: omegaconf.omegaconf.Type
-    loader: QueuedDataLoader
+    loader: Optional[QueuedDataLoader]
     writer: Optional[SummaryWriter]
     experiment: Optional[BaseExperiment]
 

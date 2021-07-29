@@ -1,3 +1,5 @@
+from omegaconf import OmegaConf
+
 from ..config import conf
 from ..utils.logger import logger
 from .train_state import TrainState
@@ -11,7 +13,7 @@ def early_stopping(train_state: TrainState) -> bool:
         # the the most recent losses
         # dont stop for the first epochs
         if len(train_state.state.val_losses) < conf.training.early_stopping:
-            return
+            return False
         recent_losses = train_state.state.val_losses[
             -conf.training.early_stopping :
         ]
@@ -22,8 +24,9 @@ def early_stopping(train_state: TrainState) -> bool:
             train_state.writer.flush()
             train_state.writer.close()
             logger.warn("Early Stopping criteria fullfilled")
-            if hasattr(train_state, "loader"):
-                train_state.loader.qfseq.stop()
+            OmegaConf.save(train_state.state, conf.path.complete_state)
+            train_state.experiment.end()
+            train_state.loader.qfseq.stop()
             return True
     else:
         return False
