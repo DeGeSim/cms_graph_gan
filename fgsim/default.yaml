@@ -14,6 +14,7 @@ path:
   checkpoint: "${path.run_path}/checkpoint.torch"
   checkpoint_old: "${path.run_path}/checkpoint_old.torch"
   predict_csv: "${path.run_path}/prediction.csv"
+  complete_state: "${path.run_path}/complete.yaml"
 seed: 0
 loader:
   keylist: [
@@ -44,7 +45,6 @@ model:
 training:
   events_processed_before_validation: 20000
   validation_interval: '${div:${training.events_processed_before_validation},${loader.batch_size}}'
-  checkpoint_interval: 50
   early_stopping: 10
   early_stopping_improvement: 0.02
 yvar : "energy"
