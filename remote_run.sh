@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --partition=cms-desy
+#SBATCH --partition=allgpu
 #SBATCH --time=12:00:00
 #SBATCH --mail-type=ALL
 #SBATCH --nodes=1
