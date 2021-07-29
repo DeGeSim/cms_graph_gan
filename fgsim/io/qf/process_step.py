@@ -21,7 +21,7 @@ class ProcessStep(StepBase):
         self.finish_barrier = mp.Barrier(parties=self.nworkers)
 
     def __handle_terminal(self):
-        logger.info(f"{self.workername}  Got terminal element.")
+        logger.debug(f"{self.workername}  Got terminal element.")
 
         # Put the terminal element back in the input queue
         self.safe_put(self.inq, TerminateQueue())
@@ -29,11 +29,11 @@ class ProcessStep(StepBase):
         # Make the first worker to reach the terminal element
         # aquires the lock and waits for the other processes
         # processes to finish
-        logger.info(f"{self.workername} waiting at barrier.")
+        logger.debug(f"{self.workername} waiting at barrier.")
         if self.finish_barrier.wait() == 0:
             assert isinstance(self.inq.get(), TerminateQueue)
             self.safe_put(self.outq, TerminateQueue())
-            logger.info(f"{self.workername} put terminal element in outq.")
+            logger.debug(f"{self.workername} put terminal element in outq.")
             self.finish_barrier.reset()
         logger.debug(
             f"""\
