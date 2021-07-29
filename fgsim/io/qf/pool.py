@@ -66,7 +66,7 @@ class PoolStep(StepBase):
                 continue
             logger.debug(
                 f"""\
-{self.workername} working on {id(wkin)} of type {type(wkin)} from queue {id(self.inq)}."""
+{self.workername} working on element of type {type(wkin)} from queue {id(self.inq)}."""
             )
 
             # If the process gets a TerminateQueue object,

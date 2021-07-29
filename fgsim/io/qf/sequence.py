@@ -31,7 +31,7 @@ class Sequence:
     """
 
     def __init__(self, *seq):
-        self.__iterables_queued = False
+        self.__iterable_queued = False
         self.__seq = [InputStep(), *seq, OutputStep()]
 
         self.shutdown_event = mp.Event()
@@ -103,7 +103,7 @@ class Sequence:
         return self
 
     def __next__(self):
-        if self.__iterables_queued < 1:
+        if not self.__iterable_queued:
             raise BufferError(
                 "No iterable queued: call queueflow.queue_iterable(iterable)"
             )
@@ -113,12 +113,13 @@ class Sequence:
         except StopIteration:
             logger.debug("Sequence: Stop Iteration encountered.")
 
-            self.__iterables_queued -= 1
+            self.__iterable_queued = False
             raise StopIteration
 
     def queue_iterable(self, iterable):
+        assert not self.__iterable_queued
         self.__seq[0].queue_iterable(iterable)
-        self.__iterables_queued += 1
+        self.__iterable_queued = True
 
     def __start(self):
         logger.debug("Before Sequence Start\n" + str(self.flowstatus()))

@@ -42,6 +42,10 @@ def geo_batch(list_of_graphs):
     return batch
 
 
+def magic_do_nothing(x):
+    return x
+
+
 # Collect the steps
 def process_seq():
     return (
@@ -60,6 +64,12 @@ def process_seq():
             split_layer_subgraphs,
             conf.loader.num_workers_stack,
             name="split_layer_subgraphs",
+        ),
+        # Needed for outputs to stay in order.
+        qf.ProcessStep(
+            magic_do_nothing,
+            1,
+            name="magic_do_nothing",
         ),
         Queue(conf.loader.prefetch_batches),
     )
@@ -149,38 +159,27 @@ class QueuedDataLoader:
             n_validation_chunks + n_testing_chunks :
         ]
 
+        self.qfseq = qf.Sequence(*process_seq())
+
         if not os.path.isfile(conf.path.validation):
             logger.warn(
                 f"""\
-Processing validation batches, queuing {len(self.validation_chunks)} batches"""
+Processing validation batches, queuing {len(self.validation_chunks)} batches."""
             )
-
-            valqfseq = qf.Sequence(*process_seq())
-            valqfseq.queue_iterable(self.validation_chunks)
-            self._validation_batches = [batch.contiguous() for batch in valqfseq]
-
+            self.qfseq.queue_iterable(self.validation_chunks)
+            self._validation_batches = [batch.contiguous() for batch in self.qfseq]
             torch.save(self._validation_batches, conf.path.validation)
-            del valqfseq
             logger.warn("Validation batches pickled.")
-            # Must restart after using qf.Sequence to avoid
-            # stange multiprocessing bugs
-            exit(0)
 
         if not os.path.isfile(conf.path.test):
-            logger.warn("Processing testing batches")
-            testqfseq = qf.Sequence(*process_seq())
-            testqfseq.queue_iterable(self.testing_chunks)
-            logger.info(f"queing {len(self.testing_chunks)} chunks for testing ")
-            self._testing_batches = [batch.contiguous() for batch in testqfseq]
-
+            logger.warn(
+                f"""\
+Processing testing batches, queuing {len(self.validation_chunks)} batches."""
+            )
+            self.qfseq.queue_iterable(self.testing_chunks)
+            self._testing_batches = [batch.contiguous() for batch in self.qfseq]
             torch.save(self._testing_batches, conf.path.test)
-            del testqfseq
             logger.warn("Testing batches pickled.")
-            # Must restart after using qf.Sequence to avoid
-            # stange multiprocessing bugs
-            exit(0)
-
-        self.qfseq = qf.Sequence(*process_seq())
 
     @property
     def validation_batches(self):
@@ -220,7 +219,6 @@ Processing validation batches, queuing {len(self.validation_chunks)} batches"""
 Skipping {n_skip_events} => {n_skip_chunks} chunks and {n_skip_batches} batches."""
             )
         self.epoch_chunks = self.training_chunks[n_skip_chunks:]
-        np.random.shuffle(self.epoch_chunks)
         self.qfseq.queue_iterable(self.epoch_chunks)
 
         if n_skip_batches != 0:
