@@ -30,7 +30,7 @@ loader:
   chunksize: 100
   prefetch_batches: 2
   batch_size : 100
-  num_workers_transform: 15
+  num_workers_transform: 20
   num_workers_stack: 10
   validation_set_size: 5000
   test_set_size: 30000

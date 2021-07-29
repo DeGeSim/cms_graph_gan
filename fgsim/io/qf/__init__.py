@@ -12,6 +12,8 @@ pickling_support.install()
 # Two recommendations by
 # https://github.com/pytorch/pytorch/issues/973
 # 1. (not needed for the moment)
+# import resource
+# rlimit = resource.getrlimit(resource.RLIMIT_NOFILE)
 # resource.setrlimit(resource.RLIMIT_NOFILE, (2000 , rlimit[1]))
 # 2.
 # Without the following option it crashes with
