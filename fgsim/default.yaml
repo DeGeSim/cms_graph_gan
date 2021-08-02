@@ -45,8 +45,9 @@ model:
 training:
   events_processed_before_validation: 100000
   validation_interval: '${div:${training.events_processed_before_validation},${loader.batch_size}}'
-  early_stopping: 10
-  early_stopping_improvement: 0.02
+  early_stopping:
+    validation_steps: 10
+    improvement: 0.02
 yvar : "energy"
 loss:
   name: L1Loss
