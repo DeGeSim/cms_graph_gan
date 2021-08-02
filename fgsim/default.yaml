@@ -43,9 +43,9 @@ model:
   deeplayer_nodes: 50
   nprop: 4
 training:
-  events_processed_before_validation: 40000
+  events_processed_before_validation: 100000
   validation_interval: '${div:${training.events_processed_before_validation},${loader.batch_size}}'
-  early_stopping: 15
+  early_stopping: 10
   early_stopping_improvement: 0.02
 yvar : "energy"
 loss:
