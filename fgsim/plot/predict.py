@@ -18,21 +18,22 @@ confL = [
 ]
 dfL = [pd.read_csv(fp) for fp in filepaths]
 # %%
-plt.figure(num=None, figsize=(10, 5), dpi=80, facecolor="w", edgecolor="k")
-for conf, df in zip(confL, dfL):
-    plt.scatter(
-        df["Energy"],
-        df["Prediction"],
-        label=conf.model.name,
-        alpha=0.1,
-        s=12,
-    )
-plt.plot([10, 510], [10, 510], label="Ideal", color="red")
-plt.xlabel("Enery")
-plt.ylabel("Prediction")
-plt.title(f"Prediction vs True Energy")
-plt.legend()
-plt.savefig(f"wd/prediction_vs_true_energy.pdf")
+# To big
+# plt.figure(num=None, figsize=(10, 5), dpi=80, facecolor="w", edgecolor="k")
+# for conf, df in zip(confL, dfL):
+#     plt.scatter(
+#         df["Energy"],
+#         df["Prediction"],
+#         label=conf.model.name,
+#         alpha=0.1,
+#         s=12,
+#     )
+# plt.plot([10, 510], [10, 510], label="Ideal", color="red")
+# plt.xlabel("Enery")
+# plt.ylabel("Prediction")
+# plt.title(f"Prediction vs True Energy")
+# plt.legend()
+# plt.savefig(f"wd/prediction_vs_true_energy.pdf")
 
 # %%
 # Error plot
@@ -60,9 +61,9 @@ for conf, df in zip(confL, dfL):
     errorL = []
     skippedbins = 0
     for ibin in range(len(bincenters)):
-        if binpos[ibin - skippedbins] != ibin:
-            skippedbins += 1
-            continue
+        # if binpos[ibin - skippedbins] != ibin:
+        #     skippedbins += 1
+        #     continue
         xL.append(bincenters[ibin])
         yL.append(stat[ibin])
         errorL.append(1 / np.sqrt(count[ibin - skippedbins]))
