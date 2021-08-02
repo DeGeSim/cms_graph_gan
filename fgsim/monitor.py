@@ -52,6 +52,8 @@ def get_experiment():
     ]
     # No experiment with the given hash:
     if len(qres) == 0:
+        if conf.command != "train":
+            raise ValueError("Experiment does not exist in comet.ml!")
         logger.warn("Creating new experiment.")
         new_api_exp = api._create_experiment(
             workspace=comet_conf.workspace, project_name=comet_conf.project_name

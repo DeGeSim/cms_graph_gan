@@ -5,6 +5,7 @@ import omegaconf
 from comet_ml.experiment import BaseExperiment
 from torch.utils.tensorboard import SummaryWriter
 
+from ..config import conf
 from ..io.queued_dataset import QueuedDataLoader
 from .holder import ModelHolder
 
@@ -21,6 +22,8 @@ class TrainState:
     experiment: Optional[BaseExperiment]
 
     def write_trainstep_logs(self) -> None:
+        if conf.debug:
+            return
         traintime = self.state.time_training_done - self.state.batch_start_time
         iotime = self.state.time_io_done - self.state.batch_start_time
         utilisation = 1 - iotime / traintime

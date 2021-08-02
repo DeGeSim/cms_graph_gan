@@ -43,14 +43,14 @@ def training_procedure() -> None:
         model_holder.state,
         QueuedDataLoader(),
         setup_writer(),
-        setup_experiment(model_holder),
+        setup_experiment(model_holder) if not conf.debug else None,
     )
 
     # Initialize the training
 
     # Queue that batches
     train_state.loader.queue_epoch(n_skip_events=train_state.state.processed_events)
-    if train_state.experiment.ended:
+    if not conf.debug and train_state.experiment.ended:
         logger.warning("Training has been completed, stopping.")
         train_state.loader.qfseq.stop()
         exit(0)
@@ -70,6 +70,7 @@ def training_procedure() -> None:
                         train_state.state["epoch"],
                         step=train_state.state["grad_step"],
                     )
+                    logger.warning("New epoch!")
                     train_state.state.epoch += 1
                     train_state.state.ibatch = 0
                     train_state.loader.queue_epoch(

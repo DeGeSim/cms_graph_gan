@@ -4,6 +4,7 @@ import torch
 from tqdm import tqdm
 
 from ..config import conf, device
+from ..io.queued_dataset import QueuedDataLoader
 from ..monitor import setup_experiment, setup_writer
 from ..utils.batch_utils import move_batch_to_device
 from ..utils.logger import logger
@@ -15,7 +16,7 @@ def prediction_procedure():
     train_state = TrainState(
         model_holder,
         model_holder.state,
-        None,
+        QueuedDataLoader(),
         setup_writer(),
         setup_experiment(model_holder),
     )
