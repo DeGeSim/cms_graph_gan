@@ -1,10 +1,11 @@
 #!/bin/bash
-#SBATCH --partition=allgpu
+#SBATCH --partition=allgpu,cms-desy
 #SBATCH --time=12:00:00
 #SBATCH --mail-type=ALL
 #SBATCH --nodes=1
 #SBATCH --constraint="P100"
 #SBATCH --output=wd/slurm-%j.out
+#SBATCH --job-name=${2}
 export LD_PRELOAD=""
 source /etc/profile.d/modules.sh
 
@@ -22,3 +23,4 @@ TORCH=1.9.0
 cd ~/fgsim
 source .tox/py38/bin/activate
 python3 -m fgsim $@
+echo "Command python3 -m fgsim $@ finished."
