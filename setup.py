@@ -35,7 +35,6 @@ install_requirements = [
     "toml",
     "tblib",
     "rich",
-    "multiprocessing-logging",
 ]
 
 extras = {
