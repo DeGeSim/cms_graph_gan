@@ -57,6 +57,7 @@ class OutputStep(InOutStep):
             try:
                 out = self.inq.get(block=True, timeout=0.005)
                 if isinstance(out, TerminateQueue):
+                    logger.debug("OutputStep got terminal element.")
                     break
                 if isinstance(out, torch_geometric.data.Data):
                     out = clone_batch(out)

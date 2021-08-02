@@ -99,6 +99,24 @@ class Sequence:
         )
         self.__start()
 
+    def __start(self):
+        logger.debug("Before Sequence Start\n" + str(self.flowstatus()))
+
+        for seq_elem in self.__seq:
+            if isinstance(seq_elem, StepBase):
+                seq_elem.start()
+        for step in self.__seq:
+            logger.debug(
+                (
+                    step.name if hasattr(step, "name") else None,
+                    id(step.inq) if hasattr(step, "inq") else None,
+                    id(step.outq) if hasattr(step, "outq") else None,
+                )
+            )
+
+        self.status_printer_thread.start()
+        self.error_queue_thread.start()
+
     def __iter__(self):
         return self
 
@@ -120,24 +138,6 @@ class Sequence:
         assert not self.__iterable_queued
         self.__seq[0].queue_iterable(iterable)
         self.__iterable_queued = True
-
-    def __start(self):
-        logger.debug("Before Sequence Start\n" + str(self.flowstatus()))
-
-        for seq_elem in self.__seq:
-            if isinstance(seq_elem, StepBase):
-                seq_elem.start()
-        for step in self.__seq:
-            logger.debug(
-                (
-                    step.name if hasattr(step, "name") else None,
-                    id(step.inq) if hasattr(step, "inq") else None,
-                    id(step.outq) if hasattr(step, "outq") else None,
-                )
-            )
-
-        self.status_printer_thread.start()
-        self.error_queue_thread.start()
 
         return self
 
