@@ -207,7 +207,7 @@ Processing testing batches, queuing {len(self.validation_chunks)} batches."""
     def queue_epoch(self, n_skip_events=0):
         n_skip_chunks = n_skip_events // conf.loader.chunksize
         # Cycle Epochs
-        n_skip_chunks % (len(files) * conf.loader.chunksize)
+        n_skip_chunks = n_skip_chunks % len(self.training_chunks)
 
         n_skip_batches = (
             n_skip_events % conf.loader.chunksize
