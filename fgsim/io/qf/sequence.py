@@ -146,17 +146,36 @@ class Sequence:
         logger.warn("Setting shutdown event!")
         self.shutdown_event.set()
 
-        for step in self.steps:
+        for queue in self.queues:
+            while True:
+                try:
+                    queue.get(block=False)
+                except Empty:
+                    break
+
+        for istep, step in enumerate(self.steps):
+            logger.debug(f"Stopping sequence step {istep}")
             step.stop()
 
-        self.queues[1].close()
-        self.queues[1].join_thread()
+        self.queues[0].close()
+        self.queues[0].join_thread()
         self.queues[-1].close()
         self.queues[-1].join_thread()
 
         self.error_queue_thread.join()
         self.error_queue.close()
         self.error_queue.join_thread()
+        time.sleep(4)
+        logger.info("After Sequence Stop\n" + str(self.flowstatus()))
+        for istep, step in enumerate(self.steps):
+            for ip, p in enumerate(step.processes):
+                if p.is_alive():
+                    logger.error(
+                        f"""\
+Process {ip} (of {len(step.processes)}) of step {istep} is still alive!"""
+                    )
+            logger.debug(f"Stopping sequence step {istep}")
+            step.stop()
 
     def read_error_queue(self):
         threading.current_thread().setName("readErrorQueue")

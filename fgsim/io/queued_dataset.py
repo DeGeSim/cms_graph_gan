@@ -216,7 +216,7 @@ Processing testing batches, queuing {len(self.validation_chunks)} batches."""
         if n_skip_events != 0:
             logger.info(
                 f"""\
-Skipping {n_skip_events} => {n_skip_chunks} chunks and {n_skip_batches} batches."""
+Skipping {n_skip_events} events => {n_skip_chunks} chunks and {n_skip_batches} batches."""
             )
         self.epoch_chunks = self.training_chunks[n_skip_chunks:]
         self.qfseq.queue_iterable(self.epoch_chunks)
@@ -228,3 +228,6 @@ Skipping {n_skip_events} => {n_skip_chunks} chunks and {n_skip_batches} batches.
 
     def __iter__(self):
         return iter(self.qfseq)
+
+    def __del__(self):
+        self.qfseq.stop()

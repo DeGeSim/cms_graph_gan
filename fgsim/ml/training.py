@@ -93,3 +93,4 @@ def training_procedure() -> None:
         train_state.loader.qfseq.stop()
         raise error
     train_state.loader.qfseq.stop()
+    exit(0)

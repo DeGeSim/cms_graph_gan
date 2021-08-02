@@ -38,7 +38,7 @@ class PoolStep(StepBase):
         for p in self.processes:
             if p.is_alive():
                 p.join(5)
-                p.terminate()
+                p.kill()
 
     def process_status(self):
         return (
@@ -132,7 +132,7 @@ element type {type(wkin)} into output queue {id(self.outq)}."""
             del wkin
         self.pool.close()
         self.pool.terminate()
-        logger.info(f"""{self.workername} pool closed""")
+        logger.debug(f"""{self.workername} pool closed""")
         self.outq.cancel_join_thread()
         self._close_queues()
-        logger.info(f"""{self.workername} queues closed""")
+        logger.debug(f"""{self.workername} queues closed""")

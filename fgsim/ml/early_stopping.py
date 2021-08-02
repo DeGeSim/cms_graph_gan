@@ -14,9 +14,10 @@ def early_stopping(train_state: TrainState) -> bool:
         train_state.holder.save_checkpoint()
         train_state.writer.flush()
         train_state.writer.close()
-        logger.warn("Early Stopping criteria fullfilled")
+        logger.warn("Early Stopping criteria fulfilled")
         OmegaConf.save(train_state.state, conf.path.complete_state)
-        train_state.experiment.end()
+        if not conf.debug:
+            train_state.experiment.end()
         return True
     else:
         return False

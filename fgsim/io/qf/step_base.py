@@ -74,8 +74,14 @@ class StepBase:
     def stop(self):
         for p in self.processes:
             if p.is_alive():
-                p.join(1)
-                p.terminate()
+                p.join(5)
+                if p.exitcode is None:
+                    p.kill()
+                    logger.warning(
+                        f"""\
+Had to kill process of name {self.name}."""
+                    )
+                p.join(0)
 
     def safe_put(self, queue, element):
         while not self.shutdown_event.is_set():
