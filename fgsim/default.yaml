@@ -41,7 +41,7 @@ model:
   dyn_features: 10
   static_features: 3
   deeplayer_nodes: 50
-  nprop: 4
+  nprop: 10
 training:
   events_processed_before_validation: 100000
   validation_interval: '${div:${training.events_processed_before_validation},${loader.batch_size}}'
