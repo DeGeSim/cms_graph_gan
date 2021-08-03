@@ -112,3 +112,4 @@ runs/
 **/*.pth
 **/*.torch
 fgsim/comet.yaml
+workspace.code-workspace

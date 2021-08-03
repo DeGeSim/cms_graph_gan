@@ -48,40 +48,7 @@
 		"version": "0.2.0",
 		"configurations": [
 			{
-				"name": "t forward",
-				"type": "python",
-				"request": "launch",
-				"module": "fgsim",
-				"args": [
-					"--tag",
-					"forward",
-					"train",
-				]
-			},
-			{
-				"name": "t deepconv",
-				"type": "python",
-				"request": "launch",
-				"module": "fgsim",
-				"args": [
-					"--tag",
-					"deepconv",
-					"train",
-				]
-			},
-			{
-				"name": "t msgpass",
-				"type": "python",
-				"request": "launch",
-				"module": "fgsim",
-				"args": [
-					"--tag",
-					"msgpass",
-					"train",
-				]
-			},
-			{
-				"name": "t linreg",
+				"name": "t lin",
 				"type": "python",
 				"request": "launch",
 				"module": "fgsim",
