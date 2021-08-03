@@ -144,8 +144,10 @@ class Sequence:
     def stop(self):
         logger.info("Before Sequence Stop\n" + str(self.flowstatus()))
         logger.warn("Setting shutdown event!")
+
         self.shutdown_event.set()
 
+        # # Drain the queues:
         for queue in self.queues:
             while True:
                 try:
@@ -157,8 +159,8 @@ class Sequence:
             logger.debug(f"Stopping sequence step {istep}")
             step.stop()
 
-        self.queues[0].close()
-        self.queues[0].join_thread()
+        # self.queues[0].close()
+        # self.queues[0].join_thread()
         self.queues[-1].close()
         self.queues[-1].join_thread()
 
@@ -175,7 +177,6 @@ class Sequence:
 Process {ip} (of {len(step.processes)}) of step {istep} is still alive!"""
                     )
             logger.debug(f"Stopping sequence step {istep}")
-            step.stop()
 
     def read_error_queue(self):
         threading.current_thread().setName("readErrorQueue")

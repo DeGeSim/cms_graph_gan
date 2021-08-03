@@ -6,7 +6,7 @@ import torch
 import torch_geometric
 from torch import multiprocessing as mp
 
-from ...utils.batch_utils import clone_batch
+from ...utils.batch_utils import batch_to_numpy_dict, clone_batch
 from ...utils.logger import logger
 
 
@@ -93,6 +93,15 @@ Had to kill process of name {self.name}."""
 
     def process_status(self):
         return (sum([p.is_alive() for p in self.processes]), self.nworkers)
+
+    def handle_error(self, error, obj):
+        if isinstance(obj, torch.Tensor):
+            obj = obj.numpy()
+        if isinstance(obj, torch_geometric.data.Data):
+            obj = batch_to_numpy_dict(obj)
+        workermsg = f"""
+{self.workername} failed on element of type of type {type(obj)}."""
+        self.error_queue.put((workermsg, obj, error))
 
     def _worker(self):
         raise NotImplementedError

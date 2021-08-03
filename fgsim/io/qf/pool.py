@@ -46,15 +46,9 @@ class PoolStep(StepBase):
             self.n_pool_workers,
         )
 
-    def propagete_error(self, element, error=Exception):
-        workermsg = (
-            f"""{self.workername} failed on element of type {type(element)}."""
-        )
-        self.error_queue.put((workermsg, element, error))
-
     def _worker(self):
         self.set_workername()
-        logger.info(
+        logger.debug(
             f"{self.workername} pool  initalizing with {self.n_pool_workers} subprocesses"
         )
         self.pool = mp.Pool(self.n_pool_workers)
@@ -108,7 +102,7 @@ class PoolStep(StepBase):
 
             except Exception as error:
                 logger.warn(f"""{self.workername} got error""")
-                self.propagete_error(wkin, error)
+                self.handle_error(error, wkin)
                 break
 
             #             if wkin_iter.count > 200:

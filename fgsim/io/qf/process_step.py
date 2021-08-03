@@ -77,9 +77,7 @@ class ProcessStep(StepBase):
 
             # Catch Errors in the worker function
             except Exception as error:
-                workermsg = f"""
-{self.workername} failed on element of type of type {type(wkin)}.\n\n{wkin}"""
-                self.error_queue.put((workermsg, wkin, error))
+                self.handle_error(error, wkin)
                 break
 
             logger.debug(

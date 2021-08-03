@@ -228,6 +228,3 @@ Skipping {n_skip_events} events => {n_skip_chunks} chunks and {n_skip_batches} b
 
     def __iter__(self):
         return iter(self.qfseq)
-
-    def __del__(self):
-        self.qfseq.stop()

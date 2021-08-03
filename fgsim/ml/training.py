@@ -66,10 +66,11 @@ def training_procedure() -> None:
                     batch = next(train_state.loader.qfseq)
                 except StopIteration:
                     # If there is no next batch go to the next epoch
-                    train_state.experiment.log_epoch_end(
-                        train_state.state["epoch"],
-                        step=train_state.state["grad_step"],
-                    )
+                    if not conf.debug:
+                        train_state.experiment.log_epoch_end(
+                            train_state.state["epoch"],
+                            step=train_state.state["grad_step"],
+                        )
                     logger.warning("New epoch!")
                     train_state.state.epoch += 1
                     train_state.state.ibatch = 0
