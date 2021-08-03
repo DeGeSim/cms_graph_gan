@@ -61,7 +61,7 @@ hyperparameters = OmegaConf.masked_copy(
 OmegaConf.resolve(hyperparameters)
 
 # Compute the hash
-conf_hash = hashlib.sha1(str(hyperparameters).encode()).hexdigest()[:7]
+conf_hash = str(hashlib.sha1(str(hyperparameters).encode()).hexdigest()[:7])
 conf["hash"] = conf_hash
 hyperparameters["hash"] = conf_hash
 

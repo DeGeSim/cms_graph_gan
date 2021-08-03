@@ -7,6 +7,8 @@ from .utils.logger import logger
 
 
 def dict_to_kv(o, keystr=""):
+    """Converts a nested dict {"a":"foo", "b": {"foo":"bar"}} to \
+    [("a","foo"),("b.foo","bar")]."""
     if hasattr(o, "keys"):
         outL = []
         for k in o.keys():
@@ -29,15 +31,11 @@ def dict_to_kv(o, keystr=""):
 
 
 def get_experiment():
+    """Tries to find for an existing experiment with the given hash and \
+ -- if unsuccessfull -- generates a new one."""
     comet_conf = OmegaConf.load("fgsim/comet.yaml")
     api = comet_ml.API(comet_conf.api_key)
 
-    # qres = api.query(
-    #     workspace=comet_conf.workspace,
-    #     project_name=comet_conf.project_name,
-    #     query=comet_ml.api.Parameter("hash") == conf.hash,
-    #     archived=False,
-    # )
     experiments = [
         exp
         for exp in api.get(
@@ -64,7 +62,7 @@ def get_experiment():
         exp_key = qres[0].id
     else:
         raise ValueError("More then one experiment with the given hash.")
-    print(f"Experiment ID {exp_key}")
+    logger.info(f"Experiment ID {exp_key}")
 
     experiment = comet_ml.ExistingExperiment(
         previous_experiment=exp_key,
@@ -90,8 +88,8 @@ def setup_experiment(model_holder):
     experiment = get_experiment()
 
     # Format the hyperparameter for comet
-    hyperparametersD = dict(dict_to_kv(hyperparameters))
-    experiment.log_parameters(hyperparametersD)
+    hyperparameters_keyval_list = dict(dict_to_kv(hyperparameters))
+    experiment.log_parameters(hyperparameters_keyval_list)
     for tag in set(conf.tag.split("_")) | set(conf.model.name.split("_")):
         experiment.add_tag(tag)
     experiment.set_model_graph(str(model_holder.model))
