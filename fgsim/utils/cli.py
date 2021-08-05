@@ -24,3 +24,15 @@ loadfile_parser.add_argument(
 )
 
 args = parser.parse_args()
+
+if __name__ == "__main__":
+    import sys
+
+    for tag in args.tag.split(","):
+        command = ""
+        for e in sys.argv[1:]:
+            if e is not args.tag:
+                command += e + " "
+            else:
+                command += tag + " "
+        print(args.command + " " + tag + " " + command)

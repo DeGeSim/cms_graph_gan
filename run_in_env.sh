@@ -1,11 +1,4 @@
 #!/bin/bash
-#SBATCH --partition=allgpu,cms-desy
-#SBATCH --time=12:00:00
-#SBATCH --mail-type=ALL
-#SBATCH --nodes=1
-#SBATCH --constraint="P100"
-#SBATCH --output=wd/slurm-%j.out
-#SBATCH --job-name=${2}
 export LD_PRELOAD=""
 source /etc/profile.d/modules.sh
 
