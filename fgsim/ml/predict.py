@@ -34,6 +34,8 @@ def prediction_procedure():
 
     # Make sure the batches are loaded
     _ = train_state.loader.testing_batches
+    train_state.loader.qfseq.stop()
+
     logger.info("Start iterating batches.")
     for ibatch, batch in enumerate(tqdm(train_state.loader.testing_batches)):
         batch = move_batch_to_device(batch, device)
@@ -69,3 +71,4 @@ def prediction_procedure():
     # train_state.experiment.log_curve(
     #     "Relative Error", ys, df["Relativ Error"], overwrite=True, step=None
     # )
+    exit(0)

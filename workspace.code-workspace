@@ -55,6 +55,19 @@
 				"args": [
 					"--tag",
 					"linreg",
+					"--debug",
+					"train",
+				]
+			},
+			{
+				"name": "t seltag",
+				"type": "python",
+				"request": "launch",
+				"module": "fgsim",
+				"args": [
+					"--tag",
+					// "`fd  --type d \".*\" --maxdepth 1 ~/fgsim/wd | sd \".*/(.+)$\" \"\\$1\"|fzf`",
+					"linreg",
 					"train",
 				]
 			},
