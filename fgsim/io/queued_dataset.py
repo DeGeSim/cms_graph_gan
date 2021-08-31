@@ -1,78 +1,25 @@
+"""
+Provides the `QueuedDataLoader` class. The definded sequence of qf steps is \
+loaded depending on `conf.loader.name`.
+"""
+
+import importlib
 import os
 from pathlib import Path
 
 import h5py as h5
 import numpy as np
 import torch
-import torch_geometric
 import yaml
-from torch.multiprocessing import Queue
 
-from ..config import conf, device
-from ..geo.batch_stack import split_layer_subgraphs
-from ..geo.transform import transform
+from ..config import conf
 from ..utils.logger import logger
 from . import qf
 
-
-# reading from the filesystem
-def read_chunk(chunkL):
-    data_dict = {k: [] for k in conf.loader.keylist}
-    for chunk in chunkL:
-        file_path, start, end = chunk
-        with h5.File(file_path) as h5_file:
-            for k in conf.loader.keylist:
-                data_dict[k].append(h5_file[k][start:end])
-    for k in conf.loader.keylist:
-        if len(data_dict[k][0].shape) == 1:
-            data_dict[k] = np.hstack(data_dict[k])
-        else:
-            data_dict[k] = np.vstack(data_dict[k])
-
-    # split up the events and pass them as a dict
-    output = [
-        {k: data_dict[k][ientry] for k in conf.loader.keylist}
-        for ientry in range(conf.loader.chunksize)
-    ]
-    return output
-
-
-def geo_batch(list_of_graphs):
-    batch = torch_geometric.data.Batch().from_data_list(list_of_graphs)
-    return batch
-
-
-def magic_do_nothing(x):
-    return x
-
-
-# Collect the steps
-def process_seq():
-    return (
-        qf.ProcessStep(read_chunk, 2, name="read_chunk"),
-        Queue(1),
-        # In the input is now [(x,y), ... (x [300 * 51 * 51 * 25], y [300,1] ), (x,y)]
-        # For these elements to be processed by each of the workers in the following
-        # transformthey need to be (x [51 * 51 * 25], y [1] ):
-        qf.PoolStep(
-            transform, nworkers=conf.loader.num_workers_transform, name="transform"
-        ),
-        Queue(1),
-        qf.RepackStep(conf.loader.batch_size),
-        qf.ProcessStep(geo_batch, 1, name="geo_batch"),
-        qf.ProcessStep(
-            split_layer_subgraphs,
-            conf.loader.num_workers_stack,
-            name="split_layer_subgraphs",
-        ),
-        # Needed for outputs to stay in order.
-        qf.ProcessStep(
-            magic_do_nothing,
-            1,
-            name="magic_do_nothing",
-        ),
-        Queue(conf.loader.prefetch_batches),
-    )
+# Import the specified processing sequence
+process_seq = importlib.import_module(
+    f"..io.{conf.loader.name}", "fgsim.models"
+).process_seq
 
 
 ds_path = Path(conf.path.dataset)
@@ -96,6 +43,12 @@ else:
 
 
 class QueuedDataLoader:
+    """
+`QueuedDataLoader` makes `validation_batches` \
+and `testing_batches` available as properties; to load training batches, one \
+must queue an epoch via `queue_epoch()` and iterate over the instance of the class.
+    """
+
     def __init__(self):
         chunksize = conf.loader.chunksize
         batch_size = conf.loader.batch_size
@@ -164,20 +117,20 @@ class QueuedDataLoader:
         if not os.path.isfile(conf.path.validation):
             logger.warn(
                 f"""\
-Processing validation batches, queuing {len(self.validation_chunks)} batches."""
+Processing validation batches, queuing {len(self.validation_chunks)} chunks."""
             )
             self.qfseq.queue_iterable(self.validation_chunks)
-            self._validation_batches = [batch.contiguous() for batch in self.qfseq]
+            self._validation_batches = [batch for batch in self.qfseq]
             torch.save(self._validation_batches, conf.path.validation)
             logger.warn("Validation batches pickled.")
 
         if not os.path.isfile(conf.path.test):
             logger.warn(
                 f"""\
-Processing testing batches, queuing {len(self.validation_chunks)} batches."""
+Processing testing batches, queuing {len(self.validation_chunks)} chunks."""
             )
             self.qfseq.queue_iterable(self.testing_chunks)
-            self._testing_batches = [batch.contiguous() for batch in self.qfseq]
+            self._testing_batches = [batch for batch in self.qfseq]
             torch.save(self._testing_batches, conf.path.test)
             logger.warn("Testing batches pickled.")
 
@@ -201,9 +154,6 @@ Processing testing batches, queuing {len(self.validation_chunks)} batches."""
             logger.warning("Finished loading.")
         return self._testing_batches
 
-    def load_test_batches(self):
-        self.testing_batches = torch.load(conf.path.test, map_location=device)
-
     def queue_epoch(self, n_skip_events=0):
         n_skip_chunks = n_skip_events // conf.loader.chunksize
         # Cycle Epochs
@@ -218,8 +168,8 @@ Processing testing batches, queuing {len(self.validation_chunks)} batches."""
                 f"""\
 Skipping {n_skip_events} events => {n_skip_chunks} chunks and {n_skip_batches} batches."""
             )
-        self.epoch_chunks = self.training_chunks[n_skip_chunks:]
-        self.qfseq.queue_iterable(self.epoch_chunks)
+        epoch_chunks = self.training_chunks[n_skip_chunks:]
+        self.qfseq.queue_iterable(epoch_chunks)
 
         if n_skip_batches != 0:
             for _ in range(n_skip_batches):

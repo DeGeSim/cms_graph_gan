@@ -1,7 +1,10 @@
+from typing import Dict
+
 import torch
 import torch_geometric
 
 from ..config import device
+from ..utils.typecheck import istype
 
 
 def move_batch_to_device(batch, device):
@@ -19,18 +22,23 @@ def move_batch_to_device(batch, device):
         else:
             raise ValueError
 
-    batch_new = torch_geometric.data.Batch().from_dict(
-        {k: move(v) for k, v in batch.to_dict().items()}
-    )
-    for attr in [
-        "__slices__",
-        "__cat_dims__",
-        "__cumsum__",
-        "__num_nodes_list__",
-        "__num_graphs__",
-    ]:
-        if hasattr(batch_new, attr):
-            setattr(batch_new, attr, move(getattr(batch, attr)))
+    if isinstance(batch, torch_geometric.data.Data):
+        batch_new = torch_geometric.data.Batch().from_dict(
+            {k: move(v) for k, v in batch.to_dict().items()}
+        )
+        for attr in [
+            "__slices__",
+            "__cat_dims__",
+            "__cumsum__",
+            "__num_nodes_list__",
+            "__num_graphs__",
+        ]:
+            if hasattr(batch_new, attr):
+                setattr(batch_new, attr, move(getattr(batch, attr)))
+    elif istype(batch, Dict[str, torch.Tensor]):
+        batch_new = {k: move(v) for k, v in batch.items()}
+    else:
+        raise RuntimeError("Cannot move this object to the torch device.")
     return batch_new
 
 

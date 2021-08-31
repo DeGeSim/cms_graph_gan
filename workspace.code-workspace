@@ -48,14 +48,14 @@
 		"version": "0.2.0",
 		"configurations": [
 			{
-				"name": "t lin",
+				"name": "t cnn",
 				"type": "python",
 				"request": "launch",
 				"module": "fgsim",
 				"args": [
 					"--tag",
-					"linreg",
-					"--debug",
+					"cnn",
+					// "--debug",
 					"train",
 				]
 			},

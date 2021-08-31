@@ -154,6 +154,8 @@ class Sequence:
                     queue.get(block=False)
                 except Empty:
                     break
+                except FileNotFoundError:
+                    break
 
         for istep, step in enumerate(self.steps):
             logger.debug(f"Stopping sequence step {istep}")
