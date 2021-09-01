@@ -1,6 +1,6 @@
 import torch
 
-from ..config import conf
+from fgsim.config import conf
 
 
 def split_layer_subgraphs(batch):

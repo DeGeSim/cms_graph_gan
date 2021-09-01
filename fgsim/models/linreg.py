@@ -1,7 +1,7 @@
 import torch
 from torch import nn
 
-from ..config import conf
+from fgsim.config import conf
 
 nfeatures = conf.model.dyn_features + conf.model.static_features
 

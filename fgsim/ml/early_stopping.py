@@ -1,7 +1,8 @@
 from omegaconf import OmegaConf
 
-from ..config import conf
-from ..utils.logger import logger
+from fgsim.config import conf
+from fgsim.utils.logger import logger
+
 from .train_state import TrainState
 
 

@@ -2,10 +2,11 @@ import torch
 from omegaconf import OmegaConf
 from torch.profiler import ProfilerActivity, profile
 
-from ..config import conf, device
-from ..io.queued_dataset import QueuedDataLoader
-from ..monitor import setup_writer
-from ..utils.logger import logger
+from fgsim.config import conf, device
+from fgsim.io.queued_dataset import QueuedDataLoader
+from fgsim.monitor import setup_writer
+from fgsim.utils.logger import logger
+
 from .holder import model_holder
 
 

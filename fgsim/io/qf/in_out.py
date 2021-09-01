@@ -2,8 +2,9 @@ from multiprocessing.queues import Empty, Full
 
 import torch_geometric
 
-from ...utils.batch_utils import clone_batch
-from ...utils.logger import logger
+from fgsim.utils.batch_utils import clone_batch
+from fgsim.utils.logger import logger
+
 from .terminate_queue import TerminateQueue
 
 

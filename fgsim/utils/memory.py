@@ -38,6 +38,6 @@ def memGB():
     # logger.debug(psutil.virtual_memory())  # physical memory usage
     pid = os.getpid()
     py = psutil.Process(pid)
-    memoryUse = py.memory_info()[0] / 2.0 ** 30  # memory use in GB...I think
+    memoryUse = py.memory_info()[0] / 2.0 ** 30  # memory use in GB... I think
     # logger.debug("memory GB:", memoryUse)
     return memoryUse

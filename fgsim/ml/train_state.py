@@ -5,8 +5,9 @@ import omegaconf
 from comet_ml.experiment import BaseExperiment
 from torch.utils.tensorboard import SummaryWriter
 
-from ..config import conf
-from ..io.queued_dataset import QueuedDataLoader
+from fgsim.config import conf
+from fgsim.io.queued_dataset import QueuedDataLoader
+
 from .holder import ModelHolder
 
 

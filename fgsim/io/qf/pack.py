@@ -1,7 +1,8 @@
 from collections.abc import Iterable
 from multiprocessing.queues import Empty
 
-from ...utils.logger import logger
+from fgsim.utils.logger import logger
+
 from .step_base import StepBase
 from .terminate_queue import TerminateQueue
 

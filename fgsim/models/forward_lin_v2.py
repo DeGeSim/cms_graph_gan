@@ -2,8 +2,8 @@ import torch
 from torch import nn
 from torch_geometric.nn import GCNConv, global_add_pool
 
-from ..config import conf
-from ..utils.cuda_clear import cuda_clear
+from fgsim.config import conf
+from fgsim.utils.cuda_clear import cuda_clear
 
 nfeatures = conf.model.dyn_features + conf.model.static_features
 

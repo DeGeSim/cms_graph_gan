@@ -1,6 +1,6 @@
 import torch
 
-from ..config import device
+from fgsim.config import device
 
 
 def cuda_clear():

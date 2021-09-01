@@ -4,7 +4,7 @@ import shutil
 import comet_ml
 from omegaconf import OmegaConf
 
-from ..config import conf
+from fgsim.config import conf
 
 filenames = [
     conf.path[key]

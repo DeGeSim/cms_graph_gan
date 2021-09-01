@@ -2,7 +2,8 @@ from multiprocessing.queues import Empty
 
 from torch import multiprocessing as mp
 
-from ...utils.logger import logger
+from fgsim.utils.logger import logger
+
 from .step_base import StepBase
 from .terminate_queue import TerminateQueue
 

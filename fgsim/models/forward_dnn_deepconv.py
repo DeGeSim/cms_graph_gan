@@ -6,8 +6,8 @@ from torch import nn
 from torch.nn import Linear
 from torch_geometric.nn import GINConv, global_add_pool
 
-from ..config import conf, device
-from ..utils.cuda_clear import cuda_clear
+from fgsim.config import conf, device
+from fgsim.utils.cuda_clear import cuda_clear
 
 nfeatures = conf.model.dyn_features + conf.model.static_features
 

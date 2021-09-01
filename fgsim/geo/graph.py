@@ -2,7 +2,7 @@ import numpy as np
 import torch
 from torch_geometric.data import Data
 
-from ..config import conf
+from fgsim.config import conf
 
 
 def arrpos(ilayer, irow, icolumn, shape):

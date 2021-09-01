@@ -6,8 +6,9 @@ from multiprocessing.queues import Queue as queues_class
 from prettytable import PrettyTable
 from torch import multiprocessing as mp
 
-from ...config import conf
-from ...utils.logger import logger
+from fgsim.config import conf
+from fgsim.utils.logger import logger
+
 from .in_out import InputStep, OutputStep
 from .step_base import StepBase
 

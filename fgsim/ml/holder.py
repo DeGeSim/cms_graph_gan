@@ -4,14 +4,14 @@ import os
 import torch
 from omegaconf import OmegaConf
 
-from ..config import conf, device
-from ..utils.check_for_nans import contains_nans
-from ..utils.count_parameters import count_parameters
-from ..utils.logger import logger
+from fgsim.config import conf, device
+from fgsim.utils.check_for_nans import contains_nans
+from fgsim.utils.count_parameters import count_parameters
+from fgsim.utils.logger import logger
 
 # Import the specified model
 ModelClass = importlib.import_module(
-    f"..models.{conf.model.name}", "fgsim.models"
+    f"fgsim.models.{conf.model.name}", "fgsim.models"
 ).ModelClass
 
 

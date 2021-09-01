@@ -8,9 +8,10 @@ import numpy as np
 import torch_geometric
 from torch.multiprocessing import Queue
 
-from ..config import conf
-from ..geo.batch_stack import split_layer_subgraphs
-from ..geo.transform import transform
+from fgsim.config import conf
+from fgsim.geo.batch_stack import split_layer_subgraphs
+from fgsim.geo.transform import transform
+
 from . import qf
 
 

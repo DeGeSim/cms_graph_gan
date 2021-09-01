@@ -8,7 +8,8 @@ import numpy as np
 import torch
 from torch.multiprocessing import Queue
 
-from ..config import conf
+from fgsim.config import conf
+
 from . import qf
 
 

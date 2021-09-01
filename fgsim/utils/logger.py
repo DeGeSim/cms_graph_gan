@@ -5,7 +5,7 @@ from rich.highlighter import NullHighlighter
 from rich.logging import RichHandler
 from tqdm.contrib.logging import logging_redirect_tqdm
 
-from ..config import conf
+from fgsim.config import conf
 
 logger = logging.getLogger(__name__)
 

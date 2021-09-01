@@ -6,8 +6,8 @@ import torch
 import torch_geometric
 from torch import multiprocessing as mp
 
-from ...utils.batch_utils import batch_to_numpy_dict, clone_batch
-from ...utils.logger import logger
+from fgsim.utils.batch_utils import batch_to_numpy_dict, clone_batch
+from fgsim.utils.logger import logger
 
 
 class StepBase:

@@ -3,8 +3,8 @@ from typing import Dict
 import torch
 import torch_geometric
 
-from ..config import device
-from ..utils.typecheck import istype
+from fgsim.config import device
+from fgsim.utils.typecheck import istype
 
 
 def move_batch_to_device(batch, device):

@@ -1,8 +1,8 @@
 import torch
 from torch_geometric.data import Data
 
-from ..config import conf
-from ..geo.graph import grid_to_graph
+from fgsim.config import conf
+from fgsim.geo.graph import grid_to_graph
 
 
 def transform(data_dict) -> Data:

@@ -3,10 +3,11 @@ from copy import deepcopy
 import torch
 from tqdm import tqdm
 
-from ..config import conf, device
-from ..utils.batch_utils import move_batch_to_device
-from ..utils.check_for_nans import check_chain_for_nans
-from ..utils.logger import logger
+from fgsim.config import conf, device
+from fgsim.utils.batch_utils import move_batch_to_device
+from fgsim.utils.check_for_nans import check_chain_for_nans
+from fgsim.utils.logger import logger
+
 from .train_state import TrainState
 
 

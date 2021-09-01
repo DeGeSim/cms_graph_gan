@@ -8,7 +8,7 @@ import torch
 import torch.nn.functional as F
 from torch import nn
 
-from ..config import conf, device
+from fgsim.config import conf, device
 
 nfeatures = conf.model.dyn_features + conf.model.static_features
 n_hl_features = len(conf.loader.keylist) - 2 - 1

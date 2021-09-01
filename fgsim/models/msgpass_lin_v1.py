@@ -6,7 +6,7 @@ from torch import nn
 from torch.nn import Linear
 from torch_geometric.nn import GCNConv, global_add_pool
 
-from ..config import conf
+from fgsim.config import conf
 
 nfeatures = conf.model.dyn_features + conf.model.static_features
 

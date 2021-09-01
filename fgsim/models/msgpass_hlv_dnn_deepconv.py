@@ -2,8 +2,8 @@ import torch
 from torch import nn
 from torch_geometric.nn import GINConv, global_add_pool
 
-from ..config import conf, device
-from ..utils.cuda_clear import cuda_clear
+from fgsim.config import conf, device
+from fgsim.utils.cuda_clear import cuda_clear
 
 n_node_features = conf.model.dyn_features + conf.model.static_features
 n_hl_features = len(conf.loader.keylist) - 2 - 1

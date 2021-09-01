@@ -12,13 +12,14 @@ import numpy as np
 import torch
 import yaml
 
-from ..config import conf
-from ..utils.logger import logger
+from fgsim.config import conf
+from fgsim.utils.logger import logger
+
 from . import qf
 
 # Import the specified processing sequence
 process_seq = importlib.import_module(
-    f"..io.{conf.loader.name}", "fgsim.models"
+    f"fgsim.io.{conf.loader.name}", "fgsim.models"
 ).process_seq
 
 
