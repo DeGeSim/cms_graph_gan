@@ -57,7 +57,7 @@ class ModelHolder:
 
     def __load_checkpoint(self):
         if not os.path.isfile(conf.path.checkpoint):
-            logger.warn("Proceeding without loading checkpoint.")
+            logger.warning("Proceeding without loading checkpoint.")
             return
 
         checkpoint = torch.load(conf.path.checkpoint, map_location=device)
@@ -70,7 +70,7 @@ class ModelHolder:
         self.optim.load_state_dict(checkpoint["optim"])
         self.best_model_state = checkpoint["best_model"]
 
-        logger.warn(
+        logger.warning(
             "Loading model from checkpoint at"
             + f" epoch {self.state['epoch']}"
             + f" batch {self.state['ibatch']}"

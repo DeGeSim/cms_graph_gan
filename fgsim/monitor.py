@@ -52,13 +52,13 @@ def get_experiment():
     if len(qres) == 0:
         if conf.command != "train":
             raise ValueError("Experiment does not exist in comet.ml!")
-        logger.warn("Creating new experiment.")
+        logger.warning("Creating new experiment.")
         new_api_exp = api._create_experiment(
             workspace=comet_conf.workspace, project_name=comet_conf.project_name
         )
         exp_key = new_api_exp.id
     elif len(qres) == 1:
-        logger.warn("Found existing experiment.")
+        logger.warning("Found existing experiment.")
         exp_key = qres[0].id
     else:
         raise ValueError("More then one experiment with the given hash.")

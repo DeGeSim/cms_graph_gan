@@ -34,6 +34,7 @@ install_requirements = [
     "tensorboard",
     "toml",
     "tblib",
+    "uproot",
     "rich",
 ]
 

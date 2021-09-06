@@ -11,7 +11,7 @@ from .holder import model_holder
 
 
 def profile_procedure() -> None:
-    logger.warn(
+    logger.warning(
         "Starting profiling with state\n" + OmegaConf.to_yaml(model_holder.state)
     )
     model_holder.writer = setup_writer()

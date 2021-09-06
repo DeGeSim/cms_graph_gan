@@ -70,7 +70,7 @@ class PoolStep(StepBase):
             if isinstance(wkin, TerminateQueue):
                 logger.info(f"{self.workername} terminating")
                 self.safe_put(self.outq, TerminateQueue())
-                logger.warn(
+                logger.warning(
                     f"""\
 {self.workername} finished with iterable (in {self.count_in}/out {self.count_out})"""
                 )
@@ -102,12 +102,12 @@ class PoolStep(StepBase):
                     break
 
             except Exception as error:
-                logger.warn(f"""{self.workername} got error""")
+                logger.warning(f"""{self.workername} got error""")
                 self.handle_error(error, wkin)
                 break
 
             #             if wkin_iter.count > 200:
-            #                 logger.warn(
+            #                 logger.warning(
             #                     f"""\
             # Giving large iterables ({wkin_iter.count})\
             # to a worker can lead to crashes.

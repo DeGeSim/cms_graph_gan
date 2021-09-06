@@ -28,7 +28,7 @@ validation steps: {relative_improvement*100}%"""
         train_state.holder.save_checkpoint()
         train_state.writer.flush()
         train_state.writer.close()
-        logger.warn("Early Stopping criteria fulfilled")
+        logger.warning("Early Stopping criteria fulfilled")
         OmegaConf.save(train_state.state, conf.path.complete_state)
         if not conf.debug:
             train_state.experiment.log_other("ended", True)

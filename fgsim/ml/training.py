@@ -1,4 +1,5 @@
 import time
+from typing import Dict, Union
 
 import torch
 import torch_geometric
@@ -18,7 +19,8 @@ from .validate import validate
 
 
 def training_step(
-    batch: torch_geometric.data.Batch, train_state: TrainState
+    batch: Union[torch_geometric.data.Batch, Dict[str, torch.Tensor]],
+    train_state: TrainState,
 ) -> None:
     train_state.holder.optim.zero_grad()
     output = train_state.holder.model(batch)
@@ -36,7 +38,7 @@ def training_step(
 
 
 def training_procedure() -> None:
-    logger.warn(
+    logger.warning(
         "Starting training with state\n" + OmegaConf.to_yaml(model_holder.state)
     )
     train_state = TrainState(

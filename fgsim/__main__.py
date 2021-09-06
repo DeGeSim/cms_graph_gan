@@ -12,6 +12,10 @@ from .utils.logger import logger
 # Add the project to the path, -> `import fgsim.x`
 sys.path.append(os.path.dirname(os.path.realpath(".")))
 
+from typeguard.importhook import install_import_hook
+
+install_import_hook("fgsim")
+
 
 def main():
     # always reload the local modules

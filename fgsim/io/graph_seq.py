@@ -3,9 +3,13 @@ Here steps for reading the h5 files and processing the calorimeter \
 images to graphs are definded. `process_seq` is the function that \
 should be passed the qfseq.
 """
+import os
+from pathlib import Path
+
 import h5py as h5
 import numpy as np
 import torch_geometric
+import yaml
 from torch.multiprocessing import Queue
 
 from fgsim.config import conf
@@ -13,6 +17,26 @@ from fgsim.geo.batch_stack import split_layer_subgraphs
 from fgsim.geo.transform import transform
 
 from . import qf
+
+# Load files
+ds_path = Path(conf.path.dataset)
+assert ds_path.is_dir()
+files = [str(e) for e in sorted(ds_path.glob("**/*.h5"))]
+if len(files) < 1:
+    raise RuntimeError("No hdf5 datasets found")
+
+
+# load lengths
+if not os.path.isfile(conf.path.ds_lenghts):
+    len_dict = {}
+    for fn in files:
+        with h5.File(fn) as h5_file:
+            len_dict[fn] = len(h5_file[conf.yvar])
+    with open(conf.path.ds_lenghts, "w") as f:
+        yaml.dump(len_dict, f, Dumper=yaml.SafeDumper)
+else:
+    with open(conf.path.ds_lenghts, "r") as f:
+        len_dict = yaml.load(f, Loader=yaml.SafeLoader)
 
 
 # reading from the filesystem

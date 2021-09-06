@@ -5,42 +5,22 @@ loaded depending on `conf.loader.name`.
 
 import importlib
 import os
-from pathlib import Path
 
-import h5py as h5
 import numpy as np
 import torch
-import yaml
 
 from fgsim.config import conf
+from fgsim.geo.batchtype import DataSetType
+from fgsim.io import qf
+from fgsim.io.qf.sequence import Sequence as qfseq
 from fgsim.utils.logger import logger
 
-from . import qf
-
 # Import the specified processing sequence
-process_seq = importlib.import_module(
-    f"fgsim.io.{conf.loader.name}", "fgsim.models"
-).process_seq
+sel_seq = importlib.import_module(f"fgsim.io.{conf.loader.name}", "fgsim.models")
 
-
-ds_path = Path(conf.path.dataset)
-assert ds_path.is_dir()
-files = [str(e) for e in sorted(ds_path.glob("**/*.h5"))]
-if len(files) < 1:
-    raise RuntimeError("No hdf5 datasets found")
-
-
-# load lengths
-if not os.path.isfile(conf.path.ds_lenghts):
-    len_dict = {}
-    for fn in files:
-        with h5.File(fn) as h5_file:
-            len_dict[fn] = len(h5_file[conf.yvar])
-    with open(conf.path.ds_lenghts, "w") as f:
-        yaml.dump(len_dict, f, Dumper=yaml.SafeDumper)
-else:
-    with open(conf.path.ds_lenghts, "r") as f:
-        len_dict = yaml.load(f, Loader=yaml.SafeLoader)
+process_seq = sel_seq.process_seq
+files = sel_seq.files
+len_dict = sel_seq.len_dict
 
 
 class QueuedDataLoader:
@@ -63,13 +43,13 @@ must queue an epoch via `queue_epoch()` and iterate over the instance of the cla
             elem_to_add = chunksize - current_chunck_elements
             if elem_left_in_cur_file > elem_to_add:
                 chunk_coords[-1].append(
-                    [files[ifile], ielement, ielement + elem_to_add]
+                    (files[ifile], ielement, ielement + elem_to_add)
                 )
                 ielement += elem_to_add
                 current_chunck_elements += elem_to_add
             else:
                 chunk_coords[-1].append(
-                    [files[ifile], ielement, ielement + elem_left_in_cur_file]
+                    (files[ifile], ielement, ielement + elem_left_in_cur_file)
                 )
                 ielement = 0
                 current_chunck_elements += elem_left_in_cur_file
@@ -113,40 +93,49 @@ must queue an epoch via `queue_epoch()` and iterate over the instance of the cla
             n_validation_chunks + n_testing_chunks :
         ]
 
+        # Check that there is a reasonable amount of data
+        assert (
+            len(self.validation_chunks) + len(self.testing_chunks)
+            > len(self.training_chunks) / 2
+        )
+
+        # Assign the sequence with the specifice steps needed to process the dataset.
         self.qfseq = qf.Sequence(*process_seq())
 
         if not os.path.isfile(conf.path.validation):
-            logger.warn(
+            logger.warning(
                 f"""\
 Processing validation batches, queuing {len(self.validation_chunks)} chunks."""
             )
             self.qfseq.queue_iterable(self.validation_chunks)
             self._validation_batches = [batch for batch in self.qfseq]
             torch.save(self._validation_batches, conf.path.validation)
-            logger.warn("Validation batches pickled.")
+            logger.warning("Validation batches pickled.")
 
         if not os.path.isfile(conf.path.test):
-            logger.warn(
+            logger.warning(
                 f"""\
 Processing testing batches, queuing {len(self.validation_chunks)} chunks."""
             )
             self.qfseq.queue_iterable(self.testing_chunks)
             self._testing_batches = [batch for batch in self.qfseq]
             torch.save(self._testing_batches, conf.path.test)
-            logger.warn("Testing batches pickled.")
+            logger.warning("Testing batches pickled.")
 
     @property
-    def validation_batches(self):
+    def validation_batches(self) -> DataSetType:
         if not hasattr(self, "_validation_batches"):
             logger.warning("Validation batches not loaded, loading from disk.")
             self._validation_batches = torch.load(
                 conf.path.validation, map_location=torch.device("cpu")
             )
-            logger.warning("Finished loading.")
+            logger.warning(
+                f"Finished loading. Type is{type(self._validation_batches)}"
+            )
         return self._validation_batches
 
     @property
-    def testing_batches(self):
+    def testing_batches(self) -> DataSetType:
         if not hasattr(self, "_testing_batches"):
             logger.warning("Testing batches not loaded, loading from disk.")
             self._testing_batches = torch.load(
@@ -155,7 +144,7 @@ Processing testing batches, queuing {len(self.validation_chunks)} chunks."""
             logger.warning("Finished loading.")
         return self._testing_batches
 
-    def queue_epoch(self, n_skip_events=0):
+    def queue_epoch(self, n_skip_events=0) -> None:
         n_skip_chunks = n_skip_events // conf.loader.chunksize
         # Cycle Epochs
         n_skip_chunks = n_skip_chunks % len(self.training_chunks)
@@ -177,5 +166,5 @@ Skipping {n_skip_events} events => {n_skip_chunks} chunks and {n_skip_batches} b
                 _ = next(self.qfseq)
             logger.info(f"Skipped {n_skip_batches} batches.")
 
-    def __iter__(self):
+    def __iter__(self) -> qfseq:
         return iter(self.qfseq)

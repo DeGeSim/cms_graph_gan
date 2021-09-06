@@ -60,19 +60,19 @@ def split_layer_subgraphs(batch):
         )
 
         # if not 0 in edge_index_inner.shape:
-        #     logger.warn(
+        #     logger.warning(
         #         (torch.min(edge_index_inner),
         #         torch.max(edge_index_inner),
         #         torch.sum(mask_input_inner),)
         #     )
         # if not 0 in edge_index_forward.shape:
-        #     logger.warn(
+        #     logger.warning(
         #         (torch.min(edge_index_forward),
         #         torch.max(edge_index_forward),
         #         torch.sum(mask_input_forward),)
         #     )
         # if not 0 in edge_index_backward.shape:
-        #     logger.warn(
+        #     logger.warning(
         #         (torch.min(edge_index_backward),
         #         torch.max(edge_index_backward),
         #         torch.sum(mask_input_backward),)

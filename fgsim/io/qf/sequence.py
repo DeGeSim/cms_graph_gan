@@ -144,7 +144,7 @@ class Sequence:
 
     def stop(self):
         logger.info("Before Sequence Stop\n" + str(self.flowstatus()))
-        logger.warn("Setting shutdown event!")
+        logger.warning("Setting shutdown event!")
 
         self.shutdown_event.set()
 

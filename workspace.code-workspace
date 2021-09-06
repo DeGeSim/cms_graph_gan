@@ -48,6 +48,18 @@
 		"version": "0.2.0",
 		"configurations": [
 			{
+				"name": "t hgcal",
+				"type": "python",
+				"request": "launch",
+				"module": "fgsim",
+				"args": [
+					"--tag",
+					"hgcal",
+					"--debug",
+					"train",
+				]
+			},
+			{
 				"name": "t cnn",
 				"type": "python",
 				"request": "launch",

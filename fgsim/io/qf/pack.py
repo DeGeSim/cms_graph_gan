@@ -139,7 +139,7 @@ class RepackStep(StepBase):
 {self.workername} terminal element into output queue {id(self.outq)}."""
         )
         self.safe_put(self.outq, TerminateQueue())
-        logger.warn(
+        logger.warning(
             f"""\
 {self.workername} finished with iterable (in {self.count_in}/out {self.count_out})"""
         )
