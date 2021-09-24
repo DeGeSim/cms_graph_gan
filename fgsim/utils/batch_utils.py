@@ -1,5 +1,6 @@
 from typing import Dict
 
+import numpy as np
 import torch
 import torch_geometric
 
@@ -8,16 +9,21 @@ from fgsim.utils.typecheck import istype
 
 
 def move_batch_to_device(batch, device):
+    """This function moves batches (eg. from torch_geometric) to a specified device
+    and also takes into account manually assinged properties."""
+
     def move(element):
         if torch.is_tensor(element):
             return element.to(device)
-        elif isinstance(element, list):
-            return [move(ee) for ee in element]
+        elif isinstance(element, (list, set, tuple)):
+            return type(element)((move(ee) for ee in element))
         elif isinstance(element, dict):
             return {k: move(ee) for k, ee in element.items()}
         elif element is None:
             return None
         elif isinstance(element, (int, str, float)):
+            return element
+        elif type(element).__module__ == np.__name__:
             return element
         else:
             raise ValueError
@@ -38,18 +44,22 @@ def move_batch_to_device(batch, device):
     elif istype(batch, Dict[str, torch.Tensor]):
         batch_new = {k: move(v) for k, v in batch.items()}
     else:
-        raise RuntimeError("Cannot move this object to the torch device.")
+        raise RuntimeError(
+            "Cannot move this object to the torch device, invalid type."
+        )
     return batch_new
 
 
 def clone_or_copy(e):
     if torch.is_tensor(e):
         return e.clone()
-    elif isinstance(e, list):
-        return [clone_or_copy(ee) for ee in e]
+    elif isinstance(e, (list, set, tuple)):
+        return type(e)((clone_or_copy(ee) for ee in e))
     elif isinstance(e, dict):
         return {k: clone_or_copy(ee) for k, ee in e.items()}
     elif isinstance(e, (int, str, float)):
+        return e
+    elif type(e).__module__ == np.__name__:
         return e
     elif e is None:
         return None
@@ -58,6 +68,9 @@ def clone_or_copy(e):
 
 
 def clone_batch(batch):
+    """This function clones batches (eg. from torch_geometric) and
+    also takes into account manually assinged properties. This is needed
+    when using torch_geometric with torch.multiprocessing"""
     batch_cloned = torch_geometric.data.Batch().from_dict(
         {k: clone_or_copy(v) for k, v in batch.to_dict().items()}
     )

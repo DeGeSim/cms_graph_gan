@@ -11,11 +11,11 @@ from .utils.cli import args
 
 # Add a custum resolver to OmegaConf allowing for divisions
 # Give int back if you can:
-def divide(a, b):
-    if a // b == a / b:
-        return a // b
+def divide(numerator, denominator):
+    if numerator // denominator == numerator / denominator:
+        return numerator // denominator
     else:
-        return a / b
+        return numerator / denominator
 
 
 OmegaConf.register_new_resolver("div", divide, replace=True)
@@ -61,9 +61,8 @@ hyperparameters = OmegaConf.masked_copy(
 OmegaConf.resolve(hyperparameters)
 
 # Compute the hash
-conf_hash = str(hashlib.sha1(str(hyperparameters).encode()).hexdigest()[:7])
-conf["hash"] = conf_hash
-hyperparameters["hash"] = conf_hash
+conf["hash"] = str(hashlib.sha1(str(hyperparameters).encode()).hexdigest()[:7])
+hyperparameters["hash"] = conf["hash"]
 
 os.makedirs(conf.path.run_path, exist_ok=True)
 

@@ -35,11 +35,17 @@ def get_experiment():
  -- if unsuccessfull -- generates a new one."""
     comet_conf = OmegaConf.load("fgsim/comet.yaml")
     api = comet_ml.API(comet_conf.api_key)
+    project_name = (
+        conf.comet_project_name
+        if "comet_project_name" in conf
+        else comet_conf.project_name
+    )
 
     experiments = [
         exp
         for exp in api.get(
-            workspace=comet_conf.workspace, project_name=comet_conf.project_name
+            workspace=comet_conf.workspace,
+            project_name=project_name,
         )
         if exp.get_parameters_summary("hash") != []
     ]
@@ -54,7 +60,7 @@ def get_experiment():
             raise ValueError("Experiment does not exist in comet.ml!")
         logger.warning("Creating new experiment.")
         new_api_exp = api._create_experiment(
-            workspace=comet_conf.workspace, project_name=comet_conf.project_name
+            workspace=comet_conf.workspace, project_name=project_name
         )
         exp_key = new_api_exp.id
     elif len(qres) == 1:

@@ -32,7 +32,7 @@ if not os.path.isfile(conf.path.ds_lenghts):
     len_dict = {}
     for fn in files:
         with uproot.open(fn) as rfile:
-            len_dict[fn] = rfile[conf.loader.rootprefix][conf.yvar].num_entries
+            len_dict[fn] = rfile[conf.loader.rootprefix].num_entries
     with open(conf.path.ds_lenghts, "w") as f:
         yaml.dump(len_dict, f, Dumper=yaml.SafeDumper)
 else:
@@ -60,7 +60,6 @@ def read_chunk(chunks: List[Tuple[str, int, int]]) -> ak.highlevel.Array:
     output = ak.concatenate(chunks_list)
 
     # remove the double gen energy
-    output["gen_energy"] = output["gen_energy"][:, 0]
     return output
 
 

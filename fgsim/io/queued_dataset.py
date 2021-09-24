@@ -96,8 +96,8 @@ must queue an epoch via `queue_epoch()` and iterate over the instance of the cla
         # Check that there is a reasonable amount of data
         assert (
             len(self.validation_chunks) + len(self.testing_chunks)
-            > len(self.training_chunks) / 2
-        )
+            < len(self.training_chunks) / 2
+        ), "Dataset to small"
 
         # Assign the sequence with the specifice steps needed to process the dataset.
         self.qfseq = qf.Sequence(*process_seq())

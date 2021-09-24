@@ -43,7 +43,7 @@ def prediction_procedure():
         with torch.no_grad():
             prediction = torch.squeeze(train_state.holder.model(batch).T)
             yhat = prediction.to("cpu").numpy()
-            y = batch[conf.yvar].to("cpu").numpy()
+            y = batch.y.to("cpu").numpy()
 
         yhats.append(yhat)
         ys.append(y)
