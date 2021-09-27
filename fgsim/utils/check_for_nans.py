@@ -3,9 +3,13 @@ import torch
 from .logger import logger
 
 
+def is_anormal_tensor(inp: torch.Tensor) -> bool:
+    return bool(torch.any(torch.isinf(inp)) or torch.any(torch.isinf(inp)))
+
+
 def contains_nans(inp, string=""):
     if isinstance(inp, torch.Tensor):
-        res = torch.any(torch.isnan(inp))
+        res = is_anormal_tensor(inp)
         return (res, string)
     elif hasattr(inp, "state_dict"):
         return contains_nans(inp.state_dict())

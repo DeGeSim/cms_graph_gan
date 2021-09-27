@@ -5,7 +5,7 @@ from tqdm import tqdm
 
 from fgsim.config import conf, device
 from fgsim.utils.batch_utils import move_batch_to_device
-from fgsim.utils.check_for_nans import check_chain_for_nans
+from fgsim.utils.check_for_nans import check_chain_for_nans, is_anormal_tensor
 from fgsim.utils.logger import logger
 
 from .train_state import TrainState
@@ -22,6 +22,8 @@ def validate(train_state: TrainState) -> None:
         with torch.no_grad():
             prediction = torch.squeeze(train_state.holder.model(batch_gpu).T)
             loss = train_state.holder.lossf(y=batch_gpu.y, yhat=prediction)
+        if is_anormal_tensor(loss):
+            raise ValueError
         losses.append(loss)
         del batch_gpu
 
