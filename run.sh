@@ -24,7 +24,7 @@ for line in ${lines[@]}; do
     if [[ $REMOTE == 'true' ]]; then
         sbatch \
         --partition=allgpu,cms-desy \
-        --time=24:00:00 \
+        --time=78:00:00 \
         --mail-type=ALL \
         --nodes=1 \
         --constraint="P100" \
