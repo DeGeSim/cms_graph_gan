@@ -16,8 +16,7 @@ from torch_geometric.data import Data as GraphType
 
 from fgsim.config import conf
 from fgsim.geo.detid_to_graph import event_to_graph
-
-from . import qf
+from fgsim.io import qf
 
 # Load files
 ds_path = Path(conf.path.dataset)
@@ -68,8 +67,18 @@ def geo_batch(list_of_graphs: List[GraphType]) -> GraphType:
     return batch
 
 
-def magic_do_nothing(elem: GraphType) -> GraphType:
-    return elem
+ToSparseTranformer = torch_geometric.transforms.ToSparseTensor(
+    remove_edge_index=True, fill_cache=True
+)
+
+
+def add_sparse_adj_mtx(batch: GraphType) -> GraphType:
+    batch = ToSparseTranformer(batch)
+    return batch
+
+
+def magic_do_nothing(batch: GraphType) -> GraphType:
+    return batch
 
 
 # Collect the steps
@@ -93,6 +102,7 @@ def process_seq():
         #     conf.loader.num_workers_stack,
         #     name="split_layer_subgraphs",
         # ),
+        qf.ProcessStep(add_sparse_adj_mtx, 1, name="add_sparse_adj_mtx"),
         # Needed for outputs to stay in order.
         qf.ProcessStep(
             magic_do_nothing,

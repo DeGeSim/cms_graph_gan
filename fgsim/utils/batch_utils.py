@@ -3,6 +3,7 @@ from typing import Dict
 import numpy as np
 import torch
 import torch_geometric
+import torch_sparse
 
 from fgsim.config import device
 from fgsim.utils.typecheck import istype
@@ -14,6 +15,8 @@ def move_batch_to_device(batch, device):
 
     def move(element):
         if torch.is_tensor(element):
+            return element.to(device)
+        if isinstance(element, torch_sparse.SparseTensor):
             return element.to(device)
         elif isinstance(element, (list, set, tuple)):
             return type(element)((move(ee) for ee in element))
@@ -50,18 +53,20 @@ def move_batch_to_device(batch, device):
     return batch_new
 
 
-def clone_or_copy(e):
-    if torch.is_tensor(e):
-        return e.clone()
-    elif isinstance(e, (list, set, tuple)):
-        return type(e)((clone_or_copy(ee) for ee in e))
-    elif isinstance(e, dict):
-        return {k: clone_or_copy(ee) for k, ee in e.items()}
-    elif isinstance(e, (int, str, float)):
-        return e
-    elif type(e).__module__ == np.__name__:
-        return e
-    elif e is None:
+def clone_or_copy(element):
+    if torch.is_tensor(element):
+        return element.clone()
+    if isinstance(element, torch_sparse.SparseTensor):
+        return element.clone()
+    elif isinstance(element, (list, set, tuple)):
+        return type(element)((clone_or_copy(ee) for ee in element))
+    elif isinstance(element, dict):
+        return {k: clone_or_copy(ee) for k, ee in element.items()}
+    elif isinstance(element, (int, str, float)):
+        return element
+    elif type(element).__module__ == np.__name__:
+        return element
+    elif element is None:
         return None
     else:
         raise ValueError

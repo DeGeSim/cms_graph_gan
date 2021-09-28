@@ -1,3 +1,5 @@
+"""Message pass model"""
+
 import torch
 from torch import nn
 from torch_geometric.nn import GINConv, global_add_pool
@@ -52,17 +54,18 @@ class ModelClass(torch.nn.Module):
 
     def forward(self, batch):
         def addstatic(
-            x, mask=torch.ones(len(batch.x), dtype=torch.bool, device=device)
+            feature_mtx,
+            mask=torch.ones(len(batch.x), dtype=torch.bool, device=device),
         ):
             return torch.hstack(
                 (
-                    x[mask],
+                    feature_mtx[mask],
                     batch.feature_mtx_static[mask],
                     batch.hlvs[batch.batch[mask]],
                 )
             )
 
-        x = torch.hstack(
+        feature_mtx = torch.hstack(
             (
                 batch.x,
                 torch.zeros(
@@ -72,11 +75,13 @@ class ModelClass(torch.nn.Module):
         )
 
         for _ in range(conf.model.nprop):
-            x = self.conv(addstatic(x), batch.edge_index)
-            x = self.node_dnn(addstatic(x))
+            feature_mtx = self.conv(addstatic(feature_mtx), batch.adj_t)
+            feature_mtx = self.node_dnn(addstatic(feature_mtx))
             cuda_clear()
 
-        x = global_add_pool(x, batch.batch, size=batch.num_graphs)
+        feature_mtx = global_add_pool(
+            feature_mtx, batch.batch, size=batch.num_graphs
+        )
 
-        x = self.hlv_dnn(torch.hstack((batch.hlvs, x)))
-        return x
+        feature_mtx = self.hlv_dnn(torch.hstack((batch.hlvs, feature_mtx)))
+        return feature_mtx

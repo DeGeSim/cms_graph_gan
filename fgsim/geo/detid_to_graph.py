@@ -5,6 +5,7 @@ Conversion from list of hit to graph
 # import sys
 
 from os.path import isfile, splitext
+from typing import Dict
 
 import awkward as ak
 import numpy as np
@@ -31,21 +32,12 @@ geo_lup = pd.read_pickle(pickle_lup_path)
 
 
 def event_to_graph(event: ak.highlevel.Record) -> GraphType:
-    # yappi.start()
-
-    # plt.close()
-    # plt.cla()
-    # plt.clf()
-    # event_hitenergies = ak.to_numpy(event.rechit_energy)
-    # event_hitenergies = event_hitenergies[event_hitenergies < 0.04]
-    # plt.hist(event_hitenergies, bins=100)
-    # plt.savefig("hist.png")
-    # print("foo")
     key_id = conf.loader.braches.id
     key_hit_energy = conf.loader.braches.hit_energy
 
     # Sum up the sim  hits
-    id_to_energy_dict = {}
+    id_to_energy_dict: Dict[int, float] = {}
+
     for hit_energy, detid in zip(event[key_hit_energy], event[key_id]):
         # TODO fix the detids
         if detid not in geo_lup.index:
@@ -94,9 +86,9 @@ def event_to_graph(event: ak.highlevel.Record) -> GraphType:
     static_feature_matrix = geo_lup_filtered[conf.loader.cell_prop_keys].values
 
     # check for NaNs of the detid is not present in the geolut
-    df = geo_lup_filtered[conf.loader.cell_prop_keys]
+    props_df = geo_lup_filtered[conf.loader.cell_prop_keys]
     # problemid= df[df.isnull().any(axis =1)].index[0] # 2160231891
-    invalids = df[df.isnull().any(axis=1)].index
+    invalids = props_df[props_df.isnull().any(axis=1)].index
     if len(invalids) != 0:
         logger.error(f"No match in geo lut for detids {invalids}.")
         raise ValueError
@@ -136,7 +128,7 @@ def event_to_graph(event: ak.highlevel.Record) -> GraphType:
         [hit_energies[detid_lut[detid]] for detid in detid_isolated]
     )
     hlvs["isolated_E_fraction"] = hlvs["isolated_energy"] / hlvs["sum_energy"]
-    for ivar, var in enumerate(["x", "y", "z"]):
+    for var in ["x", "y", "z"]:
         var_weighted = static_feature_matrix[:, 1] * hit_energies
         mean = np.mean(var_weighted)
         hlvs[var + "_mean"] = mean
