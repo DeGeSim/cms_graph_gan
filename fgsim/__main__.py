@@ -66,18 +66,18 @@ def main():
 
         prediction_procedure()
 
-    if conf["command"] == "profile":
-        from .ml.profile import profile_procedure
+    if conf["command"] == "preprocess":
+        from .utils.preprocess import preprocess_procedure
 
-        profile_procedure()
+        preprocess_procedure()
 
     if conf["command"] == "loadfile":
-        fn = str(conf.file_to_load)
+        file_name = str(conf.file_to_load)
         import re
 
-        fn = re.sub(".*fgsim/(.*?).py", ".\\1", fn)
-        fn = re.sub("/", ".", fn)
-        importlib.import_module(fn, "fgsim")
+        file_name = re.sub(".*fgsim/(.*?).py", ".\\1", file_name)
+        file_name = re.sub("/", ".", file_name)
+        importlib.import_module(file_name, "fgsim")
 
     if conf["command"] == "dump":
         from .utils import dump_training

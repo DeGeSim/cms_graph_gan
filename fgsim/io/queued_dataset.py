@@ -5,6 +5,7 @@ loaded depending on `conf.loader.name`.
 
 import importlib
 import os
+from pathlib import Path
 
 import numpy as np
 import torch
@@ -12,11 +13,12 @@ import torch
 from fgsim.config import conf
 from fgsim.geo.batchtype import DataSetType
 from fgsim.io import qf
+from fgsim.io.preprocessed_seq import preprocessed_seq
 from fgsim.io.qf.sequence import Sequence as qfseq
 from fgsim.utils.logger import logger
 
 # Import the specified processing sequence
-sel_seq = importlib.import_module(f"fgsim.io.{conf.loader.name}", "fgsim.models")
+sel_seq = importlib.import_module(f"fgsim.io.{conf.loader.qf_seq_name}")
 
 process_seq = sel_seq.process_seq
 files = sel_seq.files
@@ -77,12 +79,12 @@ must queue an epoch via `queue_epoch()` and iterate over the instance of the cla
         n_validation_chunks = conf.loader.validation_set_size // chunksize
 
         assert conf.loader.test_set_size % chunksize == 0
-        n_test_batches = conf.loader.test_set_size // batch_size
+        self.n_test_batches = conf.loader.test_set_size // batch_size
         n_testing_chunks = conf.loader.test_set_size // chunksize
 
         logger.info(
             f"Using the first {n_validation_batches} batches for "
-            + f"validation and the next {n_test_batches} batches for testing."
+            + f"validation and the next {self.n_test_batches} batches for testing."
         )
 
         self.validation_chunks = chunk_coords[:n_validation_chunks]
@@ -102,25 +104,28 @@ must queue an epoch via `queue_epoch()` and iterate over the instance of the cla
         # Assign the sequence with the specifice steps needed to process the dataset.
         self.qfseq = qf.Sequence(*process_seq())
 
-        if not os.path.isfile(conf.path.validation):
-            logger.warning(
-                f"""\
-Processing validation batches, queuing {len(self.validation_chunks)} chunks."""
-            )
-            self.qfseq.queue_iterable(self.validation_chunks)
-            self._validation_batches = [batch for batch in self.qfseq]
-            torch.save(self._validation_batches, conf.path.validation)
-            logger.warning("Validation batches pickled.")
+        if conf.loader.preprocess_training:
+            self.preprocessed_files = [
+                str(e)
+                for e in sorted(
+                    Path(conf.path.training).glob(conf.path.training_glob)
+                )
+            ]
 
-        if not os.path.isfile(conf.path.test):
-            logger.warning(
-                f"""\
-Processing testing batches, queuing {len(self.validation_chunks)} chunks."""
-            )
-            self.qfseq.queue_iterable(self.testing_chunks)
-            self._testing_batches = [batch for batch in self.qfseq]
-            torch.save(self._testing_batches, conf.path.test)
-            logger.warning("Testing batches pickled.")
+        if conf.command != "preprocess":
+            if (
+                not os.path.isfile(conf.path.validation)
+                or not os.path.isfile(conf.path.test)
+                or (
+                    conf.loader.preprocess_training
+                    and (len(self.preprocessed_files) == 0)
+                )
+            ):
+                raise FileNotFoundError
+
+            # Override the qf seq if there is a preprocessed dataset available:
+
+            self.qfseq = qf.Sequence(*preprocessed_seq())
 
     @property
     def validation_batches(self) -> DataSetType:
@@ -145,26 +150,72 @@ Processing testing batches, queuing {len(self.validation_chunks)} chunks."""
         return self._testing_batches
 
     def queue_epoch(self, n_skip_events=0) -> None:
-        n_skip_chunks = n_skip_events // conf.loader.chunksize
-        # Cycle Epochs
-        n_skip_chunks = n_skip_chunks % len(self.training_chunks)
 
-        n_skip_batches = (
-            n_skip_events % conf.loader.chunksize
-        ) // conf.loader.batch_size
+        n_skip_epochs = n_skip_events // (
+            conf.loader.chunksize * len(self.training_chunks)
+        )
 
-        if n_skip_events != 0:
+        # Compute the batches on the fly
+        if not conf.loader.preprocess_training or conf.command == "preprocess":
+            # Repeat the shuffeling to get the same list
+            for _ in range(n_skip_epochs):
+                np.random.shuffle(self.training_chunks)
+
+            # Cycle Epochs
+            n_skip_chunks = (n_skip_events // conf.loader.chunksize) % len(
+                self.training_chunks
+            )
+            # Only queue to the chucks that are still left
+            epoch_chunks = self.training_chunks[n_skip_chunks:]
+            self.qfseq.queue_iterable(epoch_chunks)
+
+            # No calculate the number of batches that we still have to skip,
+            # because a chunk may be multiple batches and we need to skip
+            # the ones that are alread processed
+            n_skip_batches = (
+                n_skip_events % conf.loader.chunksize
+            ) // conf.loader.batch_size
+
             logger.info(
                 f"""\
 Skipping {n_skip_events} events => {n_skip_chunks} chunks and {n_skip_batches} batches."""
             )
-        epoch_chunks = self.training_chunks[n_skip_chunks:]
-        self.qfseq.queue_iterable(epoch_chunks)
+            if n_skip_batches != 0:
+                for _ in range(n_skip_batches):
+                    _ = next(self.qfseq)
+                logger.info(f"Skipped {n_skip_batches} batches.")
+            np.random.shuffle(self.training_chunks)
 
-        if n_skip_batches != 0:
-            for _ in range(n_skip_batches):
-                _ = next(self.qfseq)
-            logger.info(f"Skipped {n_skip_batches} batches.")
+        # Load the preprocessed batches
+        else:
+            # Repeat the shuffeling to get the same list
+            for _ in range(n_skip_epochs):
+                np.random.shuffle(self.preprocessed_files)
+
+            # Calculate the number of files that have already been processed
+            # one file contains self.n_test_batches batches
+            n_skip_files = (
+                (n_skip_events // conf.loader.batch_size)  # n batches
+                // self.n_test_batches  # by the number of batches per file
+                % len(self.preprocessed_files)  # modulo the files per epoch
+            )
+            epoch_files = self.preprocessed_files[n_skip_files:]
+            self.qfseq.queue_iterable(epoch_files)
+
+            # No calculate the number of batches that we still have to skip
+            n_skip_batches = (
+                (n_skip_events // conf.loader.batch_size)  # n batches
+            ) % self.n_test_batches  # modulo the batches in a file
+
+            logger.info(
+                f"""\
+    Skipping {n_skip_events} events => {n_skip_files} files and {n_skip_batches} batches."""
+            )
+            if n_skip_batches != 0:
+                for _ in range(n_skip_batches):
+                    _ = next(self.qfseq)
+                logger.info(f"Skipped {n_skip_batches} batches.")
+            np.random.shuffle(self.preprocessed_files)
 
     def __iter__(self) -> qfseq:
         return iter(self.qfseq)

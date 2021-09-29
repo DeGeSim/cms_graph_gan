@@ -14,8 +14,8 @@ parser.add_argument(
 subparsers = parser.add_subparsers(help="Available Commands", dest="command")
 
 train_parser = subparsers.add_parser("train")
-predict_parser = subparsers.add_parser("profile")
 predict_parser = subparsers.add_parser("predict")
+preprocess_parser = subparsers.add_parser("preprocess")
 dump_parser = subparsers.add_parser("dump")
 loadfile_parser = subparsers.add_parser("loadfile")
 loadfile_parser.add_argument(

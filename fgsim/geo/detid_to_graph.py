@@ -2,9 +2,7 @@
 Conversion from list of hit to graph
 """
 
-# import sys
-
-from os.path import isfile, splitext
+from pathlib import Path
 from typing import Dict
 
 import awkward as ak
@@ -20,8 +18,8 @@ from torch_geometric.data import Data as GraphType
 from fgsim.config import conf
 from fgsim.utils.logger import logger
 
-pickle_lup_path = splitext("conf.path.geo_lup")[0] + ".pd"
-if not isfile(pickle_lup_path):
+pickle_lup_path = Path(conf.path.geo_lup).with_suffix(".pd")
+if not pickle_lup_path.is_file():
     with uproot.open(conf.path.geo_lup) as rf:
         geo_lup = rf["analyzer/tree;1"].arrays(library="ak")
     geo_lup = ak.to_pandas(geo_lup)

@@ -1,63 +1,104 @@
 tag: default
 loglevel: 1
 path:
-  dataset: 'data/clic'
-  ds_lenghts: '${path.dataset}/filelengths.yaml'
-  validation: 'data/clic_valtest/validation.torch'
-  test: 'data/clic_valtest/test.torch'
-  run_path: 'wd/${tag}/${hash}'
-  comet_exp_key: "${path.run_path}/comet_experiment_key"
-  log: "${path.run_path}/log"
-  train_config: "${path.run_path}/resulting_train_config.yaml"
-  full_config: "${path.run_path}/full_config.yaml"
-  tensorboard: "${path.run_path}/tb"
-  checkpoint: "${path.run_path}/checkpoint.torch"
-  checkpoint_old: "${path.run_path}/checkpoint_old.torch"
-  predict_csv: "${path.run_path}/prediction.csv"
-  complete_state: "${path.run_path}/complete.yaml"
+    dataset: "data/hgcal_william"
+    dataset_glob: "**/*.root"
+    dataset_processed: "${path.dataset}/processed"
+    ds_lenghts: "${path.dataset_processed}/filelengths.yaml"
+    validation: "${path.dataset_processed}/validation.pt"
+    test: "${path.dataset_processed}/test.pt"
+    training: "${path.dataset_processed}/training"
+    training_glob: "*.pt"
+    geo_lup: "data/hgcal/DetIdLUT_full.root"
+    run_path: "wd/${tag}/${hash}"
+    train_config: "${path.run_path}/resulting_train_config.yaml"
+    full_config: "${path.run_path}/full_config.yaml"
+    tensorboard: "${path.run_path}/tb"
+    checkpoint: "${path.run_path}/checkpoint.torch"
+    checkpoint_old: "${path.run_path}/checkpoint_old.torch"
+    predict_csv: "${path.run_path}/prediction.csv"
+    complete_state: "${path.run_path}/complete.yaml"
+    comet_exp_key: "${path.run_path}/comet_experiment_key"
+    log: "${path.run_path}/log"
 seed: 0
-loader:
-  keylist: [
-    "energy",
-    "ECAL",
-    "ECAL_E",
-    "HCAL",
-    "HCAL_E",
-    "recoEta",
-    "recoPhi",
-    "recoTheta",
-  ]
-  chunksize: 100
-  prefetch_batches: 2
-  batch_size : 100
-  num_workers_transform: 20
-  num_workers_stack: 10
-  validation_set_size: 5000
-  test_set_size: 30000
-  transform_workers: 15
-nlayers: 25
+loader: ${loader_options[${loader_name}]}
 model:
-  name: "default"
-  dyn_features: 10
-  static_features: 3
-  deeplayer_nodes: 50
-  nprop: 20
+    name: "default"
+    dyn_features: 10
+    static_features: 3
+    deeplayer_nodes: 50
+    nprop: 20
 training:
-  events_processed_before_validation: 100000
-  validation_interval: '${div:${training.events_processed_before_validation},${loader.batch_size}}'
-  early_stopping:
-    validation_steps: 40
-    improvement: 0.02
-yvar : "energy"
+    events_processed_before_validation: 100000
+    validation_interval: "${div:${training.events_processed_before_validation},${loader.batch_size}}"
+    early_stopping:
+        validation_steps: 40
+        improvement: 0.02
+yvar: "energy"
 loss:
-  name: L1Loss
+    name: L1Loss
 optimizer:
-  name: Adam
-  parameters: ${loss_params[${optimizer.name}]}
+    name: Adam
+    parameters: ${loss_options[${optimizer.name}]}
 
-loss_params:
-  Adam:
-    weight_decay: 0.0001
-    lr : 0.0002
-  SGD:
-    lr : 0.0002
+loss_options:
+    Adam:
+        weight_decay: 0.0001
+        lr: 0.0002
+    SGD:
+        lr: 0.0002
+
+loader_options:
+    clic:
+        qf_seq_name: "clic_seq"
+        keylist:
+            [
+                "energy",
+                "ECAL",
+                "ECAL_E",
+                "HCAL",
+                "HCAL_E",
+                "recoEta",
+                "recoPhi",
+                "recoTheta",
+            ]
+        chunksize: 100
+        batch_size: 100
+        validation_set_size: 5000
+        test_set_size: 30000
+        prefetch_batches: 2
+        num_workers_transform: 30
+        num_workers_stack: 2
+    hgcal:
+        qf_seq_name: "hgcal_seq"
+        rootprefix: "treeMaker/tree"
+        preprocess_training: True
+        keylist: ["genPh_E", "simHit_detid", "simHit_E"]
+        hlvs:
+            [
+                "sum_energy",
+                "num_isolated",
+                "isolated_energy",
+                "isolated_E_fraction",
+                "x_mean",
+                "x_std",
+                "x_mom3",
+                "y_mean",
+                "y_std",
+                "y_mom3",
+                "z_mean",
+                "z_std",
+                "z_mom3",
+            ]
+        cell_prop_keys: ["x", "y", "z", "celltype", "issilicon"]
+        braches:
+            id: "simHit_detid"
+            energy: "genPh_E"
+            hit_energy: "simHit_E"
+        chunksize: 100
+        batch_size: 100
+        validation_set_size: 5000
+        test_set_size: 30000
+        prefetch_batches: 2
+        num_workers_transform: 30
+        num_workers_stack: 2

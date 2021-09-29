@@ -55,20 +55,19 @@
 				"args": [
 					"--tag",
 					"hgcal",
-					"--debug",
+					// "--debug",
 					"train",
 				]
 			},
 			{
-				"name": "t cnn",
+				"name": "preprocess hgcal",
 				"type": "python",
 				"request": "launch",
 				"module": "fgsim",
 				"args": [
 					"--tag",
-					"cnn",
-					// "--debug",
-					"train",
+					"hgcal",
+					"preprocess",
 				]
 			},
 			{
