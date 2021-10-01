@@ -53,13 +53,13 @@ class StepBase:
 
     def _clone_tensors(self, wkin):
         if isinstance(wkin, list):
-            wkin = [self._clone_tensors(e) for e in wkin]
+            return [self._clone_tensors(e) for e in wkin]
         elif isinstance(wkin, GeneratorType):
             return (self._clone_tensors(e) for e in wkin)
         elif isinstance(wkin, torch_geometric.data.batch.Data):
             return clone_batch(wkin)
         elif isinstance(wkin, torch.Tensor):
-            wkin = wkin.clone()
+            return wkin.clone()
         return wkin
 
     def set_workername(self):
@@ -84,6 +84,7 @@ Had to kill process of name {self.name}."""
                 p.join(0)
 
     def safe_put(self, queue, element):
+        # element = self._clone_tensors(element)
         while not self.shutdown_event.is_set():
             try:
                 queue.put(element, True, 1)

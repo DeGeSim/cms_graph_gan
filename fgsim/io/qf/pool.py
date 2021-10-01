@@ -50,13 +50,14 @@ class PoolStep(StepBase):
     def _worker(self):
         self.set_workername()
         logger.debug(
-            f"{self.workername} pool  initalizing with {self.n_pool_workers} subprocesses"
+            f"{self.workername} pool  initalizing with"
+            f" {self.n_pool_workers} subprocesses"
         )
         self.pool = mp.Pool(self.n_pool_workers)
 
         while not self.shutdown_event.is_set():
             try:
-                wkin = self.inq.get(block=True, timeout=0.005)
+                wkin = self.inq.get(block=True, timeout=0.05)
             except Empty:
                 continue
             logger.debug(

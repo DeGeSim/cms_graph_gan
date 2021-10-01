@@ -54,7 +54,7 @@ class ProcessStep(StepBase):
         )
         while not self.shutdown_event.is_set():
             try:
-                wkin = self.inq.get(block=True, timeout=0.005)
+                wkin = self.inq.get(block=True, timeout=0.05)
             except Empty:
                 continue
             logger.debug(

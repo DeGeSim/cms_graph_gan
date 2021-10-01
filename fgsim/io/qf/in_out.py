@@ -10,7 +10,7 @@ from .terminate_queue import TerminateQueue
 
 class InOutStep:
     def __init__(self):
-        pass
+        self.shutdown_event = NotImplemented
 
     def safe_put(self, queue, element):
         while not self.shutdown_event.is_set():
@@ -56,7 +56,7 @@ class OutputStep(InOutStep):
     def __next__(self):
         while not self.shutdown_event.is_set():
             try:
-                out = self.inq.get(block=True, timeout=0.005)
+                out = self.inq.get(block=True, timeout=0.05)
                 if isinstance(out, TerminateQueue):
                     logger.debug("OutputStep got terminal element.")
                     break
