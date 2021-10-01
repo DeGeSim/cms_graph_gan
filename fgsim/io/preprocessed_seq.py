@@ -18,16 +18,16 @@ dataset_path = Path(conf.path.training)
 dataset_path.mkdir(parents=True, exist_ok=True)
 
 # reading from the filesystem
-def read_file(file: Path) -> GraphType:
+def read_file(file: Path) -> List[GraphType]:
     batch_list: List[GraphType] = torch.load(file)
     return batch_list
 
 
 # Collect the steps
 def preprocessed_seq():
-
     return (
-        qf.ProcessStep(read_file, 2, name="read_chunk"),
+        qf.ProcessStep(read_file, 1, name="read_chunk"),
+        Queue(1),
         qf.pack.UnpackStep(),
         Queue(conf.loader.prefetch_batches),
     )

@@ -105,12 +105,9 @@ must queue an epoch via `queue_epoch()` and iterate over the instance of the cla
         self.qfseq = qf.Sequence(*process_seq())
 
         if conf.loader.preprocess_training:
-            self.preprocessed_files = [
-                str(e)
-                for e in sorted(
-                    Path(conf.path.training).glob(conf.path.training_glob)
-                )
-            ]
+            self.preprocessed_files = list(
+                sorted(Path(conf.path.training).glob(conf.path.training_glob))
+            )
 
         if conf.command != "preprocess":
             if (

@@ -2,6 +2,7 @@
 
 import torch
 from torch import nn
+from torch_geometric.data import Data as GraphType
 from torch_geometric.nn import GINConv, global_add_pool
 
 from fgsim.config import conf, device
@@ -52,7 +53,7 @@ class ModelClass(torch.nn.Module):
         self.node_dnn = get_node_dnn()
         self.hlv_dnn = get_hlv_dnn()
 
-    def forward(self, batch):
+    def forward(self, batch: GraphType):
         def addstatic(
             feature_mtx,
             mask=torch.ones(len(batch.x), dtype=torch.bool, device=device),
