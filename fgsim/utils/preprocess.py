@@ -39,14 +39,12 @@ Processing testing batches, queuing {len(data_loader.testing_chunks)} chunks."""
         ifile = 0
         for batch in tqdm(data_loader.qfseq):
             output_file = f"{conf.path.training}/{ifile:03d}.pt"
-
+            batch_list.append(batch)
             if len(batch_list) == data_loader.n_test_batches:
                 logger.info(f"Saving {output_file}")
                 torch.save(batch_list, f"{output_file}")
                 ifile += 1
                 batch_list = []
-            batch_list.append(batch)
-        logger.info(f"Saving {output_file}")
-        torch.save(batch_list, f"{output_file}")
+        # Drop the last uneven set of batches
     data_loader.qfseq.stop()
     exit(0)
