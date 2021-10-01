@@ -38,9 +38,15 @@ Processing testing batches, queuing {len(data_loader.testing_chunks)} chunks."""
         batch_list: List[GraphType] = []
         ifile = 0
         for batch in tqdm(data_loader.qfseq):
+            output_file = f"{conf.path.training}/{ifile:03d}.pt"
+
             if len(batch_list) == data_loader.n_test_batches:
-                torch.save(testing_batches, f"{conf.path.training}/{ifile}.pt")
+                logger.info(f"Saving {output_file}")
+                torch.save(batch_list, f"{output_file}")
                 ifile += 1
                 batch_list = []
             batch_list.append(batch)
-        torch.save(testing_batches, f"{conf.path.training}/{ifile}.pt")
+        logger.info(f"Saving {output_file}")
+        torch.save(batch_list, f"{output_file}")
+    data_loader.qfseq.stop()
+    exit(0)

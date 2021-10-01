@@ -85,23 +85,13 @@ def magic_do_nothing(batch: GraphType) -> GraphType:
 def process_seq():
     return (
         qf.ProcessStep(read_chunk, 2, name="read_chunk"),
-        # Queue(1),
-        # # In the input is now [(x,y), ... (x [300 * 51 * 51 * 25], y [300,1] ), (x,y)]
-        # # For these elements to be processed by each of the workers in the following
-        # # transformthey need to be (x [51 * 51 * 25], y [1] ):
         qf.PoolStep(
             event_to_graph,
             nworkers=conf.loader.num_workers_transform,
             name="transform",
         ),
-        # Queue(1),
-        # qf.RepackStep(conf.loader.batch_size),
+        qf.RepackStep(conf.loader.batch_size),
         qf.ProcessStep(geo_batch, 1, name="geo_batch"),
-        # qf.ProcessStep(
-        #     split_layer_subgraphs,
-        #     conf.loader.num_workers_stack,
-        #     name="split_layer_subgraphs",
-        # ),
         qf.ProcessStep(add_sparse_adj_mtx, 1, name="add_sparse_adj_mtx"),
         # Needed for outputs to stay in order.
         qf.ProcessStep(

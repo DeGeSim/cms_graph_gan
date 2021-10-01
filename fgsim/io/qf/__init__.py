@@ -23,8 +23,8 @@ pickling_support.install()
 
 
 # Make it work ()
-# mp.set_sharing_strategy("file_descriptor")
-mp.set_sharing_strategy("file_system")
+mp.set_sharing_strategy("file_descriptor")
+# mp.set_sharing_strategy("file_system")
 
 # Reworked according to the recommendations in
 # https://pytorch.org/docs/stable/multiprocessing.html
