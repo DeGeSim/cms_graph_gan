@@ -27,7 +27,6 @@ def read_file(file: Path) -> List[GraphType]:
 def preprocessed_seq():
     return (
         qf.ProcessStep(read_file, 1, name="read_chunk"),
-        Queue(1),
         qf.pack.UnpackStep(),
         Queue(conf.loader.prefetch_batches),
     )
