@@ -48,14 +48,13 @@
 		"version": "0.2.0",
 		"configurations": [
 			{
-				"name": "t sparse",
+				"name": "t dnn",
 				"type": "python",
 				"request": "launch",
 				"module": "fgsim",
 				"args": [
 					"--tag",
-					"sparse",
-					// "--debug",
+					"dnn",
 					"train",
 				]
 			},

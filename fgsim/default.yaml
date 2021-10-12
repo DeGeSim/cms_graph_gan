@@ -9,7 +9,7 @@ path:
     test: "${path.dataset_processed}/test.pt"
     training: "${path.dataset_processed}/training"
     training_glob: "*.pt"
-    geo_lup: "data/geo_hgcal/DetIdLUT_full.root"
+    geo_lup: "data/geo_hgcal/DetIdLUT.root"
     run_path: "wd/${tag}/${hash}"
     train_config: "${path.run_path}/resulting_train_config.yaml"
     full_config: "${path.run_path}/full_config.yaml"
