@@ -220,7 +220,7 @@ Skipping {n_skip_events} events => {n_skip_chunks} chunks and {n_skip_batches} b
             for ibatch in range(n_skip_batches):
                 logger.info(f"Skipping batch({ibatch}).")
                 _ = next(self.qfseq)
-                logger.info(f"Skipped batch({ibatch}).")
+                logger.debug(f"Skipped batch({ibatch}).")
 
     def __iter__(self) -> qfseq:
         return iter(self.qfseq)
