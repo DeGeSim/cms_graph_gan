@@ -126,6 +126,6 @@ def hitlist_to_pc(event: ak.highlevel.Record) -> torch.Tensor:
     pc = pc.float()
 
     padded_pc = torch.nn.functional.pad(
-        pc, (2000 - pc.shape[1], 0), mode="constant", value=0
+        pc, (0, 0, 0, 2000 - pc.shape[0]), mode="constant", value=0
     )
     return padded_pc

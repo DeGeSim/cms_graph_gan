@@ -44,6 +44,8 @@ def move_batch_to_device(batch, device):
         ]:
             if hasattr(batch_new, attr):
                 setattr(batch_new, attr, move(getattr(batch, attr)))
+    elif istype(batch, torch.Tensor):
+        batch_new = batch.to(device)
     elif istype(batch, List[torch.Tensor]):
         batch_new = [move(v) for v in batch]
     elif istype(batch, Dict[str, torch.Tensor]):
