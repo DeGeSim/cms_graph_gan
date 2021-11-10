@@ -96,10 +96,14 @@ def setup_experiment(model_holder):
     # Format the hyperparameter for comet
     hyperparameters_keyval_list = dict(dict_to_kv(hyperparameters))
     experiment.log_parameters(hyperparameters_keyval_list)
-    for tag in set(conf.tag.split("_")) | set(conf.model.name.split("_")):
+    for tag in set(conf.tag.split("_")):
         experiment.add_tag(tag)
+
     experiment.set_model_graph(str(model_holder.model))
-    experiment.log_code(file_name=f"fgsim/models/{conf.model.name}.py")
+
+    for part_name in conf.models:
+        codepath = str(conf.models[part_name]["name"]).replace(".", "/")
+        experiment.log_code(file_name=f"fgsim/models/{codepath}.py")
 
     experiment.set_step(model_holder.state["grad_step"])
     experiment.set_epoch(model_holder.state["epoch"])

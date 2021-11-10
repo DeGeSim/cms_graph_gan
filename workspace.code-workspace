@@ -48,13 +48,14 @@
 		"version": "0.2.0",
 		"configurations": [
 			{
-				"name": "t dnn",
+				"name": "t treepc",
 				"type": "python",
 				"request": "launch",
 				"module": "fgsim",
 				"args": [
 					"--tag",
-					"dnn",
+					"treepc",
+					"--debug",
 					"train",
 				]
 			},

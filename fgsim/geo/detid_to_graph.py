@@ -2,31 +2,20 @@
 Conversion from list of hit to graph
 """
 
-from pathlib import Path
+
 from typing import Dict
 
 import awkward as ak
 import numpy as np
-import pandas as pd
 import torch
 import torch_geometric
-import uproot
 
 # import yappi
 from torch_geometric.data import Data as GraphType
 
 from fgsim.config import conf
+from fgsim.geo.geo_lup import geo_lup
 from fgsim.utils.logger import logger
-
-pickle_lup_path = Path(conf.path.geo_lup).with_suffix(".pd")
-if not pickle_lup_path.is_file():
-    with uproot.open(conf.path.geo_lup) as rf:
-        geo_lup = rf["analyzer/tree;1"].arrays(library="ak")
-    geo_lup = ak.to_pandas(geo_lup)
-    geo_lup.set_index("globalid", inplace=True)
-    geo_lup.to_pickle(pickle_lup_path)
-
-geo_lup = pd.read_pickle(pickle_lup_path)
 
 
 def event_to_graph(event: ak.highlevel.Record) -> GraphType:

@@ -4,7 +4,6 @@ loaded depending on `conf.loader.name`.
 """
 
 import importlib
-import os
 from pathlib import Path
 from typing import List, Tuple
 
@@ -76,25 +75,24 @@ must queue an epoch via `queue_epoch()` and iterate over the instance of the cla
         # Assign the sequence with the specifice steps needed to process the dataset.
         self.qfseq = qf.Sequence(*process_seq())
 
-        if conf.loader.preprocess_training:
-            self.preprocessed_files = list(
-                sorted(Path(conf.path.training).glob(conf.path.training_glob))
-            )
-
         if conf.command != "preprocess":
-            if (
-                not os.path.isfile(conf.path.validation)
-                or not os.path.isfile(conf.path.test)
-                or (
-                    conf.loader.preprocess_training
-                    and (len(self.preprocessed_files) == 0)
+            # In all cases training and test set must be available
+            # if the current command is not  preprocessing
+            # if (
+            #     not os.path.isfile(conf.path.validation)
+            #     or not os.path.isfile(conf.path.test)
+            # ):
+            #     raise FileNotFoundError
+            if conf.loader.preprocess_training:
+                self.preprocessed_files = list(
+                    sorted(Path(conf.path.training).glob(conf.path.training_glob))
                 )
-            ):
-                raise FileNotFoundError
+                if len(self.preprocessed_files) == 0:
+                    raise FileNotFoundError
 
-            # Override the qf seq if there is a preprocessed dataset available:
-
-            self.qfseq = qf.Sequence(*preprocessed_seq())
+                # Override the qf seq if there is a preprocessed dataset available:
+                if conf.loader.preprocess_training:
+                    self.qfseq = qf.Sequence(*preprocessed_seq())
 
     def _compute_chucks(self) -> List[ChunkType]:
         chunk_coords: List[ChunkType] = [[]]

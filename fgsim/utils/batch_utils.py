@@ -1,4 +1,4 @@
-from typing import Dict
+from typing import Dict, List
 
 import numpy as np
 import torch
@@ -44,6 +44,8 @@ def move_batch_to_device(batch, device):
         ]:
             if hasattr(batch_new, attr):
                 setattr(batch_new, attr, move(getattr(batch, attr)))
+    elif istype(batch, List[torch.Tensor]):
+        batch_new = [move(v) for v in batch]
     elif istype(batch, Dict[str, torch.Tensor]):
         batch_new = {k: move(v) for k, v in batch.items()}
     else:

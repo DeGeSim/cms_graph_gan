@@ -1,9 +1,52 @@
 tag: default
 loglevel: 1
+seed: 0
+
+models:
+    gen:
+        name: gen.treepc
+        param:
+            features: [96, 64, 64, 64, 64, 64, 3]
+            degrees: [2, 2, 2, 2, 2, 64]
+            support: 10
+        loss:
+            name: L1Loss
+            param: ${loss_options[${models.gen.loss.name}]}
+        optim:
+            name: Adam
+            param: ${optim_options[${models.gen.optim.name}]}
+    disc:
+        name: disc.treepc
+        param:
+            features: [3, 64, 128, 256, 512, 1024]
+        loss:
+            name: L1Loss
+            param: ${loss_options[${models.gen.loss.name}]}
+        optim:
+            name: Adam
+            param: ${optim_options[${models.gen.optim.name}]}
+
+loss_options:
+    L1Loss:
+
+optim_options:
+    Adam:
+        weight_decay: 0.0001
+        lr: 0.0002
+    SGD:
+        lr: 0.0002
+
+training:
+    events_processed_before_validation: 100000
+    validation_interval: "${div:${training.events_processed_before_validation},${loader.batch_size}}"
+    early_stopping:
+        validation_steps: 40
+        improvement: 0.02
+
 path:
     dataset: "data/hgcal_william"
     dataset_glob: "**/*.root"
-    dataset_processed: "${path.dataset}/processed"
+    dataset_processed: "${path.dataset}/pkl_${loader_name}_${loaderhash}"
     ds_lenghts: "${path.dataset_processed}/filelengths.yaml"
     validation: "${path.dataset_processed}/validation.pt"
     test: "${path.dataset_processed}/test.pt"
@@ -14,39 +57,16 @@ path:
     train_config: "${path.run_path}/resulting_train_config.yaml"
     full_config: "${path.run_path}/full_config.yaml"
     tensorboard: "${path.run_path}/tb"
-    checkpoint: "${path.run_path}/checkpoint.torch"
-    checkpoint_old: "${path.run_path}/checkpoint_old.torch"
+    checkpoint: "${path.run_path}/checkpoint_{}.torch"
+    checkpoint_old: "${path.run_path}/checkpoint_{}_old.torch"
+    state: "${path.run_path}/state.torch"
+    state_old: "${path.run_path}/state_old.torch"
     predict_csv: "${path.run_path}/prediction.csv"
     complete_state: "${path.run_path}/complete.yaml"
     comet_exp_key: "${path.run_path}/comet_experiment_key"
     log: "${path.run_path}/log"
-seed: 0
-loader: ${loader_options[${loader_name}]}
-model:
-    name: "default"
-    dyn_features: 10
-    static_features: 3
-    deeplayer_nodes: 50
-    nprop: 20
-training:
-    events_processed_before_validation: 100000
-    validation_interval: "${div:${training.events_processed_before_validation},${loader.batch_size}}"
-    early_stopping:
-        validation_steps: 40
-        improvement: 0.02
-yvar: "energy"
-loss:
-    name: L1Loss
-optimizer:
-    name: Adam
-    parameters: ${loss_options[${optimizer.name}]}
 
-loss_options:
-    Adam:
-        weight_decay: 0.0001
-        lr: 0.0002
-    SGD:
-        lr: 0.0002
+loader: ${loader_options[${loader_name}]}
 
 loader_options:
     clic:
@@ -95,6 +115,23 @@ loader_options:
             id: "simHit_detid"
             energy: "genPh_E"
             hit_energy: "simHit_E"
+        chunksize: 100
+        batch_size: 100
+        validation_set_size: 5000
+        test_set_size: 30000
+        prefetch_batches: 2
+        num_workers_transform: 30
+        num_workers_stack: 2
+    pc:
+        qf_seq_name: "pc_seq"
+        rootprefix: "treeMaker/tree"
+        preprocess_training: False
+        braches:
+            id: "simHit_detid"
+            energy: "genPh_E"
+            hit_energy: "simHit_E"
+        keylist: ["genPh_E", "simHit_detid", "simHit_E"]
+        cell_prop_keys: ["x", "y", "z"]
         chunksize: 100
         batch_size: 100
         validation_set_size: 5000

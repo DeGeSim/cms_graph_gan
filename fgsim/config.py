@@ -63,6 +63,12 @@ OmegaConf.resolve(hyperparameters)
 # Compute the hash
 conf["hash"] = str(hashlib.sha1(str(hyperparameters).encode()).hexdigest()[:7])
 hyperparameters["hash"] = conf["hash"]
+# Conmpute a loaderhash
+# this hash will be part of where the preprocessed
+# dataset is safed to ensure the parameters dont change
+conf["loaderhash"] = str(
+    hashlib.sha1(str(hyperparameters["loader"]).encode()).hexdigest()[:7]
+)
 
 os.makedirs(conf.path.run_path, exist_ok=True)
 

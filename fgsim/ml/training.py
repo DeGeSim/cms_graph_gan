@@ -1,5 +1,5 @@
 import time
-from typing import Dict, Union
+from typing import Dict, List, Union
 
 import torch
 import torch_geometric
@@ -8,6 +8,7 @@ from tqdm import tqdm
 
 from fgsim.config import conf, device
 from fgsim.io.queued_dataset import QueuedDataLoader
+from fgsim.models.loss.gradient_penalty import GradientPenalty
 from fgsim.monitor import setup_experiment, setup_writer
 from fgsim.utils.batch_utils import move_batch_to_device
 from fgsim.utils.logger import logger
@@ -19,10 +20,37 @@ from .validate import validate
 
 
 def training_step(
-    batch: Union[torch_geometric.data.Batch, Dict[str, torch.Tensor]],
+    batch: Union[
+        torch_geometric.data.Batch,
+        Dict[str, torch.Tensor],
+        List[torch.Tensor],
+        torch.Tensor,
+    ],
     train_state: TrainState,
 ) -> None:
+    # set all optimizers to a 0 gradient
     train_state.holder.optim.zero_grad()
+
+    z = torch.randn(conf.loader.batch_size, 1, 96).to(device)
+    tree = [z]
+
+    with torch.no_grad():
+        fake_point = train_state.holder.gen(tree)
+
+    # todo: batch and discriminato input not aligned
+    D_real = train_state.holder.disc(batch)
+    D_realm = D_real.mean()
+
+    D_fake = train_state.holder.disc(fake_point)
+    D_fakem = D_fake.mean()
+
+    gp_loss = GradientPenalty(train_state.holder.disc, batch, fake_point.data)
+
+    d_loss = -D_realm + D_fakem
+    d_loss_gp = d_loss + gp_loss
+    d_loss_gp.backward()
+    train_state.holder.optim.disc.step()
+
     output = train_state.holder.model(batch)
 
     prediction = torch.squeeze(output.T)
