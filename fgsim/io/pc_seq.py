@@ -4,6 +4,7 @@ to graphs are definded. `process_seq` is the function that \
 should be passed the qfseq.
 """
 import os
+from math import prod
 from pathlib import Path
 from typing import Dict, List, Tuple
 
@@ -38,6 +39,11 @@ if not os.path.isfile(conf.path.ds_lenghts):
 else:
     with open(conf.path.ds_lenghts, "r") as f:
         len_dict = yaml.load(f, Loader=yaml.SafeLoader)
+
+BatchType = torch.Tensor
+
+
+npoints = prod(conf.models.gen.param.degrees)
 
 
 # Collect the steps
@@ -124,8 +130,7 @@ def hitlist_to_pc(event: ak.highlevel.Record) -> torch.Tensor:
     pc = torch.hstack((hit_energies.view(-1, 1), xyzpos))
 
     pc = pc.float()
-
     padded_pc = torch.nn.functional.pad(
-        pc, (0, 0, 0, 2000 - pc.shape[0]), mode="constant", value=0
+        pc, (0, 0, 0, npoints - pc.shape[0]), mode="constant", value=0
     )
     return padded_pc

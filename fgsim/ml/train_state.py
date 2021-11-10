@@ -6,7 +6,6 @@ from comet_ml.experiment import BaseExperiment
 from torch.utils.tensorboard import SummaryWriter
 
 from fgsim.config import conf
-from fgsim.geo.batchtype import BatchType
 from fgsim.io.queued_dataset import QueuedDataLoader
 
 from .holder import ModelHolder
@@ -23,7 +22,7 @@ class TrainState:
     writer: Optional[SummaryWriter]
     experiment: Optional[BaseExperiment]
 
-    def write_trainstep_logs(self, batch: BatchType) -> None:
+    def write_trainstep_logs(self) -> None:
         if conf.debug:
             return
         traintime = self.state.time_training_done - self.state.batch_start_time

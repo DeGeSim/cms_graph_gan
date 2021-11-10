@@ -1,13 +1,11 @@
 import time
-from typing import Dict, List, Union
 
 import torch
-import torch_geometric
 from omegaconf import OmegaConf
 from tqdm import tqdm
 
 from fgsim.config import conf, device
-from fgsim.io.queued_dataset import QueuedDataLoader
+from fgsim.io.queued_dataset import BatchType, QueuedDataLoader
 from fgsim.models.loss.gradient_penalty import GradientPenalty
 from fgsim.monitor import setup_experiment, setup_writer
 from fgsim.utils.batch_utils import move_batch_to_device
@@ -18,51 +16,50 @@ from .holder import model_holder
 from .train_state import TrainState
 from .validate import validate
 
+GP = GradientPenalty(10, gamma=1, device=device)
+
 
 def training_step(
-    batch: Union[
-        torch_geometric.data.Batch,
-        Dict[str, torch.Tensor],
-        List[torch.Tensor],
-        torch.Tensor,
-    ],
+    batch: BatchType,
     train_state: TrainState,
 ) -> None:
     # set all optimizers to a 0 gradient
     train_state.holder.optim.zero_grad()
 
+    # discriminator
     z = torch.randn(conf.loader.batch_size, 1, 96).to(device)
     tree = [z]
 
     with torch.no_grad():
         fake_point = train_state.holder.gen(tree)
 
-    # todo: batch and discriminato input not aligned
     D_real = train_state.holder.disc(batch)
     D_realm = D_real.mean()
 
     D_fake = train_state.holder.disc(fake_point)
     D_fakem = D_fake.mean()
 
-    gp_loss = GradientPenalty(train_state.holder.disc, batch, fake_point.data)
+    gp_loss = GP(train_state.holder.disc, batch.data, fake_point.data)
 
     d_loss = -D_realm + D_fakem
     d_loss_gp = d_loss + gp_loss
     d_loss_gp.backward()
     train_state.holder.optim.disc.step()
 
-    output = train_state.holder.model(batch)
+    # generator
+    if train_state.state.ibatch % 10 == 0:
+        train_state.holder.gen.zero_grad()
 
-    prediction = torch.squeeze(output.T)
-    # Check for the global_add_pool bug in pytorch_geometric
-    # https://github.com/rusty1s/pytorch_geometric/issues/2895
-    if len(prediction) != len(batch.y):
-        return
-    loss = train_state.holder.lossf(y=batch.y, yhat=prediction)
-    loss.backward()
-    train_state.holder.optim.step()
+        z = torch.randn(conf.loader.batch_size, 1, 96).to(device)
+        tree = [z]
 
-    train_state.state.loss = float(loss)
+        fake_point = train_state.holder.gen(tree)
+        G_fake = train_state.holder.disc(fake_point)
+        G_fakem = G_fake.mean()
+
+        g_loss = -G_fakem
+        g_loss.backward()
+        train_state.holder.optim.gen.step()
 
 
 def training_procedure() -> None:
@@ -113,7 +110,7 @@ def training_procedure() -> None:
                 train_state.state.time_io_done = time.time()
                 training_step(batch, train_state)
                 train_state.state.time_training_done = time.time()
-                train_state.write_trainstep_logs(batch)
+                train_state.write_trainstep_logs()
                 train_state.state.ibatch += 1
                 train_state.state.processed_events += conf.loader.batch_size
                 train_state.state["grad_step"] += 1

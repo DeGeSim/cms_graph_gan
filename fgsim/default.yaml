@@ -6,7 +6,7 @@ models:
     gen:
         name: gen.treepc
         param:
-            features: [96, 64, 64, 64, 64, 64, 3]
+            features: [96, 64, 64, 64, 64, 64, 4]
             degrees: [2, 2, 2, 2, 2, 64]
             support: 10
         loss:
@@ -18,7 +18,7 @@ models:
     disc:
         name: disc.treepc
         param:
-            features: [3, 64, 128, 256, 512, 1024]
+            features: [4, 64, 128, 256, 512, 1024]
         loss:
             name: L1Loss
             param: ${loss_options[${models.gen.loss.name}]}

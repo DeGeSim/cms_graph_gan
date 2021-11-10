@@ -11,7 +11,6 @@ import numpy as np
 import torch
 
 from fgsim.config import conf
-from fgsim.geo.batchtype import DataSetType
 from fgsim.io import qf
 from fgsim.io.preprocessed_seq import preprocessed_seq
 from fgsim.io.qf.sequence import Sequence as qfseq
@@ -19,6 +18,9 @@ from fgsim.utils.logger import logger
 
 # Import the specified processing sequence
 sel_seq = importlib.import_module(f"fgsim.io.{conf.loader.qf_seq_name}")
+
+BatchType = sel_seq.BatchType
+DataSetType = List[BatchType]
 
 process_seq = sel_seq.process_seq
 files = sel_seq.files
