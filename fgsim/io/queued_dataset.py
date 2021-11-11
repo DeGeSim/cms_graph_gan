@@ -8,12 +8,11 @@ from pathlib import Path
 from typing import List, Tuple
 
 import numpy as np
+import queueflow as qf
 import torch
 
 from fgsim.config import conf
-from fgsim.io import qf
 from fgsim.io.preprocessed_seq import preprocessed_seq
-from fgsim.io.qf.sequence import Sequence as qfseq
 from fgsim.utils.logger import logger
 
 # Import the specified processing sequence
@@ -222,5 +221,5 @@ Skipping {n_skip_events} events => {n_skip_chunks} chunks and {n_skip_batches} b
                 _ = next(self.qfseq)
                 logger.debug(f"Skipped batch({ibatch}).")
 
-    def __iter__(self) -> qfseq:
+    def __iter__(self) -> qf.Sequence:
         return iter(self.qfseq)

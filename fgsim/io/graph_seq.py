@@ -8,6 +8,7 @@ from pathlib import Path
 
 import h5py as h5
 import numpy as np
+import queueflow as qf
 import torch_geometric
 import yaml
 from torch.multiprocessing import Queue
@@ -15,8 +16,6 @@ from torch.multiprocessing import Queue
 from fgsim.config import conf
 from fgsim.geo.batch_stack import split_layer_subgraphs
 from fgsim.geo.transform import transform
-
-from . import qf
 
 # Load files
 ds_path = Path(conf.path.dataset)

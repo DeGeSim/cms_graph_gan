@@ -6,12 +6,12 @@ should be passed the qfseq.
 from pathlib import Path
 from typing import List
 
+import queueflow as qf
 import torch
 from torch.multiprocessing import Queue
 from torch_geometric.data import Data as GraphType
 
 from fgsim.config import conf
-from fgsim.io import qf
 
 # Load files
 dataset_path = Path(conf.path.training)

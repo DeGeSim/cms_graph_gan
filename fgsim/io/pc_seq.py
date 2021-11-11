@@ -10,6 +10,7 @@ from typing import Dict, List, Tuple
 
 import awkward as ak
 import numpy as np
+import queueflow as qf
 import torch
 import uproot
 import yaml
@@ -17,7 +18,6 @@ from torch.multiprocessing import Queue
 
 from fgsim.config import conf
 from fgsim.geo.geo_lup import geo_lup
-from fgsim.io import qf
 
 # Load files
 ds_path = Path(conf.path.dataset)

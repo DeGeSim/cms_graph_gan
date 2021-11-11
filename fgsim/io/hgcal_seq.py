@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import List, Tuple
 
 import awkward as ak
+import queueflow as qf
 import torch_geometric
 import uproot
 import yaml
@@ -16,7 +17,6 @@ from torch_geometric.data import Data as GraphType
 
 from fgsim.config import conf
 from fgsim.geo.detid_to_graph import event_to_graph
-from fgsim.io import qf
 
 # Load files
 ds_path = Path(conf.path.dataset)
