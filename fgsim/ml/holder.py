@@ -1,6 +1,10 @@
+"""This modules manages all objects that need to be available for the training:
+Subnetworks, losses and optimizers. The Subnetworks and losses are dynamically imported,
+depending on the config. Contains the code for checkpointing of model and optimzer status."""
+
 import importlib
 import os
-from typing import Dict
+from typing import Callable, Dict, List
 
 import torch
 from omegaconf import OmegaConf
@@ -18,6 +22,37 @@ def push_to_old(path_new, path_old):
         os.rename(path_new, path_old)
 
 
+class Loss:
+    "Manages a single loss."
+
+    def __init__(self, pconf: OmegaConf) -> None:
+        self.pconf = pconf
+        self.lossf: Callable
+        if not hasattr(torch.nn, self.pconf.name):
+            self.lossf = importlib.import_module(
+                f"fgsim.models.{self.pconf}"
+            ).LossGen(**self.pconf.param)
+        else:
+            self.lossf = getattr(torch.nn, self.pconf)().to(device)
+
+        self.factor: torch.Tensor = torch.tensor(self.pconf.factor)
+
+    def __call__(self, *args, **kwargs):
+        return self.lossf(*args, **kwargs)
+
+
+class LossesCollector:
+    """Holds all losses for a single subnetwork.
+    Calling this class should return a single (1D) loss for the gradient step"""
+
+    def __init__(self, pconf: OmegaConf) -> None:
+        self.pconf = pconf
+        self.losses: List[Callable] = [Loss(e) for e in pconf]
+
+    def __call__(self, ytrue, ypred):
+        return torch.sum(loss(ytrue, ypred) for loss in self.losses)
+
+
 class SubModelHolder:
     def __init__(self, pconf) -> None:
         self.pconf = pconf
@@ -29,7 +64,6 @@ class SubModelHolder:
         # Import the specified model
         self.model: torch.nn.Module = importlib.import_module(
             f"fgsim.models.{self.pconf.name}"
-            # f"fgsim.models.{self.pconf.name}", "fgsim.models"
         ).ModelClass(**modelparams)
         count_parameters(self.model)
 
@@ -37,7 +71,7 @@ class SubModelHolder:
             self.model.parameters(), **optimparams
         )
 
-        self._lossf = getattr(torch.nn, self.pconf.loss.name)().to(device)
+        self._lossf = LossesCollector(self.pconf.losses)
 
         # try to load a check point
         self.cppath = conf.path.checkpoint.format(self.pconf.name)
@@ -50,8 +84,8 @@ class SubModelHolder:
         # https://github.com/pytorch/pytorch/issues/8741
         self.optim.load_state_dict(self.optim.state_dict())
 
-    def lossf(self, y, yhat):
-        loss = self._lossf(y, yhat)
+    def lossf(self, ytrue, ypred):
+        loss = self._lossf(ytrue, ypred)
         assert not contains_nans(loss)[0]
         return loss
 
@@ -76,9 +110,7 @@ class SubModelHolder:
         self.model = self.model.float().to(device)
 
     def save_checkpoint(self):
-        self.push_to_old(
-            self.cppath, conf.path.checkpoint_old.format(self.pconf.name)
-        )
+        push_to_old(self.cppath, conf.path.checkpoint_old.format(self.pconf.name))
 
         torch.save(
             {
@@ -91,8 +123,9 @@ class SubModelHolder:
 
 
 class SubModelCollector(torch.nn.Module):
-    # Collect all parts of the model in one to allow
-    # things like holder.model.to(device), float() ect.
+    """Collect all parts of the model in one to allow
+    things like holder.model.to(device), float() ect."""
+
     def __init__(self, subholderdict):
         super().__init__()
         self._parts: Dict[str, torch.nn.Module] = {}
@@ -102,8 +135,9 @@ class SubModelCollector(torch.nn.Module):
 
 
 class OptimCollector:
-    # Collect all optimizers for the different parts
-    # of the model to do eg. holder.model.zero_grad()
+    """Collect all optimizers for the different parts
+    of the model to do eg. holder.model.zero_grad()."""
+
     def __init__(self, subholderdict):
         self._parts: Dict[str, torch.optim] = {}
         for name, submodel in subholderdict.items():
@@ -169,14 +203,14 @@ class ModelHolder:
         self.state = OmegaConf.load(conf.path.state)
 
     def select_best_model(self):
-        for e in self.submodels.values():
-            e.select_best_model()
+        for submod in self.submodels.values():
+            submod.select_best_model()
 
     def save_checkpoint(self):
-        self.push_to_old(conf.path.state, conf.path.state_old)
+        push_to_old(conf.path.state, conf.path.state_old)
         OmegaConf.save(config=self.state, f=conf.path.state)
-        for e in self.submodels.values():
-            e.save_checkpoint()
+        for submod in self.submodels.values():
+            submod.save_checkpoint()
 
 
 model_holder = ModelHolder()

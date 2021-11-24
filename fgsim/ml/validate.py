@@ -21,7 +21,7 @@ def validate(train_state: TrainState) -> None:
         batch_gpu = move_batch_to_device(batch, device)
         with torch.no_grad():
             prediction = torch.squeeze(train_state.holder.model(batch_gpu).T)
-            loss = train_state.holder.lossf(y=batch_gpu.y, yhat=prediction)
+            loss = train_state.holder.lossf(y=batch_gpu.y, ypred=prediction)
         if is_anormal_tensor(loss):
             raise ValueError
         losses.append(loss)

@@ -9,9 +9,10 @@ models:
             features: [96, 64, 64, 64, 64, 64, 4]
             degrees: [2, 2, 2, 2, 2, 64]
             support: 10
-        loss:
-            name: L1Loss
-            param: ${loss_options[${models.gen.loss.name}]}
+        losses:
+            - WGenLoss:
+                  param: ${loss_options[L1Loss]}
+                  factor: 1
         optim:
             name: Adam
             param: ${optim_options[${models.gen.optim.name}]}
@@ -19,16 +20,21 @@ models:
         name: disc.treepc
         param:
             features: [4, 64, 128, 256, 512, 1024]
-        loss:
-            name: L1Loss
-            param: ${loss_options[${models.gen.loss.name}]}
+        losses:
+            - WDiscLoss:
+                  param: ${loss_options[L1Loss]}
+                  factor: 1
+            - GradientPenalty:
+                  param: ${loss_options[GradientPenalty]}
+                  factor: 1
         optim:
             name: Adam
             param: ${optim_options[${models.gen.optim.name}]}
 
 loss_options:
     L1Loss:
-
+    GradientPenalty:
+        gamma: 1.0
 optim_options:
     Adam:
         weight_decay: 0.0001

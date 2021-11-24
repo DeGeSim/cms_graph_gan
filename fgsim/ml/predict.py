@@ -31,7 +31,7 @@ def prediction_procedure():
     train_state.holder.model.eval()
     # Initialize the training
     ys = []
-    yhats = []
+    ypreds = []
 
     # Make sure the batches are loaded
     _ = train_state.loader.testing_batches
@@ -42,20 +42,20 @@ def prediction_procedure():
         batch = move_batch_to_device(batch, device)
         with torch.no_grad():
             prediction = torch.squeeze(train_state.holder.model(batch).T)
-            yhat = prediction.to("cpu").numpy()
+            ypred = prediction.to("cpu").numpy()
             y = batch.y.to("cpu").numpy()
 
-        yhats.append(yhat)
+        ypreds.append(ypred)
         ys.append(y)
 
     logger.info("Done with batches.")
     ys = np.hstack(ys)
-    yhats = np.hstack(yhats)
+    ypreds = np.hstack(ypreds)
     logger.info("Conversion done.")
     vars_dict = {
         "Energy": ys,
-        "Prediction": yhats,
-        "Relativ Error": np.abs(1 - yhats / ys),
+        "Prediction": ypreds,
+        "Relativ Error": np.abs(1 - ypreds / ys),
     }
     df = pd.DataFrame(vars_dict)
     logger.info("Dataframe done.")
@@ -67,7 +67,7 @@ def prediction_procedure():
     # train_state.experiment.log_dataframe_profile(df,name='Test DF', log_raw_dataframe=True)
 
     # train_state.experiment.log_curve(
-    #     "True vs Predicted Energy", list(ys), yhats, overwrite=True, step=None
+    #     "True vs Predicted Energy", list(ys), ypreds, overwrite=True, step=None
     # )
     # train_state.experiment.log_curve(
     #     "Relative Error", ys, df["Relativ Error"], overwrite=True, step=None
