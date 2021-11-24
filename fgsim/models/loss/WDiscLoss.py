@@ -1,5 +1,5 @@
 import torch
 
 
-def loss(y: torch.Tensor, ypred: torch.Tensor):
-    return -y.mean() + ypred.mean()
+def loss(ytrue: torch.Tensor, ypred: torch.Tensor):
+    return -ytrue.mean() + ypred.mean()

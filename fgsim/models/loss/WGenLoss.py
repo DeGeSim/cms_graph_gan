@@ -3,7 +3,7 @@ from typing import Optional
 import torch
 
 
-def loss(y: Optional[torch.Tensor], ypred: torch.Tensor):
+def loss(ytrue: Optional[torch.Tensor], ypred: torch.Tensor):
     return -ypred.mean()
 
 
