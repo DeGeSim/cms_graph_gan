@@ -1,108 +1,83 @@
 {
-	"folders": [
-		{
-			"path": "."
-		}
-	],
-	"settings": {
-		"python.envFile": "${workspaceFolder}/.env",
-		"python.pythonPath": ".tox/py38/bin/python3",
-		"python.formatting.blackPath": "~/.apps/pyenv/shims/black",
-		"python.linting.flake8Path": "~/.apps/pyenv/shims/flake8",
-		"python.linting.mypyEnabled": true,
-		"python.linting.pylintArgs": [
-			"--generated-members=numpy.* ,torch.*",
-			"--disable=E0402,C0116,logging-fstring-interpolation",
-		],
-		"files.exclude": {
-			"**/__*__/**": true,
-			"**/_build/**": true,
-			"**/.*": true,
-			"**/.*/**": true,
-			"**/*.egg-info/**": true,
-			"**/node_modules/*/**": true,
-			"**/old/**": true,
-			"**/runs/**": true,
-			"**/venv/**": true
-		},
-		"files.watcherExclude": {
-			"**/.*": true,
-			"**/.*/**": true,
-			"**/__*__/**": true,
-			"**/_build/**": true,
-			"**/node_modules/*/**": true,
-			"**/*.egg-info/**": true,
-			"**/venv/**": true,
-		},
-		"jupyter.jupyterLaunchRetries": 1,
-		"jupyter.jupyterServerType": "local",
-		"python.languageServer": "Jedi",
-		"python.formatting.provider": "black",
-		"python.linting.flake8Args": [
-			" \"--ignore=E203,E302\""
-		],
-		"debug.console.closeOnEnd": true,
-		"debug.terminal.clearBeforeReusing": true
-	},
-	"launch": {
-		"version": "0.2.0",
-		"configurations": [
-			{
-				"name": "t treepc",
-				"type": "python",
-				"request": "launch",
-				"module": "fgsim",
-				"args": [
-					"--tag",
-					"treepc",
-					"--debug",
-					"train",
-				]
-			},
-			{
-				"name": "preprocess hgcal",
-				"type": "python",
-				"request": "launch",
-				"module": "fgsim",
-				"args": [
-					"--tag",
-					"sparse",
-					"preprocess",
-				]
-			},
-			{
-				"name": "t seltag",
-				"type": "python",
-				"request": "launch",
-				"module": "fgsim",
-				"args": [
-					"--tag",
-					// "`fd  --type d \".*\" --maxdepth 1 ~/fgsim/wd | sd \".*/(.+)$\" \"\\$1\"|fzf`",
-					"linreg",
-					"train",
-				]
-			},
-			{
-				"name": "predict",
-				"type": "python",
-				"request": "launch",
-				"module": "fgsim",
-				"args": [
-					"--tag",
-					"`ls ~/fgsim/wd | fzf`",
-					"predict",
-				]
-			},
-			{
-				"name": "loadfile",
-				"type": "python",
-				"request": "launch",
-				"module": "fgsim",
-				"args": [
-					"loadfile",
-					"${file}",
-				]
-			},
-		]
-	},
+    "folders": [
+        {
+            "path": "."
+        }
+    ],
+    "settings": {
+        "python.envFile": "${workspaceFolder}/.env",
+        "python.pythonPath": ".tox/py38/bin/python3",
+        "jupyter.jupyterLaunchRetries": 1,
+        "jupyter.jupyterServerType": "local",
+        "python.languageServer": "Jedi",
+        "debug.console.closeOnEnd": true,
+        "debug.terminal.clearBeforeReusing": true
+    },
+    "launch": {
+        "version": "0.2.0",
+        "configurations": [
+            {
+                "name": "t treepc",
+                "type": "python",
+                "request": "launch",
+                "module": "fgsim",
+                "args": [
+                    "--tag",
+                    "treepc",
+                    // "--debug",
+                    "train"
+                ]
+            },
+            {
+                "name": "preprocess hgcal",
+                "type": "python",
+                "request": "launch",
+                "module": "fgsim",
+                "args": ["--tag", "sparse", "preprocess"]
+            },
+            {
+                "name": "t seltag",
+                "type": "python",
+                "request": "launch",
+                "module": "fgsim",
+                "args": [
+                    "--tag",
+                    // "`fd  --type d \".*\" --maxdepth 1 ~/fgsim/wd | sd \".*/(.+)$\" \"\\$1\"|fzf`",
+                    "linreg",
+                    "train"
+                ]
+            },
+            {
+                "name": "predict",
+                "type": "python",
+                "request": "launch",
+                "module": "fgsim",
+                "args": ["--tag", "`ls ~/fgsim/wd | fzf`", "predict"]
+            },
+            {
+                "name": "loadfile",
+                "type": "python",
+                "request": "launch",
+                "module": "fgsim",
+                "args": ["loadfile", "${file}"]
+            }
+        ]
+    },
+    "tasks": {
+        "version": "2.0.0",
+        "tasks": [
+            {
+                "type": "shell",
+                "command": "tox",
+                "args": [],
+                "isBackground": false,
+                "options": { "cwd": "${workspaceFolder}" },
+                "label": "Run tox",
+                "group": {
+                    "kind": "test",
+                    "isDefault": true
+                }
+            }
+        ]
+    }
 }
