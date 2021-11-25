@@ -3,6 +3,7 @@ from torch.utils.tensorboard import SummaryWriter
 
 from fgsim.config import conf
 from fgsim.ml.holder import Holder
+from fgsim.monitoring.logger import logger
 from fgsim.monitoring.monitor import setup_experiment, setup_writer
 
 
@@ -74,3 +75,12 @@ class TrainLog:
         #  self.experiment.log_histogram(
         #      experiment, gradmap, epoch * steps_per_epoch, prefix="gradient"
         #  )
+
+    def end(self) -> None:
+        self.holder.state.complete = True
+        self.writer.flush()
+        self.writer.close()
+        logger.warning("Early Stopping criteria fulfilled")
+        if not conf.debug:
+            self.experiment.log_other("ended", True)
+            self.experiment.end()

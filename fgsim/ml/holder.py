@@ -32,6 +32,7 @@ class Holder:
                 "ibatch": 0,
                 "grad_step": 0,
                 "val_losses": [],
+                "complete": False,
             }
         )
 

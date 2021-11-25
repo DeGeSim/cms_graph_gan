@@ -67,15 +67,17 @@ def training_procedure() -> None:
     logger.warning(
         f"Starting training with state {str(OmegaConf.to_yaml(holder.state))}"
     )
+
+    if holder.state.complete:
+        logger.warning("Training has been completed, stopping.")
+        exit(0)
+
     loader: QueuedDataLoader = QueuedDataLoader()
     train_log = TrainLog(holder)
 
     # Queue that batches
     loader.queue_epoch(n_skip_events=holder.state.processed_events)
-    if not conf.debug and train_log.experiment.ended:
-        logger.warning("Training has been completed, stopping.")
-        loader.qfseq.stop()
-        exit(0)
+
     try:
         while not early_stopping(holder.state):
             # switch model in training mode
@@ -107,17 +109,12 @@ def training_procedure() -> None:
                 holder.state.processed_events += conf.loader.batch_size
                 holder.state["grad_step"] += 1
 
-            validate(holder, loader, train_log)
+            validate(holder, loader)
             holder.save_checkpoint()
         # Stopping
+        train_log.end()
         holder.save_checkpoint()
-        train_log.writer.flush()
-        train_log.writer.close()
-        logger.warning("Early Stopping criteria fulfilled")
-        OmegaConf.save(holder.state, conf.path.complete_state)
-        if not conf.debug:
-            train_log.experiment.log_other("ended", True)
-            train_log.experiment.end()
+
     except Exception as error:
         logger.error("Error detected, stopping qfseq.")
         loader.qfseq.stop()
