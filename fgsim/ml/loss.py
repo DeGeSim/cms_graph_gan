@@ -6,6 +6,7 @@ import torch
 from omegaconf import OmegaConf
 
 from fgsim.config import device
+from fgsim.utils.check_for_nans import contains_nans
 
 
 class Loss:
@@ -27,7 +28,7 @@ class Loss:
         return self.lossf(*args, **kwargs)
 
 
-class LossesCollector:
+class LossesCol:
     """Holds all losses for a single subnetwork.
     Calling this class should return a single (1D) loss for the gradient step"""
 
@@ -36,4 +37,6 @@ class LossesCollector:
         self.losses: List[Callable] = [Loss(e) for e in pconf]
 
     def __call__(self, ytrue, ypred):
-        return torch.sum(loss(ytrue, ypred) for loss in self.losses)
+        loss = torch.sum(loss(ytrue, ypred) for loss in self.losses)
+        assert not contains_nans(loss)[0]
+        return loss
