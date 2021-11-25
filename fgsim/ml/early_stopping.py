@@ -1,7 +1,7 @@
 from omegaconf import OmegaConf
 
 from fgsim.config import conf
-from fgsim.utils.logger import logger
+from fgsim.monitoring.logger import logger
 
 
 def early_stopping(state: OmegaConf) -> bool:

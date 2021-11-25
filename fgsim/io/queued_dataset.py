@@ -13,7 +13,7 @@ import torch
 
 from fgsim.config import conf
 from fgsim.io.preprocessed_seq import preprocessed_seq
-from fgsim.utils.logger import logger
+from fgsim.monitoring.logger import logger
 
 # Import the specified processing sequence
 sel_seq = importlib.import_module(f"fgsim.io.{conf.loader.qf_seq_name}")

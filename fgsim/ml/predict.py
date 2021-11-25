@@ -5,43 +5,37 @@ from tqdm import tqdm
 
 from fgsim.config import conf, device
 from fgsim.io.queued_dataset import QueuedDataLoader
-from fgsim.monitor import setup_experiment, setup_writer
+from fgsim.ml.holder import Holder
+from fgsim.monitoring.logger import logger
+from fgsim.monitoring.monitor import setup_experiment
 from fgsim.utils.batch_utils import move_batch_to_device
-from fgsim.utils.logger import logger
-
-from .holder import model_holder
-from .train_state import TrainState
 
 
-def prediction_procedure():
-    train_state = TrainState(
-        model_holder,
-        model_holder.state,
-        QueuedDataLoader(),
-        setup_writer(),
-        setup_experiment(model_holder),
-    )
+def prediction_procedure() -> None:
+    holder: Holder = Holder()
+    loader: QueuedDataLoader = QueuedDataLoader()
+    experiment = setup_experiment(holder)
 
-    if train_state.experiment.ended:
+    if experiment.ended:
         logger.error("Training has not completed, stopping.")
-        train_state.loader.qfseq.stop()
+        loader.qfseq.stop()
         exit(0)
 
-    train_state.holder.select_best_model()
-    train_state.holder.model.eval()
+    holder.select_best_model()
+    holder.models.eval()
     # Initialize the training
     ys = []
     ypreds = []
 
     # Make sure the batches are loaded
-    _ = train_state.loader.testing_batches
-    train_state.loader.qfseq.stop()
+    _ = loader.testing_batches
+    loader.qfseq.stop()
 
     logger.info("Start iterating batches.")
-    for ibatch, batch in enumerate(tqdm(train_state.loader.testing_batches)):
+    for _, batch in enumerate(tqdm(loader.testing_batches)):
         batch = move_batch_to_device(batch, device)
         with torch.no_grad():
-            prediction = torch.squeeze(train_state.holder.model(batch).T)
+            prediction = torch.squeeze(holder.models(batch).T)
             ypred = prediction.to("cpu").numpy()
             ytrue = batch.ytrue.to("cpu").numpy()
 
@@ -64,12 +58,12 @@ def prediction_procedure():
     # train_state.writer.add_scalars(
     #     "test", vars_dict, global_step=None, walltime=None
     # )
-    # train_state.experiment.log_dataframe_profile(df,name='Test DF', log_raw_dataframe=True)
+    # experiment.log_dataframe_profile(df,name='Test DF', log_raw_dataframe=True)
 
-    # train_state.experiment.log_curve(
+    # experiment.log_curve(
     #     "True vs Predicted Energy", list(ys), ypreds, overwrite=True, step=None
     # )
-    # train_state.experiment.log_curve(
+    # experiment.log_curve(
     #     "Relative Error", ys, df["Relativ Error"], overwrite=True, step=None
     # )
     exit(0)

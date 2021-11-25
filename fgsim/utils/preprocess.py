@@ -8,7 +8,7 @@ from tqdm import tqdm
 
 from fgsim.config import conf
 from fgsim.io.queued_dataset import QueuedDataLoader
-from fgsim.utils.logger import logger
+from fgsim.monitoring.logger import logger
 
 
 def preprocess_procedure(

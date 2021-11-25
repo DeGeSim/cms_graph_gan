@@ -10,11 +10,11 @@ from fgsim.config import conf, device
 from fgsim.io.queued_dataset import BatchType, QueuedDataLoader
 from fgsim.ml.early_stopping import early_stopping
 from fgsim.ml.holder import Holder
-from fgsim.ml.train_state import TrainLog
 from fgsim.ml.validate import validate
 from fgsim.models.loss.gradient_penalty import GradientPenalty
+from fgsim.monitoring.logger import logger
+from fgsim.monitoring.train_log import TrainLog
 from fgsim.utils.batch_utils import move_batch_to_device
-from fgsim.utils.logger import logger
 
 GP = GradientPenalty(10, gamma=1, device=device)
 
@@ -107,7 +107,7 @@ def training_procedure() -> None:
                 holder.state.processed_events += conf.loader.batch_size
                 holder.state["grad_step"] += 1
 
-            validate(holder)
+            validate(holder, loader, train_log)
             holder.save_checkpoint()
         # Stopping
         holder.save_checkpoint()

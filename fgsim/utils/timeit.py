@@ -1,4 +1,4 @@
-from .logger import logger
+from fgsim.monitoring.logger import logger
 
 
 def timeit(func, n=1):

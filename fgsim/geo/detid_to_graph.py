@@ -15,7 +15,7 @@ from torch_geometric.data import Data as GraphType
 
 from fgsim.config import conf
 from fgsim.geo.geo_lup import geo_lup
-from fgsim.utils.logger import logger
+from fgsim.monitoring.logger import logger
 
 
 def event_to_graph(event: ak.highlevel.Record) -> GraphType:

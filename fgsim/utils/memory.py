@@ -5,7 +5,7 @@ from pprint import pprint
 
 import torch
 
-from .logger import logger
+from fgsim.monitoring.logger import logger
 
 
 def memReport():

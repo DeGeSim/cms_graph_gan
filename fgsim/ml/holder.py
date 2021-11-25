@@ -12,8 +12,8 @@ from fgsim.config import conf, device
 from fgsim.ml.loss import LossesCol
 from fgsim.ml.network import SubNetworkCollector
 from fgsim.ml.optim import OptimCol
+from fgsim.monitoring.logger import logger
 from fgsim.utils.check_for_nans import contains_nans
-from fgsim.utils.logger import logger
 from fgsim.utils.push_to_old import push_to_old
 
 

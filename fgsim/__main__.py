@@ -7,7 +7,7 @@ import comet_ml
 import pretty_errors
 from omegaconf import OmegaConf
 
-from .utils.logger import logger
+from fgsim.utils.logger import logger
 
 # Add the project to the path, -> `import fgsim.x`
 sys.path.append(os.path.dirname(os.path.realpath(".")))
@@ -50,24 +50,24 @@ def main():
     #     logger.info(f"Unloading {modulename}")
     #     del sys.modules[modulename]
     # logger.info("Unloading complete")
-    from .config import conf
+    from fgsim.config import conf
 
     logger.info("Configuration:\n" + OmegaConf.to_yaml(conf, resolve=True))
 
     logger.info(f"Running command {conf['command']}")
 
     if conf["command"] == "train":
-        from .ml.training import training_procedure
+        from fgsim.ml.training import training_procedure
 
         training_procedure()
 
     if conf["command"] == "predict":
-        from .ml.predict import prediction_procedure
+        from fgsim.ml.predict import prediction_procedure
 
         prediction_procedure()
 
     if conf["command"] == "preprocess":
-        from .utils.preprocess import preprocess_procedure
+        from fgsim.utils.preprocess import preprocess_procedure
 
         preprocess_procedure()
 
@@ -80,7 +80,7 @@ def main():
         importlib.import_module(file_name, "fgsim")
 
     if conf["command"] == "dump":
-        from .utils import dump_training
+        from fgsim.utils import dump_training
 
 
 if __name__ == "__main__":

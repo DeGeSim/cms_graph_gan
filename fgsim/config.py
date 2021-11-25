@@ -6,7 +6,7 @@ import numpy as np
 import torch
 from omegaconf import OmegaConf
 
-from .utils.cli import args
+from fgsim.utils.cli import args
 
 
 # Add a custum resolver to OmegaConf allowing for divisions

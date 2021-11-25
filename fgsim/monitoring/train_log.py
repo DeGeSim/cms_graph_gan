@@ -3,7 +3,7 @@ from torch.utils.tensorboard import SummaryWriter
 
 from fgsim.config import conf
 from fgsim.ml.holder import Holder
-from fgsim.monitor import setup_experiment, setup_writer
+from fgsim.monitoring.monitor import setup_experiment, setup_writer
 
 
 class TrainLog:

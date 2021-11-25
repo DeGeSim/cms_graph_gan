@@ -2,8 +2,8 @@ import comet_ml
 from omegaconf import OmegaConf
 from torch.utils.tensorboard import SummaryWriter
 
-from .config import conf, hyperparameters
-from .utils.logger import logger
+from fgsim.config import conf, hyperparameters
+from fgsim.utils.logger import logger
 
 
 def dict_to_kv(o, keystr=""):
@@ -30,7 +30,7 @@ def dict_to_kv(o, keystr=""):
         raise ValueError
 
 
-def get_experiment():
+def get_experiment() -> comet_ml.ExistingExperiment:
     """Tries to find for an existing experiment with the given hash and \
  -- if unsuccessfull -- generates a new one."""
     comet_conf = OmegaConf.load("fgsim/comet.yaml")
@@ -90,7 +90,7 @@ def setup_writer():
     return SummaryWriter(conf.path.tensorboard)
 
 
-def setup_experiment(model_holder):
+def setup_experiment(model_holder) -> comet_ml.ExistingExperiment:
     experiment = get_experiment()
 
     # Format the hyperparameter for comet
