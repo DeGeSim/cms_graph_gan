@@ -1,27 +1,31 @@
 """Dynamically manages the optimizers"""
-import importlib
 from typing import Dict
 
 import torch
-from omegaconf import OmegaConf
+from omegaconf.dictconfig import DictConfig
 
 
 class OptimCol:
     """Collect all optimizers for the different parts
     of the model to do eg. holder.model.zero_grad()."""
 
-    def __init__(self, pconf: OmegaConf):
+    def __init__(self, pconf: DictConfig, submodelpar_dict: Dict):
 
         self.pconf = pconf
         self.parts: Dict[str, torch.optim] = {}
 
         for name, submodelconf in pconf.items():
             assert name != "parts"
-            params = submodelconf.optim if submodelconf.optim is not None else {}
+            params = (
+                submodelconf.optim.params
+                if submodelconf.optim.params is not None
+                else {}
+            )
+
             # Import the python file containing the models with dynamically
-            optim: torch.optim = importlib.import_module(
-                f"fgsim.models.{self.pconf.name}"
-            ).ModelClass(**params)
+            optim: torch.optim = getattr(torch.optim, submodelconf.optim.name)(
+                submodelpar_dict[name], **params
+            )
 
             self.parts[name] = optim
             setattr(self, name, optim)

@@ -4,36 +4,34 @@ seed: 0
 
 models:
     gen:
-        name: gen.treepc
+        name: gen_treepc
         param:
             features: [96, 64, 64, 64, 64, 64, 4]
             degrees: [2, 2, 2, 2, 2, 64]
             support: 10
         losses:
-            - WGenLoss:
-                  param: ${loss_options[L1Loss]}
-                  factor: 1
+            WGenLoss: ${loss_options[WGenLoss]}
         optim:
             name: Adam
-            param: ${optim_options[${models.gen.optim.name}]}
+            params: ${optim_options[Adam]}
     disc:
-        name: disc.treepc
+        name: disc_treepc
         param:
             features: [4, 64, 128, 256, 512, 1024]
         losses:
-            - WDiscLoss:
-                  param: ${loss_options[L1Loss]}
-                  factor: 1
-            - GradientPenalty:
-                  param: ${loss_options[GradientPenalty]}
-                  factor: 1
+            WDiscLoss: ${loss_options[WDiscLoss]}
+            GradientPenalty: ${loss_options[GradientPenalty]}
         optim:
             name: Adam
-            param: ${optim_options[${models.gen.optim.name}]}
+            params: ${optim_options[Adam]}
 
 loss_options:
-    L1Loss:
+    WGenLoss:
+        factor: 1.0
+    WDiscLoss:
+        factor: 1.0
     GradientPenalty:
+        factor: 1.0
         gamma: 1.0
 optim_options:
     Adam:
@@ -45,6 +43,7 @@ optim_options:
 training:
     events_processed_before_validation: 100000
     validation_interval: "${div:${training.events_processed_before_validation},${loader.batch_size}}"
+    disc_steps_per_gen_step: 10
     early_stopping:
         validation_steps: 40
         improvement: 0.02

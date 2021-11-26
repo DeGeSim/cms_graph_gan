@@ -3,7 +3,7 @@ from omegaconf import OmegaConf
 from torch.utils.tensorboard import SummaryWriter
 
 from fgsim.config import conf, hyperparameters
-from fgsim.utils.logger import logger
+from fgsim.monitoring.logger import logger
 
 
 def dict_to_kv(o, keystr=""):
@@ -99,7 +99,7 @@ def setup_experiment(model_holder) -> comet_ml.ExistingExperiment:
     for tag in set(conf.tag.split("_")):
         experiment.add_tag(tag)
 
-    experiment.set_model_graph(str(model_holder.model))
+    experiment.set_model_graph(str(model_holder.models))
 
     for part_name in conf.models:
         codepath = str(conf.models[part_name]["name"]).replace(".", "/")

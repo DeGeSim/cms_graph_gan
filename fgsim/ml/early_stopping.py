@@ -1,10 +1,10 @@
-from omegaconf import OmegaConf
+from omegaconf.dictconfig import DictConfig
 
 from fgsim.config import conf
 from fgsim.monitoring.logger import logger
 
 
-def early_stopping(state: OmegaConf) -> bool:
+def early_stopping(state: DictConfig) -> bool:
     """Compare the last `conf.training.early_stopping.validation_steps`
     validation losses with the validation losses before that.
     If the minimum has not been reduced by

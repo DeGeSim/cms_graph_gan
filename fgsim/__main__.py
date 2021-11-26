@@ -7,7 +7,7 @@ import comet_ml
 import pretty_errors
 from omegaconf import OmegaConf
 
-from fgsim.utils.logger import logger
+from fgsim.monitoring.logger import logger
 
 # Add the project to the path, -> `import fgsim.x`
 sys.path.append(os.path.dirname(os.path.realpath(".")))

@@ -1,36 +1,34 @@
+from dataclasses import dataclass
+
 import torch
 from torch.autograd import grad
 
+from fgsim.config import device
+from fgsim.ml.holder import Holder
 
-class GradientPenalty:
+
+@dataclass
+class LossGen:
     """Computes the gradient penalty as defined in "Improved Training of Wasserstein GANs
     (https://arxiv.org/abs/1704.00028)
     Args:
-        batchSize (int): batch-size used in the training.
-        Must be updated w.r.t the current batchsize
-        lambdaGP (float): coefficient of the gradient penalty as defined in the article
-        gamma (float): regularization term of the gradient penalty,
-         augment to minimize "ghosts"
+        factor (float): coefficient of the gradient penalty as defined in the article
+        gamma (float): regularization term of the gradient penalty
     """
 
-    def __init__(
-        self, lambdaGP, gamma=1, vertex_num=2500, device=torch.device("cpu")
-    ):
-        self.lambdaGP = lambdaGP
-        self.gamma = gamma
-        self.vertex_num = vertex_num
-        self.device = device
+    factor: float = 1.0
+    gamma: float = 1.0
 
-    def __call__(self, netD, real_data, fake_data):
+    def __call__(self, holder: Holder, real_data, fake_data):
         batch_size = real_data.size(0)
 
         fake_data = fake_data[:batch_size]
 
-        alpha = torch.rand(batch_size, 1, 1, requires_grad=True).to(self.device)
+        alpha = torch.rand(batch_size, 1, 1, requires_grad=True).to(device)
         # randomly mix real and fake data
         interpolates = real_data + alpha * (fake_data - real_data)
         # compute output of D for interpolated input
-        disc_interpolates = netD(interpolates)
+        disc_interpolates = holder.disc(interpolates)
         # compute gradients w.r.t the interpolated outputs
 
         gradients = (
@@ -48,6 +46,6 @@ class GradientPenalty:
 
         gradient_penalty = (
             ((gradients.norm(2, dim=1) - self.gamma) / self.gamma) ** 2
-        ).mean() * self.lambdaGP
+        ).mean() * self.factor
 
         return gradient_penalty

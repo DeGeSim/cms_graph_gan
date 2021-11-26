@@ -1,11 +1,20 @@
+from dataclasses import dataclass
 from typing import Optional
 
 import torch
 
+from fgsim.config import conf, device
+from fgsim.ml.holder import Holder
 
-def loss(ytrue: Optional[torch.Tensor], ypred: torch.Tensor):
-    return -ypred.mean()
 
+@dataclass
+class LossGen:
+    factor: float
 
-def LossGen():
-    return loss
+    def __call__(self, holder: Holder, batch: Optional[torch.Tensor]):
+        z = torch.randn(conf.loader.batch_size, 1, 96).to(device)
+        tree = [z]
+
+        fake_point = holder.models.gen(tree)
+        G_fake = holder.models.disc(fake_point)
+        return self.factor * G_fake.mean() * -1

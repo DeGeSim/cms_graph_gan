@@ -7,6 +7,7 @@ import os
 
 import torch
 from omegaconf import OmegaConf
+from omegaconf.dictconfig import DictConfig
 
 from fgsim.config import conf, device
 from fgsim.ml.loss import LossesCol
@@ -25,7 +26,7 @@ class Holder:
     def __init__(
         self,
     ) -> None:
-        self.state: OmegaConf = OmegaConf.create(
+        self.state: DictConfig = OmegaConf.create(
             {
                 "epoch": 0,
                 "processed_events": 0,
@@ -38,7 +39,7 @@ class Holder:
 
         self.models: SubNetworkCollector = SubNetworkCollector(conf.models)
         self.losses: LossesCol = LossesCol(conf.models)
-        self.optims: OptimCol = OptimCol(conf.models)
+        self.optims: OptimCol = OptimCol(conf.models, self.models.get_par_dict())
 
         # try to load a check point
         self.checkpoint_loaded = False
