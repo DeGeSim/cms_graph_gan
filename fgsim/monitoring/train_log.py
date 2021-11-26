@@ -41,18 +41,18 @@ class TrainLog:
             self.holder.state.processed_events,
             self.holder.state["grad_step"],
         )
-        self.writer.add_scalar(
-            "loss", self.holder.state.loss, self.holder.state["grad_step"]
-        )
-        self.writer.flush()
+        # self.writer.add_scalar(
+        #     "loss", self.holder.state.loss, self.holder.state["grad_step"]
+        # )
+        # self.writer.flush()
 
-        # Comet.ml
-        self.experiment.log_metric(
-            "loss",
-            self.holder.state.loss,
-            step=self.holder.state["grad_step"],
-            epoch=self.holder.state["epoch"],
-        )
+        # # Comet.ml
+        # self.experiment.log_metric(
+        #     "loss",
+        #     self.holder.state.loss,
+        #     step=self.holder.state["grad_step"],
+        #     epoch=self.holder.state["epoch"],
+        # )
         self.experiment.log_metric(
             "utilisation",
             utilisation,

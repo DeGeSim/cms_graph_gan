@@ -6,6 +6,7 @@ import torch
 from omegaconf.dictconfig import DictConfig
 
 from fgsim.config import device
+from fgsim.io.queued_dataset import BatchType
 from fgsim.utils.check_for_nans import contains_nans
 
 
@@ -26,8 +27,8 @@ class SubNetworkLoss:
             self.parts[name] = loss
             setattr(self, name, loss)
 
-    def __call__(self, holder, ytrue, ypred):
-        loss = torch.sum(loss(holder, ytrue, ypred) for loss in self.losses)
+    def __call__(self, holder, batch: BatchType):
+        loss = sum([loss(holder, batch) for loss in self.parts.values()])
         assert not contains_nans(loss)[0]
         return loss
 

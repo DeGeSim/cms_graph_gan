@@ -12,7 +12,6 @@ class LossGen:
     factor: float
 
     def __call__(self, holder: Holder, batch: BatchType) -> torch.float:
-        # discriminator
         # EM dist loss:
         D_realm = holder.models.disc(batch).mean()
 
