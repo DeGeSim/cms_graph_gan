@@ -63,7 +63,8 @@ class TreeGCN(nn.Module):
         stdv = 1.0 / math.sqrt(self.out_feature)
         self.bias.data.uniform_(-stdv, stdv)
 
-    def forward(self, tree):
+    def forward(self, z):
+        tree = [z]
         root = 0
         for inx in range(self.depth + 1):
             root_num = tree[inx].size(1)

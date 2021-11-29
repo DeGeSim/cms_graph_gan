@@ -25,10 +25,9 @@ class LossGen:
         batch_size = real_data.size(0)
 
         z = torch.randn(conf.loader.batch_size, 1, 96).to(device)
-        tree = [z]
 
         with torch.no_grad():
-            fake_points = holder.models.gen(tree)
+            fake_points = holder.models.gen(z)
         fake_data = fake_points.data
         fake_data = fake_data[:batch_size]
 

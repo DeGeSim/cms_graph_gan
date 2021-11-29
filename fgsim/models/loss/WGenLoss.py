@@ -13,8 +13,6 @@ class LossGen:
 
     def __call__(self, holder: Holder, batch: Optional[torch.Tensor]):
         z = torch.randn(conf.loader.batch_size, 1, 96).to(device)
-        tree = [z]
-
-        fake_point = holder.models.gen(tree)
+        fake_point = holder.models.gen(z)
         G_fake = holder.models.disc(fake_point)
         return self.factor * G_fake.mean() * -1
