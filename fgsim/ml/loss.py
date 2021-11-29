@@ -7,41 +7,63 @@ from omegaconf.dictconfig import DictConfig
 
 from fgsim.config import device
 from fgsim.io.queued_dataset import BatchType
+from fgsim.monitoring.train_log import TrainLog
 from fgsim.utils.check_for_nans import contains_nans
 
 
 class SubNetworkLoss:
-    def __init__(self, pconf: DictConfig) -> None:
-        self.pconf = pconf
-        self.parts: Dict[str, Callable] = {}
-
-        for name, lossconf in pconf.items():
-            assert name != "parts"
-            params = lossconf if lossconf is not None else {}
-            if not hasattr(torch.nn, name):
-                loss = importlib.import_module(f"fgsim.models.loss.{name}").LossGen(
-                    **params
-                )
-            else:
-                loss = getattr(torch.nn, name)().to(device)
-            self.parts[name] = loss
-            setattr(self, name, loss)
-
-    def __call__(self, holder, batch: BatchType):
-        loss = sum([loss(holder, batch) for loss in self.parts.values()])
-        assert not contains_nans(loss)[0]
-        return loss
-
-
-class LossesCol:
     """Holds all losses for a single subnetwork.
     Calling this class should return a single (1D) loss for the gradient step"""
 
-    def __init__(self, pconf: DictConfig) -> None:
+    def __init__(
+        self, subnetworkname: str, pconf: DictConfig, train_logger: TrainLog
+    ) -> None:
+        self.name = subnetworkname
+        self.pconf = pconf
+        self.train_logger = train_logger
+        self.parts: Dict[str, Callable] = {}
+
+        for lossname, lossconf in pconf.items():
+            assert lossname != "parts"
+            params = lossconf if lossconf is not None else {}
+            if not hasattr(torch.nn, lossname):
+                loss = importlib.import_module(
+                    f"fgsim.models.loss.{lossname}"
+                ).LossGen(**params)
+            else:
+                loss = getattr(torch.nn, lossname)().to(device)
+            self.parts[lossname] = loss
+            setattr(self, lossname, loss)
+
+    def __call__(self, holder, batch: BatchType):
+        lossesdict = {
+            lossname: loss(holder, batch) for lossname, loss in self.parts.items()
+        }
+        # write the loss to state so it can be logged later
+        for lossname, loss in lossesdict.items():
+            self.train_logger.log_loss(f"loss.{self.name}.{lossname}", float(loss))
+            holder.state.losses[self.name][lossname].append(float(loss))
+        summedloss = sum([e for e in lossesdict.values()])
+        assert not contains_nans(summedloss)[0]
+        return summedloss
+
+    def __getitem__(self, lossname: str) -> Callable:
+        return self.parts[lossname]
+
+
+class LossesCol:
+    """Holds all losses for all subnetworks as attributes or as a dict."""
+
+    def __init__(self, pconf: DictConfig, train_logger: TrainLog) -> None:
         self.pconf = pconf
         self.parts: Dict[str, SubNetworkLoss] = {}
 
-        for name, submodelconf in pconf.items():
-            snl = SubNetworkLoss(submodelconf.losses)
-            self.parts[name] = snl
-            setattr(self, name, snl)
+        for subnetworkname, subnetworkconf in pconf.items():
+            snl = SubNetworkLoss(
+                subnetworkname, subnetworkconf.losses, train_logger
+            )
+            self.parts[subnetworkname] = snl
+            setattr(self, subnetworkname, snl)
+
+    def __getitem__(self, subnetworkname: str) -> SubNetworkLoss:
+        return self.parts[subnetworkname]

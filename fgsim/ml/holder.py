@@ -14,8 +14,26 @@ from fgsim.ml.loss import LossesCol
 from fgsim.ml.network import SubNetworkCollector
 from fgsim.ml.optim import OptimCol
 from fgsim.monitoring.logger import logger
+from fgsim.monitoring.train_log import TrainLog
 from fgsim.utils.check_for_nans import contains_nans
 from fgsim.utils.push_to_old import push_to_old
+
+
+def start_training_state() -> DictConfig:
+    return OmegaConf.create(
+        {
+            "epoch": 0,
+            "processed_events": 0,
+            "ibatch": 0,
+            "grad_step": 0,
+            "losses": {
+                snwname: {lossname: [] for lossname in snwconf.losses}
+                for snwname, snwconf in conf.models.items()
+            },
+            "val_losses": [],
+            "complete": False,
+        }
+    )
 
 
 class Holder:
@@ -23,22 +41,13 @@ class Holder:
     It manages the checkpointing and holds a member 'state' that contains
     information about the current state of the training"""
 
-    def __init__(
-        self,
-    ) -> None:
-        self.state: DictConfig = OmegaConf.create(
-            {
-                "epoch": 0,
-                "processed_events": 0,
-                "ibatch": 0,
-                "grad_step": 0,
-                "val_losses": [],
-                "complete": False,
-            }
-        )
+    # Nameing convention snw = snw
+    def __init__(self, state: DictConfig, train_logger: TrainLog) -> None:
+        self.state: DictConfig = state
 
         self.models: SubNetworkCollector = SubNetworkCollector(conf.models)
-        self.losses: LossesCol = LossesCol(conf.models)
+        train_logger.log_model_graph(self.models)
+        self.losses: LossesCol = LossesCol(conf.models, train_logger)
         self.optims: OptimCol = OptimCol(conf.models, self.models.get_par_dict())
 
         # try to load a check point
@@ -51,6 +60,13 @@ class Holder:
         self.optims.load_state_dict(self.optims.state_dict())
 
         self.__load_checkpoint()
+        logger.warning(
+            f"Starting training with state {str(OmegaConf.to_yaml(self.state))}"
+        )
+
+        if self.state.complete:
+            logger.warning("Training has been completed, stopping.")
+            exit(0)
 
     def __load_checkpoint(self):
         if not (

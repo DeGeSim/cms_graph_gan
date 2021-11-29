@@ -2,13 +2,12 @@
 
 import time
 
-from omegaconf import OmegaConf
 from tqdm import tqdm
 
 from fgsim.config import conf, device
 from fgsim.io.queued_dataset import BatchType, QueuedDataLoader
 from fgsim.ml.early_stopping import early_stopping
-from fgsim.ml.holder import Holder
+from fgsim.ml.holder import Holder, start_training_state
 from fgsim.ml.validate import validate
 from fgsim.monitoring.logger import logger
 from fgsim.monitoring.train_log import TrainLog
@@ -34,17 +33,10 @@ def training_step(
 
 
 def training_procedure() -> None:
-    holder: Holder = Holder()
-    logger.warning(
-        f"Starting training with state {str(OmegaConf.to_yaml(holder.state))}"
-    )
-
-    if holder.state.complete:
-        logger.warning("Training has been completed, stopping.")
-        exit(0)
-
+    state = start_training_state()
+    train_log = TrainLog(state)
+    holder: Holder = Holder(state, train_log)
     loader: QueuedDataLoader = QueuedDataLoader()
-    train_log = TrainLog(holder)
 
     # Queue that batches
     loader.queue_epoch(n_skip_events=holder.state.processed_events)
@@ -61,12 +53,7 @@ def training_procedure() -> None:
                     batch = next(loader.qfseq)
                 except StopIteration:
                     # If there is no next batch go to the next epoch
-                    if not conf.debug:
-                        train_log.experiment.log_epoch_end(
-                            holder.state["epoch"],
-                            step=holder.state["grad_step"],
-                        )
-                    logger.warning("New epoch!")
+                    train_log.next_epoch()
                     holder.state.epoch += 1
                     holder.state.ibatch = 0
                     loader.queue_epoch(n_skip_events=holder.state.processed_events)
@@ -83,6 +70,7 @@ def training_procedure() -> None:
             validate(holder, loader)
             holder.save_checkpoint()
         # Stopping
+        holder.state.complete = True
         train_log.end()
         holder.save_checkpoint()
 

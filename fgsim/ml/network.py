@@ -36,3 +36,6 @@ class SubNetworkCollector(torch.nn.Module):
         return {
             name: submodel.parameters() for name, submodel in self.parts.items()
         }
+
+    def __getitem__(self, subnetworkname: str) -> torch.nn.Module:
+        return self.parts[subnetworkname]

@@ -1,5 +1,6 @@
 import comet_ml
 from omegaconf import OmegaConf
+from omegaconf.dictconfig import DictConfig
 from torch.utils.tensorboard import SummaryWriter
 
 from fgsim.config import conf, hyperparameters
@@ -90,7 +91,7 @@ def setup_writer():
     return SummaryWriter(conf.path.tensorboard)
 
 
-def setup_experiment(model_holder) -> comet_ml.ExistingExperiment:
+def setup_experiment(state: DictConfig) -> comet_ml.ExistingExperiment:
     experiment = get_experiment()
 
     # Format the hyperparameter for comet
@@ -99,12 +100,13 @@ def setup_experiment(model_holder) -> comet_ml.ExistingExperiment:
     for tag in set(conf.tag.split("_")):
         experiment.add_tag(tag)
 
-    experiment.set_model_graph(str(model_holder.models))
+    for snwname, snwconf in conf.models.items():
+        # log the models
+        experiment.log_code(file_name=f"fgsim/models/subnetworks/{snwconf.name}.py")
+        # log the losses
+        for lossconf in snwconf.losses:
+            experiment.log_code(file_name=f"fgsim/models/loss/{lossconf}.py")
 
-    for part_name in conf.models:
-        codepath = str(conf.models[part_name]["name"]).replace(".", "/")
-        experiment.log_code(file_name=f"fgsim/models/{codepath}.py")
-
-    experiment.set_step(model_holder.state["grad_step"])
-    experiment.set_epoch(model_holder.state["epoch"])
+    experiment.set_step(state["grad_step"])
+    experiment.set_epoch(state["epoch"])
     return experiment

@@ -11,7 +11,20 @@
         "jupyter.jupyterServerType": "local",
         "python.languageServer": "Jedi",
         "debug.console.closeOnEnd": true,
-        "debug.terminal.clearBeforeReusing": true
+        "debug.terminal.clearBeforeReusing": true,
+        "terminal.integrated.profiles.linux": {
+            "bash": {
+              "icon": "terminal-bash",
+              "path": "bash"
+            },
+            "zsh": {
+              "path": "zsh",
+              "env": {
+                "PATH": "/home/mscham/fgsim/.tox/py38/bin:/home/mscham/.apps/goapps/bin:/home/mscham/.local/cargo/bin:/home/mscham/.local/nodejs/bin:/home/mscham/.apps/pyenv/shims:/home/mscham/.apps/pyenv/bin:/home/mscham/.local/pylibs-CentOSLinux7/bin:/home/mscham/.apps/CentOSLinux7/bin:/home/mscham/.apps/appimages:/home/mscham/.conf/scripts:/home/mscham/.bin:/software/tools/bin:/usr/local/cuda-11.1/bin:/software/cuda/cuda-11.1/bin:/software/gcc/9.3/bin:/home/mscham/.apps/goapps/bin:/home/mscham/.local/cargo/bin:/home/mscham/.local/nodejs/bin:/home/mscham/.apps/pyenv/shims:/home/mscham/.apps/pyenv/bin:/home/mscham/.local/pylibs-CentOSLinux7/bin:/home/mscham/.apps/CentOSLinux7/bin:/home/mscham/.apps/appimages:/home/mscham/.conf/scripts:/home/mscham/.bin:/software/tools/bin:/usr/lpp/mmfs/bin:/usr/lib64/ccache:/usr/local/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/opt/puppetlabs/bin:/home/mscham/.local/bin:/home/mscham/.local/bin:/home/mscham/.apps/fzf/bin",
+                "VIRTUAL_ENV":"/home/mscham/fgsim/.tox/py38",
+              },
+            }
+          },
     },
     "launch": {
         "version": "0.2.0",
