@@ -11,6 +11,7 @@ models:
             support: 10
         losses:
             WGenLoss: ${loss_options[WGenLoss]}
+            mean_dist: ${loss_options[WGenLoss]}
         optim:
             name: Adam
             params: ${optim_options[Adam]}
@@ -33,6 +34,8 @@ loss_options:
     GradientPenalty:
         factor: 1.0
         gamma: 1.0
+    mean_dist:
+        factor: 1.0
 optim_options:
     Adam:
         weight_decay: 0.0001
