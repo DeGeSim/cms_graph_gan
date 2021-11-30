@@ -74,7 +74,7 @@ path:
     log: "${path.run_path}/log"
 
 loader: ${loader_options[${loader_name}]}
-
+loader_name: hgcal
 loader_options:
     clic:
         qf_seq_name: "clic_seq"
@@ -94,8 +94,8 @@ loader_options:
         validation_set_size: 5000
         test_set_size: 30000
         prefetch_batches: 2
-        num_workers_transform: 1
-        num_workers_stack: 1
+        num_workers_transform: 15
+        num_workers_stack: 2
     hgcal:
         qf_seq_name: "hgcal_seq"
         rootprefix: "treeMaker/tree"
@@ -132,7 +132,7 @@ loader_options:
     pc:
         qf_seq_name: "pc_seq"
         rootprefix: "treeMaker/tree"
-        preprocess_training: False
+        preprocess_training: True
         braches:
             id: "simHit_detid"
             energy: "genPh_E"
