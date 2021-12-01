@@ -47,7 +47,8 @@ class ModelClass(nn.Module):
                 )
             vertex_num = int(vertex_num * degrees[inx])
 
-    def forward(self, tree):
+    def forward(self, z):
+        tree = [z]
         feat = self.gcn(tree)
 
         self.pointcloud = feat[-1]
