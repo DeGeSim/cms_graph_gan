@@ -107,6 +107,11 @@ class ValidationLoss:
             self.train_logger.log_loss(f"loss.{self.name}.{lossname}", loss)
             # Reset to 0
             self._lastlosses[lossname] = 0
+        sum_loss = sum(
+            [state.val_losses[lossname][-1] for lossname in state.val_losses]
+        )
+        state.val_loss_sum.append(sum_loss)
+        self.train_logger.log_loss(f"loss.val_loss_sum", sum_loss)
 
     def __getitem__(self, lossname: str) -> Callable:
         return self.parts[lossname]

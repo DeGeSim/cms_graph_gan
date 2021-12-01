@@ -46,6 +46,6 @@ class LossGen:
 
         gradient_penalty = (
             ((gradients.norm(2, dim=1) - self.gamma) / self.gamma) ** 2
-        ).mean() * self.factor
+        ).mean()
 
-        return gradient_penalty
+        return self.factor * gradient_penalty

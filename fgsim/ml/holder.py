@@ -31,6 +31,7 @@ def start_training_state() -> DictConfig:
                 for snwname, snwconf in conf.models.items()
             },
             "val_losses": {lossname: [] for lossname in conf.training.val_loss},
+            "val_loss_sum": [],
             "complete": False,
         }
     )
