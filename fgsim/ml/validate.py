@@ -24,6 +24,10 @@ def validate(holder: Holder, loader: QueuedDataLoader) -> None:
         del batch
 
     holder.val_loss.log_losses(holder.state)
+    val_loss_name = list(holder.state.val_losses.keys())[0]
+    val_losses = holder.state.val_losses[val_loss_name]
+    if min(val_losses) == val_losses[-1]:
+        holder.best_model_state = holder.models.state_dict()
 
 
 def log_validation(holder: Holder, train_log: TrainLog):
