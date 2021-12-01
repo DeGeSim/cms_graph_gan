@@ -10,7 +10,7 @@ from omegaconf import OmegaConf
 from omegaconf.dictconfig import DictConfig
 
 from fgsim.config import conf, device
-from fgsim.ml.loss import LossesCol
+from fgsim.ml.loss import LossesCol, ValidationLoss
 from fgsim.ml.network import SubNetworkCollector
 from fgsim.ml.optim import OptimCol
 from fgsim.monitoring.logger import logger
@@ -30,7 +30,7 @@ def start_training_state() -> DictConfig:
                 snwname: {lossname: [] for lossname in snwconf.losses}
                 for snwname, snwconf in conf.models.items()
             },
-            "val_losses": [],
+            "val_losses": {lossname: [] for lossname in conf.training.val_loss},
             "complete": False,
         }
     )
@@ -47,7 +47,8 @@ class Holder:
 
         self.models: SubNetworkCollector = SubNetworkCollector(conf.models)
         train_logger.log_model_graph(self.models)
-        self.losses: LossesCol = LossesCol(conf.models, train_logger)
+        self.losses: LossesCol = LossesCol(train_logger)
+        self.val_loss: ValidationLoss = ValidationLoss(train_logger)
         self.optims: OptimCol = OptimCol(conf.models, self.models.get_par_dict())
 
         # try to load a check point
@@ -67,6 +68,10 @@ class Holder:
         if self.state.complete:
             logger.warning("Training has been completed, stopping.")
             exit(0)
+
+        # Keep the generated samples ready, to be accessed by the losses
+        self.gen_points: torch.Tensor = None
+        self.gen_points_w_grad: torch.Tensor = None
 
     def __load_checkpoint(self):
         if not (
@@ -108,3 +113,15 @@ class Holder:
         )
         push_to_old(conf.path.state, conf.path.state_old)
         OmegaConf.save(config=self.state, f=conf.path.state)
+
+    def gen_noise(self) -> torch.Tensor:
+        return torch.randn(conf.loader.batch_size, 1, 96).to(device)
+
+    def reset_gen_points(self) -> None:
+        with torch.no_grad():
+            z = self.gen_noise()
+            self.gen_points = self.models.gen(z)
+
+    def reset_gen_points_w_grad(self) -> None:
+        z = self.gen_noise()
+        self.gen_points_w_grad = self.models.gen(z)

@@ -1,21 +1,17 @@
-from dataclasses import dataclass
 from typing import Optional
 
 import torch
 
-from fgsim.config import conf, device
 from fgsim.ml.holder import Holder
 
 
-@dataclass
 class LossGen:
-    factor: float
+    def __init__(self, factor: float = 1.0):
+        self.factor: float = factor
+        self.lossf = torch.nn.MSELoss()
 
     def __call__(self, holder: Holder, batch: Optional[torch.Tensor]):
         batch_means = torch.mean(batch, (0, 1))
-        z = torch.randn(conf.loader.batch_size, 1, 96).to(device)
-        tree = [z]
-        fake_point = holder.models.gen(tree)
-        fake_means = torch.mean(fake_point, (0, 1))
-        loss = torch.F.mse_loss(fake_means, batch_means)
+        fake_means = torch.mean(holder.gen_points_w_grad, (0, 1))
+        loss = self.lossf(fake_means, batch_means)
         return self.factor * loss

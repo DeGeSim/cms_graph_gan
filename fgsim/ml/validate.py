@@ -1,6 +1,5 @@
 from copy import deepcopy
 
-import torch
 from tqdm import tqdm
 
 from fgsim.config import conf, device
@@ -9,29 +8,22 @@ from fgsim.ml.holder import Holder
 from fgsim.monitoring.logger import logger
 from fgsim.monitoring.train_log import TrainLog
 from fgsim.utils.batch_utils import move_batch_to_device
-from fgsim.utils.check_for_nans import check_chain_for_nans, is_anormal_tensor
+from fgsim.utils.check_for_nans import check_chain_for_nans
 
 
 def validate(holder: Holder, loader: QueuedDataLoader) -> None:
-    holder.model.eval()
-    check_chain_for_nans((holder.model,))
-    losses = []
+    holder.models.eval()
+    check_chain_for_nans((holder.models,))
     # Make sure the batches are loaded
     _ = loader.validation_batches
     # Iterate over the validation sample
     for batch in tqdm(loader.validation_batches, postfix="validating"):
-        batch_gpu = move_batch_to_device(batch, device)
-        with torch.no_grad():
-            prediction = torch.squeeze(holder.model(batch_gpu).T)
-            loss = holder.lossf(ytrue=batch_gpu.ytrue, ypred=prediction)
-        if is_anormal_tensor(loss):
-            raise ValueError
-        losses.append(loss)
-        del batch_gpu
+        batch = move_batch_to_device(batch, device)
+        holder.reset_gen_points()
+        holder.val_loss(holder, batch)
+        del batch
 
-    mean_loss = torch.mean(torch.tensor(losses))
-
-    holder.state.val_losses.append(float(mean_loss))
+    holder.val_loss.log_losses(holder.state)
 
 
 def log_validation(holder: Holder, train_log: TrainLog):

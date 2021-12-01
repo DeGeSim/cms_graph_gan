@@ -36,6 +36,8 @@ loss_options:
         gamma: 1.0
     mean_dist:
         factor: 1.0
+    frechetpcdist:
+        factor: 1.0
 optim_options:
     Adam:
         weight_decay: 0.0001
@@ -46,6 +48,8 @@ optim_options:
 training:
     events_processed_before_validation: 100000
     validation_interval: "${div:${training.events_processed_before_validation},${loader.batch_size}}"
+    val_loss:
+        WDiscLoss: ${loss_options[WDiscLoss]}
     disc_steps_per_gen_step: 10
     early_stopping:
         validation_steps: 40

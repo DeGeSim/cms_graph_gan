@@ -20,6 +20,8 @@ def training_step(
 ) -> None:
     # set all optimizers to a 0 gradient
     holder.optims.zero_grad()
+    # generate a new batch with the generator
+    holder.reset_gen_points()
     d_loss = holder.losses.disc(holder, batch)
     d_loss.backward()
     holder.optims.disc.step()
@@ -27,6 +29,9 @@ def training_step(
     # generator
     if holder.state.ibatch % conf.training.disc_steps_per_gen_step == 0:
         holder.models.gen.zero_grad()
+        # generate a new batch with the generator, but with
+        # points thought the generator this time
+        holder.reset_gen_points_w_grad()
         g_loss = holder.losses.gen(holder, batch)
         g_loss.backward()
         holder.optims.gen.step()
