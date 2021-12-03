@@ -49,7 +49,6 @@ def training_procedure() -> None:
     try:
         while not early_stopping(holder.state):
             # switch model in training mode
-            validate(holder, loader)
             holder.models.train()
             for _ in tqdm(
                 range(conf.training.validation_interval), postfix="training"
@@ -79,6 +78,7 @@ def training_procedure() -> None:
         holder.state.complete = True
         train_log.end()
         holder.save_checkpoint()
+        exit(0)
 
     except Exception as error:
         logger.error("Error detected, stopping qfseq.")
