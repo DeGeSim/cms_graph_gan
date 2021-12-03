@@ -1,10 +1,11 @@
 import hashlib
 import os
 import random
+from typing import List, Tuple
 
 import numpy as np
 import torch
-from omegaconf import OmegaConf
+from omegaconf import DictConfig, OmegaConf
 
 from fgsim.utils.cli import args
 
@@ -52,23 +53,38 @@ def get_device() -> torch.device:
 
 device = get_device()
 
+
+def gethash(omconf: DictConfig, excluded_keys: List[str]) -> Tuple[DictConfig, str]:
+    filtered_omconf = OmegaConf.masked_copy(
+        omconf,
+        [k for k in conf.keys() if k not in excluded_keys],
+    )
+    OmegaConf.resolve(filtered_omconf)
+    omhash = str(hashlib.sha1(str(filtered_omconf).encode()).hexdigest()[:7])
+    return filtered_omconf, omhash
+
+
 # Exclude the keys that do not affect the training
-hyperparameters = OmegaConf.masked_copy(
-    conf,
-    [k for k in conf.keys() if k not in ["command", "debug", "loglevel", "path"]],
+hyperparameters, conf["hash"] = gethash(
+    conf, ["command", "debug", "loglevel", "path"]
 )
+# hyperparameters = OmegaConf.masked_copy(
+#     conf,
+#     [k for k in conf.keys() if k not in ["command", "debug", "loglevel", "path"]],
+# )
 
-OmegaConf.resolve(hyperparameters)
+# OmegaConf.resolve(hyperparameters)
 
-# Compute the hash
-conf["hash"] = str(hashlib.sha1(str(hyperparameters).encode()).hexdigest()[:7])
-hyperparameters["hash"] = conf["hash"]
+# # Compute the hash
+# conf["hash"] = str(hashlib.sha1(str(hyperparameters).encode()).hexdigest()[:7])
+# hyperparameters["hash"] = conf["hash"]
+
+
 # Conmpute a loaderhash
 # this hash will be part of where the preprocessed
 # dataset is safed to ensure the parameters dont change
-conf["loaderhash"] = str(
-    hashlib.sha1(str(hyperparameters["loader"]).encode()).hexdigest()[:7]
-)
+# Exclude the keys that do not affect the training
+_, conf["loaderhash"] = gethash(conf["loader"], ["preprocess_training"])
 
 os.makedirs(conf.path.run_path, exist_ok=True)
 
