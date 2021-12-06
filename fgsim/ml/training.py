@@ -2,6 +2,7 @@
 
 import time
 
+from queueflow.batch_utils import move_batch_to_device
 from tqdm import tqdm
 
 from fgsim.config import conf, device
@@ -11,7 +12,6 @@ from fgsim.ml.holder import Holder, start_training_state
 from fgsim.ml.validate import validate
 from fgsim.monitoring.logger import logger
 from fgsim.monitoring.train_log import TrainLog
-from fgsim.utils.batch_utils import move_batch_to_device
 
 
 def training_step(

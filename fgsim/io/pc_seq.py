@@ -52,11 +52,13 @@ class Event:
         self.pc = self.pc.to(*args, **kwargs)
         for key, val in self.hlvs.items():
             self.hlvs[key] = val.to(*args, **kwargs)
+        return self
 
     def clone(self, *args, **kwargs):
         self.pc = self.pc.clone(*args, **kwargs)
         for key, val in self.hlvs.items():
             self.hlvs[key] = val.clone(*args, **kwargs)
+        return self
 
 
 class Batch(Event):
@@ -67,7 +69,6 @@ class Batch(Event):
             for key in events[0].hlvs
         }
         super().__init__(pc, hlvs)
-        pass
 
     def split(self) -> List[Event]:
         outL = []
@@ -212,5 +213,5 @@ def postprocess_event(pc: GenOutput) -> Event:
     return Event(padded_pc, hlvs)
 
 
-def unbatch(batch: Batch) -> List[Event]:
-    return batch.split()
+def unstack_GenOutput(batch: GenOutput) -> List[torch.Tensor]:
+    return [batch[ievent] for ievent in range(batch.shape[0])]

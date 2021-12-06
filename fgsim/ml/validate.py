@@ -1,5 +1,6 @@
 from copy import deepcopy
 
+from queueflow.batch_utils import move_batch_to_device
 from tqdm import tqdm
 
 from fgsim.config import conf, device
@@ -7,7 +8,6 @@ from fgsim.io.queued_dataset import QueuedDataLoader
 from fgsim.ml.holder import Holder
 from fgsim.monitoring.logger import logger
 from fgsim.monitoring.train_log import TrainLog
-from fgsim.utils.batch_utils import move_batch_to_device
 from fgsim.utils.check_for_nans import check_chain_for_nans
 
 

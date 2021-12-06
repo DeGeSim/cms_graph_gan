@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 import torch
+from queueflow.batch_utils import move_batch_to_device
 from tqdm import tqdm
 
 from fgsim.config import conf, device
@@ -8,7 +9,6 @@ from fgsim.io.queued_dataset import QueuedDataLoader
 from fgsim.ml.holder import Holder
 from fgsim.monitoring.logger import logger
 from fgsim.monitoring.monitor import setup_experiment
-from fgsim.utils.batch_utils import move_batch_to_device
 
 
 def prediction_procedure() -> None:

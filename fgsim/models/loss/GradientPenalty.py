@@ -21,12 +21,12 @@ class LossGen:
     gamma: float = 1.0
 
     def __call__(self, holder: Holder, batch: Batch) -> torch.float:
-        real_data = batch.data
+        real_data = batch.pc
         alpha = torch.rand(conf.loader.batch_size, 1, 1, requires_grad=True).to(
             device
         )
         # randomly mix real and fake data
-        interpolates = real_data + alpha * (holder.gen_points - real_data)
+        interpolates = real_data + alpha * (holder.gen_points.pc - real_data)
         # compute output of D for interpolated input
         disc_interpolates = holder.models.disc(interpolates)
         # compute gradients w.r.t the interpolated outputs

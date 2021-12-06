@@ -69,9 +69,6 @@ class LossesCol:
 
 
 class ValidationLoss:
-    """Holds all losses for a single subnetwork.
-    Calling this class should return a single (1D) loss for the gradient step"""
-
     def __init__(self, train_logger: TrainLog) -> None:
         self.name = "val_loss"
         self.train_logger = train_logger

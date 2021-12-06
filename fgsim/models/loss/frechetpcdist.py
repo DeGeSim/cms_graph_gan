@@ -34,7 +34,7 @@ class LossGen:
 
     def __call__(self, holder: Holder, batch: Batch) -> torch.float:
         loss = self.calculate_fpd(
-            holder.gen_points,
+            holder.gen_points.pc,
             batch,
         )
         return self.factor * loss
