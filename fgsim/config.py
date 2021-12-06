@@ -68,23 +68,15 @@ def gethash(omconf: DictConfig, excluded_keys: List[str]) -> Tuple[DictConfig, s
 hyperparameters, conf["hash"] = gethash(
     conf, ["command", "debug", "loglevel", "path"]
 )
-# hyperparameters = OmegaConf.masked_copy(
-#     conf,
-#     [k for k in conf.keys() if k not in ["command", "debug", "loglevel", "path"]],
-# )
-
-# OmegaConf.resolve(hyperparameters)
-
-# # Compute the hash
-# conf["hash"] = str(hashlib.sha1(str(hyperparameters).encode()).hexdigest()[:7])
-# hyperparameters["hash"] = conf["hash"]
-
 
 # Conmpute a loaderhash
 # this hash will be part of where the preprocessed
 # dataset is safed to ensure the parameters dont change
 # Exclude the keys that do not affect the training
-_, conf["loaderhash"] = gethash(conf["loader"], ["preprocess_training"])
+_, conf["loaderhash"] = gethash(
+    conf["loader"],
+    ["preprocess_training"] + [x for x in conf["loader"] if "num_workers" in x],
+)
 
 os.makedirs(conf.path.run_path, exist_ok=True)
 
