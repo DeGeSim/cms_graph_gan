@@ -6,7 +6,7 @@ import torch
 from omegaconf.dictconfig import DictConfig
 
 from fgsim.config import conf, device
-from fgsim.io.queued_dataset import BatchType
+from fgsim.io.queued_dataset import Batch
 from fgsim.monitoring.train_log import TrainLog
 from fgsim.utils.check_for_nans import contains_nans
 
@@ -35,7 +35,7 @@ class SubNetworkLoss:
             self.parts[lossname] = loss
             setattr(self, lossname, loss)
 
-    def __call__(self, holder, batch: BatchType):
+    def __call__(self, holder, batch: Batch):
         lossesdict = {
             lossname: loss(holder, batch) for lossname, loss in self.parts.items()
         }
@@ -92,7 +92,7 @@ class ValidationLoss:
             self.parts[lossname] = loss
             setattr(self, lossname, loss)
 
-    def __call__(self, holder, batch: BatchType) -> None:
+    def __call__(self, holder, batch: Batch) -> None:
         # During the validation, this function is called once per batch.
         # All losses are save in a dict for later evaluation log_lossses
         with torch.no_grad():

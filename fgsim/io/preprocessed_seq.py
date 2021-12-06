@@ -16,8 +16,8 @@ from fgsim.config import conf
 # Import the specified processing sequence
 sel_seq = importlib.import_module(f"fgsim.io.{conf.loader.qf_seq_name}")
 
-BatchType = sel_seq.BatchType
-DataSetType = List[BatchType]
+Batch = sel_seq.Batch
+DataSetType = List[Batch]
 
 # Load files
 dataset_path = Path(conf.path.training)

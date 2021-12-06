@@ -4,7 +4,7 @@ import torch
 from torch.autograd import grad
 
 from fgsim.config import conf, device
-from fgsim.io.queued_dataset import BatchType
+from fgsim.io.queued_dataset import Batch
 from fgsim.ml.holder import Holder
 
 
@@ -20,7 +20,7 @@ class LossGen:
     factor: float = 1.0
     gamma: float = 1.0
 
-    def __call__(self, holder: Holder, batch: BatchType) -> torch.float:
+    def __call__(self, holder: Holder, batch: Batch) -> torch.float:
         real_data = batch.data
         alpha = torch.rand(conf.loader.batch_size, 1, 1, requires_grad=True).to(
             device

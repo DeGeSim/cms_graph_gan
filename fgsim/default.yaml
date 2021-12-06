@@ -150,3 +150,4 @@ loader_options:
         prefetch_batches: 2
         num_workers_transform: 30
         num_workers_stack: 2
+        num_workers_postprocess: 5

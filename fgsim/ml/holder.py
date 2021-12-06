@@ -74,6 +74,11 @@ class Holder:
         self.gen_points: torch.Tensor = None
         self.gen_points_w_grad: torch.Tensor = None
 
+        # This sequece should be applield a after the generation
+        from fgsim.io.postprocessor import Postprocessor
+
+        self.postprocessor = Postprocessor()
+
     def __load_checkpoint(self):
         if not (
             os.path.isfile(conf.path.state) and os.path.isfile(conf.path.checkpoint)
@@ -115,14 +120,17 @@ class Holder:
         push_to_old(conf.path.state, conf.path.state_old)
         OmegaConf.save(config=self.state, f=conf.path.state)
 
+    # Define the methods, that equip the with the generated batches
     def gen_noise(self) -> torch.Tensor:
         return torch.randn(conf.loader.batch_size, 1, 96).to(device)
 
     def reset_gen_points(self) -> None:
         with torch.no_grad():
             z = self.gen_noise()
-            self.gen_points = self.models.gen(z)
+            pc = self.models.gen(z)
+            self.gen_points = self.postprocessor(pc)
 
     def reset_gen_points_w_grad(self) -> None:
         z = self.gen_noise()
-        self.gen_points_w_grad = self.models.gen(z)
+        pc = self.models.gen(z)
+        self.gen_points_w_grad = self.postprocessor(pc)

@@ -4,6 +4,7 @@ to graphs are definded. `process_seq` is the function that \
 should be passed the qfseq.
 """
 import os
+from dataclasses import dataclass
 from math import prod
 from pathlib import Path
 from typing import Dict, List, Tuple
@@ -27,6 +28,7 @@ if len(files) < 1:
     raise RuntimeError("No hdf5 datasets found")
 
 ChunkType = List[Tuple[Path, int, int]]
+GenOutput = torch.Tensor
 
 # load lengths
 if not os.path.isfile(conf.path.ds_lenghts):
@@ -40,7 +42,40 @@ else:
     with open(conf.path.ds_lenghts, "r") as f:
         len_dict = yaml.load(f, Loader=yaml.SafeLoader)
 
-BatchType = torch.Tensor
+
+@dataclass
+class Event:
+    pc: torch.Tensor
+    hlvs: Dict[str, torch.Tensor]
+
+    def to(self, *args, **kwargs):
+        self.pc = self.pc.to(*args, **kwargs)
+        for key, val in self.hlvs.items():
+            self.hlvs[key] = val.to(*args, **kwargs)
+
+    def clone(self, *args, **kwargs):
+        self.pc = self.pc.clone(*args, **kwargs)
+        for key, val in self.hlvs.items():
+            self.hlvs[key] = val.clone(*args, **kwargs)
+
+
+class Batch(Event):
+    def __init__(self, *events: Event):
+        pc = torch.stack([event.pc for event in events])
+        hlvs = {
+            key: torch.stack([event.hlvs[key] for event in events])
+            for key in events[0].hlvs
+        }
+        super().__init__(pc, hlvs)
+        pass
+
+    def split(self) -> List[Event]:
+        outL = []
+        for ievent in range(self.pc.shape[0]):
+            e_pc = self.pc[ievent]
+            e_hlvs = {key: self.hlvs[key][ievent] for key in self.hlvs}
+            outL.append(Event(e_pc, e_hlvs))
+        return outL
 
 
 npoints = prod(conf.models.gen.param.degrees)
@@ -51,12 +86,12 @@ def process_seq():
     return (
         qf.ProcessStep(read_chunk, 2, name="read_chunk"),
         qf.PoolStep(
-            hitlist_to_pc,
+            transform,
             nworkers=conf.loader.num_workers_transform,
             name="transform",
         ),
         qf.RepackStep(conf.loader.batch_size),
-        qf.ProcessStep(batch, 1, name="batch"),
+        qf.ProcessStep(aggregate_to_batch, 1, name="batch"),
         # Needed for outputs to stay in order.
         qf.ProcessStep(
             magic_do_nothing,
@@ -89,16 +124,22 @@ def read_chunk(chunks: ChunkType) -> ak.highlevel.Array:
     return output
 
 
-def batch(list_of_graphs: List[torch.Tensor]) -> torch.Tensor:
-    batch = torch.stack(list_of_graphs)
+def aggregate_to_batch(list_of_graphs: List[Event]) -> Batch:
+    batch = Batch(*list_of_graphs)
     return batch
 
 
-def magic_do_nothing(batch: torch.Tensor) -> torch.Tensor:
+def magic_do_nothing(batch: Batch) -> Batch:
     return batch
 
 
-def hitlist_to_pc(event: ak.highlevel.Record) -> torch.Tensor:
+def transform(hitlist: ak.highlevel.Record) -> Event:
+    pc = hitlist_to_pc(hitlist)
+    event = postprocess_event(pc)
+    return event
+
+
+def hitlist_to_pc(event: ak.highlevel.Record) -> GenOutput:
     key_id = conf.loader.braches.id
     key_hit_energy = conf.loader.braches.hit_energy
 
@@ -130,7 +171,46 @@ def hitlist_to_pc(event: ak.highlevel.Record) -> torch.Tensor:
     pc = torch.hstack((hit_energies.view(-1, 1), xyzpos))
 
     pc = pc.float()
+
+    return pc
+
+
+def stand_mom(
+    vec: torch.Tensor, mean: torch.Tensor, std: torch.Tensor, order: int
+) -> torch.Tensor:
+    return torch.mean(torch.pow(vec - mean, order)) / torch.pow(std, order / 2.0)
+
+
+def postprocess_event(pc: GenOutput) -> Event:
+    hlvs: Dict[str, torch.Tensor] = {}
+
+    hlvs["energy_sum"] = torch.sum(pc[:, 0])
+    hlvs["energy_sum_std"] = torch.std(pc[:, 0])
+    e_weight = pc[:, 0] / hlvs["energy_sum"]
+
+    for irow, key in enumerate(conf.loader.cell_prop_keys, start=1):
+        vec = pc[:, irow]
+        mean = torch.mean(vec)
+        std = torch.std(vec)
+        hlvs[key + "_mean"] = mean
+        hlvs[key + "_std"] = std
+        hlvs[key + "_mom3"] = stand_mom(vec, mean, std, 3)
+        hlvs[key + "_mom4"] = stand_mom(vec, mean, std, 4)
+
+        vec_ew = vec * e_weight
+        mean = torch.mean(vec_ew)
+        std = torch.std(vec_ew)
+        hlvs[key + "_mean_ew"] = mean
+        hlvs[key + "_std_ew"] = std
+        hlvs[key + "_mom3_ew"] = stand_mom(vec, mean, std, 3)
+        hlvs[key + "_mom4_ew"] = stand_mom(vec, mean, std, 4)
+
     padded_pc = torch.nn.functional.pad(
         pc, (0, 0, 0, npoints - pc.shape[0]), mode="constant", value=0
     )
-    return padded_pc
+
+    return Event(padded_pc, hlvs)
+
+
+def unbatch(batch: Batch) -> List[Event]:
+    return batch.split()

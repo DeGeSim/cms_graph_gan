@@ -2,7 +2,7 @@ from dataclasses import dataclass
 
 import torch
 
-from fgsim.io.queued_dataset import BatchType
+from fgsim.io.queued_dataset import Batch
 from fgsim.ml.holder import Holder
 
 
@@ -10,7 +10,7 @@ from fgsim.ml.holder import Holder
 class LossGen:
     factor: float
 
-    def __call__(self, holder: Holder, batch: BatchType) -> torch.float:
+    def __call__(self, holder: Holder, batch: Batch) -> torch.float:
         # EM dist loss:
         D_realm = holder.models.disc(batch).mean()
         D_fakem = holder.models.disc(holder.gen_points).mean()

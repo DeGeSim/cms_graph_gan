@@ -7,7 +7,7 @@ from scipy.linalg import sqrtm
 from tqdm import tqdm
 
 from fgsim.config import conf, device
-from fgsim.io.queued_dataset import BatchType
+from fgsim.io.queued_dataset import Batch
 from fgsim.ml.holder import Holder
 from fgsim.models.subnetworks.pointnet import PointNetCls
 
@@ -32,7 +32,7 @@ class LossGen:
         self.model.to(device)
         self.model.eval()
 
-    def __call__(self, holder: Holder, batch: BatchType) -> torch.float:
+    def __call__(self, holder: Holder, batch: Batch) -> torch.float:
         loss = self.calculate_fpd(
             holder.gen_points,
             batch,
