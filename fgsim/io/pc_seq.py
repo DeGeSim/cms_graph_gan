@@ -4,10 +4,10 @@ to graphs are definded. `process_seq` is the function that \
 should be passed the qfseq.
 """
 import os
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from math import prod
 from pathlib import Path
-from typing import Dict, List, Tuple
+from typing import Dict, List, Optional, Tuple
 
 import awkward as ak
 import numpy as np
@@ -28,7 +28,6 @@ if len(files) < 1:
     raise RuntimeError("No datasets found")
 
 ChunkType = List[Tuple[Path, int, int]]
-GenOutput = torch.Tensor
 
 # load lengths
 if not os.path.isfile(conf.path.ds_lenghts):
@@ -49,7 +48,7 @@ else:
 @dataclass
 class Event:
     pc: torch.Tensor
-    hlvs: Dict[str, torch.Tensor]
+    hlvs: Dict[str, torch.Tensor] = field(default_factory=dict)
 
     def to(self, *args, **kwargs):
         self.pc = self.pc.to(*args, **kwargs)
@@ -65,13 +64,21 @@ class Event:
 
 
 class Batch(Event):
-    def __init__(self, *events: Event):
+    def __init__(
+        self, pc: torch.Tensor, hlvs: Optional[Dict[str, torch.Tensor]] = None
+    ):
+        if hlvs is None:
+            hlvs = {}
+        super().__init__(pc, hlvs)
+
+    @classmethod
+    def from_event_list(cls, *events: Event):
         pc = torch.stack([event.pc for event in events])
         hlvs = {
             key: torch.stack([event.hlvs[key] for event in events])
             for key in events[0].hlvs
         }
-        super().__init__(pc, hlvs)
+        return cls(pc=pc, hlvs=hlvs)
 
     def split(self) -> List[Event]:
         outL = []
@@ -129,7 +136,7 @@ def read_chunk(chunks: ChunkType) -> ak.highlevel.Array:
 
 
 def aggregate_to_batch(list_of_graphs: List[Event]) -> Batch:
-    batch = Batch(*list_of_graphs)
+    batch = Batch.from_event_list(*list_of_graphs)
     return batch
 
 
@@ -143,7 +150,7 @@ def transform(hitlist: ak.highlevel.Record) -> Event:
     return event
 
 
-def hitlist_to_pc(event: ak.highlevel.Record) -> GenOutput:
+def hitlist_to_pc(event: ak.highlevel.Record) -> Event:
     key_id = conf.loader.braches.id
     key_hit_energy = conf.loader.braches.hit_energy
 
@@ -176,7 +183,7 @@ def hitlist_to_pc(event: ak.highlevel.Record) -> GenOutput:
 
     pc = pc.float()
 
-    return pc
+    return Event(pc)
 
 
 def stand_mom(
@@ -185,7 +192,8 @@ def stand_mom(
     return torch.mean(torch.pow(vec - mean, order)) / torch.pow(std, order / 2.0)
 
 
-def postprocess_event(pc: GenOutput) -> Event:
+def postprocess_event(event: Event) -> Event:
+    pc = event.pc
     hlvs: Dict[str, torch.Tensor] = {}
 
     hlvs["energy_sum"] = torch.sum(pc[:, 0])
@@ -216,5 +224,5 @@ def postprocess_event(pc: GenOutput) -> Event:
     return Event(padded_pc, hlvs)
 
 
-def unstack_GenOutput(batch: GenOutput) -> List[torch.Tensor]:
-    return [batch[ievent] for ievent in range(batch.shape[0])]
+# def unstack_batch(batch: torch.Tensor) -> List[torch.Tensor]:
+#     return [batch[ievent] for ievent in range(batch.shape[0])]

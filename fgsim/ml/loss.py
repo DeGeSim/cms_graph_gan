@@ -81,8 +81,13 @@ class ValidationLoss:
             assert lossname != "parts"
             params = lossconf if lossconf is not None else {}
             if not hasattr(torch.nn, lossname):
+                filename = (
+                    params["function_file"]
+                    if "function_file" in params
+                    else lossname
+                )
                 loss = importlib.import_module(
-                    f"fgsim.models.loss.{lossname}"
+                    f"fgsim.models.loss.{filename}"
                 ).LossGen(**params)
             else:
                 loss = getattr(torch.nn, lossname)().to(device)

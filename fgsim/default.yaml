@@ -26,6 +26,14 @@ models:
             name: Adam
             params: ${optim_options[Adam]}
 
+optim_options:
+    Adam:
+        weight_decay: 0.0001
+        lr: 0.0002
+    SGD:
+        lr: 0.0002
+
+
 loss_options:
     WGenLoss:
         factor: 1.0
@@ -38,18 +46,142 @@ loss_options:
         factor: 1.0
     frechetpcdist:
         factor: 1.0
-optim_options:
-    Adam:
-        weight_decay: 0.0001
-        lr: 0.0002
-    SGD:
-        lr: 0.0002
+
 
 training:
     events_processed_before_validation: 100000
     validation_interval: "${div:${training.events_processed_before_validation},${loader.batch_size}}"
     val_loss:
-        WDiscLoss: ${loss_options[WDiscLoss]}
+        L1_energy_sum:
+            factor: 1.0
+            function_file: hlv_L1
+            var: energy_sum
+            wgrad: False
+        L1_energy_sum_std:
+            factor: 1.0
+            function_file: hlv_L1
+            var: energy_sum_std
+            wgrad: False
+        L1_x_mean:
+            factor: 1.0
+            function_file: hlv_L1
+            var: x_mean
+            wgrad: False
+        L1_x_std:
+            factor: 1.0
+            function_file: hlv_L1
+            var: x_std
+            wgrad: False
+        L1_x_mom3:
+            factor: 1.0
+            function_file: hlv_L1
+            var: x_mom3
+            wgrad: False
+        L1_x_mom4:
+            factor: 1.0
+            function_file: hlv_L1
+            var: x_mom4
+            wgrad: False
+        L1_x_mean_ew:
+            factor: 1.0
+            function_file: hlv_L1
+            var: x_mean_ew
+            wgrad: False
+        L1_x_std_ew:
+            factor: 1.0
+            function_file: hlv_L1
+            var: x_std_ew
+            wgrad: False
+        L1_x_mom3_ew:
+            factor: 1.0
+            function_file: hlv_L1
+            var: x_mom3_ew
+            wgrad: False
+        L1_x_mom4_ew:
+            factor: 1.0
+            function_file: hlv_L1
+            var: x_mom4_ew
+            wgrad: False
+        L1_y_mean:
+            factor: 1.0
+            function_file: hlv_L1
+            var: y_mean
+            wgrad: False
+        L1_y_std:
+            factor: 1.0
+            function_file: hlv_L1
+            var: y_std
+            wgrad: False
+        L1_y_mom3:
+            factor: 1.0
+            function_file: hlv_L1
+            var: y_mom3
+            wgrad: False
+        L1_y_mom4:
+            factor: 1.0
+            function_file: hlv_L1
+            var: y_mom4
+            wgrad: False
+        L1_y_mean_ew:
+            factor: 1.0
+            function_file: hlv_L1
+            var: y_mean_ew
+            wgrad: False
+        L1_y_std_ew:
+            factor: 1.0
+            function_file: hlv_L1
+            var: y_std_ew
+            wgrad: False
+        L1_y_mom3_ew:
+            factor: 1.0
+            function_file: hlv_L1
+            var: y_mom3_ew
+            wgrad: False
+        L1_y_mom4_ew:
+            factor: 1.0
+            function_file: hlv_L1
+            var: y_mom4_ew
+            wgrad: False
+        L1_z_mean:
+            factor: 1.0
+            function_file: hlv_L1
+            var: z_mean
+            wgrad: False
+        L1_z_std:
+            factor: 1.0
+            function_file: hlv_L1
+            var: z_std
+            wgrad: False
+        L1_z_mom3:
+            factor: 1.0
+            function_file: hlv_L1
+            var: z_mom3
+            wgrad: False
+        L1_z_mom4:
+            factor: 1.0
+            function_file: hlv_L1
+            var: z_mom4
+            wgrad: False
+        L1_z_mean_ew:
+            factor: 1.0
+            function_file: hlv_L1
+            var: z_mean_ew
+            wgrad: False
+        L1_z_std_ew:
+            factor: 1.0
+            function_file: hlv_L1
+            var: z_std_ew
+            wgrad: False
+        L1_z_mom3_ew:
+            factor: 1.0
+            function_file: hlv_L1
+            var: z_mom3_ew
+            wgrad: False
+        L1_z_mom4_ew:
+            factor: 1.0
+            function_file: hlv_L1
+            var: z_mom4_ew
+            wgrad: False
     disc_steps_per_gen_step: 10
     early_stopping:
         validation_steps: 40
@@ -138,7 +270,7 @@ loader_options:
     pc:
         qf_seq_name: "pc_seq"
         rootprefix: "treeMaker/tree"
-        preprocess_training: True
+        preprocess_training: False
         debug: False
         braches:
             id: "simHit_detid"
@@ -151,6 +283,6 @@ loader_options:
         validation_set_size: 5000
         test_set_size: 30000
         prefetch_batches: 2
-        num_workers_transform: 10
+        num_workers_transform: 30
         num_workers_stack: 2
         num_workers_postprocess: 5

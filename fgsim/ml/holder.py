@@ -10,6 +10,7 @@ from omegaconf import OmegaConf
 from omegaconf.dictconfig import DictConfig
 
 from fgsim.config import conf, device
+from fgsim.io.postprocessor import Batch, Postprocessor
 from fgsim.ml.loss import LossesCol, ValidationLoss
 from fgsim.ml.network import SubNetworkCollector
 from fgsim.ml.optim import OptimCol
@@ -71,12 +72,10 @@ class Holder:
             exit(0)
 
         # Keep the generated samples ready, to be accessed by the losses
-        self.gen_points: torch.Tensor = None
-        self.gen_points_w_grad: torch.Tensor = None
+        self.gen_points: Batch = None
+        self.gen_points_w_grad: Batch = None
 
         # This sequece should be applield a after the generation
-        from fgsim.io.postprocessor import Postprocessor
-
         self.postprocessor = Postprocessor()
 
     def __load_checkpoint(self):
@@ -124,13 +123,20 @@ class Holder:
     def gen_noise(self) -> torch.Tensor:
         return torch.randn(conf.loader.batch_size, 1, 96).to(device)
 
+    def postprocess_gen_points(self) -> None:
+        with torch.no_grad():
+            self.gen_points = self.postprocessor(self.gen_points)
+
+    def postprocess_gen_points_w_grad(self) -> None:
+        self.gen_points_w_grad = self.postprocessor(self.gen_points_w_grad)
+
     def reset_gen_points(self) -> None:
         with torch.no_grad():
             z = self.gen_noise()
             pc = self.models.gen(z)
-            self.gen_points = self.postprocessor(pc)
+            self.gen_points = Batch(pc)
 
     def reset_gen_points_w_grad(self) -> None:
         z = self.gen_noise()
         pc = self.models.gen(z)
-        self.gen_points_w_grad = self.postprocessor(pc)
+        self.gen_points_w_grad = Batch(pc)
