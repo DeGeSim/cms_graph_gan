@@ -25,7 +25,7 @@ ds_path = Path(conf.path.dataset)
 assert ds_path.is_dir()
 files = sorted(ds_path.glob(conf.path.dataset_glob))
 if len(files) < 1:
-    raise RuntimeError("No hdf5 datasets found")
+    raise RuntimeError("No datasets found")
 
 ChunkType = List[Tuple[Path, int, int]]
 GenOutput = torch.Tensor
@@ -36,6 +36,9 @@ if not os.path.isfile(conf.path.ds_lenghts):
     for fn in files:
         with uproot.open(fn) as rfile:
             len_dict[str(fn)] = rfile[conf.loader.rootprefix].num_entries
+    ds_processed = Path(conf.path.dataset_processed)
+    if not ds_processed.is_dir():
+        ds_processed.mkdir()
     with open(conf.path.ds_lenghts, "w") as f:
         yaml.dump(len_dict, f, Dumper=yaml.SafeDumper)
 else:
