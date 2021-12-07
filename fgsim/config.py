@@ -75,7 +75,8 @@ hyperparameters, conf["hash"] = gethash(
 # Exclude the keys that do not affect the training
 _, conf["loaderhash"] = gethash(
     conf["loader"],
-    ["preprocess_training"] + [x for x in conf["loader"] if "num_workers" in x],
+    ["preprocess_training", "debug"]
+    + [x for x in conf["loader"] if "num_workers" in x],
 )
 
 os.makedirs(conf.path.run_path, exist_ok=True)

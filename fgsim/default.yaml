@@ -76,6 +76,7 @@ path:
     predict_csv: "${path.run_path}/prediction.csv"
     comet_exp_key: "${path.run_path}/comet_experiment_key"
     log: "${path.run_path}/log"
+    loader_log: "${path.run_path}/loader_log"
 
 loader: ${loader_options[${loader_name}]}
 loader_name: hgcal
@@ -104,6 +105,7 @@ loader_options:
         qf_seq_name: "hgcal_seq"
         rootprefix: "treeMaker/tree"
         preprocess_training: True
+        debug: False
         keylist: ["genPh_E", "simHit_detid", "simHit_E"]
         hlvs:
             [
@@ -137,6 +139,7 @@ loader_options:
         qf_seq_name: "pc_seq"
         rootprefix: "treeMaker/tree"
         preprocess_training: True
+        debug: False
         braches:
             id: "simHit_detid"
             energy: "genPh_E"
