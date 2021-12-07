@@ -13,6 +13,8 @@ from fgsim.ml.validate import validate
 from fgsim.monitoring.logger import logger
 from fgsim.monitoring.train_log import TrainLog
 
+exitcode = 0
+
 
 def training_step(
     batch: Batch,
@@ -78,13 +80,10 @@ def training_procedure() -> None:
         holder.state.complete = True
         train_log.end()
         holder.save_checkpoint()
-        exit(0)
-
     except Exception as error:
         logger.error("Error detected, stopping qfseq.")
-        loader.qfseq.stop()
+        exitcode = 1
         raise error
-    loader.qfseq.stop()
-    del holder.postprocessor
-    train_log.experiment.end()
-    exit(0)
+    finally:
+        loader.qfseq.stop()
+        exit(exitcode)
