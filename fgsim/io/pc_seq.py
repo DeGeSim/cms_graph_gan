@@ -57,10 +57,15 @@ class Event:
         return self
 
     def clone(self, *args, **kwargs):
-        self.pc = self.pc.clone(*args, **kwargs)
-        for key, val in self.hlvs.items():
-            self.hlvs[key] = val.clone(*args, **kwargs)
-        return self
+        # This needs to return a new object to align the python and pytorch ref counts
+        # Overwriting the attributes leads to memory leak with this
+        # L = [event0,event1,event2,event3]
+        # for e in L:
+        #     e.to(gpu_device)
+
+        pc = self.pc.clone(*args, **kwargs)
+        hlvs = {key: val.clone(*args, **kwargs) for key, val in self.hlvs.items()}
+        return type(self)(pc, hlvs)
 
 
 class Batch(Event):
