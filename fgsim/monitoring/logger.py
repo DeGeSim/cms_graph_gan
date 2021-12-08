@@ -17,16 +17,14 @@ if not logger.handlers:
         format="%(asctime)s - %(levelname)s - %(message)s",
         datefmt="%y-%m-%d %H:%M",
     )
-    logger.setLevel(logging.DEBUG if conf.debug else logging.INFO)
 
     streamhandler = RichHandler(
         log_time_format="%y-%m-%d %H:%M", highlighter=NullHighlighter()
     )
     logger.addHandler(streamhandler)
+    qf.logger.setup_logger(
+        conf.path.loader_log, print_bool=conf.loader.debug, debug=conf.loader.debug
+    )
+    logger.setLevel(logging.DEBUG if conf.debug else logging.INFO)
     logging_redirect_tqdm(logger)
     install_mp_handler(logger)
-
-
-qf.logger.setup_logger(
-    conf.path.loader_log, print_bool=conf.loader.debug, debug=conf.loader.debug
-)
