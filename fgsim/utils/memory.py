@@ -2,9 +2,11 @@ import gc
 import os
 import sys
 from pprint import pprint
+from typing import Optional
 
 import torch
 
+from fgsim.config import device
 from fgsim.monitoring.logger import logger
 
 
@@ -41,3 +43,45 @@ def memGB():
     memoryUse = py.memory_info()[0] / 2.0 ** 30  # memory use in GB... I think
     # logger.debug("memory GB:", memoryUse)
     return memoryUse
+
+
+class Gpu_Mem_Monitor:
+    def __init__(self):
+        self.gpu_mem_res = torch.cuda.memory_reserved(device)
+        self.gpu_mem_avail = torch.cuda.memory_allocated(device)
+
+    def print_delta(self, msg: Optional[str] = None):
+        gc.collect()
+        torch.cuda.empty_cache()
+        rp = torch.cuda.memory_reserved(device)
+        ap = torch.cuda.memory_allocated(device)
+
+        if msg is None:
+            msg = ""
+        else:
+            msg = msg + " "
+
+        logger.info(
+            f"{msg[:25]:>25} GPU Memory Δ: reserved"
+            f" {rp-self.gpu_mem_res:+.2E} allocated {ap-self.gpu_mem_avail:+.2E}"
+        )
+        self.gpu_mem_res = rp
+        self.gpu_mem_avail = ap
+
+    def print(self, msg: Optional[str] = None):
+        gc.collect()
+        torch.cuda.empty_cache()
+        t = torch.cuda.get_device_properties(device).total_memory
+        r = torch.cuda.memory_reserved(device)
+        a = torch.cuda.memory_allocated(device)
+        if msg is None:
+            msg = ""
+        else:
+            msg = msg + " "
+        logger.info(
+            f"{msg[:25]:>25} GPU Memory: reserved {r:.2E} allocated"
+            f" {a:.2E} avail {r-a:.2E} total {t:.2E}"
+        )
+
+
+gpu_mem_monitor = Gpu_Mem_Monitor()
