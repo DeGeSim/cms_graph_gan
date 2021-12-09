@@ -63,6 +63,22 @@ def get_experiment() -> comet_ml.ExistingExperiment:
         new_api_exp = api._create_experiment(
             workspace=comet_conf.workspace, project_name=project_name
         )
+
+        # Format the hyperparameter for comet
+        hyperparameters_keyval_list = dict(dict_to_kv(hyperparameters))
+        hyperparameters_keyval_list["hash"] = conf["hash"]
+        hyperparameters_keyval_list["loader_hash"] = conf["loader_hash"]
+        new_api_exp.log_parameters(hyperparameters_keyval_list)
+        new_api_exp.add_tags(list(set(conf.tag.split("_"))))
+
+        for snwname, snwconf in conf.models.items():
+            # log the models
+            new_api_exp.log_code(
+                file_name=f"fgsim/models/subnetworks/{snwconf.name}.py"
+            )
+            # log the losses
+            for lossconf in snwconf.losses:
+                new_api_exp.log_code(file_name=f"fgsim/models/loss/{lossconf}.py")
         exp_key = new_api_exp.id
     elif len(qres) == 1:
         logger.warning("Found existing experiment.")
@@ -93,19 +109,6 @@ def setup_writer():
 
 def setup_experiment(state: DictConfig) -> comet_ml.ExistingExperiment:
     experiment = get_experiment()
-
-    # Format the hyperparameter for comet
-    hyperparameters_keyval_list = dict(dict_to_kv(hyperparameters))
-    experiment.log_parameters(hyperparameters_keyval_list)
-    for tag in set(conf.tag.split("_")):
-        experiment.add_tag(tag)
-
-    for snwname, snwconf in conf.models.items():
-        # log the models
-        experiment.log_code(file_name=f"fgsim/models/subnetworks/{snwconf.name}.py")
-        # log the losses
-        for lossconf in snwconf.losses:
-            experiment.log_code(file_name=f"fgsim/models/loss/{lossconf}.py")
 
     experiment.set_step(state["grad_step"])
     experiment.set_epoch(state["epoch"])

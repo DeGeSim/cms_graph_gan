@@ -1,7 +1,7 @@
 import hashlib
 import os
 import random
-from typing import List, Tuple
+from typing import List
 
 import numpy as np
 import torch
@@ -53,31 +53,38 @@ def get_device() -> torch.device:
 
 device = get_device()
 
-
-def gethash(omconf: DictConfig, excluded_keys: List[str]) -> Tuple[DictConfig, str]:
+# Exclude the keys that do not affect the training
+def removekeys(omconf: DictConfig, excluded_keys: List[str]) -> DictConfig:
     filtered_omconf = OmegaConf.masked_copy(
         omconf,
-        [k for k in conf.keys() if k not in excluded_keys],
+        [k for k in omconf.keys() if k not in excluded_keys],
     )
     OmegaConf.resolve(filtered_omconf)
-    omhash = str(hashlib.sha1(str(filtered_omconf).encode()).hexdigest()[:7])
-    return filtered_omconf, omhash
+    return filtered_omconf
 
 
-# Exclude the keys that do not affect the training
-hyperparameters, conf["hash"] = gethash(
-    conf, ["command", "debug", "loglevel", "path"]
+hyperparameters = removekeys(
+    conf,
+    ["command", "debug", "loglevel", "path"],
 )
+exclude_keys = ["preprocess_training", "debug"] + [
+    x for x in conf["loader"] if "num_workers" in x
+]
+hyperparameters["loader"] = removekeys(hyperparameters["loader"], exclude_keys)
 
-# Conmpute a loaderhash
+
+def gethash(omconf: DictConfig) -> str:
+    omhash = str(hashlib.sha1(str(omconf).encode()).hexdigest()[:7])
+    return omhash
+
+
+conf["hash"] = gethash(conf)
+
+# Conmpute a loader_hash
 # this hash will be part of where the preprocessed
 # dataset is safed to ensure the parameters dont change
 # Exclude the keys that do not affect the training
-_, conf["loaderhash"] = gethash(
-    conf["loader"],
-    ["preprocess_training", "debug"]
-    + [x for x in conf["loader"] if "num_workers" in x],
-)
+conf["loader_hash"] = gethash(hyperparameters["loader"])
 
 os.makedirs(conf.path.run_path, exist_ok=True)
 

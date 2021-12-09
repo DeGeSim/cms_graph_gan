@@ -190,7 +190,7 @@ training:
 path:
     dataset: "data/hgcal_william"
     dataset_glob: "**/*.root"
-    dataset_processed: "${path.dataset}/pkl_${loader_name}_${loaderhash}"
+    dataset_processed: "${path.dataset}/pkl_${loader_name}_${loader_hash}"
     ds_lenghts: "${path.dataset_processed}/filelengths.yaml"
     validation: "${path.dataset_processed}/validation.pt"
     test: "${path.dataset_processed}/test.pt"
@@ -207,8 +207,8 @@ path:
     state_old: "${path.run_path}/state_old.torch"
     predict_csv: "${path.run_path}/prediction.csv"
     comet_exp_key: "${path.run_path}/comet_experiment_key"
-    log: "${path.run_path}/log"
-    loader_log: "${path.run_path}/loader_log"
+    log: "${path.run_path}/${command}.log"
+    loader_log: "${path.run_path}/${command}_loader.log"
 
 loader: ${loader_options[${loader_name}]}
 loader_name: hgcal
