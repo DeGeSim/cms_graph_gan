@@ -232,7 +232,7 @@ loader_options:
         test_set_size: 30000
         prefetch_batches: 2
         num_workers_transform: 15
-        num_workers_stack: 2
+        num_workers_stack: 1
     hgcal:
         qf_seq_name: "hgcal_seq"
         rootprefix: "treeMaker/tree"
@@ -266,7 +266,7 @@ loader_options:
         test_set_size: 30000
         prefetch_batches: 2
         num_workers_transform: 30
-        num_workers_stack: 2
+        num_workers_stack: 1
     pc:
         qf_seq_name: "pc_seq"
         rootprefix: "treeMaker/tree"
@@ -284,5 +284,5 @@ loader_options:
         test_set_size: 30000
         prefetch_batches: 2
         num_workers_transform: 10
-        num_workers_stack: 2
+        num_workers_stack: 1
         num_workers_postprocess: 5

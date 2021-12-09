@@ -42,11 +42,11 @@
                 ]
             },
             {
-                "name": "preprocess hgcal",
+                "name": "preprocess",
                 "type": "python",
                 "request": "launch",
                 "module": "fgsim",
-                "args": ["--tag", "sparse", "preprocess"]
+                "args": ["--tag", "treepc", "preprocess"]
             },
             {
                 "name": "t seltag",
@@ -56,7 +56,6 @@
                 "args": [
                     "--tag",
                     // "`fd  --type d \".*\" --maxdepth 1 ~/fgsim/wd | sd \".*/(.+)$\" \"\\$1\"|fzf`",
-                    "linreg",
                     "train"
                 ]
             },
