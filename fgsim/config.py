@@ -55,17 +55,25 @@ device = get_device()
 
 # Exclude the keys that do not affect the training
 def removekeys(omconf: DictConfig, excluded_keys: List[str]) -> DictConfig:
+    OmegaConf.resolve(omconf)
     filtered_omconf = OmegaConf.masked_copy(
         omconf,
         [k for k in omconf.keys() if k not in excluded_keys],
     )
-    OmegaConf.resolve(filtered_omconf)
     return filtered_omconf
 
 
 hyperparameters = removekeys(
     conf,
-    ["command", "debug", "loglevel", "path"],
+    [
+        "command",
+        "debug",
+        "loglevel",
+        "path",
+        "optim_options",
+        "loss_options",
+        "loader_options",
+    ],
 )
 exclude_keys = ["preprocess_training", "debug"] + [
     x for x in conf["loader"] if "num_workers" in x

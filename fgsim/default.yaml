@@ -26,28 +26,6 @@ models:
             name: Adam
             params: ${optim_options[Adam]}
 
-optim_options:
-    Adam:
-        weight_decay: 0.0001
-        lr: 0.0002
-    SGD:
-        lr: 0.0002
-
-
-loss_options:
-    WGenLoss:
-        factor: 1.0
-    WDiscLoss:
-        factor: 1.0
-    GradientPenalty:
-        factor: 1.0
-        gamma: 1.0
-    mean_dist:
-        factor: 1.0
-    frechetpcdist:
-        factor: 1.0
-
-
 training:
     events_processed_before_validation: 100000
     validation_interval: "${div:${training.events_processed_before_validation},${loader.batch_size}}"
@@ -212,6 +190,29 @@ path:
 
 loader: ${loader_options[${loader_name}]}
 loader_name: hgcal
+
+optim_options:
+    Adam:
+        weight_decay: 0.0001
+        lr: 0.0002
+    SGD:
+        lr: 0.0002
+
+
+loss_options:
+    WGenLoss:
+        factor: 1.0
+    WDiscLoss:
+        factor: 1.0
+    GradientPenalty:
+        factor: 1.0
+        gamma: 1.0
+    mean_dist:
+        factor: 1.0
+    frechetpcdist:
+        factor: 1.0
+
+
 loader_options:
     clic:
         qf_seq_name: "clic_seq"
