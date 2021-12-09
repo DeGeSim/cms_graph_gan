@@ -24,6 +24,7 @@ DataSetType = List[Batch]
 process_seq = sel_seq.process_seq
 files = sel_seq.files
 len_dict = sel_seq.len_dict
+postprocess_switch = sel_seq.postprocess_switch
 
 chunksize = conf.loader.chunksize
 batch_size = conf.loader.batch_size
@@ -75,6 +76,8 @@ must queue an epoch via `queue_epoch()` and iterate over the instance of the cla
 
         # Assign the sequence with the specifice steps needed to process the dataset.
         self.qfseq = qf.Sequence(*process_seq())
+        # Get access to the postprocess switch for computing the validation dataset
+        self.postprocess_switch = postprocess_switch
 
         if conf.command != "preprocess":
             # In all cases training and test set must be available

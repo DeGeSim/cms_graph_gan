@@ -15,7 +15,7 @@ import queueflow as qf
 import torch
 import uproot
 import yaml
-from torch.multiprocessing import Queue
+from torch.multiprocessing import Queue, Value
 
 from fgsim.config import conf
 from fgsim.geo.geo_lup import geo_lup
@@ -94,7 +94,9 @@ class Batch(Event):
         return outL
 
 
+#
 npoints = prod(conf.models.gen.param.degrees)
+postprocess_switch = Value("i", 0)
 
 
 # Collect the steps
@@ -117,6 +119,8 @@ def process_seq():
         Queue(conf.loader.prefetch_batches),
     )
 
+
+# Methods used in the Sequence
 
 # reading from the filesystem
 def read_chunk(chunks: ChunkType) -> ak.highlevel.Array:
@@ -151,11 +155,14 @@ def magic_do_nothing(batch: Batch) -> Batch:
 
 def transform(hitlist: ak.highlevel.Record) -> Event:
     pc = hitlist_to_pc(hitlist)
-    event = postprocess_event(pc)
+    event = Event(pc)
+    if postprocess_switch.value:
+        event = postprocess_event(event)
+
     return event
 
 
-def hitlist_to_pc(event: ak.highlevel.Record) -> Event:
+def hitlist_to_pc(event: ak.highlevel.Record) -> torch.Tensor:
     key_id = conf.loader.braches.id
     key_hit_energy = conf.loader.braches.hit_energy
 
@@ -187,8 +194,10 @@ def hitlist_to_pc(event: ak.highlevel.Record) -> Event:
     pc = torch.hstack((hit_energies.view(-1, 1), xyzpos))
 
     pc = pc.float()
-
-    return Event(pc)
+    pc = torch.nn.functional.pad(
+        pc, (0, 0, 0, npoints - pc.shape[0]), mode="constant", value=0
+    )
+    return pc
 
 
 def stand_mom(
@@ -222,11 +231,7 @@ def postprocess_event(event: Event) -> Event:
         hlvs[key + "_mom3_ew"] = stand_mom(vec, mean, std, 3)
         hlvs[key + "_mom4_ew"] = stand_mom(vec, mean, std, 4)
 
-    padded_pc = torch.nn.functional.pad(
-        pc, (0, 0, 0, npoints - pc.shape[0]), mode="constant", value=0
-    )
-
-    return Event(padded_pc, hlvs)
+    return Event(pc, hlvs)
 
 
 # def unstack_batch(batch: torch.Tensor) -> List[torch.Tensor]:
