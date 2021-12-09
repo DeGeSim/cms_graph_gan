@@ -55,7 +55,6 @@ device = get_device()
 
 # Exclude the keys that do not affect the training
 def removekeys(omconf: DictConfig, excluded_keys: List[str]) -> DictConfig:
-    OmegaConf.resolve(omconf)
     filtered_omconf = OmegaConf.masked_copy(
         omconf,
         [k for k in omconf.keys() if k not in excluded_keys],
@@ -63,8 +62,36 @@ def removekeys(omconf: DictConfig, excluded_keys: List[str]) -> DictConfig:
     return filtered_omconf
 
 
-hyperparameters = removekeys(
+def gethash(omconf: DictConfig) -> str:
+    OmegaConf.resolve(omconf)
+    omhash = str(hashlib.sha1(str(omconf).encode()).hexdigest()[:7])
+    return omhash
+
+
+# remove the dependency on hash and loader hash to be able to resolve
+conf_without_paths = removekeys(
     conf,
+    [
+        "path",
+    ],
+)
+OmegaConf.resolve(conf_without_paths)
+
+
+# Compute a loader_hash
+# this hash will be part of where the preprocessed
+# dataset is safed to ensure the parameters dont change
+# Exclude the keys that do not affect the training
+exclude_keys = ["preprocess_training", "debug"] + [
+    x for x in conf["loader"] if "num_workers" in x
+]
+
+loader_params = removekeys(conf_without_paths["loader"], exclude_keys)
+conf["loader_hash"] = gethash(loader_params)
+
+
+hyperparameters = removekeys(
+    conf_without_paths,
     [
         "command",
         "debug",
@@ -75,24 +102,8 @@ hyperparameters = removekeys(
         "loader_options",
     ],
 )
-exclude_keys = ["preprocess_training", "debug"] + [
-    x for x in conf["loader"] if "num_workers" in x
-]
-hyperparameters["loader"] = removekeys(hyperparameters["loader"], exclude_keys)
+conf["hash"] = gethash(hyperparameters)
 
-
-def gethash(omconf: DictConfig) -> str:
-    omhash = str(hashlib.sha1(str(omconf).encode()).hexdigest()[:7])
-    return omhash
-
-
-conf["hash"] = gethash(conf)
-
-# Conmpute a loader_hash
-# this hash will be part of where the preprocessed
-# dataset is safed to ensure the parameters dont change
-# Exclude the keys that do not affect the training
-conf["loader_hash"] = gethash(hyperparameters["loader"])
 
 os.makedirs(conf.path.run_path, exist_ok=True)
 
