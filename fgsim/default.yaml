@@ -52,134 +52,134 @@ training:
     events_processed_before_validation: 100000
     validation_interval: "${div:${training.events_processed_before_validation},${loader.batch_size}}"
     val_loss:
-        L1_energy_sum:
+        w1_energy_sum:
             factor: 1.0
-            function_file: hlv_L1
+            function_file: hlv_w1
             var: energy_sum
             wgrad: False
-        L1_energy_sum_std:
+        w1_energy_sum_std:
             factor: 1.0
-            function_file: hlv_L1
+            function_file: hlv_w1
             var: energy_sum_std
             wgrad: False
-        L1_x_mean:
+        w1_x_mean:
             factor: 1.0
-            function_file: hlv_L1
+            function_file: hlv_w1
             var: x_mean
             wgrad: False
-        L1_x_std:
+        w1_x_std:
             factor: 1.0
-            function_file: hlv_L1
+            function_file: hlv_w1
             var: x_std
             wgrad: False
-        L1_x_mom3:
+        w1_x_mom3:
             factor: 1.0
-            function_file: hlv_L1
+            function_file: hlv_w1
             var: x_mom3
             wgrad: False
-        L1_x_mom4:
+        w1_x_mom4:
             factor: 1.0
-            function_file: hlv_L1
+            function_file: hlv_w1
             var: x_mom4
             wgrad: False
-        L1_x_mean_ew:
+        w1_x_mean_ew:
             factor: 1.0
-            function_file: hlv_L1
+            function_file: hlv_w1
             var: x_mean_ew
             wgrad: False
-        L1_x_std_ew:
+        w1_x_std_ew:
             factor: 1.0
-            function_file: hlv_L1
+            function_file: hlv_w1
             var: x_std_ew
             wgrad: False
-        L1_x_mom3_ew:
+        w1_x_mom3_ew:
             factor: 1.0
-            function_file: hlv_L1
+            function_file: hlv_w1
             var: x_mom3_ew
             wgrad: False
-        L1_x_mom4_ew:
+        w1_x_mom4_ew:
             factor: 1.0
-            function_file: hlv_L1
+            function_file: hlv_w1
             var: x_mom4_ew
             wgrad: False
-        L1_y_mean:
+        w1_y_mean:
             factor: 1.0
-            function_file: hlv_L1
+            function_file: hlv_w1
             var: y_mean
             wgrad: False
-        L1_y_std:
+        w1_y_std:
             factor: 1.0
-            function_file: hlv_L1
+            function_file: hlv_w1
             var: y_std
             wgrad: False
-        L1_y_mom3:
+        w1_y_mom3:
             factor: 1.0
-            function_file: hlv_L1
+            function_file: hlv_w1
             var: y_mom3
             wgrad: False
-        L1_y_mom4:
+        w1_y_mom4:
             factor: 1.0
-            function_file: hlv_L1
+            function_file: hlv_w1
             var: y_mom4
             wgrad: False
-        L1_y_mean_ew:
+        w1_y_mean_ew:
             factor: 1.0
-            function_file: hlv_L1
+            function_file: hlv_w1
             var: y_mean_ew
             wgrad: False
-        L1_y_std_ew:
+        w1_y_std_ew:
             factor: 1.0
-            function_file: hlv_L1
+            function_file: hlv_w1
             var: y_std_ew
             wgrad: False
-        L1_y_mom3_ew:
+        w1_y_mom3_ew:
             factor: 1.0
-            function_file: hlv_L1
+            function_file: hlv_w1
             var: y_mom3_ew
             wgrad: False
-        L1_y_mom4_ew:
+        w1_y_mom4_ew:
             factor: 1.0
-            function_file: hlv_L1
+            function_file: hlv_w1
             var: y_mom4_ew
             wgrad: False
-        L1_z_mean:
+        w1_z_mean:
             factor: 1.0
-            function_file: hlv_L1
+            function_file: hlv_w1
             var: z_mean
             wgrad: False
-        L1_z_std:
+        w1_z_std:
             factor: 1.0
-            function_file: hlv_L1
+            function_file: hlv_w1
             var: z_std
             wgrad: False
-        L1_z_mom3:
+        w1_z_mom3:
             factor: 1.0
-            function_file: hlv_L1
+            function_file: hlv_w1
             var: z_mom3
             wgrad: False
-        L1_z_mom4:
+        w1_z_mom4:
             factor: 1.0
-            function_file: hlv_L1
+            function_file: hlv_w1
             var: z_mom4
             wgrad: False
-        L1_z_mean_ew:
+        w1_z_mean_ew:
             factor: 1.0
-            function_file: hlv_L1
+            function_file: hlv_w1
             var: z_mean_ew
             wgrad: False
-        L1_z_std_ew:
+        w1_z_std_ew:
             factor: 1.0
-            function_file: hlv_L1
+            function_file: hlv_w1
             var: z_std_ew
             wgrad: False
-        L1_z_mom3_ew:
+        w1_z_mom3_ew:
             factor: 1.0
-            function_file: hlv_L1
+            function_file: hlv_w1
             var: z_mom3_ew
             wgrad: False
-        L1_z_mom4_ew:
+        w1_z_mom4_ew:
             factor: 1.0
-            function_file: hlv_L1
+            function_file: hlv_w1
             var: z_mom4_ew
             wgrad: False
     disc_steps_per_gen_step: 10
