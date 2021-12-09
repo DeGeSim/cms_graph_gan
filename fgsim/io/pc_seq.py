@@ -67,6 +67,21 @@ class Event:
         hlvs = {key: val.clone(*args, **kwargs) for key, val in self.hlvs.items()}
         return type(self)(pc, hlvs)
 
+    def compute_hlvs(self) -> None:
+        self.hlvs["energy_sum"] = torch.sum(self.pc[:, 0])
+        self.hlvs["energy_sum_std"] = torch.std(self.pc[:, 0])
+        e_weight = self.pc[:, 0] / self.hlvs["energy_sum"]
+
+        for irow, key in enumerate(conf.loader.cell_prop_keys, start=1):
+            vec = self.pc[:, irow]
+            vec_ew = vec * e_weight
+            mean = torch.mean(vec_ew)
+            std = torch.std(vec_ew)
+            self.hlvs[key + "_mean_ew"] = mean
+            self.hlvs[key + "_std_ew"] = std
+            self.hlvs[key + "_mom3_ew"] = stand_mom(vec, mean, std, 3)
+            self.hlvs[key + "_mom4_ew"] = stand_mom(vec, mean, std, 4)
+
 
 class Batch(Event):
     def __init__(
@@ -86,12 +101,20 @@ class Batch(Event):
         return cls(pc=pc, hlvs=hlvs)
 
     def split(self) -> List[Event]:
+        """Split batch into events."""
         outL = []
         for ievent in range(self.pc.shape[0]):
             e_pc = self.pc[ievent]
             e_hlvs = {key: self.hlvs[key][ievent] for key in self.hlvs}
             outL.append(Event(e_pc, e_hlvs))
         return outL
+
+    def compute_hlvs(self) -> None:
+        event_list = [x for x in self.split()]
+        for event in event_list:
+            event.compute_hlvs()
+        self.hlvs = Batch.from_event_list(*event_list).hlvs
+        return
 
 
 #
@@ -157,8 +180,7 @@ def transform(hitlist: ak.highlevel.Record) -> Event:
     pc = hitlist_to_pc(hitlist)
     event = Event(pc)
     if postprocess_switch.value:
-        event = postprocess_event(event)
-
+        event.compute_hlvs()
     return event
 
 
@@ -204,35 +226,3 @@ def stand_mom(
     vec: torch.Tensor, mean: torch.Tensor, std: torch.Tensor, order: int
 ) -> torch.Tensor:
     return torch.mean(torch.pow(vec - mean, order)) / torch.pow(std, order / 2.0)
-
-
-def postprocess_event(event: Event) -> Event:
-    pc = event.pc
-    hlvs: Dict[str, torch.Tensor] = {}
-
-    hlvs["energy_sum"] = torch.sum(pc[:, 0])
-    hlvs["energy_sum_std"] = torch.std(pc[:, 0])
-    e_weight = pc[:, 0] / hlvs["energy_sum"]
-
-    for irow, key in enumerate(conf.loader.cell_prop_keys, start=1):
-        vec = pc[:, irow]
-        mean = torch.mean(vec)
-        std = torch.std(vec)
-        hlvs[key + "_mean"] = mean
-        hlvs[key + "_std"] = std
-        hlvs[key + "_mom3"] = stand_mom(vec, mean, std, 3)
-        hlvs[key + "_mom4"] = stand_mom(vec, mean, std, 4)
-
-        vec_ew = vec * e_weight
-        mean = torch.mean(vec_ew)
-        std = torch.std(vec_ew)
-        hlvs[key + "_mean_ew"] = mean
-        hlvs[key + "_std_ew"] = std
-        hlvs[key + "_mom3_ew"] = stand_mom(vec, mean, std, 3)
-        hlvs[key + "_mom4_ew"] = stand_mom(vec, mean, std, 4)
-
-    return Event(pc, hlvs)
-
-
-# def unstack_batch(batch: torch.Tensor) -> List[torch.Tensor]:
-#     return [batch[ievent] for ievent in range(batch.shape[0])]
