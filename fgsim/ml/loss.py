@@ -74,10 +74,10 @@ class ValidationLoss:
         self.train_logger = train_logger
         self.parts: Dict[str, Callable] = {}
         self._lastlosses: Dict[str, float] = {
-            lossname: 0.0 for lossname in conf.training.val_loss
+            lossname: 0.0 for lossname in conf.training.val_losses
         }
 
-        for lossname, lossconf in conf.training.val_loss.items():
+        for lossname, lossconf in conf.training.val_losses.items():
             assert lossname != "parts"
             params = lossconf if lossconf is not None else {}
             if not hasattr(torch.nn, lossname):

@@ -21,10 +21,12 @@ def validate(holder: Holder, loader: QueuedDataLoader) -> None:
         with torch.no_grad():
             batch = batch.clone().to(device)
             holder.reset_gen_points()
-            holder.postprocess_gen_points()
+            holder.gen_points.compute_hlvs()
             holder.val_loss(holder, batch)
     holder.val_loss.log_losses(holder.state)
-    if min(holder.state.val_loss_sum) == holder.state.val_loss_sum[-1]:
+
+    val_loss_sum = holder.state.val_losses[conf.training.val_loss_sumkey]
+    if min(val_loss_sum) == val_loss_sum[-1]:
         holder.best_model_state = holder.models.state_dict()
 
 

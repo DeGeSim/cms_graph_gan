@@ -10,10 +10,11 @@ from omegaconf import OmegaConf
 from omegaconf.dictconfig import DictConfig
 
 from fgsim.config import conf, device
-from fgsim.io.postprocessor import Batch, Postprocessor
-from fgsim.ml.loss import LossesCol, ValidationLoss
+from fgsim.io.queued_dataset import Batch
+from fgsim.ml.loss import LossesCol
 from fgsim.ml.network import SubNetworkCollector
 from fgsim.ml.optim import OptimCol
+from fgsim.ml.val_loss import ValidationLoss
 from fgsim.monitoring.logger import logger
 from fgsim.monitoring.train_log import TrainLog
 from fgsim.utils.check_for_nans import contains_nans
@@ -31,8 +32,7 @@ def start_training_state() -> DictConfig:
                 snwname: {lossname: [] for lossname in snwconf.losses}
                 for snwname, snwconf in conf.models.items()
             },
-            "val_losses": {lossname: [] for lossname in conf.training.val_loss},
-            "val_loss_sum": [],
+            "val_losses": {},
             "complete": False,
         }
     )
@@ -74,9 +74,6 @@ class Holder:
         # Keep the generated samples ready, to be accessed by the losses
         self.gen_points: Batch = None
         self.gen_points_w_grad: Batch = None
-
-        # This sequece should be applield a after the generation
-        self.postprocessor = Postprocessor()
 
     def __load_checkpoint(self):
         if not (
@@ -122,13 +119,6 @@ class Holder:
     # Define the methods, that equip the with the generated batches
     def gen_noise(self) -> torch.Tensor:
         return torch.randn(conf.loader.batch_size, 1, 96).to(device)
-
-    def postprocess_gen_points(self) -> None:
-        with torch.no_grad():
-            self.gen_points = self.postprocessor(self.gen_points)
-
-    def postprocess_gen_points_w_grad(self) -> None:
-        self.gen_points_w_grad = self.postprocessor(self.gen_points_w_grad)
 
     def reset_gen_points(self) -> None:
         with torch.no_grad():

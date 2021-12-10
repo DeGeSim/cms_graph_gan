@@ -1,4 +1,5 @@
-import torch
+from typing import Dict
+
 from scipy.stats import wasserstein_distance
 
 from fgsim.io.queued_dataset import Batch
@@ -6,10 +7,15 @@ from fgsim.ml.holder import Holder
 
 
 class LossGen:
-    def __init__(self, var: str, wgrad: bool, factor: float = 1.0, *args, **kwargs):
+    def __init__(
+        self,
+        foreach_hlv: bool,
+        factor: float = 1.0,
+        *args,
+        **kwargs,
+    ):
         self.factor: float = factor
-        self.var: str = var
-        self.wgrad: bool = wgrad
+        self.foreach_hlv: bool = foreach_hlv
 
     def lossf(self, a, b):
         a = a.cpu().numpy()
@@ -17,15 +23,11 @@ class LossGen:
 
         return wasserstein_distance(a, b)
 
-    def __call__(self, holder: Holder, batch: Batch):
-        if self.wgrad:
-            loss = self.lossf(
-                batch.hlvs[self.var], holder.gen_points_w_grad.hlvs[self.var]
+    def __call__(self, holder: Holder, batch: Batch) -> Dict[str, float]:
+        out_dict: Dict[str, float] = {}
+        for var in batch.hlvs:
+            out_dict[var] = self.factor * self.lossf(
+                batch.hlvs[var], holder.gen_points.hlvs[var]
             )
-        else:
-            with torch.no_grad():
-                loss = self.lossf(
-                    batch.hlvs[self.var], holder.gen_points.hlvs[self.var]
-                )
 
-        return self.factor * loss
+        return out_dict

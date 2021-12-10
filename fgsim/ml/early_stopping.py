@@ -9,11 +9,14 @@ def early_stopping(state: DictConfig) -> bool:
     validation losses with the validation losses before that.
     If the minimum has not been reduced by
     `conf.training.early_stopping.improvement`, stop the training"""
+    if len(state.val_losses.keys()) == 0:
+        return False
     valsteps = conf.training.early_stopping.validation_steps
-    if len(state.val_loss_sum) < valsteps + 1:
+    val_loss_sum = state.val_losses[conf.training.val_loss_sumkey]
+    if len(val_loss_sum) < valsteps + 1:
         return False
     relative_improvement = 1 - (
-        min(state.val_loss_sum[-valsteps:]) / min(state.val_loss_sum[:-valsteps])
+        min(val_loss_sum[-valsteps:]) / min(val_loss_sum[:-valsteps])
     )
 
     logger.info(
