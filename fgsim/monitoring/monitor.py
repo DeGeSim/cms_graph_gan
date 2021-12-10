@@ -74,11 +74,11 @@ def get_experiment() -> comet_ml.ExistingExperiment:
         for snwname, snwconf in conf.models.items():
             # log the models
             new_api_exp.set_code(
-                file_name=f"fgsim/models/subnetworks/{snwconf.name}.py"
+                filename=f"fgsim/models/subnetworks/{snwconf.name}.py"
             )
             # log the losses
             for lossconf in snwconf.losses:
-                new_api_exp.set_code(file_name=f"fgsim/models/loss/{lossconf}.py")
+                new_api_exp.set_code(filename=f"fgsim/models/loss/{lossconf}.py")
         exp_key = new_api_exp.id
     elif len(qres) == 1:
         logger.warning("Found existing experiment.")

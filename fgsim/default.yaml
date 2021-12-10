@@ -1,6 +1,8 @@
 tag: default
 loglevel: 1
 seed: 0
+comet_project_name: "gan"
+
 
 models:
     gen:
@@ -65,7 +67,7 @@ path:
     loader_log: "${path.run_path}/${command}_loader.log"
 
 loader: ${loader_options[${loader_name}]}
-loader_name: hgcal
+loader_name: pc
 
 optim_options:
     Adam:
