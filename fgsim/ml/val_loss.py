@@ -63,7 +63,7 @@ class ValidationLoss:
                 state.val_losses[lossname] = []
             state.val_losses[lossname].append(loss)
             # Log the validation loss
-            self.train_logger.log_loss(f"loss.{self.name}.{lossname}", loss)
+            self.train_logger.log_loss(f"{self.name}.{lossname}", loss)
             # Reset to 0
             self._lastlosses[lossname] = 0
 
