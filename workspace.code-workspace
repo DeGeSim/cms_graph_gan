@@ -7,6 +7,12 @@
     "settings": {
         "python.envFile": "${workspaceFolder}/.env",
         "python.pythonPath": ".tox/py38/bin/python3",
+        "python.formatting.blackPath": "${env:HOME}/.local/bin/black",
+        "python.linting.flake8Path": "${env:HOME}/.local/bin/flake8",
+        "python.linting.mypyPath": "${env:HOME}/.local/bin/mypy",
+        // "python.linting.pylintPath": "${env:HOME}/.local/bin/pylint",
+        "python.pipenvPath": "${env:HOME}/.local/bin/pipenv",
+        "python.poetryPath": "${env:HOME}/.local/bin/poetry",
         "jupyter.jupyterLaunchRetries": 1,
         "jupyter.jupyterServerType": "local",
         "python.languageServer": "Jedi",
