@@ -1,7 +1,6 @@
 import numpy as np
 import pandas as pd
 import torch
-from queueflow.batch_utils import move_batch_to_device
 from tqdm import tqdm
 
 from fgsim.config import conf, device
@@ -33,7 +32,7 @@ def prediction_procedure() -> None:
 
     logger.info("Start iterating batches.")
     for _, batch in enumerate(tqdm(loader.testing_batches)):
-        batch = move_batch_to_device(batch, device)
+        batch = batch.to(device)
         with torch.no_grad():
             prediction = torch.squeeze(holder.models(batch).T)
             ypred = prediction.to("cpu").numpy()

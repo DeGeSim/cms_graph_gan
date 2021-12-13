@@ -2,16 +2,16 @@
 
 import time
 
-from queueflow.batch_utils import move_batch_to_device
 from tqdm import tqdm
 
 from fgsim.config import conf, device
 from fgsim.io.queued_dataset import Batch, QueuedDataLoader
 from fgsim.ml.early_stopping import early_stopping
-from fgsim.ml.holder import Holder, start_training_state
+from fgsim.ml.holder import Holder
 from fgsim.ml.validate import validate
 from fgsim.monitoring.logger import logger
 from fgsim.monitoring.train_log import TrainLog
+from fgsim.utils.memory import gpu_mem_monitor
 
 exitcode = 0
 
@@ -23,26 +23,31 @@ def training_step(
     # set all optimizers to a 0 gradient
     holder.optims.zero_grad()
     # generate a new batch with the generator
-    holder.reset_gen_points()
+    with gpu_mem_monitor("gen_points", False):
+        holder.reset_gen_points()
+
     d_loss = holder.losses.disc(holder, batch)
-    d_loss.backward()
-    holder.optims.disc.step()
+    with gpu_mem_monitor("disc_grad"):
+        d_loss.backward()
+        holder.optims.disc.step()
 
     # generator
     if holder.state.ibatch % conf.training.disc_steps_per_gen_step == 0:
         holder.models.gen.zero_grad()
         # generate a new batch with the generator, but with
         # points thought the generator this time
-        holder.reset_gen_points_w_grad()
+        with gpu_mem_monitor("gen_points_w_grad", False):
+            holder.reset_gen_points_w_grad()
         g_loss = holder.losses.gen(holder, batch)
-        g_loss.backward()
-        holder.optims.gen.step()
+        with gpu_mem_monitor("gen_grad"):
+            g_loss.backward()
+            holder.optims.gen.step()
 
 
 def training_procedure() -> None:
-    state = start_training_state()
-    train_log = TrainLog(state)
-    holder: Holder = Holder(state, train_log)
+    holder: Holder = Holder()
+    train_log: TrainLog = holder.train_log
+
     loader: QueuedDataLoader = QueuedDataLoader()
 
     # Queue that batches
@@ -65,7 +70,8 @@ def training_procedure() -> None:
                     holder.state.ibatch = 0
                     loader.queue_epoch(n_skip_events=holder.state.processed_events)
                     batch = next(loader.qfseq)
-                batch = move_batch_to_device(batch, device)
+                with gpu_mem_monitor("batch"):
+                    batch = batch.to(device)
                 holder.state.time_io_done = time.time()
                 training_step(batch, holder)
                 holder.state.time_training_done = time.time()

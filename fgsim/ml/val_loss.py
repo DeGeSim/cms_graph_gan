@@ -10,9 +10,9 @@ from fgsim.monitoring.train_log import TrainLog
 
 
 class ValidationLoss:
-    def __init__(self, train_logger: TrainLog) -> None:
+    def __init__(self, train_log: TrainLog) -> None:
         self.name = "val_loss"
-        self.train_logger = train_logger
+        self.train_log = train_log
         self.parts: Dict[str, Callable] = {}
         self._lastlosses: Dict[str, float] = {}
 
@@ -63,7 +63,7 @@ class ValidationLoss:
                 state.val_losses[lossname] = []
             state.val_losses[lossname].append(loss)
             # Log the validation loss
-            self.train_logger.log_loss(f"{self.name}.{lossname}", loss)
+            self.train_log.log_loss(f"{self.name}.{lossname}", loss)
             # Reset to 0
             self._lastlosses[lossname] = 0
 

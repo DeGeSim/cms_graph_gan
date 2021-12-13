@@ -9,6 +9,7 @@ from fgsim.config import conf, device
 from fgsim.io.queued_dataset import Batch
 from fgsim.monitoring.train_log import TrainLog
 from fgsim.utils.check_for_nans import contains_nans
+from fgsim.utils.memory import gpu_mem_monitor
 
 
 class SubNetworkLoss:
@@ -16,11 +17,11 @@ class SubNetworkLoss:
     Calling this class should return a single (1D) loss for the gradient step"""
 
     def __init__(
-        self, subnetworkname: str, pconf: DictConfig, train_logger: TrainLog
+        self, subnetworkname: str, pconf: DictConfig, train_log: TrainLog
     ) -> None:
         self.name = subnetworkname
         self.pconf = pconf
-        self.train_logger = train_logger
+        self.train_log = train_log
         self.parts: Dict[str, Callable] = {}
 
         for lossname, lossconf in pconf.items():
@@ -35,13 +36,18 @@ class SubNetworkLoss:
             self.parts[lossname] = loss
             setattr(self, lossname, loss)
 
+    def log_gpu_loss(self, loss, lossname, holder, batch):
+        with gpu_mem_monitor(f"{self.name}.{lossname}"):
+            return loss(holder, batch)
+
     def __call__(self, holder, batch: Batch):
         lossesdict = {
-            lossname: loss(holder, batch) for lossname, loss in self.parts.items()
+            lossname: self.log_gpu_loss(loss, lossname, holder, batch)
+            for lossname, loss in self.parts.items()
         }
         # write the loss to state so it can be logged later
         for lossname, loss in lossesdict.items():
-            self.train_logger.log_loss(f"loss.{self.name}.{lossname}", float(loss))
+            self.train_log.log_loss(f"loss.{self.name}.{lossname}", float(loss))
             holder.state.losses[self.name][lossname].append(float(loss))
         summedloss = sum([e for e in lossesdict.values()])
         assert not contains_nans(summedloss)[0]
@@ -54,13 +60,11 @@ class SubNetworkLoss:
 class LossesCol:
     """Holds all losses for all subnetworks as attributes or as a dict."""
 
-    def __init__(self, train_logger: TrainLog) -> None:
+    def __init__(self, train_log: TrainLog) -> None:
         self.parts: Dict[str, SubNetworkLoss] = {}
 
         for subnetworkname, subnetworkconf in conf.models.items():
-            snl = SubNetworkLoss(
-                subnetworkname, subnetworkconf.losses, train_logger
-            )
+            snl = SubNetworkLoss(subnetworkname, subnetworkconf.losses, train_log)
             self.parts[subnetworkname] = snl
             setattr(self, subnetworkname, snl)
 

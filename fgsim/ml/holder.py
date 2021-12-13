@@ -18,6 +18,7 @@ from fgsim.ml.val_loss import ValidationLoss
 from fgsim.monitoring.logger import logger
 from fgsim.monitoring.train_log import TrainLog
 from fgsim.utils.check_for_nans import contains_nans
+from fgsim.utils.memory import gpu_mem_monitor
 from fgsim.utils.push_to_old import push_to_old
 
 
@@ -44,23 +45,26 @@ class Holder:
     information about the current state of the training"""
 
     # Nameing convention snw = snw
-    def __init__(self, state: DictConfig, train_logger: TrainLog) -> None:
-        self.state: DictConfig = state
+    def __init__(self) -> None:
+        self.state: DictConfig = start_training_state()
+        self.train_log = TrainLog(self.state)
 
         self.models: SubNetworkCollector = SubNetworkCollector(conf.models)
-        train_logger.log_model_graph(self.models)
-        self.losses: LossesCol = LossesCol(train_logger)
-        self.val_loss: ValidationLoss = ValidationLoss(train_logger)
+        self.train_log.log_model_graph(self.models)
+        self.losses: LossesCol = LossesCol(self.train_log)
+        self.val_loss: ValidationLoss = ValidationLoss(self.train_log)
         self.optims: OptimCol = OptimCol(conf.models, self.models.get_par_dict())
 
         # try to load a check point
         self.checkpoint_loaded = False
         self.__load_checkpoint()
 
+        with gpu_mem_monitor("models"):
+            self.models = self.models.float().to(device)
         # Hack to move the optim parameters to the correct device
-        self.models = self.models.float().to(device)
         # https://github.com/pytorch/pytorch/issues/8741
-        self.optims.load_state_dict(self.optims.state_dict())
+        with gpu_mem_monitor("optims"):
+            self.optims.load_state_dict(self.optims.state_dict())
 
         self.__load_checkpoint()
         state_filtered = OmegaConf.create(
@@ -86,6 +90,9 @@ class Holder:
             return
 
         self.state = OmegaConf.load(conf.path.state)
+        # Once the state has been loaded from the checkpoint,
+        #  update the logger state
+        self.train_log.state = self.state
         checkpoint = torch.load(conf.path.checkpoint, map_location=device)
 
         assert not contains_nans(checkpoint["models"])[0]
