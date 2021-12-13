@@ -63,8 +63,11 @@ class Holder:
         self.optims.load_state_dict(self.optims.state_dict())
 
         self.__load_checkpoint()
+        state_filtered = OmegaConf.create(
+            {key: self.state[key] for key in self.state if "loss" not in key}
+        )
         logger.warning(
-            f"Starting training with state {str(OmegaConf.to_yaml(self.state))}"
+            f"Starting training with state {str(OmegaConf.to_yaml(state_filtered))}"
         )
 
         if self.state.complete:
