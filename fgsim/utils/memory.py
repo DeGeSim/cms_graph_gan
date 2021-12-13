@@ -35,7 +35,8 @@ class GpuMemMonitor:
         self.gpu_mem_alloc = torch.cuda.memory_allocated(device)
 
     def __call__(self, varname: str, overwrite: bool = True):
-        assert self.lastvar is None, "Already recording memory footprint."
+        if self.lastvar is not None:
+            raise RuntimeError("Already recording memory footprint.")
         self.lastvar = varname
         self.overwrite = overwrite
         self._update_mem()
@@ -52,7 +53,6 @@ class GpuMemMonitor:
         if self.overwrite or self.lastvar not in self.sizes:
             cur_alloc = torch.cuda.memory_allocated(device)
             self.sizes[self.lastvar] = cur_alloc - self.gpu_mem_alloc
-            assert self.sizes[self.lastvar] >= 0, "Size cannot be negative"
         self.lastvar = None
 
     def print_recorded(self):
