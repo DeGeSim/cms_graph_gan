@@ -55,7 +55,9 @@ def main():
     logger.info(
         "Configuration:\n" + OmegaConf.to_yaml(hyperparameters, resolve=True)
     )
-    logger.warn(f"Using hash {conf['hash']} and loader_hash {conf['loader_hash']}")
+    logger.warning(
+        f"Using hash {conf['hash']} and loader_hash {conf['loader_hash']}"
+    )
 
     logger.info(f"Running command {conf['command']}")
 

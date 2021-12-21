@@ -36,6 +36,18 @@
         "version": "0.2.0",
         "configurations": [
             {
+                "name": "t deeptree",
+                "type": "python",
+                "request": "launch",
+                "module": "fgsim",
+                "args": [
+                    "--tag",
+                    "deeptree",
+                    // "--debug",
+                    "train"
+                ]
+            },
+            {
                 "name": "t treepc",
                 "type": "python",
                 "request": "launch",
@@ -45,6 +57,18 @@
                     "treepc",
                     // "--debug",
                     "train"
+                ]
+            },
+            {
+                "name": "predict treepc",
+                "type": "python",
+                "request": "launch",
+                "module": "fgsim",
+                "args": [
+                    "--tag",
+                    "treepc",
+                    // "--debug",
+                    "predict"
                 ]
             },
             {

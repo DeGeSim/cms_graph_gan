@@ -1,5 +1,6 @@
+import matplotlib.pyplot as plt
 import numpy as np
-import pandas as pd
+import seaborn as sns
 import torch
 from tqdm import tqdm
 
@@ -7,62 +8,87 @@ from fgsim.config import conf, device
 from fgsim.io.queued_dataset import QueuedDataLoader
 from fgsim.ml.holder import Holder
 from fgsim.monitoring.logger import logger
-from fgsim.monitoring.monitor import setup_experiment
+from fgsim.monitoring.train_log import TrainLog
 
 
 def prediction_procedure() -> None:
     holder: Holder = Holder()
+    train_log: TrainLog = holder.train_log
+
     loader: QueuedDataLoader = QueuedDataLoader()
-    experiment = setup_experiment(holder)
 
-    if experiment.ended:
-        logger.error("Training has not completed, stopping.")
-        loader.qfseq.stop()
-        exit(0)
+    # if not experiment.ended:
+    #     logger.error("Training has not completed, stopping.")
+    #     loader.qfseq.stop()
+    #     exit(0)
 
-    holder.select_best_model()
+    # holder.select_best_model()
+    # holder.models.eval()
+
     holder.models.eval()
-    # Initialize the training
-    ys = []
-    ypreds = []
-
     # Make sure the batches are loaded
     _ = loader.testing_batches
     loader.qfseq.stop()
 
-    logger.info("Start iterating batches.")
-    for _, batch in enumerate(tqdm(loader.testing_batches)):
-        batch = batch.to(device)
+    vals = {"gen": {}, "true": {}}
+
+    # Iterate over the validation sample
+    for batch in tqdm(loader.testing_batches, postfix="testing"):
         with torch.no_grad():
-            prediction = torch.squeeze(holder.models(batch).T)
-            ypred = prediction.to("cpu").numpy()
-            ytrue = batch.ytrue.to("cpu").numpy()
+            batch = batch.clone().to(device)
+            for key, nparr in batch.hlvs.items():
+                if key not in vals["true"]:
+                    vals["true"][key] = []
+                vals["true"][key].append(list(nparr))
 
-        ypreds.append(ypred)
-        ys.append(ytrue)
+            holder.reset_gen_points()
+            holder.gen_points.compute_hlvs()
+            for key, nparr in holder.gen_points.hlvs.items():
+                if key not in vals["gen"]:
+                    vals["gen"][key] = []
+                vals["gen"][key].append(list(nparr))
 
+    for var in vals["true"]:
+        vals["true"][var] = (
+            torch.tensor(vals["true"][var]).flatten().detach().numpy()
+        )
+        vals["gen"][var] = torch.tensor(vals["gen"][var]).flatten().detach().numpy()
+
+    for var in vals["gen"]:
+        figure = plot2d(var, vals["true"][var], vals["gen"][var])
+        with train_log.experiment.test():
+            train_log.experiment.log_figure(
+                figure_name=f"test-distplot-{var}", figure=figure, overwrite=True
+            )
     logger.info("Done with batches.")
-    ys = np.hstack(ys)
-    ypreds = np.hstack(ypreds)
-    logger.info("Conversion done.")
-    vars_dict = {
-        "Energy": ys,
-        "Prediction": ypreds,
-        "Relativ Error": np.abs(1 - ypreds / ys),
-    }
-    df = pd.DataFrame(vars_dict)
-    logger.info("Dataframe done.")
-    df.to_csv(conf.path.predict_csv)
-    logger.info(f"CVS written to {conf.path.predict_csv}.")
-    # train_state.writer.add_scalars(
-    #     "test", vars_dict, global_step=None, walltime=None
-    # )
-    # experiment.log_dataframe_profile(df,name='Test DF', log_raw_dataframe=True)
-
-    # experiment.log_curve(
-    #     "True vs Predicted Energy", list(ys), ypreds, overwrite=True, step=None
-    # )
-    # experiment.log_curve(
-    #     "Relative Error", ys, df["Relativ Error"], overwrite=True, step=None
-    # )
     exit(0)
+
+
+plotconf = dict(hist_kws={"alpha": 0.6}, kde_kws={"linewidth": 2})
+
+
+def plot2d(var, xtrue, xgen):
+    logger.warning(f"foo {var} {len(xtrue)} {len(xgen)}")
+    fig = plt.figure(figsize=(10, 7))
+    logger.warning(f"bar1 {var}")
+    sns.histplot(
+        xtrue,
+        color="dodgerblue",
+        label=f"simulated μ ({np.mean(xtrue)}) σ ({np.std(xtrue)}) ",
+        alpha=0.6,
+    )
+    logger.warning(f"bar2 {var}")
+    sns.histplot(
+        xgen,
+        color="orange",
+        label=f"generated μ ({np.mean(xgen)}) σ ({np.std(xgen)}) ",
+        alpha=0.6,
+    )
+    logger.warning(f"bar3 {var}")
+    plt.title(var)
+    plt.legend()
+    outputpath = f"{conf.path.run_path}/diffplots/{var}.pdf"
+    logger.warning(f"bar4 {var} {outputpath}")
+    plt.savefig(outputpath)
+    logger.warning(f"bar5 {var}")
+    return fig
