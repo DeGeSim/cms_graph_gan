@@ -13,5 +13,5 @@ class LossGen:
         batch_means = torch.mean(batch.pc, (0, 1))
         fake_means = torch.mean(holder.gen_points_w_grad.pc, (0, 1))
         loss = self.factor * self.lossf(fake_means, batch_means)
-        loss.backward()
+        loss.backward(retain_graph=True)
         return float(loss)
