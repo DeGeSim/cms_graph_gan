@@ -12,5 +12,6 @@ class LossGen:
     def __call__(self, holder: Holder, batch: Batch):
         batch_means = torch.mean(batch.pc, (0, 1))
         fake_means = torch.mean(holder.gen_points_w_grad.pc, (0, 1))
-        loss = self.lossf(fake_means, batch_means)
-        return self.factor * loss
+        loss = self.factor * self.lossf(fake_means, batch_means)
+        loss.backward()
+        return float(loss)

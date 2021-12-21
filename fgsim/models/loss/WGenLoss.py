@@ -9,4 +9,6 @@ class LossGen:
 
     def __call__(self, holder: Holder, *args, **kwargs):
         G_fake = holder.models.disc(holder.gen_points_w_grad.pc)
-        return self.factor * G_fake.mean() * -1
+        loss = self.factor * G_fake.mean() * -1
+        loss.backward()
+        return float(loss)

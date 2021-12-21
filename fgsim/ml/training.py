@@ -26,9 +26,8 @@ def training_step(
     with gpu_mem_monitor("gen_points", False):
         holder.reset_gen_points()
 
-    d_loss = holder.losses.disc(holder, batch)
+    holder.losses.disc(holder, batch)
     with gpu_mem_monitor("disc_grad"):
-        d_loss.backward()
         holder.optims.disc.step()
 
     # generator
@@ -38,9 +37,8 @@ def training_step(
         # points thought the generator this time
         with gpu_mem_monitor("gen_points_w_grad", False):
             holder.reset_gen_points_w_grad()
-        g_loss = holder.losses.gen(holder, batch)
+        holder.losses.gen(holder, batch)
         with gpu_mem_monitor("gen_grad"):
-            g_loss.backward()
             holder.optims.gen.step()
 
 

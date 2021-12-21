@@ -1,6 +1,6 @@
 """Dynamically import the losses"""
 import importlib
-from typing import Callable, Dict
+from typing import Dict, Protocol
 
 import torch
 from omegaconf.dictconfig import DictConfig
@@ -9,7 +9,11 @@ from fgsim.config import conf, device
 from fgsim.io.queued_dataset import Batch
 from fgsim.monitoring.train_log import TrainLog
 from fgsim.utils.check_for_nans import contains_nans
-from fgsim.utils.memory import gpu_mem_monitor
+
+
+class LossFunction(Protocol):
+    def __call__(self, holder, batch: Batch) -> float:
+        ...
 
 
 class SubNetworkLoss:
@@ -22,7 +26,7 @@ class SubNetworkLoss:
         self.name = subnetworkname
         self.pconf = pconf
         self.train_log = train_log
-        self.parts: Dict[str, Callable] = {}
+        self.parts: Dict[str, LossFunction] = {}
 
         for lossname, lossconf in pconf.items():
             assert lossname != "parts"
@@ -36,24 +40,19 @@ class SubNetworkLoss:
             self.parts[lossname] = loss
             setattr(self, lossname, loss)
 
-    def log_gpu_loss(self, loss, lossname, holder, batch):
-        with gpu_mem_monitor(f"{self.name}.{lossname}"):
-            return loss(holder, batch)
-
     def __call__(self, holder, batch: Batch):
         lossesdict = {
-            lossname: self.log_gpu_loss(loss, lossname, holder, batch)
-            for lossname, loss in self.parts.items()
+            lossname: loss(holder, batch) for lossname, loss in self.parts.items()
         }
         # write the loss to state so it can be logged later
         for lossname, loss in lossesdict.items():
-            self.train_log.log_loss(f"loss.{self.name}.{lossname}", float(loss))
-            holder.state.losses[self.name][lossname].append(float(loss))
+            self.train_log.log_loss(f"loss.{self.name}.{lossname}", loss)
+            holder.state.losses[self.name][lossname].append(loss)
         summedloss = sum([e for e in lossesdict.values()])
         assert not contains_nans(summedloss)[0]
         return summedloss
 
-    def __getitem__(self, lossname: str) -> Callable:
+    def __getitem__(self, lossname: str) -> LossFunction:
         return self.parts[lossname]
 
 
