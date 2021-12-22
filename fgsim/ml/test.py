@@ -11,7 +11,7 @@ from fgsim.monitoring.logger import logger
 from fgsim.monitoring.train_log import TrainLog
 
 
-def prediction_procedure() -> None:
+def test_procedure() -> None:
     holder: Holder = Holder()
     train_log: TrainLog = holder.train_log
 
@@ -68,27 +68,31 @@ plotconf = dict(hist_kws={"alpha": 0.6}, kde_kws={"linewidth": 2})
 
 
 def plot2d(var, xtrue, xgen):
-    logger.warning(f"foo {var} {len(xtrue)} {len(xgen)}")
+    logger.info(f"Plotting  var {var} {len(xtrue)} {len(xgen)}")
     fig = plt.figure(figsize=(10, 7))
-    logger.warning(f"bar1 {var}")
+
     sns.histplot(
         xtrue,
         color="dodgerblue",
         label=f"simulated μ ({np.mean(xtrue)}) σ ({np.std(xtrue)}) ",
         alpha=0.6,
     )
-    logger.warning(f"bar2 {var}")
+
     sns.histplot(
         xgen,
         color="orange",
         label=f"generated μ ({np.mean(xgen)}) σ ({np.std(xgen)}) ",
         alpha=0.6,
     )
-    logger.warning(f"bar3 {var}")
+
     plt.title(var)
     plt.legend()
-    outputpath = f"{conf.path.run_path}/diffplots/{var}.pdf"
-    logger.warning(f"bar4 {var} {outputpath}")
+    from pathlib import Path
+
+    path = Path(f"{conf.path.run_path}/diffplots/")
+    path.mkdir(exist_ok=True)
+    outputpath = path / f"{var}.pdf"
+
     plt.savefig(outputpath)
-    logger.warning(f"bar5 {var}")
+
     return fig

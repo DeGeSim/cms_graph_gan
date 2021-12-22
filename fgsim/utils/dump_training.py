@@ -13,7 +13,6 @@ filenames = [
         "train_config",
         "checkpoint",
         "checkpoint_old",
-        "predict_csv",
     ]
 ]
 

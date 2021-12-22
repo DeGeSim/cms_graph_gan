@@ -60,7 +60,7 @@
                 ]
             },
             {
-                "name": "predict treepc",
+                "name": "test treepc",
                 "type": "python",
                 "request": "launch",
                 "module": "fgsim",
@@ -68,7 +68,7 @@
                     "--tag",
                     "treepc",
                     // "--debug",
-                    "predict"
+                    "test"
                 ]
             },
             {
@@ -90,11 +90,11 @@
                 ]
             },
             {
-                "name": "predict",
+                "name": "test",
                 "type": "python",
                 "request": "launch",
                 "module": "fgsim",
-                "args": ["--tag", "`ls ~/fgsim/wd | fzf`", "predict"]
+                "args": ["--tag", "`ls ~/fgsim/wd | fzf`", "test"]
             },
             {
                 "name": "loadfile",

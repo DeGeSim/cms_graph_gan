@@ -66,10 +66,10 @@ def main():
 
         training_procedure()
 
-    if conf["command"] == "predict":
-        from fgsim.ml.predict import prediction_procedure
+    if conf["command"] == "test":
+        from fgsim.ml.test import test_procedure
 
-        prediction_procedure()
+        test_procedure()
 
     if conf["command"] == "preprocess":
         from fgsim.utils.preprocess import preprocess_procedure
