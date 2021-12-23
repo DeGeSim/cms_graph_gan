@@ -1,14 +1,13 @@
-import matplotlib.pyplot as plt
 import numpy as np
-import seaborn as sns
 import torch
 from tqdm import tqdm
 
-from fgsim.config import conf, device
+from fgsim.config import device
 from fgsim.io.queued_dataset import QueuedDataLoader
 from fgsim.ml.holder import Holder
 from fgsim.monitoring.logger import logger
 from fgsim.monitoring.train_log import TrainLog
+from fgsim.plot.test import diffhist
 
 
 def test_procedure() -> None:
@@ -30,16 +29,16 @@ def test_procedure() -> None:
     _ = loader.testing_batches
     loader.qfseq.stop()
 
-    vals = {"gen": {}, "true": {}}
+    vals = {"gen": {}, "sim": {}}
 
-    # Iterate over the validation sample
+    # Iterate over the test sample
     for batch in tqdm(loader.testing_batches, postfix="testing"):
         with torch.no_grad():
             batch = batch.clone().to(device)
             for key, nparr in batch.hlvs.items():
-                if key not in vals["true"]:
-                    vals["true"][key] = []
-                vals["true"][key].append(list(nparr))
+                if key not in vals["sim"]:
+                    vals["sim"][key] = []
+                vals["sim"][key].append(list(nparr))
 
             holder.reset_gen_points()
             holder.gen_points.compute_hlvs()
@@ -48,51 +47,20 @@ def test_procedure() -> None:
                     vals["gen"][key] = []
                 vals["gen"][key].append(list(nparr))
 
-    for var in vals["true"]:
-        vals["true"][var] = (
-            torch.tensor(vals["true"][var]).flatten().detach().numpy()
-        )
+    # Merge the computed hlvs from all batches
+    for var in vals["sim"]:
+        vals["sim"][var] = torch.tensor(vals["sim"][var]).flatten().detach().numpy()
         vals["gen"][var] = torch.tensor(vals["gen"][var]).flatten().detach().numpy()
 
+    # Sample 2k events and plot the distribution
     for var in vals["gen"]:
-        figure = plot2d(var, vals["true"][var], vals["gen"][var])
+        xsim = np.random.choice(vals["sim"][var], size=2000, replace=False)
+        xgen = np.random.choice(vals["gen"][var], size=2000, replace=False)
+        logger.info(f"Plotting  var {var}")
+        figure = diffhist(var, xsim=xsim, xgen=xgen)
         with train_log.experiment.test():
             train_log.experiment.log_figure(
                 figure_name=f"test-distplot-{var}", figure=figure, overwrite=True
             )
-    logger.info("Done with batches.")
+        figure.close()
     exit(0)
-
-
-plotconf = dict(hist_kws={"alpha": 0.6}, kde_kws={"linewidth": 2})
-
-
-def plot2d(var, xtrue, xgen):
-    logger.info(f"Plotting  var {var} {len(xtrue)} {len(xgen)}")
-    fig = plt.figure(figsize=(10, 7))
-
-    sns.histplot(
-        xtrue,
-        color="dodgerblue",
-        label=f"simulated μ ({np.mean(xtrue)}) σ ({np.std(xtrue)}) ",
-        alpha=0.6,
-    )
-
-    sns.histplot(
-        xgen,
-        color="orange",
-        label=f"generated μ ({np.mean(xgen)}) σ ({np.std(xgen)}) ",
-        alpha=0.6,
-    )
-
-    plt.title(var)
-    plt.legend()
-    from pathlib import Path
-
-    path = Path(f"{conf.path.run_path}/diffplots/")
-    path.mkdir(exist_ok=True)
-    outputpath = path / f"{var}.pdf"
-
-    plt.savefig(outputpath)
-
-    return fig

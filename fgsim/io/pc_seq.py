@@ -219,6 +219,8 @@ def hitlist_to_pc(event: ak.highlevel.Record) -> torch.Tensor:
     pc = torch.nn.functional.pad(
         pc, (0, 0, 0, npoints - pc.shape[0]), mode="constant", value=0
     )
+    if torch.any(pc[:, 0] < 0):
+        raise Exception
     return pc
 
 
