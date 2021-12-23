@@ -74,7 +74,7 @@ class Holder:
             f"Starting training with state {str(OmegaConf.to_yaml(state_filtered))}"
         )
 
-        if self.state.complete:
+        if self.state.complete and conf["command"] == "train":
             logger.warning("Training has been completed, stopping.")
             exit(0)
 

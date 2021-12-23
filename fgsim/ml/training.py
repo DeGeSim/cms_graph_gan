@@ -13,8 +13,6 @@ from fgsim.monitoring.logger import logger
 from fgsim.monitoring.train_log import TrainLog
 from fgsim.utils.memory import gpu_mem_monitor
 
-exitcode = 0
-
 
 def training_step(
     batch: Batch,
@@ -45,12 +43,12 @@ def training_step(
 def training_procedure() -> None:
     holder: Holder = Holder()
     train_log: TrainLog = holder.train_log
-
     loader: QueuedDataLoader = QueuedDataLoader()
 
     # Queue that batches
     loader.queue_epoch(n_skip_events=holder.state.processed_events)
 
+    exitcode = 0
     try:
         while not early_stopping(holder.state):
             # switch model in training mode
