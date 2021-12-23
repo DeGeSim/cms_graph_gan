@@ -62,5 +62,4 @@ def test_procedure() -> None:
             train_log.experiment.log_figure(
                 figure_name=f"test-distplot-{var}", figure=figure, overwrite=True
             )
-        figure.close()
     exit(0)
