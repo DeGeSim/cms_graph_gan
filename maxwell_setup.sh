@@ -12,7 +12,7 @@ module load maxwell gcc/9.3 cuda/11.3
 pip install -U pipx
 pipx install black isort #formating \
     rope #refactoring \
-    flake8 mypy #linting\
+    pyproject-flake8 mypy #linting\
     coverage pytest jedi #testing \
     pre-commit #precommit hooks
 
