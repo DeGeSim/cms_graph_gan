@@ -91,32 +91,11 @@ loss_options:
 
 
 loader_options:
-    clic:
-        qf_seq_name: "clic_seq"
-        keylist:
-            [
-                "energy",
-                "ECAL",
-                "ECAL_E",
-                "HCAL",
-                "HCAL_E",
-                "recoEta",
-                "recoPhi",
-                "recoTheta",
-            ]
-        chunksize: 100
-        batch_size: 100
-        validation_set_size: 5000
-        test_set_size: 30000
-        prefetch_batches: 2
-        num_workers_transform: 15
-        num_workers_stack: 1
     hgcal:
         qf_seq_name: "hgcal_seq"
         rootprefix: "treeMaker/tree"
         preprocess_training: True
         debug: False
-        keylist: ["genPh_E", "simHit_detid", "simHit_E"]
         hlvs:
             [
                 "sum_energy",
@@ -154,7 +133,6 @@ loader_options:
             id: "simHit_detid"
             energy: "genPh_E"
             hit_energy: "simHit_E"
-        keylist: ["genPh_E", "simHit_detid", "simHit_E"]
         cell_prop_keys: ["x", "y", "z"]
         chunksize: 100
         batch_size: 100

@@ -154,7 +154,7 @@ def read_chunk(chunks: ChunkType) -> ak.highlevel.Array:
             roottree = rfile[conf.loader.rootprefix]
             chunks_list.append(
                 roottree.arrays(
-                    conf.loader.keylist,
+                    list(conf.loader.braches.values()),
                     entry_start=start,
                     entry_stop=end,
                     library="ak",
