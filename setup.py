@@ -1,11 +1,5 @@
 #!/usr/bin/env python
-
 """The setup script."""
-
-# needed for build the cpp extension
-# from glob import glob
-# import numpy as np
-# from pybind11.setup_helpers import Pybind11Extension
 from setuptools import find_packages, setup
 
 with open("docs/readme.rst") as readme_file:
@@ -15,55 +9,39 @@ with open("docs/history.rst") as history_file:
     history = history_file.read()
 
 
-setup_requirements = ["torch"]
+setup_requirements = ["setuptools"]
 install_requirements = [
-    "matplotlib",
-    "numpy",
-    "omegaconf",
-    "pretty-errors",
-    "prettytable",
-    "setuptools",
     "torch",
     "torch-geometric",
     "torch-sparse",
     "torch-scatter",
     "torch-spline-conv",
+    "matplotlib",
+    "omegaconf",
+    "pretty-errors",
+    "prettytable",
+    "typeguard",
     "tqdm",
+    "rich",
     "h5py",
+    "uproot",
+    "awkward",
     "comet-ml",
     "tensorboard",
-    "toml",
     "tblib",
-    "uproot",
-    "rich",
 ]
 
 extras = {
-    "test": [
-        "tox",
-        "coverage",
-        "flake8",
-        "isort",
-        "black",
+    "dev": [
+        #  "coverage",
+        #  "pyproject-flake8",
         "pytest",
-        "pytest-runner",
+        #  "pytest-runner",
+        #  "pylint",
+        #  "jedi",
+        #  "rope",
     ],
-    "code": ["pylint", "jedi", "rope"],
 }
-
-ext_modules = [
-    # Pybind11Extension(
-    #     "geomapper",
-    #     sources=sorted(glob("fgsim/geo/*.cpp")),
-    #     include_dirs=[
-    #         np.get_include(),
-    #         "fgsim/geo/libs/xtensor/include",
-    #         "fgsim/geo/libs/xtensor-python/include",
-    #         "fgsim/geo/libs/xtl/include",
-    #     ],
-    #     extra_compile_args=["-std=c99", "-Wno-error=vla"],
-    # ),
-]
 
 setup(
     author="Anonymous",
@@ -88,7 +66,6 @@ setup(
         include=["fgsim"], exclude=["fgsim/geo/libs/.*", "xtensor-python"]
     ),
     setup_requires=setup_requirements,
-    ext_modules=ext_modules,
     extras_require=extras,
     url="https://github.com/mova/fgsim",
     version="0.1.0",

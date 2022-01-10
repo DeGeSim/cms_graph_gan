@@ -1,6 +1,32 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[tool.pytest.ini_options]
+testpaths = [
+    "tests",
+]
+python_files = "*.py"
+
+[tool.flake8]
+max-line-length = 93
+per-file-ignores = """
+    fgsim/__main__.py: E402,F401,
+    **/__init__.py: F401
+    """
+exclude = [
+    "*/tests",
+    "fgsim/geo/libs/*",
+    "fgsim/old/*",
+    ".tox",
+    "docs",
+    "__pycache__"
+    ]
+ignore = "E203,E302,W503,F541,"
+
+
 [tool.isort]
 profile = "black"
-
 
 [tool.black]
 line-length = 84
@@ -20,11 +46,6 @@ exclude = '''
   )
 )
 '''
-
-
-[build-system]
-requires = ["setuptools", "wheel", 'pybind11==2.6.1','numpy==1.19.4']
-build-backend = "setuptools.build_meta"
 
 [mypy]
 python_version = 38

@@ -1,6 +1,0 @@
-recursive-include tests *
-recursive-exclude * __pycache__
-
-recursive-include docs *.rst conf.py Makefile make.bat
-global-exclude *.py[cod]
-graft fgsim/geo/libs

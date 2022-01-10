@@ -6,31 +6,25 @@
     ],
     "settings": {
         "python.envFile": "${workspaceFolder}/.env",
-        "python.pythonPath": ".tox/py38/bin/python3",
+        "python.pythonPath": "${workspaceFolder}/venv/bin/python",
         "python.formatting.blackPath": "${env:HOME}/.local/bin/black",
         "python.linting.flake8Path": "${env:HOME}/.local/bin/flake8",
         "python.linting.mypyPath": "${env:HOME}/.local/bin/mypy",
         // "python.linting.pylintPath": "${env:HOME}/.local/bin/pylint",
         "python.pipenvPath": "${env:HOME}/.local/bin/pipenv",
-        "python.poetryPath": "${env:HOME}/.local/bin/poetry",
         "jupyter.jupyterLaunchRetries": 1,
         "jupyter.jupyterServerType": "local",
         "python.languageServer": "Jedi",
         "debug.console.closeOnEnd": true,
         "debug.terminal.clearBeforeReusing": true,
-        "terminal.integrated.profiles.linux": {
-            "bash": {
-              "icon": "terminal-bash",
-              "path": "bash"
-            },
-            "zsh": {
-              "path": "zsh",
-              "env": {
-                "PATH": "/home/mscham/fgsim/.tox/py38/bin:/home/mscham/.apps/goapps/bin:/home/mscham/.local/cargo/bin:/home/mscham/.local/nodejs/bin:/home/mscham/.apps/pyenv/shims:/home/mscham/.apps/pyenv/bin:/home/mscham/.local/pylibs-CentOSLinux7/bin:/home/mscham/.apps/CentOSLinux7/bin:/home/mscham/.apps/appimages:/home/mscham/.conf/scripts:/home/mscham/.bin:/software/tools/bin:/usr/local/cuda-11.1/bin:/software/cuda/cuda-11.1/bin:/software/gcc/9.3/bin:/home/mscham/.apps/goapps/bin:/home/mscham/.local/cargo/bin:/home/mscham/.local/nodejs/bin:/home/mscham/.apps/pyenv/shims:/home/mscham/.apps/pyenv/bin:/home/mscham/.local/pylibs-CentOSLinux7/bin:/home/mscham/.apps/CentOSLinux7/bin:/home/mscham/.apps/appimages:/home/mscham/.conf/scripts:/home/mscham/.bin:/software/tools/bin:/usr/lpp/mmfs/bin:/usr/lib64/ccache:/usr/local/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/opt/puppetlabs/bin:/home/mscham/.local/bin:/home/mscham/.local/bin:/home/mscham/.apps/fzf/bin",
-                "VIRTUAL_ENV":"/home/mscham/fgsim/.tox/py38",
-              },
-            }
-          },
+        // "terminal.integrated.profiles.linux": {
+        //     "bash": {
+        //       "path": "bash"
+        //     },
+        //     "zsh": {
+        //       "path": "zsh",
+        //     }
+        //   },
     },
     "launch": {
         "version": "0.2.0",
@@ -110,11 +104,11 @@
         "tasks": [
             {
                 "type": "shell",
-                "command": "tox",
+                "command": "pytest",
                 "args": [],
                 "isBackground": false,
                 "options": { "cwd": "${workspaceFolder}" },
-                "label": "Run tox",
+                "label": "Run test",
                 "group": {
                     "kind": "test",
                     "isDefault": true
