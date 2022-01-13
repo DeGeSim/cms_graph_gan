@@ -4,19 +4,91 @@
             "path": "."
         }
     ],
+    "launch": {
+        "configurations": [
+            {
+                "args": [
+                    "--tag",
+                    "deeptree",
+                    // "--debug",
+                    "train"
+                ],
+                "module": "fgsim",
+                "name": "t deeptree",
+                "request": "launch",
+                "type": "python"
+            },
+            {
+                "args": [
+                    "--tag",
+                    "treepc",
+                    // "--debug",
+                    "train"
+                ],
+                "module": "fgsim",
+                "name": "t treepc",
+                "request": "launch",
+                "type": "python"
+            },
+            {
+                "args": [
+                    "--tag",
+                    "treepc",
+                    // "--debug",
+                    "test"
+                ],
+                "module": "fgsim",
+                "name": "test treepc",
+                "request": "launch",
+                "type": "python"
+            },
+            {
+                "args": [
+                    "--tag",
+                    "treepc",
+                    "preprocess"
+                ],
+                "module": "fgsim",
+                "name": "preprocess",
+                "request": "launch",
+                "type": "python"
+            },
+            {
+                "args": [
+                    "--tag",
+                    // "`fd  --type d \".*\" --maxdepth 1 ~/fgsim/wd | sd \".*/(.+)$\" \"\\$1\"|fzf`",
+                    "train"
+                ],
+                "module": "fgsim",
+                "name": "t seltag",
+                "request": "launch",
+                "type": "python"
+            },
+            {
+                "args": [
+                    "--tag",
+                    "`ls ~/fgsim/wd | fzf`",
+                    "test"
+                ],
+                "module": "fgsim",
+                "name": "test",
+                "request": "launch",
+                "type": "python"
+            },
+            {
+                "args": [
+                    "loadfile",
+                    "${file}"
+                ],
+                "module": "fgsim",
+                "name": "loadfile",
+                "request": "launch",
+                "type": "python"
+            }
+        ],
+        "version": "0.2.0"
+    },
     "settings": {
-        "python.envFile": "${workspaceFolder}/.env",
-        "python.pythonPath": "${workspaceFolder}/venv/bin/python",
-        "python.formatting.blackPath": "${env:HOME}/.local/bin/black",
-        "python.linting.flake8Path": "${env:HOME}/.local/bin/flake8",
-        "python.linting.mypyPath": "${env:HOME}/.local/bin/mypy",
-        // "python.linting.pylintPath": "${env:HOME}/.local/bin/pylint",
-        "python.pipenvPath": "${env:HOME}/.local/bin/pipenv",
-        "python.testing.unittestEnabled": false,
-        "python.testing.pytestEnabled": true,
-        "jupyter.jupyterLaunchRetries": 1,
-        "jupyter.jupyterServerType": "local",
-        "python.languageServer": "Jedi",
         "debug.console.closeOnEnd": true,
         "debug.terminal.clearBeforeReusing": true,
         // "terminal.integrated.profiles.linux": {
@@ -27,95 +99,40 @@
         //       "path": "zsh",
         //     }
         //   },
-    },
-    "launch": {
-        "version": "0.2.0",
-        "configurations": [
-            {
-                "name": "t deeptree",
-                "type": "python",
-                "request": "launch",
-                "module": "fgsim",
-                "args": [
-                    "--tag",
-                    "deeptree",
-                    // "--debug",
-                    "train"
-                ]
-            },
-            {
-                "name": "t treepc",
-                "type": "python",
-                "request": "launch",
-                "module": "fgsim",
-                "args": [
-                    "--tag",
-                    "treepc",
-                    // "--debug",
-                    "train"
-                ]
-            },
-            {
-                "name": "test treepc",
-                "type": "python",
-                "request": "launch",
-                "module": "fgsim",
-                "args": [
-                    "--tag",
-                    "treepc",
-                    // "--debug",
-                    "test"
-                ]
-            },
-            {
-                "name": "preprocess",
-                "type": "python",
-                "request": "launch",
-                "module": "fgsim",
-                "args": ["--tag", "treepc", "preprocess"]
-            },
-            {
-                "name": "t seltag",
-                "type": "python",
-                "request": "launch",
-                "module": "fgsim",
-                "args": [
-                    "--tag",
-                    // "`fd  --type d \".*\" --maxdepth 1 ~/fgsim/wd | sd \".*/(.+)$\" \"\\$1\"|fzf`",
-                    "train"
-                ]
-            },
-            {
-                "name": "test",
-                "type": "python",
-                "request": "launch",
-                "module": "fgsim",
-                "args": ["--tag", "`ls ~/fgsim/wd | fzf`", "test"]
-            },
-            {
-                "name": "loadfile",
-                "type": "python",
-                "request": "launch",
-                "module": "fgsim",
-                "args": ["loadfile", "${file}"]
-            }
-        ]
+        "jupyter.jupyterLaunchRetries": 1,
+        "jupyter.jupyterServerType": "local",
+        "python.defaultInterpreterPath": "${workspaceFolder}/v/venv1.10.1+cu111/bin/python",
+        "python.envFile": "${workspaceFolder}/.env",
+        "python.formatting.blackPath": "${env:HOME}/.local/bin/black",
+        "python.languageServer": "Jedi",
+        "python.linting.flake8Enabled": true,
+        "python.linting.flake8Path": "${env:HOME}/.local/bin/flake8",
+        "python.linting.mypyEnabled": true,
+        "python.linting.mypyPath": "${env:HOME}/.local/bin/mypy",
+        // "python.linting.pylintPath": "${env:HOME}/.local/bin/pylint",
+        "python.linting.pylintEnabled": false,
+        "python.pipenvPath": "${env:HOME}/.local/bin/pipenv",
+        "python.pythonPath": "${workspaceFolder}/v/venv1.10.1+cu111/bin/python",
+        "python.testing.pytestEnabled": true,
+        "python.testing.unittestEnabled": false
     },
     "tasks": {
-        "version": "2.0.0",
         "tasks": [
             {
-                "type": "shell",
-                "command": "pytest",
                 "args": [],
-                "isBackground": false,
-                "options": { "cwd": "${workspaceFolder}" },
-                "label": "Run test",
+                "command": "pytest",
                 "group": {
-                    "kind": "test",
-                    "isDefault": true
-                }
+                    "isDefault": true,
+                    "kind": "test"
+                },
+                "isBackground": false,
+                "label": "Run test",
+                "options": {
+                    "cwd": "${workspaceFolder}"
+                },
+                "type": "shell"
             }
-        ]
+        ],
+        "version": "2.0.0"
     }
 }

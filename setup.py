@@ -33,13 +33,8 @@ install_requirements = [
 
 extras = {
     "dev": [
-        #  "coverage",
-        #  "pyproject-flake8",
-        "pytest",
-        #  "pytest-runner",
-        #  "pylint",
-        #  "jedi",
-        #  "rope",
+        "jedi",
+        "rope",
     ],
 }
 
