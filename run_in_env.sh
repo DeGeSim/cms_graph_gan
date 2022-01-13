@@ -8,7 +8,7 @@ if ! command -v nvidia-smi &> /dev/null
 then
     module load maxwell gcc/9.3
 else
-    module load maxwell gcc/9.3 cuda/11.3
+    module load maxwell gcc/9.3 cuda/11.1
 fi
 
 cd ~/fgsim

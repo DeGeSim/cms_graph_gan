@@ -6,8 +6,8 @@ import torch
 
 
 class Node:
-    def __init__(self, ftx: torch.Tensor):
-        self.ftx = ftx
+    def __init__(self, idx: torch.long):
+        self.idx: torch.long = idx
         self.children: List[Node] = []
         self.parent: Optional[Node] = None
 
@@ -16,14 +16,24 @@ class Node:
         self.children.append(child)
         child.parent = self
 
-    def get_parents(self) -> List[Node]:
+    def get_ancestors(self) -> List[Node]:
         if self.parent is None:
             return []
         else:
-            return [self.parent] + self.parent.get_parents()
+            return [self.parent] + self.parent.get_ancestors()
+
+    def recur_descendants(self):
+        return self.children + [
+            coc for child in self.children for coc in child.recur_descendants()
+        ]
 
     def get_root(self) -> Node:
         cur = self
         while cur.parent is not None:
             cur = cur.parent
         return cur
+
+    def get_node_list(self) -> List[Node]:
+        root = self.get_root()
+        node_list = [root] + root.recur_descendants()
+        return node_list
