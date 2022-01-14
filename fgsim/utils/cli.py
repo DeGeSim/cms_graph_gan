@@ -1,5 +1,11 @@
 """Console script for fgsim."""
 import argparse
+import sys
+
+# No args if run within pytest
+if "pytest" in sys.modules:
+    sys.argv = ["/home/mscham/fgsim/fgsim/__main__.py", "train"]
+
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-t", "--tag", default="default", required=False)
