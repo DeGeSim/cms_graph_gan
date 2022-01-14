@@ -1,6 +1,9 @@
+import torch
 import torch.nn as nn
+from torch_geometric.data import Data
 
-from fgsim.config import conf
+from fgsim.config import conf, device
+from fgsim.monitoring.logger import logger
 
 from .ancester_conv import AncesterConv
 from .global_feedback import GlobalDeepAggr
@@ -9,17 +12,20 @@ from .tree import Node
 
 
 class ModelClass(nn.Module):
-    def __init__(self):
+    def __init__(
+        self, n_hidden_features: int, n_global: int, n_branches: int, n_splits: int
+    ):
         super().__init__()
-        param = conf.models.gen.param
+        n_features = conf.loader.n_features + n_hidden_features
+        self.n_splits = n_splits
         # Compute the number of nodes generated in the tree
+        # Should be in the configuration ideally
+        # Hopefully when this is implemented
+        # https://github.com/omry/omegaconf/issues/91
         conf.training["n_points"] = sum(
-            [param["n_branches"] ** i for i in range(param["n_branches"])]
+            [n_branches ** i for i in range(self.n_splits)]
         )
-        n_features = (
-            conf.loader.n_features + conf.models.gen.param.n_hidden_features
-        )
-        n_global = param["n_global"]
+
         self.global_aggr = GlobalDeepAggr(
             pre_nn=nn.Sequential(
                 nn.Linear(n_features, n_features),
@@ -36,18 +42,18 @@ class ModelClass(nn.Module):
         )
         self.branching_nn = NodeSpliter(
             n_features=n_features,
-            n_branches=param["n_branches"],
+            n_branches=n_branches,
             proj_nn=nn.Sequential(
-                nn.Linear(n_features + n_global, n_features * param["n_branches"]),
+                nn.Linear(n_features + n_global, n_features * n_branches),
                 nn.ReLU(),
                 nn.Linear(
-                    n_features * param["n_branches"],
-                    n_features * param["n_branches"],
+                    n_features * n_branches,
+                    n_features * n_branches,
                 ),
                 nn.ReLU(),
                 nn.Linear(
-                    n_features * param["n_branches"],
-                    n_features * param["n_branches"],
+                    n_features * n_branches,
+                    n_features * n_branches,
                 ),
                 nn.ReLU(),
             ),
@@ -65,24 +71,27 @@ class ModelClass(nn.Module):
                 # agreegated features + previous feature vector + global
                 nn.Linear(2 * n_features + n_global, 2 * n_features + n_global),
                 nn.ReLU(),
-                nn.Linear(
-                    2 * n_features + n_global, n_features * param["n_branches"]
-                ),
+                nn.Linear(2 * n_features + n_global, n_features),
                 nn.ReLU(),
                 nn.Linear(
-                    n_features * param["n_branches"],
-                    n_features * param["n_branches"],
+                    n_features,
+                    n_features,
                 ),
                 nn.ReLU(),
             ),
         )
 
-    def forward(self, random_vector):
-        root = Node(random_vector)
-        tree_layers = [[root]]
-        for inx in range(self.layer_num):
-            global_features = self.global_aggr(root.get_full_tree())
-            tree_layers = self.branching_nn(tree_layers[inx], global_features)
-            self.ancester_conv(root, global_features)
-
-        return self.pointcloud
+    # Random vector to pc
+    def forward(self, random_vector: torch.Tensor) -> torch.Tensor:
+        pc_list = []
+        for ipc, x in enumerate(random_vector):
+            logger.info(f"PC #{ipc}")
+            edge_index = torch.tensor([[], []], dtype=torch.long, device=device)
+            graph = Data(x=x, edge_index=edge_index)
+            graph.tree = [[Node(0)]]
+            for inx in range(self.n_splits):
+                global_features = self.global_aggr(graph)
+                graph = self.branching_nn(graph, global_features)
+                graph.x = self.ancester_conv(graph, global_features)
+            pc_list.append(graph.x)
+        return torch.vstack(pc_list)

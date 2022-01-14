@@ -5,7 +5,6 @@ should be passed the qfseq.
 """
 import os
 from dataclasses import dataclass, field
-from math import prod
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
@@ -117,8 +116,7 @@ class Batch(Event):
         return
 
 
-#
-npoints = prod(conf.models.gen.param.degrees)
+# Sharded switch for the postprocessing
 postprocess_switch = Value("i", 0)
 
 
@@ -217,10 +215,15 @@ def hitlist_to_pc(event: ak.highlevel.Record) -> torch.Tensor:
 
     pc = pc.float()
     pc = torch.nn.functional.pad(
-        pc, (0, 0, 0, npoints - pc.shape[0]), mode="constant", value=0
+        pc,
+        (0, 0, 0, conf.training.n_points - pc.shape[0]),
+        mode="constant",
+        value=0,
     )
     if torch.any(pc[:, 0] < 0):
         raise Exception
+    assert pc.shape[0] == conf.training.n_points
+    assert pc.shape[1] == conf.loader.n_features
     return pc
 
 
