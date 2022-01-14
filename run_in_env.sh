@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 export LD_PRELOAD=""
 source /etc/profile.d/modules.sh
 
@@ -12,6 +13,6 @@ else
 fi
 
 cd ~/fgsim
-source venv/bin/activate
+source v/venv1.10.1+cu111/bin/activate
 python3 -m fgsim $@
 echo "Command python3 -m fgsim $@ finished."

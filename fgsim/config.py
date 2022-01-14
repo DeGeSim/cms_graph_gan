@@ -38,11 +38,11 @@ if args.tag != "default":
 else:
     tagconf = OmegaConf.create({})
 
+
 conf = OmegaConf.merge(defaultconf, tagconf, vars(args))
 
+
 # Select the CPU/GPU
-
-
 def get_device() -> torch.device:
     if torch.cuda.is_available():
         dev = torch.device("cuda:" + str(torch.cuda.device_count() - 1))

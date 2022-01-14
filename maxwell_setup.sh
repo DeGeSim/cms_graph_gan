@@ -47,7 +47,7 @@ pip install -e .[dev]
 # rope #refactoring \
 # jedi
 
-# # install queueflow
-# git clone git@github.com:DeGeSim/queueflow.git ~/queueflow
-# cd ~/queueflow
-# pip install -e .
+# install queueflow
+git clone git@github.com:DeGeSim/queueflow.git ~/queueflow
+cd ~/queueflow
+pip install -e .
