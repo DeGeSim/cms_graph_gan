@@ -14,17 +14,25 @@ class AncesterConv(MessagePassing):
         x = graph.x
         edge_index = graph.edge_index
 
+        # Construct the per-event-feature vector for each
+        # row in the feature matrix
+        glo_ftx_mtx = global_features[graph.event, :]
         # Transform node feature matrix with the global features
-        xt = self.msg_gen(torch.hstack([x, global_features.repeat(x.shape[0], 1)]))
+        xtransform = self.msg_gen(torch.hstack([x, glo_ftx_mtx]))
 
         # start propagating messages.
-        x = self.propagate(edge_index, x=x, xt=xt, global_features=global_features)
+        x = self.propagate(
+            edge_index, x=xtransform, xorginal=x, glo_ftx_mtx=glo_ftx_mtx
+        )
         return x
 
     def message(self, x_j: torch.Tensor) -> torch.Tensor:
         return x_j
 
-    def update(self, aggr_out: torch.Tensor, x, global_features) -> torch.Tensor:
-        return self.update_nn(
-            torch.hstack([aggr_out, x, global_features.repeat(x.shape[0], 1)])
-        )
+    def update(
+        self,
+        aggr_out: torch.Tensor,
+        xorginal: torch.Tensor,
+        glo_ftx_mtx: torch.Tensor,
+    ) -> torch.Tensor:
+        return self.update_nn(torch.hstack([aggr_out, xorginal, glo_ftx_mtx]))

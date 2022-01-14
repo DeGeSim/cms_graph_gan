@@ -2,10 +2,12 @@ from __future__ import annotations
 
 from typing import List, Optional
 
+import torch
+
 
 class Node:
-    def __init__(self, idx: int):
-        self.idx: int = idx
+    def __init__(self, idxs: torch.Tensor):
+        self.idxs: torch.Tensor = idxs
         self.children: List[Node] = []
         self.parent: Optional[Node] = None
 

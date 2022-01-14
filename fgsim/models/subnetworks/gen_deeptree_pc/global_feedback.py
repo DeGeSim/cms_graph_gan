@@ -1,6 +1,6 @@
-import torch
 import torch.nn as nn
 from torch_geometric.data import Data
+from torch_geometric.nn import global_add_pool
 
 
 class GlobalDeepAggr(nn.Module):
@@ -11,6 +11,6 @@ class GlobalDeepAggr(nn.Module):
 
     def forward(self, graph: Data):
         ftx_mtx = self.pre_nn(graph.x)
-        global_ftx = torch.sum(ftx_mtx, -2)
+        global_ftx = global_add_pool(ftx_mtx, graph.event)
         global_ftx = self.post_nn(global_ftx)
         return global_ftx

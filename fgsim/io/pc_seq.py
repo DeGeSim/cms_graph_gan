@@ -214,15 +214,20 @@ def hitlist_to_pc(event: ak.highlevel.Record) -> torch.Tensor:
     pc = torch.hstack((hit_energies.view(-1, 1), xyzpos))
 
     pc = pc.float()
+    if conf.loader.n_points < pc.shape[0]:
+        raise RuntimeError(
+            "Event hast more points then the padding: "
+            f"{conf.loader.n_points} < {pc.shape[0]}"
+        )
     pc = torch.nn.functional.pad(
         pc,
-        (0, 0, 0, conf.training.n_points - pc.shape[0]),
+        (0, 0, 0, conf.loader.n_points - pc.shape[0]),
         mode="constant",
         value=0,
     )
     if torch.any(pc[:, 0] < 0):
         raise Exception
-    assert pc.shape[0] == conf.training.n_points
+    assert pc.shape[0] == conf.loader.n_points
     assert pc.shape[1] == conf.loader.n_features
     return pc
 

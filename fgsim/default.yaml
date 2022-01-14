@@ -91,9 +91,6 @@ path:
 loader: ${loader_options[${loader_name}]}
 loader_name: pc
 
-
-
-
 loader_options:
     hgcal:
         qf_seq_name: "hgcal_seq"
@@ -139,6 +136,7 @@ loader_options:
             hit_energy: "simHit_E"
         cell_prop_keys: ["x", "y", "z"]
         n_features: 4
+        n_points: 4500
         chunksize: 100
         batch_size: 100
         validation_set_size: 5000

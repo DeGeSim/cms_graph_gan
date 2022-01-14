@@ -1,10 +1,10 @@
-from typing import List
-
+import numpy as np
 import pytest
 import torch
 from torch import nn
 from torch_geometric.data import Data
 
+from fgsim.config import device
 from fgsim.models.subnetworks.gen_deeptree_pc.ancester_conv import AncesterConv
 from fgsim.models.subnetworks.gen_deeptree_pc.global_feedback import GlobalDeepAggr
 from fgsim.models.subnetworks.gen_deeptree_pc.splitting import NodeSpliter
@@ -13,14 +13,19 @@ from fgsim.models.subnetworks.gen_deeptree_pc.tree import Node
 n_features = 4
 n_branches = 2
 n_global = 6
+batch_size = 3
 
 
 @pytest.fixture
 def graph():
-    edge_index = torch.tensor([[], []], dtype=torch.long)
-    x = torch.randn(1, n_features, dtype=torch.float)
-    g = Data(x=x, edge_index=edge_index)
-    g.tree: List[List[Node]] = [[Node(0)]]
+    g = Data(
+        x=torch.randn(batch_size, n_features, dtype=torch.float, device=device),
+        edge_index=torch.tensor([[], []], dtype=torch.long, device=device),
+        edge_attr=torch.tensor([], dtype=torch.long, device=device),
+        event=torch.arange(batch_size, dtype=torch.long, device=device),
+        tree=[[Node(torch.arange(batch_size, dtype=torch.long, device=device))]],
+    )
+
     return g
 
 
@@ -34,15 +39,16 @@ def test_GlobalFeedBackNN(graph):
             nn.Linear(n_features, n_global),
             nn.ReLU(),
         ),
-    )
+    ).to(device)
     splitter = NodeSpliter(
+        batch_size=batch_size,
         n_features=n_features,
         n_branches=n_branches,
         proj_nn=nn.Sequential(
             nn.Linear(n_features + n_global, n_features * n_branches),
             nn.ReLU(),
         ),
-    )
+    ).to(device)
     ancester_conv = AncesterConv(
         msg_gen=nn.Sequential(
             nn.Linear(n_features + n_global, n_features),
@@ -53,13 +59,14 @@ def test_GlobalFeedBackNN(graph):
             nn.Linear(2 * n_features + n_global, n_features),
             nn.ReLU(),
         ),
-    )
+    ).to(device)
     for isplit in range(4):
         # ### Global
         global_features = global_aggr(graph)
-        assert global_features.shape[0] == n_global
+        assert global_features.shape[1] == n_global
 
         # ### Splitting
+        # record previous shapes
         old_x_shape = torch.tensor(graph.x.shape)
         old_edge_index_shape = torch.tensor(graph.edge_index.shape)
 
@@ -68,17 +75,45 @@ def test_GlobalFeedBackNN(graph):
 
         n_parents = len(graph.tree[-2])
         assert len(graph.tree[-1]) == n_parents * n_branches
+
+        # x shape testing
         # add n_parents * n_branches rows to the feature matrix
         assert torch.all(
-            torch.tensor([n_parents * n_branches, 0]) + old_x_shape
+            torch.tensor([n_parents * n_branches * batch_size, 0]) + old_x_shape
             == torch.tensor(graph.x.shape)
         )
+        # edge_index shape testing
         # add one connection for each brach and each parent
         assert torch.all(
-            torch.tensor([0, n_parents * n_branches * (isplit + 1)])
+            torch.tensor([0, n_parents * n_branches * batch_size])
             + old_edge_index_shape
             == torch.tensor(graph.edge_index.shape)
         )
+        if isplit == 0:
+            # F|E|B
+            # -|-|-
+            # 0|0|0
+            # 1|1|0
+            # 2|2|0
+            # 3|0|0
+            # 4|0|1
+            # 5|1|0
+            # 6|1|1
+            # 7|2|0
+            # 8|2|1
+            assert np.all(graph.event.cpu().numpy() == [0, 1, 2, 0, 0, 1, 1, 2, 2])
+            assert np.all(
+                graph.edge_index.cpu().numpy()
+                == [[0, 0, 1, 1, 2, 2], [3, 4, 5, 6, 7, 8]]
+            )
+        if isplit == 1:
+            assert np.all(
+                graph.edge_index[:, 6:].cpu().numpy()
+                == [
+                    [3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8],
+                    [9, 10, 11, 12, 13, 14, 9, 10, 11, 12, 13, 14],
+                ]
+            )
 
         # ### Convolution
         graph.x = ancester_conv(graph, global_features)
