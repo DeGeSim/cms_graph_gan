@@ -17,6 +17,7 @@ install_requirements = [
     "torch-scatter",
     "torch-spline-conv",
     "matplotlib",
+    "seaborn",
     "omegaconf",
     "pretty-errors",
     "prettytable",

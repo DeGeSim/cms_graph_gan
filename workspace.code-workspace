@@ -21,6 +21,18 @@
             {
                 "args": [
                     "--tag",
+                    "deeptree",
+                    // "--debug",
+                    "test"
+                ],
+                "module": "fgsim",
+                "name": "test deeptree",
+                "request": "launch",
+                "type": "python"
+            },
+            {
+                "args": [
+                    "--tag",
                     "treepc",
                     // "--debug",
                     "train"
@@ -30,18 +42,7 @@
                 "request": "launch",
                 "type": "python"
             },
-            {
-                "args": [
-                    "--tag",
-                    "treepc",
-                    // "--debug",
-                    "test"
-                ],
-                "module": "fgsim",
-                "name": "test treepc",
-                "request": "launch",
-                "type": "python"
-            },
+
             {
                 "args": [
                     "--tag",
@@ -101,7 +102,7 @@
         //   },
         "jupyter.jupyterLaunchRetries": 1,
         "jupyter.jupyterServerType": "local",
-        "python.defaultInterpreterPath": "${workspaceFolder}/v/venv1.10.1+cu111/bin/python",
+        "python.defaultInterpreterPath": "${workspaceFolder}/venv/bin/python",
         "python.envFile": "${workspaceFolder}/.env",
         "python.formatting.blackPath": "${env:HOME}/.local/bin/black",
         "python.languageServer": "Jedi",
@@ -112,7 +113,7 @@
         // "python.linting.pylintPath": "${env:HOME}/.local/bin/pylint",
         "python.linting.pylintEnabled": false,
         "python.pipenvPath": "${env:HOME}/.local/bin/pipenv",
-        "python.pythonPath": "${workspaceFolder}/v/venv1.10.1+cu111/bin/python",
+        "python.pythonPath": "${workspaceFolder}/venv/bin/python",
         "python.testing.pytestEnabled": true,
         "python.testing.unittestEnabled": false
     },
