@@ -97,10 +97,8 @@ hyperparameters = removekeys(
         "debug",
         "loglevel",
         "path",
-        "optim_options",
-        "loss_options",
-        "loader_options",
-    ],
+    ]
+    + [key for key in conf.keys() if key.endswith("_options")],
 )
 conf["hash"] = gethash(hyperparameters)
 
