@@ -50,7 +50,14 @@ class ValidationLoss:
                         lstr = f"{lossname}_sum"
                         if lstr not in self._lastlosses:
                             self._lastlosses[lstr] = 0
-                        self._lastlosses[lstr] += float(lossval)
+                        if lossval in [float("nan"), float("inf"), float("-inf")]:
+                            # raise ValueError(
+                            #     f"Loss {lossname} evaluates to NaN for variable"
+                            #     f" {var}: {lossval}."
+                            # )
+                            pass
+                        else:
+                            self._lastlosses[lstr] += float(lossval)
                 else:
                     if lossname not in self._lastlosses:
                         self._lastlosses[lossname] = 0

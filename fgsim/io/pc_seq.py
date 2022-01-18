@@ -80,6 +80,11 @@ class Event:
             self.hlvs[key + "_std_ew"] = std
             self.hlvs[key + "_mom3_ew"] = stand_mom(vec, mean, std, 3)
             self.hlvs[key + "_mom4_ew"] = stand_mom(vec, mean, std, 4)
+            for var, v in self.hlvs.items():
+                if not var.startswith(key):
+                    continue
+                if torch.isnan(v):
+                    raise ValueError("NaN Computed for hlv")
 
 
 class Batch(Event):
@@ -235,4 +240,10 @@ def hitlist_to_pc(event: ak.highlevel.Record) -> torch.Tensor:
 def stand_mom(
     vec: torch.Tensor, mean: torch.Tensor, std: torch.Tensor, order: int
 ) -> torch.Tensor:
-    return torch.mean(torch.pow(vec - mean, order)) / torch.pow(std, order / 2.0)
+    numerator = torch.mean(torch.pow(vec - mean, order))
+    denominator = torch.pow(std, order / 2.0)
+    if numerator == denominator:
+        return torch.tensor(1).float()
+    if denominator == 0:
+        raise ValueError("Would devide by 0.")
+    return numerator / denominator
