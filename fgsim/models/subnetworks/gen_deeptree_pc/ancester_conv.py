@@ -3,7 +3,11 @@ import torch.nn as nn
 from torch_geometric.nn import MessagePassing
 
 
-class AncesterConv(MessagePassing):
+# 1. The global features are concatenated with the node
+#    features and passed to the message generation layer.
+# 2. The messages are aggregated and passed to the update layer.
+# 3. The update layer returns the updated node features.
+class AncestorConv(MessagePassing):
     def __init__(self, msg_gen: nn.Module, update_nn: nn.Module):
         super().__init__(aggr="add", flow="source_to_target")
         self.msg_gen = msg_gen

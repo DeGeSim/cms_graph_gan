@@ -5,7 +5,7 @@ from torch import nn
 from torch_geometric.data import Data
 
 from fgsim.config import device
-from fgsim.models.subnetworks.gen_deeptree_pc.ancester_conv import AncesterConv
+from fgsim.models.subnetworks.gen_deeptree_pc.ancester_conv import AncestorConv
 from fgsim.models.subnetworks.gen_deeptree_pc.global_feedback import GlobalDeepAggr
 from fgsim.models.subnetworks.gen_deeptree_pc.splitting import NodeSpliter
 from fgsim.models.subnetworks.gen_deeptree_pc.tree import Node
@@ -49,7 +49,7 @@ def test_GlobalFeedBackNN(graph):
             nn.ReLU(),
         ),
     ).to(device)
-    ancester_conv = AncesterConv(
+    ancester_conv = AncestorConv(
         msg_gen=nn.Sequential(
             nn.Linear(n_features + n_global, n_features),
             nn.ReLU(),
@@ -119,6 +119,8 @@ def test_GlobalFeedBackNN(graph):
         graph.x = ancester_conv(graph, global_features)
 
 
+# The tree is initialized with a root node, which has two children.
+# The root node has two children, each of which have two children.
 class Tree:
     def __init__(self):
         #   /b -d

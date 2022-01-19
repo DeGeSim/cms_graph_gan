@@ -5,7 +5,7 @@ from torch_geometric.data import Data
 from fgsim.config import conf, device
 from fgsim.monitoring.logger import logger
 
-from .ancester_conv import AncesterConv
+from .ancester_conv import AncestorConv
 from .global_feedback import GlobalDeepAggr
 from .splitting import NodeSpliter
 from .tree import Node
@@ -69,7 +69,7 @@ class ModelClass(nn.Module):
                 nn.ReLU(),
             ),
         )
-        self.ancester_conv = AncesterConv(
+        self.ancester_conv = AncestorConv(
             msg_gen=nn.Sequential(
                 nn.Linear(self.n_features + n_global, self.n_features),
                 nn.ReLU(),
