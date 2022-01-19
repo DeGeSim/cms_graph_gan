@@ -42,7 +42,6 @@
                 "request": "launch",
                 "type": "python"
             },
-
             {
                 "args": [
                     "--tag",
@@ -90,28 +89,36 @@
         "version": "0.2.0"
     },
     "settings": {
+        "[python]": {
+            "editor.codeActionsOnSave": {
+                "source.organizeImports": true
+            },
+            "editor.defaultFormatter": "ms-python.python",
+            "editor.formatOnSave": true
+        },
         "debug.console.closeOnEnd": true,
         "debug.terminal.clearBeforeReusing": true,
-        // "terminal.integrated.profiles.linux": {
-        //     "bash": {
-        //       "path": "bash"
-        //     },
-        //     "zsh": {
-        //       "path": "zsh",
-        //     }
-        //   },
+        "editor.formatOnSave": true,
         "jupyter.jupyterLaunchRetries": 1,
         "jupyter.jupyterServerType": "local",
+        "python.analysis.typeCheckingMode": "strict",
         "python.defaultInterpreterPath": "${workspaceFolder}/venv1.10.1+cu111/bin/python",
         "python.envFile": "${workspaceFolder}/.env",
         "python.formatting.blackPath": "${env:HOME}/.local/bin/black",
-        "python.languageServer": "Jedi",
+        "python.formatting.provider": "black",
+        "python.languageServer": "Default",
+        "python.linting.enabled": true,
         "python.linting.flake8Enabled": true,
-        "python.linting.flake8Path": "${env:HOME}/.local/bin/flake8",
+        "python.linting.flake8Path": "${env:HOME}/.local/bin/pflake8",
+        "python.linting.lintOnSave": true,
         "python.linting.mypyEnabled": true,
         "python.linting.mypyPath": "${env:HOME}/.local/bin/mypy",
-        // "python.linting.pylintPath": "${env:HOME}/.local/bin/pylint",
-        "python.linting.pylintEnabled": false,
+        "python.linting.pylintArgs": [
+            "--generated-members=numpy.* ,torch.*",
+            "--disable=E0402,C0116,logging-fstring-interpolation"
+        ],
+        "python.linting.pylintEnabled": true,
+        "python.linting.pylintPath": "${workspaceFolder}/venv1.10.1+cu111/bin/pylint",
         "python.pipenvPath": "${env:HOME}/.local/bin/pipenv",
         "python.pythonPath": "${workspaceFolder}/venv1.10.1+cu111/bin/python",
         "python.testing.pytestEnabled": true,

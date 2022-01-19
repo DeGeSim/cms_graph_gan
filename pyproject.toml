@@ -1,38 +1,33 @@
 [build-system]
-requires = ["setuptools"]
 build-backend = "setuptools.build_meta"
+requires = ["setuptools"]
 
 [tool.pytest.ini_options]
-testpaths = [
-    "tests",
-]
 python_files = "*.py"
-
+testpaths = [
+  "tests",
+]
+#--ignore=E203,E302
 [tool.flake8]
+exclude = [
+  "*/tests",
+  "fgsim/geo/libs/*",
+  "fgsim/old/*",
+  ".tox",
+  "docs",
+  "__pycache__",
+]
+ignore = "E203,E302,W503,F541,"
 max-line-length = 93
 per-file-ignores = """
     fgsim/__main__.py: E402,F401,
     **/__init__.py: F401
     """
-exclude = [
-    "*/tests",
-    "fgsim/geo/libs/*",
-    "fgsim/old/*",
-    ".tox",
-    "docs",
-    "__pycache__"
-    ]
-ignore = "E203,E302,W503,F541,"
-
 
 [tool.isort]
 profile = "black"
 
 [tool.black]
-line-length = 84
-target-version = ['py38']
-experimental-string-processing = true
-include = '.*\.pyi?$'
 exclude = '''
 (
   /(
@@ -46,17 +41,21 @@ exclude = '''
   )
 )
 '''
+experimental-string-processing = true
+include = '.*\.pyi?$'
+line-length = 84
+target-version = ['py38']
 
 [mypy]
+check_untyped_defs = true
+disallow_any_generics = true
+disallow_untyped_defs = true
+exclude = "(\\..*|_build|dist|fgsim/old|fgsim/geo/libs)"
+ignore_missing_imports = true
+no_implicit_reexport = true
 python_version = 38
+show_error_codes = true
 strict_optional = true
 warn_redundant_casts = true
-warn_unused_ignores = true
-disallow_any_generics = true
-check_untyped_defs = true
-no_implicit_reexport = true
-disallow_untyped_defs = true
-ignore_missing_imports = true
 warn_unused_configs = true
-show_error_codes = true
-exclude = "(\\..*|_build|dist|fgsim/old|fgsim/geo/libs)"
+warn_unused_ignores = true
