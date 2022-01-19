@@ -1,8 +1,14 @@
+"""
+Given a trained model, it will generate a set of random events
+and compare the generated events to the simulated events.
+"""
+
 import numpy as np
 import torch
+from scipy.stats import kstest
 from tqdm import tqdm
 
-from fgsim.config import device
+from fgsim.config import conf, device
 from fgsim.io.queued_dataset import QueuedDataLoader
 from fgsim.ml.holder import Holder
 from fgsim.monitoring.logger import logger
@@ -12,6 +18,9 @@ from fgsim.plot.test import diffhist
 
 def test_procedure() -> None:
     holder: Holder = Holder()
+    holder.select_best_model()
+    holder.models.eval()
+
     train_log: TrainLog = holder.train_log
 
     loader: QueuedDataLoader = QueuedDataLoader()
@@ -21,10 +30,6 @@ def test_procedure() -> None:
     #     loader.qfseq.stop()
     #     exit(0)
 
-    # holder.select_best_model()
-    # holder.models.eval()
-
-    holder.models.eval()
     # Make sure the batches are loaded
     _ = loader.testing_batches
     loader.qfseq.stop()
@@ -32,7 +37,7 @@ def test_procedure() -> None:
     vals = {"gen": {}, "sim": {}}
 
     # Iterate over the test sample
-    for batch in tqdm(loader.testing_batches, postfix="testing"):
+    for ibatch, batch in enumerate(tqdm(loader.testing_batches, postfix="testing")):
         with torch.no_grad():
             batch = batch.clone().to(device)
             for key, nparr in batch.hlvs.items():
@@ -46,20 +51,33 @@ def test_procedure() -> None:
                 if key not in vals["gen"]:
                     vals["gen"][key] = []
                 vals["gen"][key].append(list(nparr))
+        # Sample at least 2k events
+        if ibatch >= (2000 / conf.loader.batch_size):
+            break
 
     # Merge the computed hlvs from all batches
     for var in vals["sim"]:
         vals["sim"][var] = torch.tensor(vals["sim"][var]).flatten().detach().numpy()
         vals["gen"][var] = torch.tensor(vals["gen"][var]).flatten().detach().numpy()
 
-    # Sample 2k events and plot the distribution
+    for var in vals["gen"].keys():
+        res = kstest(subsample(vals["sim"][var]), subsample(vals["gen"][var]))
+        with train_log.experiment.test():
+            train_log.experiment.log_metric(f"kstest-{var}", res.pvalue)
+
+    # # Sample 2k events and plot the distribution
     for var in vals["gen"]:
-        xsim = np.random.choice(vals["sim"][var], size=2000, replace=False)
-        xgen = np.random.choice(vals["gen"][var], size=2000, replace=False)
+        xsim = subsample(vals["sim"][var])
+        xgen = subsample(vals["gen"][var])
         logger.info(f"Plotting  var {var}")
         figure = diffhist(var, xsim=xsim, xgen=xgen)
         with train_log.experiment.test():
             train_log.experiment.log_figure(
                 figure_name=f"test-distplot-{var}", figure=figure, overwrite=True
             )
+
     exit(0)
+
+
+def subsample(arr: np.ndarray):
+    return np.random.choice(arr, size=2000, replace=False)
