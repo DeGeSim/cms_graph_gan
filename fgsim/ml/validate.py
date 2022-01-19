@@ -7,7 +7,6 @@ from fgsim.config import conf, device
 from fgsim.io.queued_dataset import QueuedDataLoader
 from fgsim.ml.holder import Holder
 from fgsim.monitoring.logger import logger
-from fgsim.monitoring.train_log import TrainLog
 from fgsim.utils.check_for_nans import check_chain_for_nans
 
 
@@ -23,38 +22,24 @@ def validate(holder: Holder, loader: QueuedDataLoader) -> None:
             holder.reset_gen_points()
             holder.gen_points.compute_hlvs()
             holder.val_loss(holder, batch)
+    logger.warning("Validation batches evaluated")
     holder.val_loss.log_losses(holder.state)
-
+    logger.warning("Validation loss logged")
     val_loss_sum = holder.state.val_losses[conf.training.val_loss_sumkey]
-    if min(val_loss_sum) == val_loss_sum[-1]:
-        holder.best_model_state = holder.models.state_dict()
-
-
-def log_validation(holder: Holder, train_log: TrainLog):
-    val_loss: float = holder.state.val_losses[-1]
-    logger.info(f"Validation Loss: {val_loss}")
-
-    if not conf.debug:
-        train_log.writer.add_scalar("val_loss", val_loss, holder.state["grad_step"])
-        train_log.experiment.log_metric(
-            "val_loss", val_loss, holder.state["grad_step"]
-        )
-    if (
-        not hasattr(holder.state, "min_val_loss")
-        or holder.state.min_val_loss > val_loss
-    ):
-        holder.state.min_val_loss = val_loss
+    min_val_loss_sum = min(val_loss_sum)
+    if min_val_loss_sum == val_loss_sum[-1]:
         holder.state.best_grad_step = holder.state["grad_step"]
         holder.best_model_state = deepcopy(holder.model.state_dict())
 
         if not conf.debug:
-            train_log.experiment.log_metric("min_val_loss", val_loss)
-            train_log.experiment.log_metric(
+            holder.train_log.experiment.log_metric("min_val_loss", min_val_loss_sum)
+            holder.train_log.experiment.log_metric(
                 "best_grad_step", holder.state["grad_step"]
             )
-            train_log.experiment.log_metric(
+            holder.train_log.experiment.log_metric(
                 "best_grad_epoch", holder.state["epoch"]
             )
-            train_log.experiment.log_metric(
+            holder.train_log.experiment.log_metric(
                 "best_grad_batch", holder.state["ibatch"]
             )
+    logger.warning("Validation function done")
