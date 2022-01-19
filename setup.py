@@ -33,7 +33,7 @@ install_requirements = [
 ]
 
 extras = {
-    "dev": ["jedi", "rope", "pylint", "ipython"],
+    "dev": ["jedi", "rope", "pylint", "ipython", "pytest"],
 }
 
 setup(

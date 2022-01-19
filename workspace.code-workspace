@@ -101,7 +101,7 @@
         "editor.formatOnSave": true,
         "jupyter.jupyterLaunchRetries": 1,
         "jupyter.jupyterServerType": "local",
-        "python.analysis.typeCheckingMode": "strict",
+        "python.analysis.typeCheckingMode": "basic",
         "python.defaultInterpreterPath": "${workspaceFolder}/venv1.10.1+cu111/bin/python",
         "python.envFile": "${workspaceFolder}/.env",
         "python.formatting.blackPath": "${env:HOME}/.local/bin/black",
