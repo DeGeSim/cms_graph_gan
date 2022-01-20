@@ -19,18 +19,15 @@ class SubNetworkCollector(torch.nn.Module):
             modelparams = (
                 submodelconf.param if submodelconf.param is not None else {}
             )
-            # Import the python file containing the models with dynamically
-            submodel: torch.nn.Module = importlib.import_module(
-                f"fgsim.models.subnetworks.{submodelconf.name}"
-            ).ModelClass(**modelparams)
+            submodel = import_nn(submodelconf.name, modelparams)
 
             self.parts[name] = submodel
             setattr(self, name, submodel)
 
-    def forward(self, X):
+    def forward(self, in_X):
         for model in self.parts.values():
-            X = model(X)
-        return X
+            in_X = model(in_X)
+        return in_X
 
     def get_par_dict(self) -> Dict:
         return {
@@ -39,3 +36,35 @@ class SubNetworkCollector(torch.nn.Module):
 
     def __getitem__(self, subnetworkname: str) -> torch.nn.Module:
         return self.parts[subnetworkname]
+
+
+# Import the python file containing the models with dynamically
+def import_nn(nn_name, modelparams) -> torch.nn.Module:
+    try:
+        model_module = importlib.import_module(
+            f"fgsim.models.subnetworks.{nn_name}"
+        )
+        if not hasattr(model_module, "ModelClass"):
+            raise ModuleNotFoundError
+        submodel = model_module.ModelClass(**modelparams)
+    except ModuleNotFoundError:
+        # Submodule with a model.py with the ModelClass
+        try:
+            model_module = importlib.import_module(
+                f"fgsim.models.subnetworks.{nn_name}.model"
+            )
+            if not hasattr(model_module, "ModelClass"):
+                raise ModuleNotFoundError
+            submodel = model_module.ModelClass(**modelparams)
+        except ModuleNotFoundError:
+            # Submodule with a {nn_name}.py with the ModelClass
+            try:
+                model_module = importlib.import_module(
+                    f"fgsim.models.subnetworks.{nn_name}.{nn_name}"
+                )
+                if not hasattr(model_module, "ModelClass"):
+                    raise ModuleNotFoundError
+                submodel = model_module.ModelClass(**modelparams)
+            except ModuleNotFoundError:
+                raise ModuleNotFoundError
+    return submodel
