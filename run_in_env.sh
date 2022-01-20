@@ -13,6 +13,6 @@ else
 fi
 
 cd ~/fgsim
-source v/venv1.10.1+cu111/bin/activate
+source venv1.10.1+cu111/bin/activate
 python3 -m fgsim $@
 echo "Command python3 -m fgsim $@ finished."

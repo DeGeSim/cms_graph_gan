@@ -89,13 +89,6 @@
         "version": "0.2.0"
     },
     "settings": {
-        "[python]": {
-            "editor.codeActionsOnSave": {
-                "source.organizeImports": true
-            },
-            "editor.defaultFormatter": "ms-python.python",
-            "editor.formatOnSave": true
-        },
         "debug.console.closeOnEnd": true,
         "debug.terminal.clearBeforeReusing": true,
         "editor.formatOnSave": true,
