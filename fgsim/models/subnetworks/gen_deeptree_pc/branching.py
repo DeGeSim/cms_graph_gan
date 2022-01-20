@@ -38,15 +38,15 @@ class BranchingLayer(nn.Module):
     def forward(self, graph: Data, global_features: torch.Tensor) -> Data:
         device = graph.x.device
         # Clone everything to avoid changing the input object
-        tree = [[Node(ee.idxs.clone()) for ee in e] for e in graph.tree]
+        tree = graph.tree
         x = graph.x.clone()
         edge_index = graph.edge_index.clone()
         edge_attr = graph.edge_attr.clone()
         event = graph.event.clone()
         del graph
 
+        # Add a new tree layer
         tree.append([])
-        last_added_index = len(x) - 1
         new_features = []
         new_edges = []
         new_edge_attrs = []
@@ -55,7 +55,57 @@ class BranchingLayer(nn.Module):
         for parent in tree[-2]:
             # Use a NN to do the splitting for each node
             # output is features*splitting
+            # #### 1. Compute the new connections ###
 
+            # Calculate the index of the childern
+            last_added_index = (
+                len(x) + len(new_features) * self.n_branches * self.n_events - 1
+            )
+            children_idxs = torch.arange(
+                last_added_index + 1,
+                last_added_index + 1 + self.n_branches * self.n_events,
+                dtype=torch.long,
+                device=device,
+            )
+            # # Connect the parent with the childern
+            # split_edges = torch.vstack([parent_idxs, children_idxs])
+            # new_edges.append(split_edges)
+
+            # # ### 2. Edge attrs to record the degree ###
+            # # write the degree in the edge atts
+            # new_edge_attrs.append(
+            #     torch.tensor(
+            #         1,
+            #         dtype=torch.long,
+            #         device=device,
+            #     ).repeat(self.n_branches * self.n_events)
+            # )
+
+            # ### 3. Make the connections to parent in the node ###
+            # Add the child to the tree to keep a reference
+            for child_idxs in children_idxs.reshape(self.n_branches, -1):
+                child = Node(child_idxs)
+                parent.add_child(child)
+                tree[-1].append(child)
+
+            # ### 4. Add the connections to the ancestors ###
+            for degree, ancestor in enumerate(
+                [parent] + parent.get_ancestors(), start=1
+            ):
+                source_idxs = ancestor.idxs.repeat(self.n_branches)
+                ancestor_edges = torch.vstack(
+                    [source_idxs, children_idxs],
+                )
+                new_edges.append(ancestor_edges)
+                new_edge_attrs.append(
+                    torch.tensor(
+                        degree,
+                        dtype=torch.long,
+                        device=device,
+                    ).repeat(self.n_branches * self.n_events)
+                )
+
+            # ### 5. New feature vectors ###
             # for the parents indeces generate a matrix where
             # each row is the global vector of the respective event:
             # With the idxs of the parent index the event vector
@@ -87,59 +137,14 @@ class BranchingLayer(nn.Module):
 
             new_features.append(ftx_children)
 
-            # Mark to which event the generated points belong
-            # Should be like [0,0,0,1,1,1,2,2,2,3,3,3,...]
+            # ### 5.b Update the event vector. ###
+            # The event vector records which event a feature index belongs
+            # to, analogous to torch_geometric.data.Data().batch
             new_event_idxs.append(
-                torch.arange(self.n_events, dtype=torch.long, device=device)
-                .repeat(self.n_branches, 1)
-                .T.reshape(-1)
-            )
-
-            # Should be like
-            # [parent0,parent0,parent0,
-            # ,parent1,parent1,parent1,
-            # parent2,parent2,parent2...]
-            parent_idxs = parent.idxs.repeat(self.n_branches, 1).T.reshape(-1)
-
-            # Calculate the index of the childern
-            children_idxs = torch.arange(
-                last_added_index + 1,
-                last_added_index + 1 + self.n_branches * self.n_events,
-                dtype=torch.long,
-                device=device,
-            )
-            # Connect the parent with the childern
-            split_edges = torch.vstack([parent_idxs, children_idxs])
-            new_edges.append(split_edges)
-
-            # write the degree in the edge atts
-            new_edge_attrs.append(
-                torch.tensor(
-                    [[1] * self.n_branches * self.n_events],
-                    dtype=torch.long,
-                    device=device,
+                torch.arange(self.n_events, dtype=torch.long, device=device).repeat(
+                    self.n_branches
                 )
             )
-
-            for degree, ancester in enumerate(parent.get_ancestors()):
-                ancester_edges = torch.tensor(
-                    [[ancester.idxs] * self.n_branches, children_idxs],
-                    dtype=torch.long,
-                    device=device,
-                )
-                new_edges.append(ancester_edges)
-                new_edge_attrs.append(
-                    torch.tensor(
-                        [[degree + 2] * self.n_branches],
-                        dtype=torch.long,
-                        device=device,
-                    )
-                )
-
-            for child_idxs in children_idxs.reshape(self.n_branches, -1):
-                child = Node(child_idxs)
-                parent.add_child(child)
-                tree[-1].append(child)
 
         new_graph = Data(
             x=torch.vstack([x] + new_features),
