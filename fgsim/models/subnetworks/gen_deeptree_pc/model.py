@@ -5,9 +5,9 @@ from torch_geometric.data import Data
 from fgsim.config import conf, device
 from fgsim.monitoring.logger import logger
 
-from .ancester_conv import AncestorConv
-from .global_feedback import GlobalDeepAggr
-from .splitting import NodeSpliter
+from .ancestor_conv import AncestorConvLayer
+from .branching import BranchingLayer
+from .dyn_hlvs import DynHLVsLayer
 from .tree import Node
 
 
@@ -36,7 +36,7 @@ class ModelClass(nn.Module):
                 f"{conf.loader.n_points} < {self.output_points}"
             )
 
-        self.global_aggr = GlobalDeepAggr(
+        self.dyn_hlvs_layer = DynHLVsLayer(
             pre_nn=nn.Sequential(
                 nn.Linear(self.n_features, self.n_features),
                 nn.ReLU(),
@@ -50,7 +50,7 @@ class ModelClass(nn.Module):
                 nn.ReLU(),
             ),
         )
-        self.branching_nn = NodeSpliter(
+        self.branching_layer = BranchingLayer(
             n_events=self.n_events,
             n_features=self.n_features,
             n_branches=n_branches,
@@ -69,7 +69,7 @@ class ModelClass(nn.Module):
                 nn.ReLU(),
             ),
         )
-        self.ancester_conv = AncestorConv(
+        self.ancestor_conv_layer = AncestorConvLayer(
             msg_gen=nn.Sequential(
                 nn.Linear(self.n_features + n_global, self.n_features),
                 nn.ReLU(),
@@ -108,9 +108,9 @@ class ModelClass(nn.Module):
         )
 
         for inx in range(self.n_splits):
-            global_features = self.global_aggr(graph)
-            graph = self.branching_nn(graph, global_features)
-            graph.x = self.ancester_conv(graph, global_features)
+            global_features = self.dyn_hlvs_layer(graph)
+            graph = self.branching_layer(graph, global_features)
+            graph.x = self.ancestor_conv_layer(graph, global_features)
 
         # No arange the events separatly by sorting the
         # arguments of the graph.event vector

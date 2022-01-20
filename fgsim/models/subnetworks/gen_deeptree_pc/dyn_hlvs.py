@@ -3,7 +3,7 @@ from torch_geometric.data import Data
 from torch_geometric.nn import global_add_pool
 
 
-class GlobalDeepAggr(nn.Module):
+class DynHLVsLayer(nn.Module):
     def __init__(self, pre_nn: nn.Module, post_nn: nn.Module):
         super().__init__()
         self.pre_nn = pre_nn

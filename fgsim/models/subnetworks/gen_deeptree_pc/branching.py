@@ -4,12 +4,10 @@ import torch
 import torch.nn as nn
 from torch_geometric.data import Data
 
-from fgsim.config import device
-
 from .tree import Node
 
 
-class NodeSpliter(nn.Module):
+class BranchingLayer(nn.Module):
     """Splits the last set of Nodes of a given graph.
     Order for x : node>event>branch
     Example with 3 events,2 branches for a single split:
@@ -38,6 +36,7 @@ class NodeSpliter(nn.Module):
 
     # Split each of the leafs in the the graph.tree into n_branches and connect them
     def forward(self, graph: Data, global_features: torch.Tensor) -> Data:
+        device = graph.x.device
         # Clone everything to avoid changing the input object
         tree = [[Node(ee.idxs.clone()) for ee in e] for e in graph.tree]
         x = graph.x.clone()
