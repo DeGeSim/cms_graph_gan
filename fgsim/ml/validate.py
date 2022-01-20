@@ -29,7 +29,7 @@ def validate(holder: Holder, loader: QueuedDataLoader) -> None:
     min_val_loss_sum = min(val_loss_sum)
     if min_val_loss_sum == val_loss_sum[-1]:
         holder.state.best_grad_step = holder.state["grad_step"]
-        holder.best_model_state = deepcopy(holder.model.state_dict())
+        holder.best_model_state = deepcopy(holder.models.state_dict())
 
         if not conf.debug:
             holder.train_log.experiment.log_metric("min_val_loss", min_val_loss_sum)

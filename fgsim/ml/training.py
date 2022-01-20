@@ -52,6 +52,8 @@ def training_procedure() -> None:
     try:
         while not early_stopping(holder.state):
             # switch model in training mode
+            validate(holder, loader)
+            holder.save_checkpoint()
             holder.models.train()
             for _ in tqdm(
                 range(conf.training.validation_interval), postfix="training"
@@ -75,7 +77,7 @@ def training_procedure() -> None:
                 holder.state.ibatch += 1
                 holder.state.processed_events += conf.loader.batch_size
                 holder.state["grad_step"] += 1
-
+            holder.models.eval()
             validate(holder, loader)
             holder.save_checkpoint()
         # Stopping
