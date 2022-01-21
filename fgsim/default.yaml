@@ -9,7 +9,8 @@ models:
         param: ${model_param_options[${models.gen.name}]}
         losses:
             WGenLoss: ${loss_options[WGenLoss]}
-            mean_dist: ${loss_options[WGenLoss]}
+            mean_dist: ${loss_options[mean_dist]}
+            physics: ${loss_options[physics]}
         optim:
             name: Adam
             params: ${optim_options[Adam]}
@@ -47,6 +48,8 @@ loss_options:
         gamma: 1.0
     mean_dist:
         factor: 1.0
+    physics:
+        factor: 100.0
     frechetpcdist:
         factor: 1.0
 
