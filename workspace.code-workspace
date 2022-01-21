@@ -2,6 +2,9 @@
     "folders": [
         {
             "path": "."
+        },
+        {
+            "path": "~/queueflow"
         }
     ],
     "launch": {
@@ -10,35 +13,10 @@
                 "args": [
                     "--tag",
                     "deeptree",
-                    // "--debug",
                     "train"
                 ],
                 "module": "fgsim",
                 "name": "t deeptree",
-                "request": "launch",
-                "type": "python"
-            },
-            {
-                "args": [
-                    "--tag",
-                    "deeptree",
-                    // "--debug",
-                    "test"
-                ],
-                "module": "fgsim",
-                "name": "test deeptree",
-                "request": "launch",
-                "type": "python"
-            },
-            {
-                "args": [
-                    "--tag",
-                    "treepc",
-                    // "--debug",
-                    "train"
-                ],
-                "module": "fgsim",
-                "name": "t treepc",
                 "request": "launch",
                 "type": "python"
             },
@@ -92,11 +70,21 @@
         "debug.console.closeOnEnd": true,
         "debug.terminal.clearBeforeReusing": true,
         "editor.formatOnSave": true,
+        "[python]": {
+            "editor.formatOnSave": true,
+            "editor.codeActionsOnSave": {
+                "source.organizeImports": true,
+            },
+        },
         "jupyter.jupyterLaunchRetries": 1,
         "jupyter.jupyterServerType": "local",
         "python.analysis.typeCheckingMode": "basic",
-        "python.defaultInterpreterPath": "${workspaceFolder}/venv1.10.1+cu111/bin/python",
-        "python.envFile": "${workspaceFolder}/.env",
+        // "python.analysis.extraPaths": [
+        //     "${env:HOME}/queueflow",
+        //     "${env:HOME}/fgsim/venv1.10.1+cu111/lib/python3.8/site-packages"
+        // ],
+        "python.defaultInterpreterPath": "~/fgsim/venv1.10.1+cu111/bin/python",
+        "python.envFile": "~/fgsim/.env",
         "python.formatting.blackPath": "${env:HOME}/.local/bin/black",
         "python.formatting.provider": "black",
         "python.languageServer": "Default",
@@ -111,9 +99,9 @@
             "--disable=E0402,C0116,logging-fstring-interpolation"
         ],
         "python.linting.pylintEnabled": true,
-        "python.linting.pylintPath": "${workspaceFolder}/venv1.10.1+cu111/bin/pylint",
+        "python.linting.pylintPath": "~/fgsim/venv1.10.1+cu111/bin/pylint",
         "python.pipenvPath": "${env:HOME}/.local/bin/pipenv",
-        "python.pythonPath": "${workspaceFolder}/venv1.10.1+cu111/bin/python",
+        "python.pythonPath": "~/fgsim/venv1.10.1+cu111/bin/python",
         "python.testing.pytestEnabled": true,
         "python.testing.unittestEnabled": false
     },
