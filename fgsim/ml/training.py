@@ -1,6 +1,7 @@
 """Contain the training procedure, access point from __main__"""
 
 import time
+import traceback
 
 from tqdm import tqdm
 
@@ -87,7 +88,8 @@ def training_procedure() -> None:
     except Exception as error:
         logger.error("Error detected, stopping qfseq.")
         exitcode = 1
-        raise error
+        logger.error(error)
+        traceback.print_exc()
     finally:
         loader.qfseq.stop()
         exit(exitcode)
