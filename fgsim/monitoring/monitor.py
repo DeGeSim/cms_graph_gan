@@ -1,10 +1,20 @@
+from typing import List
+
 import comet_ml
 from omegaconf import OmegaConf
 from omegaconf.dictconfig import DictConfig
-from torch.utils.tensorboard import SummaryWriter
+from torch.utils.tensorboard.writer import SummaryWriter
 
 from fgsim.config import conf, hyperparameters
 from fgsim.monitoring.logger import logger
+
+comet_conf = OmegaConf.load("fgsim/comet.yaml")
+api = comet_ml.API(comet_conf.api_key)
+project_name = (
+    conf.comet_project_name
+    if "comet_project_name" in conf
+    else comet_conf.project_name
+)
 
 
 def dict_to_kv(o, keystr=""):
@@ -31,17 +41,7 @@ def dict_to_kv(o, keystr=""):
         raise ValueError
 
 
-def get_experiment() -> comet_ml.ExistingExperiment:
-    """Tries to find for an existing experiment with the given hash and \
- -- if unsuccessfull -- generates a new one."""
-    comet_conf = OmegaConf.load("fgsim/comet.yaml")
-    api = comet_ml.API(comet_conf.api_key)
-    project_name = (
-        conf.comet_project_name
-        if "comet_project_name" in conf
-        else comet_conf.project_name
-    )
-
+def get_exps_with_hash(hash: str) -> List[comet_ml.APIExperiment]:
     experiments = [
         exp
         for exp in api.get(
@@ -53,8 +53,15 @@ def get_experiment() -> comet_ml.ExistingExperiment:
     qres = [
         exp
         for exp in experiments
-        if exp.get_parameters_summary("hash")["valueCurrent"] == conf.hash
+        if exp.get_parameters_summary("hash")["valueCurrent"] == hash
     ]
+    return qres
+
+
+def get_experiment() -> comet_ml.ExistingExperiment:
+    """Tries to find for an existing experiment with the given hash and \
+ -- if unsuccessfull -- generates a new one."""
+    qres = get_exps_with_hash(conf.hash)
     # No experiment with the given hash:
     if len(qres) == 0:
         if conf.command != "train":
