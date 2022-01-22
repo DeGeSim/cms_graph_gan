@@ -25,7 +25,7 @@ class LossGen:
 
     def __call__(self, holder: Holder, batch: Batch) -> Dict[str, float]:
         out_dict: Dict[str, float] = {}
-        for var in batch.hlvs:
+        for var in holder.gen_points.hlvs:
             out_dict[var] = self.factor * self.lossf(
                 batch.hlvs[var], holder.gen_points.hlvs[var]
             )

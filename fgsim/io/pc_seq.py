@@ -78,8 +78,8 @@ class Event:
             std = torch.std(vec_ew)
             self.hlvs[key + "_mean_ew"] = mean
             self.hlvs[key + "_std_ew"] = std
-            self.hlvs[key + "_mom3_ew"] = stand_mom(vec, mean, std, 3)
-            self.hlvs[key + "_mom4_ew"] = stand_mom(vec, mean, std, 4)
+            # self.hlvs[key + "_mom3_ew"] = stand_mom(vec, mean, std, 3)
+            # self.hlvs[key + "_mom4_ew"] = stand_mom(vec, mean, std, 4)
             for var, v in self.hlvs.items():
                 if not var.startswith(key):
                     continue
