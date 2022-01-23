@@ -10,10 +10,11 @@ fi
 
 shift
 
+# Let python resolve the cli arguments
 IFS=$'\n'
 readarray -t lines < <(python ./fgsim/utils/cli.py $@)
 
-
+#construct the correct job with it
 for line in ${lines[@]}; do
     IFS=' ' read -r -a linesplit <<< $line
     CMD=${linesplit[0]}

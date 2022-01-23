@@ -13,6 +13,8 @@ else
 fi
 
 cd ~/fgsim
+source bashFunctionCollection.sh
+
 source venv1.10.1+cu111/bin/activate
-python3 -m fgsim $@
+logandrun python3 -m fgsim $@
 echo "Command python3 -m fgsim $@ finished."
