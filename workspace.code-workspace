@@ -23,6 +23,17 @@
             {
                 "args": [
                     "--tag",
+                    "deeptree",
+                    "test"
+                ],
+                "module": "fgsim",
+                "name": "test deeptree",
+                "request": "launch",
+                "type": "python"
+            },
+            {
+                "args": [
+                    "--tag",
                     "treepc",
                     "preprocess"
                 ],
@@ -103,7 +114,8 @@
         "python.pipenvPath": "${env:HOME}/.local/bin/pipenv",
         "python.pythonPath": "~/fgsim/venv1.10.1+cu111/bin/python",
         "python.testing.pytestEnabled": true,
-        "python.testing.unittestEnabled": false
+        "python.testing.unittestEnabled": false,
+        "docwriter.style": "Google"
     },
     "tasks": {
         "tasks": [

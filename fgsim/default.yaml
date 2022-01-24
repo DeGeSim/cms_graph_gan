@@ -64,7 +64,7 @@ training:
     events_processed_before_validation: 100000
     disc_steps_per_gen_step: 10
     early_stopping:
-        validation_steps: 10
+        validation_steps: 15
         improvement: 0.02
 validation:
     interval: "${div:${training.events_processed_before_validation},${loader.batch_size}}"

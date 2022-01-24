@@ -18,6 +18,7 @@ from torch.multiprocessing import Queue, Value
 
 from fgsim.config import conf
 from fgsim.geo.geo_lup import geo_lup
+from fgsim.monitoring.logger import logger
 
 # Load files
 ds_path = Path(conf.path.dataset)
@@ -70,9 +71,15 @@ class Event:
         self.hlvs["energy_sum"] = torch.sum(self.pc[:, 0])
         self.hlvs["energy_sum_std"] = torch.std(self.pc[:, 0])
         e_weight = self.pc[:, 0] / self.hlvs["energy_sum"]
+        if torch.isnan(torch.sum(e_weight)):
+            logger.warning(f"energy: vec {min_mean_max(self.pc[:, 0])}")
+            logger.warning(f"x: vec {min_mean_max(self.pc[:, 1])}")
+            logger.warning(f"y: vec {min_mean_max(self.pc[:, 2])}")
+            logger.warning(f"z: vec {min_mean_max(self.pc[:, 3])}")
 
         for irow, key in enumerate(conf.loader.cell_prop_keys, start=1):
             vec = self.pc[:, irow]
+
             vec_ew = vec * e_weight
             mean = torch.mean(vec_ew)
             std = torch.std(vec_ew)
@@ -84,7 +91,14 @@ class Event:
                 if not var.startswith(key):
                     continue
                 if torch.isnan(v):
-                    raise ValueError("NaN Computed for hlv")
+                    logger.error(f"NaN Computed for hlv {var}")
+
+
+def min_mean_max(vec):
+    return (
+        f"min {torch.min(vec)} mean {torch.mean(vec)} mean"
+        f" {torch.max(vec)} nan%{sum(torch.isnan(vec))/sum(vec.shape)}"
+    )
 
 
 class Batch(Event):
