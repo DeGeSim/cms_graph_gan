@@ -67,7 +67,7 @@ def main():
         training_procedure()
 
     if conf["command"] == "test":
-        from fgsim.ml.test import test_procedure
+        from fgsim.ml.testing import test_procedure
 
         test_procedure()
 

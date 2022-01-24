@@ -1,3 +1,4 @@
+import numpy as np
 from omegaconf.dictconfig import DictConfig
 
 from fgsim.config import conf
@@ -5,26 +6,33 @@ from fgsim.monitoring.logger import logger
 
 
 def early_stopping(state: DictConfig) -> bool:
-    """Compare the last `conf.training.early_stopping.validation_steps`
-    validation losses with the validation losses before that.
-    If the minimum has not been reduced by
-    `conf.training.early_stopping.improvement`, stop the training"""
-    if len(state.val_losses.keys()) == 0:
+    """
+    If in the last `valsteps` the stopping metric have shown no
+    improvement(=decay), return True, else False.
+
+    Args:
+      state (DictConfig): DictConfig
+
+    Returns:
+      A boolean value.
+    """
+    # Make sure some metrics have been recorded
+    if len(state.val_metrics.keys()) == 0:
         return False
+
     valsteps = conf.training.early_stopping.validation_steps
-    val_loss_sum = state.val_losses[conf.training.val_loss_sumkey]
-    if len(val_loss_sum) < valsteps + 1:
+    stop_metric = np.array(state.val_metrics[conf.validation.stop_key])
+
+    if len(stop_metric) < valsteps + 1:
         return False
-    relative_improvement = 1 - (
-        min(val_loss_sum[-valsteps:]) / min(val_loss_sum[:-valsteps])
-    )
+    growth = 1 - (min(stop_metric[-valsteps:]) / min(stop_metric[:-valsteps]))
 
     logger.info(
         f"""\
 Relative Improvement in the last {valsteps} \
-validation steps: {relative_improvement*100}%"""
+validation steps: {growth}%"""
     )
-    if relative_improvement < conf.training.early_stopping.improvement:
+    if growth < conf.training.early_stopping.improvement:
         return True
     else:
         return False

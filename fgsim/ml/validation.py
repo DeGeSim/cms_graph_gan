@@ -25,7 +25,7 @@ def validate(holder: Holder, loader: QueuedDataLoader) -> None:
     logger.warning("Validation batches evaluated")
     holder.val_loss.log_losses(holder.state)
     logger.warning("Validation loss logged")
-    val_loss_sum = holder.state.val_losses[conf.training.val_loss_sumkey]
+    val_loss_sum = holder.state.val_metrics[conf.validation.stop_key]
     min_val_loss_sum = min(val_loss_sum)
     if min_val_loss_sum == val_loss_sum[-1]:
         holder.state.best_grad_step = holder.state["grad_step"]

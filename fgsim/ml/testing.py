@@ -3,6 +3,8 @@ Given a trained model, it will generate a set of random events
 and compare the generated events to the simulated events.
 """
 
+from typing import Dict, List
+
 import numpy as np
 import torch
 from scipy.stats import kstest
@@ -16,9 +18,17 @@ from fgsim.monitoring.train_log import TrainLog
 from fgsim.plot.test import diffhist
 
 
+def convert(tensorarr: List[torch.Tensor]) -> np.ndarray:
+    return torch.cat(tensorarr).flatten().detach().cpu().numpy()
+
+
+def subsample(arr: np.ndarray):
+    return np.random.choice(arr, size=conf.testing.n_events, replace=False)
+
+
 def test_procedure() -> None:
     holder: Holder = Holder()
-    holder.select_best_model()
+    # holder.select_best_model()
     holder.models.eval()
 
     train_log: TrainLog = holder.train_log
@@ -34,41 +44,44 @@ def test_procedure() -> None:
     _ = loader.testing_batches
     loader.qfseq.stop()
 
-    vals = {"gen": {}, "sim": {}}
+    vals: Dict[str, Dict[str, List[torch.Tensor]]] = {"gen": {}, "sim": {}}
 
     # Iterate over the test sample
     for ibatch, batch in enumerate(tqdm(loader.testing_batches, postfix="testing")):
         with torch.no_grad():
             batch = batch.clone().to(device)
-            for key, nparr in batch.hlvs.items():
-                if key not in vals["sim"]:
-                    vals["sim"][key] = []
-                vals["sim"][key].append(list(nparr))
-
             holder.reset_gen_points()
             holder.gen_points.compute_hlvs()
-            for key, nparr in holder.gen_points.hlvs.items():
+            for key in holder.gen_points.hlvs:
+                if key not in vals["sim"]:
+                    vals["sim"][key] = []
                 if key not in vals["gen"]:
                     vals["gen"][key] = []
-                vals["gen"][key].append(list(nparr))
+                vals["sim"][key].append(batch.hlvs[key])
+                vals["gen"][key].append(holder.gen_points.hlvs[key])
         # Sample at least 2k events
-        if ibatch >= (2000 / conf.loader.batch_size):
+        if ibatch >= (conf.testing.n_events / conf.loader.batch_size):
             break
 
     # Merge the computed hlvs from all batches
-    for var in vals["sim"]:
-        vals["sim"][var] = torch.tensor(vals["sim"][var]).flatten().detach().numpy()
-        vals["gen"][var] = torch.tensor(vals["gen"][var]).flatten().detach().numpy()
 
-    for var in vals["gen"].keys():
-        res = kstest(subsample(vals["sim"][var]), subsample(vals["gen"][var]))
+    sample: Dict[str, Dict[str, np.ndarray]] = {
+        sim_or_gen: {
+            var: subsample(convert(vals[sim_or_gen][var]))
+            for var in vals[sim_or_gen]
+        }
+        for sim_or_gen in ("sim", "gen")
+    }
+
+    for var in sample["gen"].keys():
+        res = kstest(sample["sim"][var], sample["gen"][var])
         with train_log.experiment.test():
             train_log.experiment.log_metric(f"kstest-{var}", res.pvalue)
 
     # # Sample 2k events and plot the distribution
-    for var in vals["gen"]:
-        xsim = subsample(vals["sim"][var])
-        xgen = subsample(vals["gen"][var])
+    for var in sample["gen"]:
+        xsim = sample["sim"][var]
+        xgen = sample["gen"][var]
         logger.info(f"Plotting  var {var}")
         figure = diffhist(var, xsim=xsim, xgen=xgen)
         with train_log.experiment.test():
@@ -77,7 +90,3 @@ def test_procedure() -> None:
             )
 
     exit(0)
-
-
-def subsample(arr: np.ndarray):
-    return np.random.choice(arr, size=2000, replace=False)

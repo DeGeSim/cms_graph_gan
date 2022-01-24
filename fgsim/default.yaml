@@ -62,18 +62,21 @@ optim_options:
 
 training:
     events_processed_before_validation: 100000
-    validation_interval: "${div:${training.events_processed_before_validation},${loader.batch_size}}"
-    val_losses:
+    disc_steps_per_gen_step: 10
+    early_stopping:
+        validation_steps: 10
+        improvement: 0.02
+validation:
+    interval: "${div:${training.events_processed_before_validation},${loader.batch_size}}"
+    stop_key: stop_key
+    metrics:
         hlv_w1:
             factor: 1.0
             function_file: hlv_w1
             wgrad: False
             foreach_hlv: True
-    disc_steps_per_gen_step: 10
-    val_loss_sumkey: hlv_w1_sum
-    early_stopping:
-        validation_steps: 40
-        improvement: 0.02
+testing:
+    n_events: 2000
 
 path:
     dataset: "data/hgcal_william"

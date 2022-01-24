@@ -9,7 +9,7 @@ from fgsim.config import conf, device
 from fgsim.io.queued_dataset import Batch, QueuedDataLoader
 from fgsim.ml.early_stopping import early_stopping
 from fgsim.ml.holder import Holder
-from fgsim.ml.validate import validate
+from fgsim.ml.validation import validate
 from fgsim.monitoring.logger import logger
 from fgsim.monitoring.train_log import TrainLog
 from fgsim.utils.memory import gpu_mem_monitor
@@ -53,12 +53,8 @@ def training_procedure() -> None:
     try:
         while not early_stopping(holder.state):
             # switch model in training mode
-            validate(holder, loader)
-            holder.save_checkpoint()
             holder.models.train()
-            for _ in tqdm(
-                range(conf.training.validation_interval), postfix="training"
-            ):
+            for _ in tqdm(range(conf.validation.interval), postfix="training"):
                 holder.state.batch_start_time = time.time()
                 try:
                     batch = next(loader.qfseq)

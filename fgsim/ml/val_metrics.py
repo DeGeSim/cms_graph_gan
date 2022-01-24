@@ -1,7 +1,8 @@
 """Dynamically import the losses"""
 import importlib
-from typing import Callable, Dict
+from typing import Callable, Dict, List
 
+import numpy as np
 import torch
 
 from fgsim.config import conf
@@ -9,14 +10,14 @@ from fgsim.io.queued_dataset import Batch
 from fgsim.monitoring.train_log import TrainLog
 
 
-class ValidationLoss:
+class ValidationMetrics:
     def __init__(self, train_log: TrainLog) -> None:
         self.name = "val_loss"
         self.train_log = train_log
         self.parts: Dict[str, Callable] = {}
         self._lastlosses: Dict[str, float] = {}
 
-        for lossname, lossconf in conf.training.val_losses.items():
+        for lossname, lossconf in conf.validation.metrics.items():
             assert lossname != "parts"
             params = lossconf if lossconf is not None else {}
             filename = (
@@ -45,11 +46,6 @@ class ValidationLoss:
                         lstr = f"{lossname}_{var}"
                         if lstr not in self._lastlosses:
                             self._lastlosses[lstr] = 0
-                        # Compute the sum
-                        self._lastlosses[lstr] += float(lossval)
-                        lstr = f"{lossname}_sum"
-                        if lstr not in self._lastlosses:
-                            self._lastlosses[lstr] = 0
                         if lossval in [float("nan"), float("inf"), float("-inf")]:
                             # raise ValueError(
                             #     f"Loss {lossname} evaluates to NaN for variable"
@@ -66,15 +62,34 @@ class ValidationLoss:
     def log_losses(self, state) -> None:
         for lossname, loss in self._lastlosses.items():
             # Update the state
-            if lossname not in state.val_losses:
-                state.val_losses[lossname] = []
-            state.val_losses[lossname].append(loss)
-            # Log the validation loss
-            if not conf.debug:
-                with self.train_log.experiment.validate():
-                    self.train_log.log_loss(f"{self.name}.{lossname}", loss)
+            if lossname not in state.val_metrics:
+                state.val_metrics[lossname] = []
+            state.val_metrics[lossname].append(loss)
             # Reset to 0
             self._lastlosses[lossname] = 0
+        # compute the stop_metric
+        lossname = conf.validation.stop_key
+        stop_crit = np.mean(
+            [
+                ratio_better_than_last(list(state.val_metrics[metric]))
+                for metric in state.val_metrics
+            ]
+        )
+        if lossname not in state.val_metrics:
+            state.val_metrics[lossname] = []
+        state.val_metrics[lossname].append(float(stop_crit))
+        # Log the validation loss
+        if not conf.debug:
+            with self.train_log.experiment.validate():
+                for lossname, loss_history in state.val_metrics.items():
+                    self.train_log.log_loss(
+                        f"{self.name}.{lossname}", loss_history[-1]
+                    )
 
     def __getitem__(self, lossname: str) -> Callable:
         return self.parts[lossname]
+
+
+def ratio_better_than_last(loss_history: List[float]) -> float:
+    arr = np.array(loss_history)
+    return np.mean(arr <= arr[-1])

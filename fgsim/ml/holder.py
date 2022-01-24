@@ -14,7 +14,7 @@ from fgsim.io.queued_dataset import Batch
 from fgsim.ml.loss import LossesCol
 from fgsim.ml.network import SubNetworkCollector
 from fgsim.ml.optim import OptimCol
-from fgsim.ml.val_loss import ValidationLoss
+from fgsim.ml.val_metrics import ValidationMetrics
 from fgsim.monitoring.logger import logger
 from fgsim.monitoring.train_log import TrainLog
 from fgsim.utils.check_for_nans import contains_nans
@@ -33,7 +33,7 @@ def start_training_state() -> DictConfig:
                 snwname: {lossname: [] for lossname in snwconf.losses}
                 for snwname, snwconf in conf.models.items()
             },
-            "val_losses": {},
+            "val_metrics": {},
             "complete": False,
         }
     )
@@ -52,7 +52,7 @@ class Holder:
         self.models: SubNetworkCollector = SubNetworkCollector(conf.models)
         self.train_log.log_model_graph(self.models)
         self.losses: LossesCol = LossesCol(self.train_log)
-        self.val_loss: ValidationLoss = ValidationLoss(self.train_log)
+        self.val_loss: ValidationMetrics = ValidationMetrics(self.train_log)
         self.optims: OptimCol = OptimCol(conf.models, self.models.get_par_dict())
 
         # try to load a check point
