@@ -1,4 +1,5 @@
 from math import prod
+from typing import List
 
 import torch
 import torch.nn as nn
@@ -47,10 +48,10 @@ class BranchingLayer(nn.Module):
 
         # Add a new tree layer
         tree.append([])
-        new_features = []
-        new_edges = []
-        new_edge_attrs = []
-        new_event_idxs = []
+        new_features: List[torch.Tensor] = []
+        new_edges: List[torch.Tensor] = []
+        new_edge_attrs: List[torch.Tensor] = []
+        new_event_idxs: List[torch.Tensor] = []
         # split the nodes in the last layer
         for parent in tree[-2]:
             # Use a NN to do the splitting for each node
@@ -67,20 +68,6 @@ class BranchingLayer(nn.Module):
                 dtype=torch.long,
                 device=device,
             )
-            # # Connect the parent with the childern
-            # split_edges = torch.vstack([parent_idxs, children_idxs])
-            # new_edges.append(split_edges)
-
-            # # ### 2. Edge attrs to record the degree ###
-            # # write the degree in the edge atts
-            # new_edge_attrs.append(
-            #     torch.tensor(
-            #         1,
-            #         dtype=torch.long,
-            #         device=device,
-            #     ).repeat(self.n_branches * self.n_events)
-            # )
-
             # ### 3. Make the connections to parent in the node ###
             # Add the child to the tree to keep a reference
             for child_idxs in children_idxs.reshape(self.n_branches, -1):
@@ -118,24 +105,20 @@ class BranchingLayer(nn.Module):
             assert prod(parent_ftx_mtx.shape) * self.n_branches == prod(
                 proj_ftx.shape
             )
+            # The proj_nn projects the n_event x n_features to a
+            # n_event x (n_features*n_branches) matrix
+            # For the feature vector of the first branch, we need to slice
+            # the first n_features from this output and so on for the
+            # other branches
+            branch_ftx_list = [
+                proj_ftx[
+                    ...,
+                    self.n_features * (ibranch) : self.n_features * (1 + ibranch),
+                ]
+                for ibranch in range(self.n_branches)
+            ]
 
-            # the feature vectors for the children are in a row
-            # so we do some reshaping
-            ftx_children = proj_ftx.reshape(-1, self.n_features)
-            # assert that all the children for one event are
-            # after on another. Order for x : TreeNode>Event>Branch
-            assert torch.all(
-                proj_ftx[0]
-                == torch.hstack([ftx_children[i] for i in range(self.n_branches)])
-            )
-            assert torch.all(
-                proj_ftx[-1]
-                == torch.hstack(
-                    [ftx_children[i] for i in range(-self.n_branches, 0)]
-                )
-            )
-
-            new_features.append(ftx_children)
+            new_features.append(torch.cat(branch_ftx_list))
 
             # ### 5.b Update the event vector. ###
             # The event vector records which event a feature index belongs

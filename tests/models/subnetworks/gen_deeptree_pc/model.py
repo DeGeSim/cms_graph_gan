@@ -3,7 +3,6 @@ import torch
 from torch import nn
 from torch_geometric.data import Data
 
-from fgsim.config import device
 from fgsim.models.subnetworks.gen_deeptree_pc.ancestor_conv import AncestorConvLayer
 from fgsim.models.subnetworks.gen_deeptree_pc.branching import BranchingLayer
 from fgsim.models.subnetworks.gen_deeptree_pc.dyn_hlvs import DynHLVsLayer
@@ -13,6 +12,7 @@ n_features = 4
 n_branches = 2
 n_global = 6
 n_events = 3
+device = torch.device("cpu")
 
 
 @pytest.fixture

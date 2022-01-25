@@ -126,11 +126,13 @@ class Holder:
         OmegaConf.save(config=self.state, f=conf.path.state)
 
     # Define the methods, that equip the with the generated batches
-    def gen_noise(self) -> torch.Tensor:
+    def gen_noise(self, requires_grad=False) -> torch.Tensor:
         n_features = (
             conf.loader.n_features + conf.models.gen.param.n_hidden_features
         )
-        return torch.randn(conf.loader.batch_size, 1, n_features).to(device)
+        return torch.randn(
+            conf.loader.batch_size, 1, n_features, requires_grad=requires_grad
+        ).to(device)
 
     def reset_gen_points(self) -> None:
         with torch.no_grad():
@@ -139,6 +141,6 @@ class Holder:
             self.gen_points = Batch(pc)
 
     def reset_gen_points_w_grad(self) -> None:
-        z = self.gen_noise()
+        z = self.gen_noise(True)
         pc = self.models.gen(z)
         self.gen_points_w_grad = Batch(pc)
