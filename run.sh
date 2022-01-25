@@ -26,7 +26,6 @@ for line in ${lines[@]}; do
         sbatch \
         --partition=allgpu,cms-desy \
         --time=78:00:00 \
-        --mail-type=ALL \
         --nodes=1 \
         --constraint="P100" \
         --output=wd/slurm-$CMD-$TAG-%j.out \
