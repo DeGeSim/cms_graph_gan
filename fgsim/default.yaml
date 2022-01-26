@@ -147,8 +147,8 @@ loader_options:
             energy: "genPh_E"
             hit_energy: "simHit_E"
         cell_prop_keys: ["x", "y", "z"]
+        max_points: 4085
         n_features: 4
-        n_points: 4500
         chunksize: 100
         batch_size: 100
         validation_set_size: 5000

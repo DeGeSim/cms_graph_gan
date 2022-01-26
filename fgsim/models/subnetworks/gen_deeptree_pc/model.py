@@ -30,10 +30,10 @@ class ModelClass(nn.Module):
             [n_branches ** i for i in range(self.n_splits + 1)]
         )
         logger.warning(f"Generator output will be {self.output_points}")
-        if conf.loader.n_points < self.output_points:
+        if conf.loader.max_points > self.output_points:
             raise RuntimeError(
-                "Event hast more points then the padding: "
-                f"{conf.loader.n_points} < {self.output_points}"
+                "Model cannot generate a sufficent number of points: "
+                f"{conf.loader.max_points} < {self.output_points}"
             )
 
         self.dyn_hlvs_layer = DynHLVsLayer(
@@ -126,10 +126,4 @@ class ModelClass(nn.Module):
         )
         assert self.output_points == pcs.shape[1]
 
-        pcs_padded = torch.nn.functional.pad(
-            pcs,
-            (0, 0, 0, conf.loader.n_points - pcs.shape[1], 0, 0),
-            mode="constant",
-            value=0,
-        )
-        return pcs_padded
+        return pcs
