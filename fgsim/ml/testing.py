@@ -10,7 +10,7 @@ import torch
 from scipy.stats import kstest
 from tqdm import tqdm
 
-from fgsim.config import conf, device
+from fgsim.config import conf
 from fgsim.io.queued_dataset import QueuedDataLoader
 from fgsim.ml.holder import Holder
 from fgsim.monitoring.logger import logger
@@ -46,22 +46,50 @@ def test_procedure() -> None:
 
     vals: Dict[str, Dict[str, List[torch.Tensor]]] = {"gen": {}, "sim": {}}
 
-    # Iterate over the test sample
-    for ibatch, batch in enumerate(tqdm(loader.testing_batches, postfix="testing")):
+    # Sample at least 2k events
+    n_batches = int(conf.testing.n_events / conf.loader.batch_size)
+    assert n_batches <= len(loader.testing_batches)
+    sim_batches = loader.testing_batches[:n_batches]
+    gen_batches = []
+    # generate a batch for each simulated one:
+    for _ in tqdm(range(n_batches), desc="Generating Batches"):
         with torch.no_grad():
-            batch = batch.clone().to(device)
             holder.reset_gen_points()
-            holder.gen_points.compute_hlvs()
-            for key in holder.gen_points.hlvs:
-                if key not in vals["sim"]:
-                    vals["sim"][key] = []
-                if key not in vals["gen"]:
-                    vals["gen"][key] = []
-                vals["sim"][key].append(batch.hlvs[key])
-                vals["gen"][key].append(holder.gen_points.hlvs[key])
-        # Sample at least 2k events
-        if ibatch >= (conf.testing.n_events / conf.loader.batch_size):
-            break
+            gen_batch = holder.gen_points.clone().cpu()
+            gen_batches.append(gen_batch)
+
+    # compute hlvs with a pool
+    def compute_hlvs(batch):
+        batch.compute_hlvs()
+        return batch
+
+    # with Pool(10) as p:
+    #     gen_batches = list(tqdm(p.imap(compute_hlvs, gen_batches))
+    for batch in tqdm(gen_batches, desc="Compute HLVs"):
+        batch.compute_hlvs()
+
+    for sim_batch, gen_batch in zip(sim_batches, gen_batches):
+        for key in gen_batch.hlvs:
+            if key not in vals["sim"]:
+                vals["sim"][key] = []
+            if key not in vals["gen"]:
+                vals["gen"][key] = []
+            vals["sim"][key].append(sim_batch.hlvs[key])
+            vals["gen"][key].append(gen_batch.hlvs[key])
+
+    # # Iterate over the test sample
+    # for ibatch, batch in enumerate(tqdm(sim_batches, postfix="testing")):
+    #     with torch.no_grad():
+    #         batch = batch.clone().to(device)
+    #         holder.reset_gen_points()
+    #         holder.gen_points.compute_hlvs()
+    #         for key in holder.gen_points.hlvs:
+    #             if key not in vals["sim"]:
+    #                 vals["sim"][key] = []
+    #             if key not in vals["gen"]:
+    #                 vals["gen"][key] = []
+    #             vals["sim"][key].append(batch.hlvs[key])
+    #             vals["gen"][key].append(holder.gen_points.hlvs[key])
 
     # Merge the computed hlvs from all batches
 

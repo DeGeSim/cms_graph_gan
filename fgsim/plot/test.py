@@ -9,13 +9,19 @@ from fgsim.config import conf
 
 def diffhist(var, xsim: np.array, xgen: np.array) -> plt.Figure:
     assert xsim.shape == xgen.shape
-    fullarr = np.array([xsim, xgen]).flatten()
+    xgen_nan_ratio = np.sum(np.isnan(xgen)) / len(xgen) * 100
+    # filter out the nans
+    xgen = xgen[~np.isnan(xgen)]
+    fullarr = np.concatenate([xsim, xgen])
     fullarr.sort()
 
     be = np.histogram_bin_edges(fullarr, bins="fd")
     hist = np.histogram(fullarr, bins=be)[0]
 
-    minevents = min([len(e) / 500 for e in (xsim, xgen)])
+    if len(xgen) > 0:
+        minevents = min([len(e) / 500 for e in (xsim, xgen)])
+    else:
+        minevents = min([len(e) / 500 for e in (xsim,)])
 
     # Merge bins with less then two events on the end of the spectrum
     be_list = list(be)
@@ -41,16 +47,32 @@ def diffhist(var, xsim: np.array, xgen: np.array) -> plt.Figure:
     assert be_list[-2] == be[-2 - removed_end]
 
     fig = plt.figure(figsize=(10, 7))
-    sns.histplot(
-        {
-            f"simulated μ ({np.mean(xsim):.2E}) σ ({np.std(xsim):.2E}) ": xsim,
-            f"generated μ ({np.mean(xgen):.2E}) σ ({np.std(xgen):.2E}) ": xgen,
-        },
-        bins=be[hstart : hend + 1],
-        alpha=0.6,
-        legend=True,
-    )
-    plt.title(var)
+    if len(xgen) > 0:
+        simlab = f"simulated μ ({np.mean(xsim):.2E}) σ ({np.std(xsim):.2E})"
+        genlab = (
+            f"generated μ ({np.mean(xgen):.2E}) σ ({np.std(xgen):.2E}) nans:"
+            f" {xgen_nan_ratio}%"
+        )
+        sns.histplot(
+            {
+                simlab: xsim,
+                genlab: xgen,
+            },
+            bins=be[hstart : hend + 1],
+            alpha=0.6,
+            legend=True,
+        )
+        plt.title(var)
+    else:
+        sns.histplot(
+            {
+                f"simulated μ ({np.mean(xsim):.2E}) σ ({np.std(xsim):.2E}) ": xsim,
+            },
+            bins=be[hstart : hend + 1],
+            alpha=0.6,
+            legend=True,
+        )
+        plt.title(f"{var}, all gen values are nan")
 
     path = Path(f"{conf.path.run_path}/diffplots/")
     path.mkdir(exist_ok=True)
