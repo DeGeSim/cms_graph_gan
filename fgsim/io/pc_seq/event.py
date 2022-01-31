@@ -18,6 +18,9 @@ class Event:
             self.hlvs[key] = val.to(*args, **kwargs)
         return self
 
+    def cpu(self):
+        return self.to(torch.device("cpu"))
+
     def clone(self, *args, **kwargs):
         # This needs to return a new object to align the python and pytorch ref counts
         # Overwriting the attributes leads to memory leak with this
@@ -33,11 +36,11 @@ class Event:
         self.hlvs["energy_sum"] = torch.sum(self.pc[:, 0])
         self.hlvs["energy_sum_std"] = torch.std(self.pc[:, 0])
         e_weight = self.pc[:, 0] / self.hlvs["energy_sum"]
-        if torch.isnan(torch.sum(e_weight)):
-            logger.warning(f"energy: vec {min_mean_max(self.pc[:, 0])}")
-            logger.warning(f"x: vec {min_mean_max(self.pc[:, 1])}")
-            logger.warning(f"y: vec {min_mean_max(self.pc[:, 2])}")
-            logger.warning(f"z: vec {min_mean_max(self.pc[:, 3])}")
+        # if torch.isnan(torch.sum(e_weight)):
+        #     logger.warning(f"energy: vec {min_mean_max(self.pc[:, 0])}")
+        #     logger.warning(f"x: vec {min_mean_max(self.pc[:, 1])}")
+        #     logger.warning(f"y: vec {min_mean_max(self.pc[:, 2])}")
+        #     logger.warning(f"z: vec {min_mean_max(self.pc[:, 3])}")
 
         for irow, key in enumerate(conf.loader.cell_prop_keys, start=1):
             vec = self.pc[:, irow]
