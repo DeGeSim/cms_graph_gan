@@ -18,17 +18,17 @@ class ModelClass(nn.Module):
         n_hidden_features: int,
         n_global: int,
         n_branches: int,
-        n_splits: int,
+        n_levels: int,
+        post_gen_mp_steps: int,
     ):
         super().__init__()
         self.n_events = n_events
         self.n_hidden_features = n_hidden_features
         self.n_features = conf.loader.n_features + n_hidden_features
-        self.n_splits = n_splits
+        self.n_levels = n_levels
         self.n_global = n_global
-        self.output_points = sum(
-            [n_branches ** i for i in range(self.n_splits + 1)]
-        )
+        self.post_gen_mp_steps = post_gen_mp_steps
+        self.output_points = sum([n_branches ** i for i in range(self.n_levels)])
         logger.warning(f"Generator output will be {self.output_points}")
         if conf.loader.max_points > self.output_points:
             raise RuntimeError(
@@ -49,11 +49,13 @@ class ModelClass(nn.Module):
                 nn.Linear(n_global, n_global),
                 nn.ReLU(),
             ),
+            n_events=n_events,
         )
         self.branching_layer = BranchingLayer(
             n_events=self.n_events,
             n_features=self.n_features,
             n_branches=n_branches,
+            n_levels=n_levels,
             proj_nn=nn.Sequential(
                 nn.Linear(self.n_features + n_global, self.n_features * n_branches),
                 nn.ReLU(),
@@ -68,6 +70,7 @@ class ModelClass(nn.Module):
                 ),
                 nn.ReLU(),
             ),
+            device=device,
         )
         self.ancestor_conv_layer = AncestorConvLayer(
             msg_gen=nn.Sequential(
@@ -107,9 +110,13 @@ class ModelClass(nn.Module):
             tree=[[Node(torch.arange(n_events, dtype=torch.long, device=device))]],
         )
 
-        for inx in range(self.n_splits):
+        for _ in range(self.n_levels - 1):
             global_features = self.dyn_hlvs_layer(graph)
             graph = self.branching_layer(graph, global_features)
+            graph.x = self.ancestor_conv_layer(graph, global_features)
+
+        for _ in range(self.post_gen_mp_steps):
+            global_features = self.dyn_hlvs_layer(graph)
             graph.x = self.ancestor_conv_layer(graph, global_features)
 
         # No arange the events separatly by sorting the

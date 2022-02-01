@@ -33,8 +33,9 @@ model_param_options:
         n_hidden_features: 4
         n_global: 6
         n_branches: 2
-        n_splits: 11
+        n_levels: 12
         n_events: "${loader.batch_size}"
+        post_gen_mp_steps: 10
     disc_treepc:
         features: [4, 64, 128, 256, 512, 1024]
 

@@ -3,58 +3,14 @@ from typing import List
 import numpy as np
 import pytest
 import torch
-from torch import nn
-from torch_geometric.data import Data
 
-from fgsim.models.subnetworks.gen_deeptree_pc.branching import BranchingLayer
+from fgsim.models.subnetworks.gen_deeptree_pc.branching import reshape_features
 from fgsim.models.subnetworks.gen_deeptree_pc.tree import Node
 
-n_features = 4
-n_branches = 2
-n_global = 6
-n_events = 3
 device = torch.device("cpu")
 
 
-@pytest.fixture
-def graph():
-    g = Data(
-        x=torch.randn(
-            n_events,
-            n_features,
-            dtype=torch.float,
-            device=device,
-            requires_grad=True,
-        ),
-        edge_index=torch.tensor([[], []], dtype=torch.long, device=device),
-        edge_attr=torch.tensor([], dtype=torch.long, device=device),
-        event=torch.arange(n_events, dtype=torch.long, device=device),
-        tree=[[Node(torch.arange(n_events, dtype=torch.long, device=device))]],
-    )
-    return g
-
-
-@pytest.fixture
-def global_features():
-    return torch.randn(n_events, n_global, dtype=torch.float, device=device)
-
-
-@pytest.fixture
-def branching_layer():
-    return BranchingLayer(
-        n_events=n_events,
-        n_features=n_features,
-        n_branches=n_branches,
-        proj_nn=nn.Sequential(
-            nn.Linear(n_features + n_global, n_features * n_branches),
-            nn.ReLU(),
-        ),
-    ).to(device)
-
-
-def test_BranchingLayer_compute_graph(
-    graph: Data, branching_layer: BranchingLayer, global_features: torch.Tensor
-):
+def test_BranchingLayer_compute_graph(static_objects):
     """
     Make sure that the events are independent.
     For this, we apply branching and make sure, that the gradient only
@@ -64,8 +20,12 @@ def test_BranchingLayer_compute_graph(
       branching_layer (BranchingLayer): The branching layer to test.
       global_features (torch.Tensor): torch.Tensor
     """
+    graph = static_objects.graph
+    branching_layer = static_objects.branching_layer
+    global_features = static_objects.global_features
+
     new_graph1 = branching_layer(graph, global_features)
-    leaf = new_graph1.tree[-1][0]
+    leaf = branching_layer.tree[1][0]
     pc_leaf_point = new_graph1.x[leaf.idxs[2]]
     sum(pc_leaf_point).backward(retain_graph=True)
 
@@ -76,7 +36,7 @@ def test_BranchingLayer_compute_graph(
     assert torch.any(graph.x.grad[2] != zero_feature)
 
     new_graph2 = branching_layer(new_graph1, global_features)
-    leaf = new_graph2.tree[-1][0]
+    leaf = branching_layer.tree[2][0]
     pc_leaf_point = new_graph2.x[leaf.idxs[2]]
     sum(pc_leaf_point).backward()
 
@@ -86,55 +46,32 @@ def test_BranchingLayer_compute_graph(
     assert torch.any(graph.x.grad[2] != zero_feature)
 
 
-def test_BranchingLayer_connectivity(
-    graph: Data, branching_layer: BranchingLayer, global_features: torch.Tensor
-):
-
-    for isplit in range(4):
-        # ### Splitting
-        graph = branching_layer(graph, global_features)
-
-        n_parents = len(graph.tree[-2])
-        assert len(graph.tree[-1]) == n_parents * n_branches
-
-        # x shape testing
-        assert graph.x.shape[1] == n_features
-        assert len(graph.tree) == isplit + 2
-        assert graph.x.shape[0] == n_events * sum(
-            [n_branches ** i for i in range(len(graph.tree))]
-        )
-        # edge_index shape testing
-        assert graph.edge_index.shape[0] == 2
-        # Number of connections
-        # Sum n_branches^ilayer*ilayer for ilayer in 0..nlayers
-        assert graph.edge_index.shape[1] == n_events * sum(
-            [n_branches ** i * i for i in range(len(graph.tree))]
-        )
-
+def test_BranchingLayer_connectivity_static(static_objects):
+    props = static_objects.props
+    graph = static_objects.graph
+    branching_layer = static_objects.branching_layer
+    global_features = static_objects.global_features
+    for ilevel in range(props["n_levels"] - 1):
         conlist = graph.edge_index.T.cpu().numpy().tolist()
         connections = {tuple(x) for x in conlist}
-        # No double connections
-        assert len(connections) == len(conlist)
 
         # Static Check
-        if isplit == 0:
-            # F|E|B
-            # -|-|-
-            # 0|0|0
-            # 1|1|0
-            # 2|2|0
-            # 3|0|0
-            # 4|0|1
-            # 5|1|0
-            # 6|1|1
-            # 7|2|0
-            # 8|2|1
-            # Check the event mapping
-            assert np.all(graph.event.cpu().numpy() == [0, 1, 2, 0, 1, 2, 0, 1, 2])
+        if ilevel == 1:
+            # F|B
+            # -|-
+            # 0|0
+            # 1|0
+            # 2|0
+            # 3|0
+            # 4|1
+            # 5|0
+            # 6|1
+            # 7|0
+            # 8|1
             # check the connections
             expected_connections = {(0, 3), (1, 4), (0, 6), (1, 7), (2, 5), (2, 8)}
             assert connections.issuperset(expected_connections)
-        if isplit == 1:
+        if ilevel == 2:
             expected_connections = {
                 (3, 9),
                 (3, 12),
@@ -150,6 +87,48 @@ def test_BranchingLayer_connectivity(
                 (8, 20),
             }
             assert connections.issuperset(expected_connections)
+        # No double connections
+        assert len(connections) == len(conlist)
+
+        graph = branching_layer(graph, global_features)
+
+
+def test_BranchingLayer_connectivity_dyn(dyn_objects):
+    props = dyn_objects.props
+    graph = dyn_objects.graph
+    branching_layer = dyn_objects.branching_layer
+    global_features = dyn_objects.global_features
+    n_features = props["n_features"]
+    n_branches = props["n_branches"]
+    # n_global = props["n_global"]
+    n_events = props["n_events"]
+    n_levels = props["n_levels"]
+    # Shape
+    for ilevel in range(n_levels):
+        n_parents = len(branching_layer.tree[ilevel])
+        assert len(branching_layer.tree[ilevel + 1]) == n_parents * n_branches
+
+    for ilevel in range(n_levels):
+        # split once
+        # x shape testing
+        assert graph.x.shape[1] == n_features
+        assert graph.x.shape[0] == n_events * sum(
+            [n_branches ** i for i in range(ilevel + 1)]
+        )
+        # edge_index shape testing
+        assert graph.edge_index.shape[0] == 2
+        # Number of connections
+        # Sum n_branches^ilayer*ilayer for ilayer in 0..nlayers
+        assert graph.edge_index.shape[1] == n_events * sum(
+            [n_branches ** i * i for i in range(ilevel + 1)]
+        )
+
+        conlist = graph.edge_index.T.cpu().numpy().tolist()
+        connections = {tuple(x) for x in conlist}
+        # No double connections
+        assert len(connections) == len(conlist)
+
+        graph = branching_layer(graph, global_features)
 
     conlist = graph.edge_index.T.cpu().numpy().tolist()
     connections = {tuple(x) for x in conlist}
@@ -166,4 +145,47 @@ def test_BranchingLayer_connectivity(
                     assert (source, target) in connections
                 recurr_check_connection(child, new_ancestors_idxs)
 
-    recurr_check_connection(graph.tree[0][0], [])
+    recurr_check_connection(branching_layer.tree[0][0], [])
+
+
+# Test the reshaping
+def demo_mtx(*, n_parents, n_events, n_branches, n_features):
+    mtx = torch.ones(n_parents * n_events, n_branches * n_features)
+    i, j = 0, 0
+    ifield = 0
+    for iparent in range(n_parents):
+        for ibranch in range(n_branches):
+            for ievent in range(n_events):
+                for ifeature in range(n_features):
+                    print(f"Acessing {i}, {j+ifeature}")
+                    mtx[i, ifeature + ibranch * n_features] = ifield
+                ifield = ifield + 1
+                i = i + 1
+            i = i - n_events
+            j = j + 1
+        i = i + n_events
+        j = j - n_branches
+    return mtx
+
+
+@pytest.mark.parametrize("n_parents", [1, 3])
+@pytest.mark.parametrize("n_events", [1, 3])
+@pytest.mark.parametrize("n_branches", [1, 3])
+@pytest.mark.parametrize("n_features", [1, 4])
+def test_reshape_features(n_parents, n_events, n_branches, n_features):
+    mtx = demo_mtx(
+        n_parents=n_parents,
+        n_events=n_events,
+        n_branches=n_branches,
+        n_features=n_features,
+    )
+    mtx_reshaped = reshape_features(
+        mtx,
+        n_parents=n_parents,
+        n_events=n_events,
+        n_branches=n_branches,
+        n_features=n_features,
+    )
+    for i in range(n_parents * n_events):
+        assert torch.all(mtx_reshaped[i, :] == i)
+    torch.all(torch.arange(n_parents * n_events * n_branches) == mtx_reshaped[:, 0])

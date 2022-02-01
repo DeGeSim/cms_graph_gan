@@ -4,10 +4,11 @@ from torch_geometric.nn import global_add_pool
 
 
 class DynHLVsLayer(nn.Module):
-    def __init__(self, pre_nn: nn.Module, post_nn: nn.Module):
+    def __init__(self, pre_nn: nn.Module, post_nn: nn.Module, n_events: int):
         super().__init__()
         self.pre_nn = pre_nn
         self.post_nn = post_nn
+        self.n_events = n_events
 
     def forward(self, graph: Data):
         ftx_mtx = self.pre_nn(graph.x)
