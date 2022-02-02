@@ -68,7 +68,7 @@ def object_gen(props: Dict[str, int]) -> DTColl:
             nn.ReLU(),
         ),
         post_nn=nn.Sequential(
-            nn.Linear(n_features, n_global),
+            nn.Linear(n_features * 2, n_global),
             nn.ReLU(),
         ),
         n_events=n_events,
