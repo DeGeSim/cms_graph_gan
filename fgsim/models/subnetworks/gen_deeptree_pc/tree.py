@@ -7,6 +7,7 @@ import torch
 
 class Node:
     def __init__(self, idxs: torch.Tensor):
+        assert torch.long == idxs.dtype
         self.idxs: torch.Tensor = idxs
         self.children: List[Node] = []
         self.parent: Optional[Node] = None

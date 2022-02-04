@@ -7,14 +7,16 @@ models:
     gen:
         name: gen_treepc
         param: ${model_param_options[${models.gen.name}]}
-        losses: "${optionlist:${loss_options},[WGenLoss,mean_dist,physics]}"
+        losses: "${optionlist:${loss_options},${models.gen.losses_list}}"
+        losses_list: [WGenLoss]
         optim:
             name: Adam
             params: ${optim_options[Adam]}
     disc:
         name: disc_treepc
         param: ${model_param_options[${models.disc.name}]}
-        losses: "${optionlist:${loss_options},[WDiscLoss,GradientPenalty]}"
+        losses: "${optionlist:${loss_options},${models.disc.losses_list}}"
+        losses_list: [WDiscLoss,GradientPenalty]
         optim:
             name: Adam
             params: ${optim_options[Adam]}
@@ -31,6 +33,7 @@ model_param_options:
         n_levels: 12
         n_events: "${loader.batch_size}"
         post_gen_mp_steps: 10
+        conv_name: GINConv
     disc_treepc:
         features: [4, 64, 128, 256, 512, 1024]
         activation: Identity
@@ -50,7 +53,7 @@ loss_options:
     mean_dist:
         factor: 1.0
     physics:
-        factor: 100.0
+        factor: 1.0
     frechetpcdist:
         factor: 1.0
 
@@ -151,7 +154,7 @@ loader_options:
         max_points: 4085
         n_features: 4
         chunksize: 100
-        batch_size: 100
+        batch_size: 50
         validation_set_size: 5000
         test_set_size: 30000
         prefetch_batches: 2

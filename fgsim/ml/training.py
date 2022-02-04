@@ -54,7 +54,10 @@ def training_procedure() -> None:
         while not early_stopping(holder.state):
             # switch model in training mode
             holder.models.train()
-            for _ in tqdm(range(conf.validation.interval), postfix="training"):
+            for _ in tqdm(
+                range(conf.validation.interval),
+                postfix=f"training from {holder.state.grad_step}",
+            ):
                 holder.state.batch_start_time = time.time()
                 try:
                     batch = next(loader.qfseq)
