@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from os import mkdir
 from typing import Dict, List
 
+from genericpath import isdir
 from omegaconf import DictConfig, OmegaConf
 
 
@@ -21,7 +22,7 @@ base_config = ExperimentConfig(
         """models:
     gen:
         name: gen_deeptree_pc
-        losses_list: [WGenLoss,mean_dist,physics]
+        losses_list: [WGenLoss]
     disc:
         losses_list: [WDiscLoss,GradientPenalty]
 model_param_options:
@@ -45,6 +46,7 @@ def option_ce(input_conf: DictConfig) -> Dict[str, DictConfig]:
     mod_conf["models"]["gen"]["losses_list"].remove("WGenLoss")
     mod_conf["models"]["gen"]["losses_list"].append("CEGenLoss")
     mod_conf["models"]["disc"]["losses_list"].remove("WDiscLoss")
+    mod_conf["models"]["disc"]["losses_list"].remove("GradientPenalty")
     mod_conf["models"]["disc"]["losses_list"].append("CEDiscLoss")
     mod_conf["model_param_options"]["disc_treepc"]["activation"] = "Sigmoid"
     return {"wd": input_conf, "ce": mod_conf}
@@ -53,13 +55,13 @@ def option_ce(input_conf: DictConfig) -> Dict[str, DictConfig]:
 def option_physics_loss(input_conf: DictConfig) -> Dict[str, DictConfig]:
     mod_conf = input_conf.copy()
     mod_conf["models"]["gen"]["losses_list"].append("physics")
-    return {"no_pl": input_conf, "pl": mod_conf}
+    return {"nopl": input_conf, "pl": mod_conf}
 
 
 def option_mean_dist_loss(input_conf: DictConfig) -> Dict[str, DictConfig]:
     mod_conf = input_conf.copy()
     mod_conf["models"]["gen"]["losses_list"].append("mean_dist")
-    return {"no_md": input_conf, "md": mod_conf}
+    return {"nomd": input_conf, "md": mod_conf}
 
 
 def option_wide(input_conf: DictConfig) -> Dict[str, DictConfig]:
@@ -69,7 +71,7 @@ def option_wide(input_conf: DictConfig) -> Dict[str, DictConfig]:
     if "param" not in input_conf["models"]["gen"]:
         input_conf["models"]["gen"]["param"] = {}
     mod_conf["models"]["gen"]["param"]["n_branches"] = 4
-    mod_conf["models"]["gen"]["param"]["n_splits"] = 6
+    mod_conf["models"]["gen"]["param"]["n_levels"] = 7
     return {"slim": input_conf, "wide": mod_conf}
 
 
@@ -77,7 +79,8 @@ def option_conv(input_conf: DictConfig) -> Dict[str, DictConfig]:
     mod_conf = input_conf.copy()
     mod_conf["models"]["gen"]["param"]["conv_name"] = "GINConv"
     input_conf["models"]["gen"]["param"]["conv_name"] = "AncestorConv"
-    return {"ancconv": input_conf, "gin": mod_conf}
+    # return {"ancconv": input_conf }
+    return {"gin": mod_conf}
 
 
 exp_list: List[ExperimentConfig] = [base_config]
@@ -101,7 +104,8 @@ for exp in exp_list:
     print(exp.tags)
     print(exp.config)
     folder = "wd/deeptree_" + "_".join(exp.tags)
-    mkdir(folder)
+    if not isdir(folder):
+        mkdir(folder)
     OmegaConf.save(exp.config, f"{folder}/config.yaml")
 
 # WGenLoss ->
