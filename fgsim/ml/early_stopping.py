@@ -21,7 +21,7 @@ def early_stopping(state: DictConfig) -> bool:
         return False
 
     valsteps = conf.training.early_stopping.validation_steps
-    stop_metric = np.array(state.val_metrics[conf.validation.stop_key])
+    stop_metric = np.array(state.stop_crit)
 
     if len(stop_metric) < valsteps + 1:
         return False

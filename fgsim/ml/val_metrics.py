@@ -1,6 +1,6 @@
 """Dynamically import the losses"""
 import importlib
-from typing import Callable, Dict, List
+from typing import Callable, Dict
 
 import numpy as np
 import torch
@@ -67,17 +67,7 @@ class ValidationMetrics:
             state.val_metrics[lossname].append(loss)
             # Reset to 0
             self._lastlosses[lossname] = 0
-        # compute the stop_metric
-        lossname = conf.validation.stop_key
-        stop_crit = np.mean(
-            [
-                ratio_better_than_last(list(state.val_metrics[metric]))
-                for metric in state.val_metrics
-            ]
-        )
-        if lossname not in state.val_metrics:
-            state.val_metrics[lossname] = []
-        state.val_metrics[lossname].append(float(stop_crit))
+
         # Log the validation loss
         if not conf.debug:
             with self.train_log.experiment.validate():
@@ -86,10 +76,24 @@ class ValidationMetrics:
                         f"{self.name}.{lossname}", loss_history[-1]
                     )
 
+        # compute the stop_metric
+        loss_history = np.stack(
+            [state.val_metrics[metric] for metric in state.val_metrics]
+        )
+        ratio_better = np.apply_along_axis(
+            lambda row: np.array([np.mean(row <= e) for e in row]), 1, loss_history
+        ).mean(0)
+        ratio_better = [float(val) for val in ratio_better]
+        state.stop_crit = list(ratio_better)
+        if not conf.debug:
+            with self.train_log.experiment.validate():
+                self.train_log.experiment.log_curve(
+                    "ratio_better",
+                    x=np.arange(len(ratio_better)),
+                    y=ratio_better,
+                    overwrite=True,
+                    step=self.train_log.state["grad_step"],
+                )
+
     def __getitem__(self, lossname: str) -> Callable:
         return self.parts[lossname]
-
-
-def ratio_better_than_last(loss_history: List[float]) -> float:
-    arr = np.array(loss_history)
-    return np.mean(arr <= arr[-1])

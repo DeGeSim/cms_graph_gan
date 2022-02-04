@@ -1,3 +1,4 @@
+from glob import glob
 from typing import List
 
 import comet_ml
@@ -78,14 +79,6 @@ def get_experiment() -> comet_ml.ExistingExperiment:
         new_api_exp.log_parameters(hyperparameters_keyval_list)
         new_api_exp.add_tags(list(set(conf.tag.split("_"))))
 
-        for snwname, snwconf in conf.models.items():
-            # log the models
-            new_api_exp.set_code(
-                filename=f"fgsim/models/subnetworks/{snwconf.name}.py"
-            )
-            # log the losses
-            for lossconf in snwconf.losses:
-                new_api_exp.set_code(filename=f"fgsim/models/loss/{lossconf}.py")
         exp_key = new_api_exp.id
     elif len(qres) == 1:
         logger.warning("Found existing experiment.")
@@ -107,6 +100,13 @@ def get_experiment() -> comet_ml.ExistingExperiment:
         log_env_cpu=True,
         log_env_host=True,
     )
+    for snwname, snwconf in conf.models.items():
+        # log the models
+        for p in glob(f"fgsim/models/subnetworks/{snwconf.name}*"):
+            experiment.log_code(p)
+        for p in glob("fgsim/models/loss/{lossconf}*"):
+            experiment.log_code(p)
+
     return experiment
 
 

@@ -25,14 +25,14 @@ def validate(holder: Holder, loader: QueuedDataLoader) -> None:
     logger.warning("Validation batches evaluated")
     holder.val_loss.log_losses(holder.state)
     logger.warning("Validation loss logged")
-    val_loss_sum = holder.state.val_metrics[conf.validation.stop_key]
-    min_val_loss_sum = min(val_loss_sum)
-    if min_val_loss_sum == val_loss_sum[-1]:
+
+    min_stop_crit = min(holder.state.stop_crit)
+    if min_stop_crit == holder.state.stop_crit[-1]:
         holder.state.best_grad_step = holder.state["grad_step"]
         holder.best_model_state = deepcopy(holder.models.state_dict())
 
         if not conf.debug:
-            holder.train_log.experiment.log_metric("min_val_loss", min_val_loss_sum)
+            holder.train_log.experiment.log_metric("min_stop_crit", min_stop_crit)
             holder.train_log.experiment.log_metric(
                 "best_grad_step", holder.state["grad_step"]
             )
