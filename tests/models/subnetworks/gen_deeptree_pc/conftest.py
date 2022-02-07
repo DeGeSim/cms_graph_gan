@@ -7,7 +7,7 @@ import torch
 from torch import nn
 from torch_geometric.data import Data
 
-from fgsim.models.subnetworks.gen_deeptree_pc.ancestor_conv import AncestorConvLayer
+from fgsim.models.subnetworks.gen_deeptree_pc.ancestor_conv import AncestorConv
 from fgsim.models.subnetworks.gen_deeptree_pc.branching import BranchingLayer
 from fgsim.models.subnetworks.gen_deeptree_pc.dyn_hlvs import DynHLVsLayer
 
@@ -21,7 +21,7 @@ class DTColl:
     global_features: torch.Tensor
     branching_layer: BranchingLayer
     dyn_hlvs_layer: DynHLVsLayer
-    ancestor_conv_layer: AncestorConvLayer
+    ancestor_conv_layer: AncestorConv
 
 
 def object_gen(props: Dict[str, int]) -> DTColl:
@@ -74,7 +74,7 @@ def object_gen(props: Dict[str, int]) -> DTColl:
         n_events=n_events,
     ).to(device)
 
-    ancestor_conv_layer = AncestorConvLayer(
+    ancestor_conv_layer = AncestorConv(
         msg_gen=nn.Sequential(
             nn.Linear(n_features + n_global, n_features),
             nn.ReLU(),

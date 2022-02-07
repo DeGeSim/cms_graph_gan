@@ -34,6 +34,7 @@ model_param_options:
         n_events: "${loader.batch_size}"
         post_gen_mp_steps: 10
         conv_name: GINConv
+        conv_parem: {}
     disc_treepc:
         features: [4, 64, 128, 256, 512, 1024]
         activation: Identity

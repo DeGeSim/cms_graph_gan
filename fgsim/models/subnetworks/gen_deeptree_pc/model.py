@@ -5,7 +5,7 @@ from torch_geometric.data import Data
 from fgsim.config import conf, device
 from fgsim.monitoring.logger import logger
 
-from .ancestor_conv import AncestorConvLayer
+from .ancestor_conv import AncestorConv
 from .branching import BranchingLayer
 from .dyn_hlvs import DynHLVsLayer
 from .tree import Node
@@ -99,7 +99,7 @@ class ModelClass(nn.Module):
                 )
             )
         elif self.convname == "AncestorConv":
-            self._conv = AncestorConvLayer(
+            self._conv = AncestorConv(
                 msg_gen=nn.Sequential(
                     nn.Linear(self.n_features + n_global, self.n_features),
                     nn.ReLU(),
