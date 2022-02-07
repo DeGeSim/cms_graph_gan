@@ -6,7 +6,7 @@ from omegaconf import OmegaConf
 from omegaconf.dictconfig import DictConfig
 from torch.utils.tensorboard.writer import SummaryWriter
 
-from fgsim.config import conf, hyperparameters
+from fgsim.config import conf
 from fgsim.monitoring.logger import logger
 
 comet_conf = OmegaConf.load("fgsim/comet.yaml")
@@ -73,6 +73,8 @@ def get_experiment() -> comet_ml.ExistingExperiment:
         )
 
         # Format the hyperparameter for comet
+        from fgsim.config import hyperparameters
+
         hyperparameters_keyval_list = dict(dict_to_kv(hyperparameters))
         hyperparameters_keyval_list["hash"] = conf["hash"]
         hyperparameters_keyval_list["loader_hash"] = conf["loader_hash"]

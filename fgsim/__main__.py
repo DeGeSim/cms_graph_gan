@@ -50,11 +50,8 @@ def main():
     #     logger.info(f"Unloading {modulename}")
     #     del sys.modules[modulename]
     # logger.info("Unloading complete")
-    from fgsim.config import conf, hyperparameters
+    from fgsim.config import conf
 
-    logger.info(
-        "Configuration:\n" + OmegaConf.to_yaml(hyperparameters, resolve=True)
-    )
     logger.warning(
         f"Using hash {conf['hash']} and loader_hash {conf['loader_hash']}"
     )

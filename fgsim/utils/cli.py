@@ -8,7 +8,15 @@ if "pytest" in sys.modules:
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument("-t", "--tag", default="default", required=False)
+group = parser.add_mutually_exclusive_group(required=True)
+
+group.add_argument(
+    "-t",
+    "--tag",
+    default="default",
+)
+group.add_argument("--hash")
+
 parser.add_argument(
     "--debug",
     dest="debug",
