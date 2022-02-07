@@ -6,7 +6,7 @@ comet_project_name: "gan"
 models:
     gen:
         name: gen_treepc
-        param: ${model_param_options[${models.gen.name}]}
+        params: ${model_param_options[${models.gen.name}]}
         losses: "${optionlist:${loss_options},${models.gen.losses_list}}"
         losses_list: [WGenLoss]
         optim:
@@ -14,7 +14,7 @@ models:
             params: ${optim_options[Adam]}
     disc:
         name: disc_treepc
-        param: ${model_param_options[${models.disc.name}]}
+        params: ${model_param_options[${models.disc.name}]}
         losses: "${optionlist:${loss_options},${models.disc.losses_list}}"
         losses_list: [WDiscLoss,GradientPenalty]
         optim:

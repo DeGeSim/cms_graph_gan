@@ -66,21 +66,21 @@ def option_mean_dist_loss(input_conf: DictConfig) -> Dict[str, DictConfig]:
 
 def option_wide(input_conf: DictConfig) -> Dict[str, DictConfig]:
     mod_conf = input_conf.copy()
-    if "param" not in mod_conf["models"]["gen"]:
-        mod_conf["models"]["gen"]["param"] = {}
-    if "param" not in input_conf["models"]["gen"]:
-        input_conf["models"]["gen"]["param"] = {}
-    mod_conf["models"]["gen"]["param"]["n_branches"] = 4
-    mod_conf["models"]["gen"]["param"]["n_levels"] = 7
+    if "params" not in mod_conf["models"]["gen"]:
+        mod_conf["models"]["gen"]["params"] = {}
+    if "params" not in input_conf["models"]["gen"]:
+        input_conf["models"]["gen"]["params"] = {}
+    mod_conf["models"]["gen"]["params"]["n_branches"] = 4
+    mod_conf["models"]["gen"]["params"]["n_levels"] = 7
     return {"slim": input_conf, "wide": mod_conf}
 
 
 def option_conv(input_conf: DictConfig) -> Dict[str, DictConfig]:
     mod_conf = input_conf.copy()
-    mod_conf["models"]["gen"]["param"]["conv_name"] = "GINConv"
-    input_conf["models"]["gen"]["param"]["conv_name"] = "AncestorConv"
-    # return {"ancconv": input_conf }
-    return {"gin": mod_conf}
+    mod_conf["models"]["gen"]["params"]["conv_name"] = "GINConv"
+    input_conf["models"]["gen"]["params"]["conv_name"] = "AncestorConv"
+    # return { }
+    return {"ancconv": input_conf, "gin": mod_conf}
 
 
 exp_list: List[ExperimentConfig] = [base_config]
