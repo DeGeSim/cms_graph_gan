@@ -49,7 +49,7 @@ else:
     else:
         tagconf = OmegaConf.create({})
 
-    conf = OmegaConf.merge(defaultconf, tagconf, vars(args))
+    conf = OmegaConf.unsafe_merge(defaultconf, tagconf, vars(args))
 
 
 # Select the CPU/GPU
