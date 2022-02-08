@@ -76,7 +76,7 @@ def object_gen(props: Dict[str, int]) -> DTColl:
 
     ancestor_conv_layer = AncestorConv(
         msg_gen=nn.Sequential(
-            nn.Linear(n_features + n_global, n_features),
+            nn.Linear(n_features + n_global + 1, n_features),
             nn.ReLU(),
         ),
         update_nn=nn.Sequential(

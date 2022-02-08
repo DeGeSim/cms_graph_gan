@@ -11,6 +11,23 @@ from .dyn_hlvs import DynHLVsLayer
 from .tree import Node
 
 
+def dnn_gen(input_dim: int, output_dim: int, n_layers: int):
+    if n_layers == 1:
+        layers = [nn.Linear(input_dim, output_dim)]
+    elif n_layers == 2:
+        layers = [nn.Linear(input_dim, input_dim), nn.Linear(input_dim, output_dim)]
+    else:
+        layers = [
+            nn.Linear(input_dim, input_dim),
+            nn.Linear(input_dim, output_dim),
+        ] + [nn.Linear(output_dim, output_dim) for _ in range(n_layers - 1)]
+    seq = []
+    for e in layers:
+        seq.append(e)
+        seq.append(nn.ReLU())
+    return nn.Sequential(*seq)
+
+
 class ModelClass(nn.Module):
     def __init__(
         self,
@@ -20,6 +37,7 @@ class ModelClass(nn.Module):
         n_branches: int,
         n_levels: int,
         conv_name: str,
+        conv_parem,
         post_gen_mp_steps: int,
     ):
         super().__init__()
@@ -39,24 +57,8 @@ class ModelClass(nn.Module):
             )
 
         self.dyn_hlvs_layer = DynHLVsLayer(
-            pre_nn=nn.Sequential(
-                nn.Linear(self.n_features, self.n_features),
-                nn.ReLU(),
-                nn.Linear(self.n_features, self.n_features),
-                nn.ReLU(),
-                nn.Linear(self.n_features, self.n_features),
-                nn.ReLU(),
-                nn.Linear(self.n_features, n_global),
-                nn.ReLU(),
-            ),
-            post_nn=nn.Sequential(
-                nn.Linear(n_global * 2, n_global * 2),
-                nn.ReLU(),
-                nn.Linear(n_global * 2, n_global * 2),
-                nn.ReLU(),
-                nn.Linear(n_global * 2, n_global),
-                nn.ReLU(),
-            ),
+            pre_nn=dnn_gen(self.n_features, self.n_features, n_layers=4),
+            post_nn=dnn_gen(self.n_features * 2, self.n_global, n_layers=4),
             n_events=n_events,
         )
         self.branching_layer = BranchingLayer(
@@ -64,19 +66,8 @@ class ModelClass(nn.Module):
             n_features=self.n_features,
             n_branches=n_branches,
             n_levels=n_levels,
-            proj_nn=nn.Sequential(
-                nn.Linear(self.n_features + n_global, self.n_features * n_branches),
-                nn.ReLU(),
-                nn.Linear(
-                    self.n_features * n_branches,
-                    self.n_features * n_branches,
-                ),
-                nn.ReLU(),
-                nn.Linear(
-                    self.n_features * n_branches,
-                    self.n_features * n_branches,
-                ),
-                nn.ReLU(),
+            proj_nn=dnn_gen(
+                self.n_features + n_global, self.n_features * n_branches, n_layers=4
             ),
             device=device,
         )
@@ -85,44 +76,17 @@ class ModelClass(nn.Module):
             from torch_geometric.nn.conv import GINConv
 
             self._conv = GINConv(
-                nn.Sequential(
-                    nn.Linear(
-                        self.n_features + n_global, self.n_features + n_global
-                    ),
-                    nn.ReLU(),
-                    nn.Linear(self.n_features + n_global, self.n_features),
-                    nn.ReLU(),
-                    nn.Linear(self.n_features, self.n_features),
-                    nn.ReLU(),
-                    nn.Linear(self.n_features, self.n_features),
-                    nn.ReLU(),
-                )
+                dnn_gen(self.n_features + n_global, self.n_features, n_layers=4)
             )
         elif self.convname == "AncestorConv":
             self._conv = AncestorConv(
-                msg_gen=nn.Sequential(
-                    nn.Linear(self.n_features + n_global, self.n_features),
-                    nn.ReLU(),
-                    nn.Linear(self.n_features, self.n_features),
-                    nn.ReLU(),
-                    nn.Linear(self.n_features, self.n_features),
-                    nn.ReLU(),
+                msg_gen=dnn_gen(
+                    self.n_features + self.n_global + 1, self.n_features, n_layers=4
                 ),
-                update_nn=nn.Sequential(
-                    # agreegated features + previous feature vector + global
-                    nn.Linear(
-                        2 * self.n_features + n_global,
-                        2 * self.n_features + n_global,
-                    ),
-                    nn.ReLU(),
-                    nn.Linear(2 * self.n_features + n_global, self.n_features),
-                    nn.ReLU(),
-                    nn.Linear(
-                        self.n_features,
-                        self.n_features,
-                    ),
-                    nn.ReLU(),
+                update_nn=dnn_gen(
+                    2 * self.n_features + n_global, self.n_features, n_layers=4
                 ),
+                **conv_parem,
             )
         else:
             raise ImportError
@@ -138,6 +102,7 @@ class ModelClass(nn.Module):
             return self._conv(
                 x=graph.x,
                 edge_index=graph.edge_index,
+                edge_attr=graph.edge_attr,
                 event=graph.event,
                 global_features=global_features,
             )

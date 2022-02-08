@@ -16,8 +16,11 @@ def test_GlobalFeedBackNN_ancestor_conv(static_objects):
         assert global_features.shape[1] == n_global
         graph = branching_layer(graph, global_features)
         graph.x = ancestor_conv_layer(
-            graph.edge_index,
-            torch.hstack([graph.x, global_features[graph.event]]),
+            x=graph.x,
+            edge_index=graph.edge_index,
+            edge_attr=graph.edge_attr,
+            event=graph.event,
+            global_features=global_features,
         )
 
 
@@ -78,4 +81,10 @@ def test_full_NN_compute_graph(static_objects):
         global_features = dyn_hlvs_layer(graph)
         assert global_features.shape[1] == n_global
         graph = branching_layer(graph, global_features)
-        graph.x = ancestor_conv_layer(graph, global_features)
+        graph.x = ancestor_conv_layer(
+            x=graph.x,
+            edge_index=graph.edge_index,
+            edge_attr=graph.edge_attr,
+            event=graph.event,
+            global_features=global_features,
+        )
