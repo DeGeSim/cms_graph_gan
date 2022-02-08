@@ -21,9 +21,9 @@ class ModelClass(nn.Module):
 
         self.leaky_relu = nn.LeakyReLU(negative_slope=0.2)
         self.final_layer = nn.Sequential(
-            nn.Linear(features[-1], features[-3]),
-            nn.Linear(features[-3], features[-5]),
-            nn.Linear(features[-5], 1),
+            nn.Linear(features[-1], features[-2]),
+            nn.Linear(features[-2], features[0]),
+            nn.Linear(features[0], 1),
         )
         self.activation = getattr(nn, activation)()
 
