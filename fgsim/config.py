@@ -35,6 +35,7 @@ OmegaConf.register_new_resolver("optionlist", optionlist, replace=True)
 if args.hash is not None:
     fn = glob(f"wd/*/{args.hash}/full_config.yaml")[0]
     conf = OmegaConf.load(fn)
+    conf["command"] = args.command
 else:
     with open("fgsim/default.yaml", "r") as fp:
         defaultconf = OmegaConf.load(fp)

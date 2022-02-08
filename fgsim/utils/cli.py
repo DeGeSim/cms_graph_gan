@@ -42,11 +42,21 @@ args = parser.parse_args()
 if __name__ == "__main__":
     import sys
 
-    for tag in args.tag.split(","):
-        command = ""
-        for e in sys.argv[1:]:
-            if e is not args.tag:
-                command += e + " "
-            else:
-                command += tag + " "
-        print(args.command + " " + tag + " " + command)
+    if args.hash is None:
+        for tag in args.tag.split(","):
+            command = ""
+            for e in sys.argv[1:]:
+                if e is not args.tag:
+                    command += e + " "
+                else:
+                    command += tag + " "
+            print(args.command + " " + tag + " " + command)
+    else:
+        for tag in args.hash.split(","):
+            command = ""
+            for e in sys.argv[1:]:
+                if e is not args.hash:
+                    command += e + " "
+                else:
+                    command += tag + " "
+            print(args.command + " " + tag + " " + command)
