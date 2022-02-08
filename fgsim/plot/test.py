@@ -58,7 +58,7 @@ def diffhist(var, xsim: np.array, xgen: np.array) -> plt.Figure:
                 simlab: xsim,
                 genlab: xgen,
             },
-            bins=be[hstart : hend + 1],
+            # bins=be[hstart : hend + 1],
             alpha=0.6,
             legend=True,
         )
@@ -68,7 +68,7 @@ def diffhist(var, xsim: np.array, xgen: np.array) -> plt.Figure:
             {
                 f"simulated μ ({np.mean(xsim):.2E}) σ ({np.std(xsim):.2E}) ": xsim,
             },
-            bins=be[hstart : hend + 1],
+            # bins=be[hstart : hend + 1],
             alpha=0.6,
             legend=True,
         )
