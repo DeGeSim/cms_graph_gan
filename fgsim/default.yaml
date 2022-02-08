@@ -34,10 +34,16 @@ model_param_options:
         n_events: "${loader.batch_size}"
         post_gen_mp_steps: 10
         conv_name: GINConv
-        conv_parem: {}
+        conv_parem: ${conv_options[${models.gen.params.conv_name}]}
     disc_treepc:
         features: [4, 64, 128, 256]
         activation: Identity
+
+conv_options:
+    GINConv: {}
+    AncestorConv:
+        add_self_loops: True
+
 
 loss_options:
     WGenLoss:
