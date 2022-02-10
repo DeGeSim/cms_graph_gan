@@ -144,5 +144,4 @@ loader_options:
         qf_seq_name: "pc_seq"
     pcgraph:
         qf_seq_name: "pcgraph_seq"
-        preprocess_training: False
         debug: True
