@@ -21,7 +21,7 @@ class LossGen:
 
     def __call__(self, holder: Holder, batch: Batch) -> torch.float:
         # Loss of the simulated samples
-        D_sim = holder.models.disc(batch.pc)
+        D_sim = holder.models.disc(batch)
         assert D_sim.dim() == 1
         # maximize log(D(x))
         # sample_disc_loss = -1 * torch.log(D_sim).mean() * self.factor
@@ -32,7 +32,7 @@ class LossGen:
 
         # Loss of the generated samples
         # maximize log(1−D(G(z)))
-        D_gen = holder.models.disc(holder.gen_points.pc)
+        D_gen = holder.models.disc(holder.gen_points)
         # gen_disc_loss = -1 * (
         #     torch.log(torch.ones_like(D_gen) - D_gen).mean() * self.factor
         # )

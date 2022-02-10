@@ -12,11 +12,11 @@ class LossGen:
 
     def __call__(self, holder: Holder, batch: Batch) -> torch.float:
         # EM dist loss:
-        D_realm = holder.models.disc(batch.pc).mean()
+        D_realm = holder.models.disc(batch).mean()
         sample_disc_loss = -D_realm * self.factor
         sample_disc_loss.backward()
 
-        D_fakem = holder.models.disc(holder.gen_points.pc).mean()
+        D_fakem = holder.models.disc(holder.gen_points).mean()
         gen_disc_loss = D_fakem * self.factor
         gen_disc_loss.backward()
         return float(gen_disc_loss) + float(sample_disc_loss)
