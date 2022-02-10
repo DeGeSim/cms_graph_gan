@@ -70,7 +70,6 @@ def training_procedure() -> None:
                     batch = next(loader.qfseq)
                 with gpu_mem_monitor("batch"):
                     batch = batch.to(device)
-                    batch.repad(holder.models.gen.output_points)
                 holder.state.time_io_done = time.time()
                 training_step(batch, holder)
                 holder.state.time_training_done = time.time()
