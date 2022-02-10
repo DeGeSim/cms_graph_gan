@@ -1,9 +1,9 @@
 import torch
 import torch.nn as nn
-from torch_geometric.data import Data
 
 from fgsim.config import conf, device
 from fgsim.monitoring.logger import logger
+from fgsim.types import Batch, Graph
 
 from .ancestor_conv import AncestorConv
 from .branching import BranchingLayer
@@ -55,6 +55,7 @@ class ModelClass(nn.Module):
                 "Model cannot generate a sufficent number of points: "
                 f"{conf.loader.max_points} < {self.output_points}"
             )
+        conf.models.gen.output_points = self.output_points
 
         self.dyn_hlvs_layer = DynHLVsLayer(
             pre_nn=dnn_gen(self.n_features, self.n_features, n_layers=4),
@@ -91,7 +92,7 @@ class ModelClass(nn.Module):
         else:
             raise ImportError
 
-    def conv(self, graph: Data, global_features: torch.Tensor):
+    def conv(self, graph: Graph, global_features: torch.Tensor):
         if self.convname == "GINConv":
             return self._conv(
                 x=torch.hstack([graph.x, global_features[graph.event]]),
@@ -108,11 +109,11 @@ class ModelClass(nn.Module):
             )
 
     # Random vector to pc
-    def forward(self, random_vector: torch.Tensor) -> torch.Tensor:
+    def forward(self, random_vector: torch.Tensor) -> Batch:
         n_events = self.n_events
         n_features = self.n_features
 
-        graph = Data(
+        graph = Graph(
             x=random_vector.reshape(n_events, n_features),
             edge_index=torch.tensor([[], []], dtype=torch.long, device=device),
             edge_attr=torch.tensor([], dtype=torch.long, device=device),
@@ -135,18 +136,7 @@ class ModelClass(nn.Module):
                 global_features,
             )
 
-        # No arange the events separatly by sorting the
-        # arguments of the graph.event vector
-        # Also only cut out the first conf.loader.n_features
-        # features that have a meaning
-        eidxs = torch.argsort(graph.event)
-        # TODO write test
-        # graph.event[torch.argsort(graph.event)[:10]]
-        # tensor([0, 0, 0, 0, 0, 0, 0, 0, 0, 0], device='cuda:3')
-        #
-        pcs = graph.x[eidxs, : conf.loader.n_features].reshape(
-            n_events, -1, conf.loader.n_features
+        batch = Batch.from_pcs_list(
+            graph.x[:, : conf.loader.n_features], graph.event
         )
-        assert self.output_points == pcs.shape[1]
-
-        return pcs
+        return batch
