@@ -29,6 +29,14 @@ def optionlist(options, ol):
 
 OmegaConf.register_new_resolver("optionlist", optionlist, replace=True)
 
+
+def merge(*configs):
+    return OmegaConf.merge(*configs)
+
+
+OmegaConf.register_new_resolver("merge", merge, replace=True)
+
+
 # Load the default settings, overwrite them
 # witht the tag-specific settings and then
 # overwrite those with cli arguments.
