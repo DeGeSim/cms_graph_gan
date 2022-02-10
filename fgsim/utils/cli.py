@@ -2,13 +2,8 @@
 import argparse
 import sys
 
-# No args if run within pytest
-if "pytest" in sys.modules:
-    sys.argv = ["/home/mscham/fgsim/fgsim/__main__.py", "train"]
-
-
 parser = argparse.ArgumentParser()
-group = parser.add_mutually_exclusive_group(required=True)
+group = parser.add_mutually_exclusive_group()
 
 group.add_argument(
     "-t",
@@ -36,8 +31,18 @@ loadfile_parser.add_argument(
     "file_to_load",
     help="python file to load",
 )
+# No args if run within pytest
+if "pytest" in sys.modules:
+    argv = [
+        # "/home/mscham/fgsim/fgsim/__main__.py",
+        "--tag",
+        "default",
+        "train",
+    ]
+    args = parser.parse_args(argv)
 
-args = parser.parse_args()
+else:
+    args = parser.parse_args()
 
 if __name__ == "__main__":
     import sys
