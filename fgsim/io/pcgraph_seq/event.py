@@ -2,18 +2,30 @@ from dataclasses import dataclass, field
 from typing import Dict, List, Optional
 
 import torch
+from torch_geometric.data import Batch as GraphBatch
+from torch_geometric.data import Data as Graph
 
 from fgsim.config import conf
 from fgsim.monitoring.logger import logger
 
+from .aggr_and_sort_points import aggr_and_sort_points
+
 
 @dataclass
 class Event:
-    pc: torch.Tensor
+    graph: Graph
     hlvs: Dict[str, torch.Tensor] = field(default_factory=dict)
 
+    def __post_init__(self):
+        if self.graph.edge_index is None and not hasattr(self.graph, "num_graphs"):
+            self.graph = Graph(x=aggr_and_sort_points(self.pc))
+
+    @property
+    def pc(self):
+        return self.graph.x
+
     def to(self, *args, **kwargs):
-        self.pc = self.pc.to(*args, **kwargs)
+        self.graph = self.graph.to(*args, **kwargs)
         for key, val in self.hlvs.items():
             self.hlvs[key] = val.to(*args, **kwargs)
         return self
@@ -22,15 +34,9 @@ class Event:
         return self.to(torch.device("cpu"))
 
     def clone(self, *args, **kwargs):
-        # This needs to return a new object to align the python and pytorch ref counts
-        # Overwriting the attributes leads to memory leak with this
-        # L = [event0,event1,event2,event3]
-        # for e in L:
-        #     e.to(gpu_device)
-
-        pc = self.pc.clone(*args, **kwargs)
+        graph = self.graph.clone(*args, **kwargs)
         hlvs = {key: val.clone(*args, **kwargs) for key, val in self.hlvs.items()}
-        return type(self)(pc, hlvs)
+        return type(self)(graph, hlvs)
 
     def compute_hlvs(self) -> None:
         self.hlvs["energy_sum"] = torch.sum(self.pc[:, 0])
@@ -79,28 +85,38 @@ def min_mean_max(vec):
 
 class Batch(Event):
     def __init__(
-        self, pc: torch.Tensor, hlvs: Optional[Dict[str, torch.Tensor]] = None
+        self, graph: Graph, hlvs: Optional[Dict[str, torch.Tensor]] = None
     ):
+        self.graph = graph
         if hlvs is None:
-            hlvs = {}
-        super().__init__(pc, hlvs)
+            self.hlvs = {}
+        else:
+            self.hlvs = hlvs
 
     @classmethod
     def from_event_list(cls, *events: Event):
-        pc = torch.stack([event.pc for event in events])
+        graph = GraphBatch.from_data_list([event.graph for event in events])
         hlvs = {
             key: torch.stack([event.hlvs[key] for event in events])
             for key in events[0].hlvs
         }
-        return cls(pc=pc, hlvs=hlvs)
+        return cls(graph=graph, hlvs=hlvs)
+
+    @classmethod
+    def from_pcs_list(cls, pcs: torch.Tensor, events: torch.Tensor):
+        pcs_list = [pcs[events == ievent] for ievent in range(max(events) + 1)]
+        event_list = [Event(Graph(x=pc)) for pc in pcs_list]
+
+        return cls.from_event_list(*event_list)
 
     def split(self) -> List[Event]:
         """Split batch into events."""
+        graphs_list = self.graph.to_data_list()
         outL = []
-        for ievent in range(self.pc.shape[0]):
-            e_pc = self.pc[ievent]
+        for ievent in range(self.graph.num_graphs):
+            e_graph = graphs_list[ievent]
             e_hlvs = {key: self.hlvs[key][ievent] for key in self.hlvs}
-            outL.append(Event(e_pc, e_hlvs))
+            outL.append(Event(e_graph, e_hlvs))
         return outL
 
     def compute_hlvs(self) -> None:
@@ -109,17 +125,3 @@ class Batch(Event):
             event.compute_hlvs()
         self.hlvs = Batch.from_event_list(*event_list).hlvs
         return
-
-    def to(self, *args, **kwargs):
-        self.repad(conf.models.gen.output_points)
-        return super().to(self, *args, **kwargs)
-
-    def repad(self, new_size: int) -> None:
-        if new_size < conf.loader.max_points:
-            raise ValueError
-        self.pc = torch.nn.functional.pad(
-            self.pc,
-            (0, 0, 0, new_size - conf.loader.max_points, 0, 0),
-            mode="constant",
-            value=0,
-        )

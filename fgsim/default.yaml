@@ -111,45 +111,11 @@ path:
     log: "${path.run_path}/${command}.log"
     loader_log: "${path.run_path}/${command}_loader.log"
 
-loader: ${loader_options[${loader_name}]}
-loader_name: pc
+loader: "${merge:${loader_options[default]},${loader_options[${loader_name}]}}"
+loader_name: pcgraph
 
 loader_options:
-    hgcal:
-        qf_seq_name: "hgcal_seq"
-        rootprefix: "treeMaker/tree"
-        preprocess_training: True
-        debug: False
-        hlvs:
-            [
-                "sum_energy",
-                "num_isolated",
-                "isolated_energy",
-                "isolated_E_fraction",
-                "x_mean",
-                "x_std",
-                "x_mom3",
-                "y_mean",
-                "y_std",
-                "y_mom3",
-                "z_mean",
-                "z_std",
-                "z_mom3",
-            ]
-        cell_prop_keys: ["x", "y", "z", "celltype", "issilicon"]
-        braches:
-            id: "simHit_detid"
-            energy: "genPh_E"
-            hit_energy: "simHit_E"
-        chunksize: 100
-        batch_size: 100
-        validation_set_size: 5000
-        test_set_size: 30000
-        prefetch_batches: 2
-        num_workers_transform: 30
-        num_workers_stack: 1
-    pc:
-        qf_seq_name: "pc_seq"
+    default:
         rootprefix: "treeMaker/tree"
         preprocess_training: True
         debug: False
@@ -158,7 +124,6 @@ loader_options:
             energy: "genPh_E"
             hit_energy: "simHit_E"
         cell_prop_keys: ["x", "y", "z"]
-        max_points: 4085
         n_features: 4
         chunksize: 100
         batch_size: 50
@@ -168,3 +133,14 @@ loader_options:
         num_workers_transform: 10
         num_workers_stack: 1
         num_workers_postprocess: 5
+        max_points: 4085
+    hgcal:
+        qf_seq_name: "hgcal_seq"
+        cell_prop_keys: ["x", "y", "z", "celltype", "issilicon"]
+        batch_size: 100
+    pc:
+        qf_seq_name: "pc_seq"
+    pcgraph:
+        qf_seq_name: "pcgraph_seq"
+        preprocess_training: False
+        debug: True
