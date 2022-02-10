@@ -5,7 +5,7 @@ comet_project_name: "gan"
 
 models:
     gen:
-        name: gen_treepc
+        name: gen_deeptree_pc
         params: ${model_param_options[${models.gen.name}]}
         losses: "${optionlist:${loss_options},${models.gen.losses_list}}"
         losses_list: [WGenLoss]
@@ -13,7 +13,7 @@ models:
             name: Adam
             params: ${optim_options[Adam]}
     disc:
-        name: disc_treepc
+        name: disc_hlvs
         params: ${model_param_options[${models.disc.name}]}
         losses: "${optionlist:${loss_options},${models.disc.losses_list}}"
         losses_list: [WDiscLoss,GradientPenalty]
@@ -35,6 +35,8 @@ model_param_options:
         post_gen_mp_steps: 10
         conv_name: GINConv
         conv_parem: ${conv_options[${models.gen.params.conv_name}]}
+    disc_hlvs:
+        activation: Identity
     disc_treepc:
         features: [4, 64, 128, 256]
         activation: Identity
