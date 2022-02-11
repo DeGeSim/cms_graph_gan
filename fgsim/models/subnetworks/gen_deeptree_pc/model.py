@@ -24,7 +24,7 @@ def dnn_gen(input_dim: int, output_dim: int, n_layers: int):
     seq = []
     for e in layers:
         seq.append(e)
-        seq.append(nn.ReLU())
+        seq.append(nn.LeakyReLU(0.2))
     return nn.Sequential(*seq)
 
 
@@ -49,7 +49,7 @@ class ModelClass(nn.Module):
         self.post_gen_mp_steps = post_gen_mp_steps
         self.convname = conv_name
         self.output_points = sum([n_branches ** i for i in range(self.n_levels)])
-        logger.warning(f"Generator output will be {self.output_points}")
+        logger.debug(f"Generator output will be {self.output_points}")
         if conf.loader.max_points > self.output_points:
             raise RuntimeError(
                 "Model cannot generate a sufficent number of points: "
