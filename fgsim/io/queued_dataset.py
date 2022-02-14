@@ -81,7 +81,7 @@ must queue an epoch via `queue_epoch()` and iterate over the instance of the cla
             qf.init(file_descriptor=False)
             self.qfseq = qf.Sequence(*preprocessed_seq())
         else:
-            qf.init()
+            qf.init(file_descriptor=False)
             self.qfseq = qf.Sequence(*process_seq())
 
         if conf.command != "preprocess":

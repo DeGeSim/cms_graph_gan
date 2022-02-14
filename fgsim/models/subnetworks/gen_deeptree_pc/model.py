@@ -1,9 +1,10 @@
 import torch
 import torch.nn as nn
+from torch_geometric.data import Data
 
 from fgsim.config import conf, device
+from fgsim.io.queued_dataset import Batch
 from fgsim.monitoring.logger import logger
-from fgsim.types import Batch, Graph
 
 from .ancestor_conv import AncestorConv
 from .branching import BranchingLayer
@@ -92,7 +93,7 @@ class ModelClass(nn.Module):
         else:
             raise ImportError
 
-    def conv(self, graph: Graph, global_features: torch.Tensor):
+    def conv(self, graph: Data, global_features: torch.Tensor):
         if self.convname == "GINConv":
             return self._conv(
                 x=torch.hstack([graph.x, global_features[graph.event]]),
@@ -113,7 +114,7 @@ class ModelClass(nn.Module):
         n_events = self.n_events
         n_features = self.n_features
 
-        graph = Graph(
+        graph = Data(
             x=random_vector.reshape(n_events, n_features),
             edge_index=torch.tensor([[], []], dtype=torch.long, device=device),
             edge_attr=torch.tensor([], dtype=torch.long, device=device),

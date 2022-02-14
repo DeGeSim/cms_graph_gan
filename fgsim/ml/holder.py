@@ -10,13 +10,13 @@ from omegaconf import OmegaConf
 from omegaconf.dictconfig import DictConfig
 
 from fgsim.config import conf, device
+from fgsim.io.queued_dataset import Batch
 from fgsim.ml.loss import LossesCol
 from fgsim.ml.network import SubNetworkCollector
 from fgsim.ml.optim import OptimCol
 from fgsim.ml.val_metrics import ValidationMetrics
 from fgsim.monitoring.logger import logger
 from fgsim.monitoring.train_log import TrainLog
-from fgsim.types import Batch
 from fgsim.utils.check_for_nans import contains_nans
 from fgsim.utils.memory import gpu_mem_monitor
 from fgsim.utils.push_to_old import push_to_old

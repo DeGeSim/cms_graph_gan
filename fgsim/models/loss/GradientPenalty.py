@@ -2,10 +2,11 @@ from dataclasses import dataclass
 
 import torch
 from torch.autograd import grad
+from torch_geometric.data import Data
 
 from fgsim.config import device
+from fgsim.io.queued_dataset import Batch
 from fgsim.ml.holder import Holder
-from fgsim.types import Batch, Event, Graph
 
 
 @dataclass
@@ -41,7 +42,7 @@ class LossGen:
         # randomly interpolate between real and fake data
         alpha = torch.rand(len(big_pc), 1, requires_grad=True).to(device)
         interpolates = rsmall_pc + alpha * (big_pc - rsmall_pc)
-        interpol_batch = Batch.from_event_list(Event(Graph(x=interpolates)))
+        interpol_batch = Batch.from_event_list(Data(Data(x=interpolates)))
 
         # compute output of D for interpolated input
         disc_interpolates = holder.models.disc(interpol_batch)

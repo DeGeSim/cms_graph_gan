@@ -114,7 +114,7 @@ path:
     loader_log: "${path.run_path}/${command}_loader.log"
 
 loader: "${merge:${loader_options[default]},${loader_options[${loader_name}]}}"
-loader_name: pcgraph
+loader_name: puregraph
 
 loader_options:
     default:
@@ -136,12 +136,12 @@ loader_options:
         num_workers_stack: 1
         num_workers_postprocess: 5
         max_points: 4085
+        qf_seq_name: "${loader_name}_seq"
     hgcal:
-        qf_seq_name: "hgcal_seq"
         cell_prop_keys: ["x", "y", "z", "celltype", "issilicon"]
         batch_size: 100
-    pc:
-        qf_seq_name: "pc_seq"
     pcgraph:
-        qf_seq_name: "pcgraph_seq"
         debug: True
+    puregraph:
+        debug: True
+        preprocess_training: False

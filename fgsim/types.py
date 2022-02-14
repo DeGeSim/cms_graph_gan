@@ -1,7 +1,7 @@
 import importlib
 
-from torch_geometric.data import Batch as GraphBatch
 from torch_geometric.data import Data as Graph
+from torch_geometric.data.batch import DataBatch as GraphBatch
 
 from fgsim.config import conf
 
