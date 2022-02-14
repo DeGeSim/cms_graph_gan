@@ -2,7 +2,7 @@ from dataclasses import dataclass
 
 import torch
 
-from fgsim.io.queued_dataset import Batch
+from fgsim.io.sel_seq import Batch
 from fgsim.ml.holder import Holder
 
 

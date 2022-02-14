@@ -6,7 +6,7 @@ import torch
 from omegaconf.dictconfig import DictConfig
 
 from fgsim.config import conf, device
-from fgsim.io.queued_dataset import Batch
+from fgsim.io.sel_seq import Batch
 from fgsim.monitoring.train_log import TrainLog
 from fgsim.utils.check_for_nans import contains_nans
 

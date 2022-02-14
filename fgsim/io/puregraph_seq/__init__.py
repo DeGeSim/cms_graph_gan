@@ -3,14 +3,13 @@ Here steps for reading the root files and processing the hit list \
 to graphs are definded. `process_seq` is the function that \
 should be passed the qfseq.
 """
-
-import imp
 import sys
+
+from fgsim.io.loader import Loader
 
 if "pytest" not in sys.modules:
     import os
     from pathlib import Path
-    from typing import List, Tuple
 
     import uproot
     import yaml

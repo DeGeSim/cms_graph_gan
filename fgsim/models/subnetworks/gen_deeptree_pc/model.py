@@ -3,7 +3,7 @@ import torch.nn as nn
 from torch_geometric.data import Data
 
 from fgsim.config import conf, device
-from fgsim.io.queued_dataset import Batch
+from fgsim.io.sel_seq import Batch, batch_tools
 from fgsim.monitoring.logger import logger
 
 from .ancestor_conv import AncestorConv
@@ -136,8 +136,9 @@ class ModelClass(nn.Module):
                 graph,
                 global_features,
             )
-
-        batch = Batch.from_pcs_list(
-            graph.x[:, : conf.loader.n_features], graph.event
+        # slice the output the the corrent number of dimesions and create the batch
+        batch = batch_tools.batch_from_pcs_list(
+            graph.x[..., : conf.loader.n_features], graph.event
         )
+
         return batch

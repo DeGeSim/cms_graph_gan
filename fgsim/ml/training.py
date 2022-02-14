@@ -6,7 +6,8 @@ import traceback
 from tqdm import tqdm
 
 from fgsim.config import conf, device
-from fgsim.io.queued_dataset import Batch, QueuedDataLoader
+from fgsim.io.queued_dataset import QueuedDataLoader
+from fgsim.io.sel_seq import Batch
 from fgsim.ml.early_stopping import early_stopping
 from fgsim.ml.holder import Holder
 from fgsim.ml.validation import validate

@@ -2,7 +2,7 @@ from typing import Dict
 
 from scipy.stats import wasserstein_distance
 
-from fgsim.io.queued_dataset import Batch
+from fgsim.io.sel_seq import Batch
 from fgsim.ml.holder import Holder
 
 

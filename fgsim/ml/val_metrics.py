@@ -6,7 +6,7 @@ import numpy as np
 import torch
 
 from fgsim.config import conf
-from fgsim.io.queued_dataset import Batch
+from fgsim.io.sel_seq import Batch
 from fgsim.monitoring.train_log import TrainLog
 
 

@@ -7,7 +7,7 @@ from scipy.linalg import sqrtm
 from tqdm import tqdm
 
 from fgsim.config import conf, device
-from fgsim.io.queued_dataset import Batch
+from fgsim.io.sel_seq import Batch
 from fgsim.ml.holder import Holder
 from fgsim.models.subnetworks.pointnet import PointNetCls
 

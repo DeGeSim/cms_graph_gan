@@ -3,7 +3,6 @@ Provides the `QueuedDataLoader` class. The definded sequence of qf steps is \
 loaded depending on `conf.loader.name`.
 """
 
-import importlib
 from pathlib import Path
 from typing import List, Tuple
 
@@ -13,18 +12,14 @@ import torch
 
 from fgsim.config import conf
 from fgsim.io.preprocessed_seq import preprocessed_seq
+from fgsim.io.sel_seq import (
+    DataSetType,
+    files,
+    len_dict,
+    postprocess_switch,
+    process_seq,
+)
 from fgsim.monitoring.logger import logger
-
-# Import the specified processing sequence
-sel_seq = importlib.import_module(f"fgsim.io.{conf.loader.qf_seq_name}")
-
-Batch = sel_seq.Batch
-DataSetType = List[Batch]
-
-process_seq = sel_seq.process_seq
-files = sel_seq.files
-len_dict = sel_seq.len_dict
-postprocess_switch = sel_seq.postprocess_switch
 
 chunksize = conf.loader.chunksize
 batch_size = conf.loader.batch_size
