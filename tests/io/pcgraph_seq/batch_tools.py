@@ -1,6 +1,6 @@
 import torch
 
-from fgsim.io.pcgraph_seq.aggr_and_sort_points import aggr_and_sort_points
+from fgsim.io.pcgraph_seq.batch_tools import aggr_and_sort_points
 
 
 def test_aggr_and_sort_points():

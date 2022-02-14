@@ -17,6 +17,7 @@ if "pytest" not in sys.modules:
 
     # from torch_geometric.data.batch import DataBatch as Batch
     from fgsim.config import conf
+    from fgsim.io.puregraph_seq import batch_tools
 
     from .seq import postprocess_switch, process_seq
 
@@ -41,3 +42,12 @@ if "pytest" not in sys.modules:
     else:
         with open(conf.path.ds_lenghts, "r") as f:
             len_dict = yaml.load(f, Loader=yaml.SafeLoader)
+
+    loader = Loader(
+        process_seq=process_seq,
+        Batch=Batch,
+        files=files,
+        len_dict=len_dict,
+        postprocess_switch=postprocess_switch,
+        batch_tools=batch_tools,
+    )

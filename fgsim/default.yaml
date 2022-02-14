@@ -143,5 +143,4 @@ loader_options:
     pcgraph:
         debug: True
     puregraph:
-        debug: True
         preprocess_training: False
