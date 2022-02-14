@@ -22,12 +22,11 @@ class ModelClass(torch.nn.Module):
         )
 
     def forward(self, batch):
-        graph = batch.graph
-        x = batch.graph.x
+        x = batch.x
         x = torch.hstack(
             [
-                global_add_pool(x, graph.batch, size=graph.num_graphs),
-                global_mean_pool(x, graph.batch, size=graph.num_graphs),
+                global_add_pool(x, batch.batch, size=batch.num_graphs),
+                global_mean_pool(x, batch.batch, size=batch.num_graphs),
             ]
         )
         x = self.hlv_dnn(x)
