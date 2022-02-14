@@ -22,48 +22,61 @@ class LossGen:
     gamma: float = 1.0
 
     def __call__(self, holder: Holder, batch: Batch) -> torch.float:
-        gen_pc = holder.gen_points.pc
-        sim_pc = batch.pc
-        # The point could very different sizes.
-        # So we repeat the smaller one:
-        if len(gen_pc) > len(sim_pc):
-            big_pc = gen_pc
-            small_pc = sim_pc
-        else:
-            big_pc = sim_pc
-            small_pc = gen_pc
-        n_repeats = len(big_pc) // len(small_pc)
-        rest = len(big_pc) - n_repeats * len(small_pc)
-        rsmall_pc = torch.vstack(
-            [small_pc.repeat(n_repeats, 1), small_pc[:rest, :]]
-        )
-        # Shuffle one of the datasets
-        rsmall_pc = rsmall_pc[torch.randperm(rsmall_pc.shape[0])]
-        # randomly interpolate between real and fake data
-        alpha = torch.rand(len(big_pc), 1, requires_grad=True).to(device)
-        interpolates = rsmall_pc + alpha * (big_pc - rsmall_pc)
-        interpol_batch = Batch.from_event_list(Data(Data(x=interpolates)))
+
+        interpol_events = [
+            Data(x=interpol_pcs(holder.gen_points[ievent].x, batch[ievent].x))
+            for ievent in range(batch.num_graphs)
+        ]
+
+        interpol_batch = Batch.from_data_list(interpol_events)
 
         # compute output of D for interpolated input
         disc_interpolates = holder.models.disc(interpol_batch)
         # compute gradients w.r.t the interpolated outputs
-
-        gradients = (
-            grad(
-                outputs=disc_interpolates,
-                inputs=interpolates,
-                grad_outputs=torch.ones(disc_interpolates.size(), device=device),
-                create_graph=True,
-                retain_graph=True,
-                only_inputs=True,
-            )[0]
-            .contiguous()
-            .view(1, -1)
+        inputs = [e.x for e in interpol_events]
+        grads = grad(
+            outputs=disc_interpolates,  # disc output
+            inputs=inputs,
+            grad_outputs=torch.ones(
+                disc_interpolates.size(), device=device
+            ),  # I dont understand this
+            retain_graph=True,
+            create_graph=True,
+            allow_unused=False,
         )
+        assert grads[0].shape == inputs[0].shape
+        l2s = torch.stack([g.norm(2) for g in grads])
 
-        gradient_penalty = (
-            ((gradients.norm(2, dim=1) - self.gamma) / self.gamma) ** 2
-        ).mean()
+        gradient_penalty = (((l2s - self.gamma) / self.gamma) ** 2).mean()
         loss = self.factor * gradient_penalty
         loss.backward()
         return float(loss)
+
+
+def interpol_pcs(pc1: torch.Tensor, pc2: torch.Tensor) -> torch.Tensor:
+
+    # The point could very different sizes.
+    # So we repeat the smaller one:
+    if len(pc1) > len(pc2):
+        big_pc = pc1
+        small_pc = pc2
+    else:
+        big_pc = pc2
+        small_pc = pc1
+    new_pc_len = int(torch.randint(len(small_pc), len(big_pc), size=(1,)))
+
+    big_downsample = big_pc[
+        torch.multinomial(
+            torch.ones(len(big_pc)), num_samples=new_pc_len, replacement=False
+        )
+    ]
+    small_upsample = small_pc[
+        torch.multinomial(
+            torch.ones(len(small_pc)), num_samples=new_pc_len, replacement=True
+        )
+    ]
+
+    # randomly interpolate between real and fake data
+    alpha = torch.rand(new_pc_len, 1, requires_grad=True).to(device)
+    interpolates = small_upsample + alpha * (big_downsample - small_upsample)
+    return interpolates
