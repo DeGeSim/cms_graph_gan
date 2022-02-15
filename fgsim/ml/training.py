@@ -23,23 +23,27 @@ def training_step(
     # set all optimizers to a 0 gradient
     holder.optims.zero_grad()
     # generate a new batch with the generator
-    with gpu_mem_monitor("gen_points", False):
+    with gpu_mem_monitor("disc_training_points"):
         holder.reset_gen_points()
-
-    holder.losses.disc(holder, batch)
-    with gpu_mem_monitor("disc_grad"):
+    with gpu_mem_monitor("disc_training_forward"):
+        holder.losses.disc(holder, batch)
+    with gpu_mem_monitor("disc_training_grad"):
         holder.optims.disc.step()
+    with gpu_mem_monitor("disc_training_reset"):
+        holder.optims.disc.zero_grad()
 
     # generator
     if holder.state.ibatch % conf.training.disc_steps_per_gen_step == 0:
-        holder.models.gen.zero_grad()
         # generate a new batch with the generator, but with
         # points thought the generator this time
-        with gpu_mem_monitor("gen_points_w_grad", False):
+        with gpu_mem_monitor("gen_training_points"):
             holder.reset_gen_points_w_grad()
-        holder.losses.gen(holder, batch)
-        with gpu_mem_monitor("gen_grad"):
+        with gpu_mem_monitor("gen_training_forward"):
+            holder.losses.gen(holder, batch)
+        with gpu_mem_monitor("gen_training_grad"):
             holder.optims.gen.step()
+        with gpu_mem_monitor("gen_trainingreset"):
+            holder.models.gen.zero_grad()
 
 
 def training_procedure() -> None:
