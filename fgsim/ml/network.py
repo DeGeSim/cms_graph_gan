@@ -1,6 +1,7 @@
 """Manages the networks for the holder class"""
 import importlib
-from typing import Dict
+from modulefinder import Module
+from typing import Dict, Optional
 
 import torch
 from omegaconf.dictconfig import DictConfig
@@ -40,31 +41,23 @@ class SubNetworkCollector(torch.nn.Module):
 
 # Import the python file containing the models with dynamically
 def import_nn(nn_name, modelparams) -> torch.nn.Module:
-    try:
-        model_module = importlib.import_module(
-            f"fgsim.models.subnetworks.{nn_name}"
-        )
-        if not hasattr(model_module, "ModelClass"):
-            raise ModuleNotFoundError
-        submodel = model_module.ModelClass(**modelparams)
-    except ModuleNotFoundError:
-        # Submodule with a model.py with the ModelClass
+    model_module: Optional[Module] = None
+    for import_path in [
+        f"fgsim.models.subnetworks.{nn_name}",
+        f"fgsim.models.subnetworks.{nn_name}.model",
+        f"fgsim.models.subnetworks.{nn_name}.{nn_name}",
+    ]:
         try:
-            model_module = importlib.import_module(
-                f"fgsim.models.subnetworks.{nn_name}.model"
-            )
+            model_module = importlib.import_module(import_path)
             if not hasattr(model_module, "ModelClass"):
                 raise ModuleNotFoundError
-            submodel = model_module.ModelClass(**modelparams)
+            break
         except ModuleNotFoundError:
-            # Submodule with a {nn_name}.py with the ModelClass
-            try:
-                model_module = importlib.import_module(
-                    f"fgsim.models.subnetworks.{nn_name}.{nn_name}"
-                )
-                if not hasattr(model_module, "ModelClass"):
-                    raise ModuleNotFoundError
-                submodel = model_module.ModelClass(**modelparams)
-            except ModuleNotFoundError:
-                raise ModuleNotFoundError
+            model_module = None
+
+    if model_module is None:
+        raise ImportError
+
+    submodel = model_module.ModelClass(**modelparams)
+
     return submodel
