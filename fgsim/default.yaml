@@ -31,8 +31,8 @@ model_param_options:
         n_global: 4
         n_branches: 2
         n_levels: 12
+        post_gen_mp_steps: 5
         n_events: "${loader.batch_size}"
-        post_gen_mp_steps: 10
         conv_name: GINConv
         conv_parem: ${conv_options[${models.gen.params.conv_name}]}
     disc_hlvs:
@@ -75,7 +75,7 @@ optim_options:
 
 training:
     events_processed_before_validation: 100000
-    disc_steps_per_gen_step: 10
+    disc_steps_per_gen_step: 1
     early_stopping:
         validation_steps: 15
         improvement: 0.02

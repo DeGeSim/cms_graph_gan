@@ -27,11 +27,11 @@ base_config = ExperimentConfig(
         losses_list: [WDiscLoss,GradientPenalty]
 model_param_options:
     gen_deeptree_pc:
-        n_hidden_features: 4
-        n_global: 6
+        n_hidden_features: 3
+        n_global: 4
         n_branches: 2
         n_levels: 12
-        post_gen_mp_steps: 10
+        post_gen_mp_steps: 5
         conv_name: GINConv
     disc_treepc:
         activation: Identity"""
