@@ -39,7 +39,8 @@
                 "module": "fgsim",
                 "name": "t deeptree",
                 "request": "launch",
-                "type": "python"
+                "type": "python",
+                "justMyCode": false,
             },
             {
                 "args": [
