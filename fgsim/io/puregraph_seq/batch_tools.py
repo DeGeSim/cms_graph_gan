@@ -1,29 +1,118 @@
-from typing import Dict, List
+from collections import defaultdict
+from typing import Dict, List, Tuple
 
 import torch
+import torch_scatter
 from torch_geometric.data import Batch, Data
 from torch_geometric.nn import global_add_pool, global_mean_pool
 
 from fgsim.config import conf
 from fgsim.monitoring.logger import logger
 
-# @classmethod
-# def from_event_list(cls, *events: Event):
-#     graph = DataBatch.from_data_list([event.graph for event in events])
-#     hlvs = {
-#         key: torch.stack([event.hlvs[key] for event in events])
-#         for key in events[0].hlvs
-#     }
-#     return cls(graph=graph, hlvs=hlvs)
 
-
-def batch_from_pcs_list(pcs: torch.Tensor, events: torch.Tensor) -> Batch:
+def pcs_to_batch_v1(pcs: torch.Tensor, events: torch.Tensor) -> Batch:
     pcs_list = [pcs[events == ievent] for ievent in range(max(events) + 1)]
     event_list = [Data(x=pc) for pc in pcs_list]
 
     return Batch.from_data_list(event_list)
 
 
+def batch_sort_by_sort(
+    pcs: torch.Tensor, batch_idxs: torch.Tensor
+) -> Tuple[torch.Tensor, torch.Tensor]:
+    reorder_idxs = batch_idxs.sort(stable=True)[1]
+    pcs = pcs[reorder_idxs]
+    batch_idxs = batch_idxs[reorder_idxs]
+    return (pcs, batch_idxs)
+
+
+def batch_sort_by_reshape(
+    pcs: torch.Tensor, batch_idxs: torch.Tensor
+) -> Tuple[torch.Tensor, torch.Tensor]:
+    n_features = int(pcs.shape[1])
+    n_events = int(batch_idxs.max() + 1)
+    n_points_per_event = len(pcs) // n_events
+    # events.reshape(-1,5).T
+    assert torch.all(
+        batch_idxs
+        == torch.arange(n_events, device=pcs.device).repeat(n_points_per_event)
+    )
+    batch_idxs = batch_idxs.reshape(n_points_per_event, n_events).T.reshape(-1)
+    pcs = (
+        pcs.reshape(n_points_per_event, n_features * n_events)
+        .T.reshape(n_events, n_features, n_points_per_event)
+        .transpose(1, 2)
+        .reshape(n_events, n_features * n_points_per_event)
+    )
+    return (pcs, batch_idxs)
+
+
+def batch_construct_direct(pcs: torch.Tensor, batch_idxs: torch.Tensor) -> Batch:
+    device = pcs.device
+    batch = Batch(x=pcs, batch=batch_idxs)
+    batch._num_graphs = int(batch.batch.max() + 1)
+
+    _slice_dict = defaultdict(dict)
+    out = torch_scatter.scatter_add(
+        torch.ones(len(batch.x), dtype=torch.long, device=device), batch_idxs, dim=0
+    )
+    out = out.cumsum(dim=0)
+    _slice_dict["x"] = torch.cat(
+        [torch.zeros(1, dtype=torch.long, device=device), out], dim=0
+    )
+
+    batch._slice_dict = _slice_dict
+
+    _inc_dict = defaultdict(dict)
+    _inc_dict["x"] = torch.zeros(batch._num_graphs, dtype=torch.long, device=device)
+    batch._inc_dict = _inc_dict
+    return batch
+
+
+# 4 Options
+def pcs_to_batch_sort_direct(pcs: torch.Tensor, batch_idxs: torch.Tensor) -> Batch:
+    pcs, batch_idxs = batch_sort_by_sort(pcs, batch_idxs)
+    batch = batch_construct_direct(pcs, batch_idxs)
+    return batch
+
+
+def pcs_to_batch_sort_list(pcs: torch.Tensor, batch_idxs: torch.Tensor) -> Batch:
+    n_features = int(pcs.shape[1])
+    n_events = int(batch_idxs.max() + 1)
+    n_points_per_event = len(pcs) // n_events
+    pcs, batch_idxs = batch_sort_by_sort(pcs, batch_idxs)
+    pcs = pcs.reshape(n_events, n_points_per_event, n_features)
+    batch = Batch.from_data_list([Data(x=e) for e in pcs])
+    return batch
+
+
+def pcs_to_batch_reshape_direct(
+    pcs: torch.Tensor, batch_idxs: torch.Tensor
+) -> Batch:
+    n_features = int(pcs.shape[1])
+    n_events = int(batch_idxs.max() + 1)
+    n_points_per_event = len(pcs) // n_events
+    pcs, batch_idxs = batch_sort_by_reshape(pcs, batch_idxs)
+    batch = batch_construct_direct(
+        pcs.reshape(n_events * n_points_per_event, n_features), batch_idxs
+    )
+    return batch
+
+
+def pcs_to_batch_reshape_list(pcs: torch.Tensor, batch_idxs: torch.Tensor) -> Batch:
+    n_features = int(pcs.shape[1])
+    n_events = int(batch_idxs.max() + 1)
+    n_points_per_event = len(pcs) // n_events
+    pcs, batch_idxs = batch_sort_by_reshape(pcs, batch_idxs)
+    pcs = pcs.reshape(n_events, n_points_per_event, n_features)
+    batch = Batch.from_data_list([Data(x=e) for e in pcs])
+    return batch
+
+
+# fastest method
+batch_from_pcs_list = pcs_to_batch_sort_list
+
+# Compute stuff
 def batch_compute_hlvs(batch: Batch) -> Batch:
     event_list = [x for x in batch.to_data_list()]
     for event in event_list:
