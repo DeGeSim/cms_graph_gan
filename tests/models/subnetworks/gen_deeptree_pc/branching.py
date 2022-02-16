@@ -157,7 +157,7 @@ def demo_mtx(*, n_parents, n_events, n_branches, n_features):
         for ibranch in range(n_branches):
             for ievent in range(n_events):
                 for ifeature in range(n_features):
-                    print(f"Acessing {i}, {j+ifeature}")
+                    # print(f"Acessing {i}, {j+ifeature}")
                     mtx[i, ifeature + ibranch * n_features] = ifield
                 ifield = ifield + 1
                 i = i + 1
@@ -168,10 +168,10 @@ def demo_mtx(*, n_parents, n_events, n_branches, n_features):
     return mtx
 
 
-@pytest.mark.parametrize("n_parents", [1, 3])
-@pytest.mark.parametrize("n_events", [1, 3])
-@pytest.mark.parametrize("n_branches", [1, 3])
-@pytest.mark.parametrize("n_features", [1, 4])
+@pytest.mark.parametrize("n_parents", [3])
+@pytest.mark.parametrize("n_events", [3])
+@pytest.mark.parametrize("n_branches", [3])
+@pytest.mark.parametrize("n_features", [4])
 def test_reshape_features(n_parents, n_events, n_branches, n_features):
     mtx = demo_mtx(
         n_parents=n_parents,

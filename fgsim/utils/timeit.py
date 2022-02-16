@@ -1,8 +1,11 @@
-from fgsim.monitoring.logger import logger
+import time
+from collections import namedtuple
+
+# from fgsim.monitoring.logger import logger
 
 
 def timeit(func, n=1):
-    import time
+    ResTuple = namedtuple("ResTuple", ["res", "time"])
 
     def wrapper(*arg, **kw):
         """source: http://www.daniweb.com/code/snippet368.html"""
@@ -10,7 +13,9 @@ def timeit(func, n=1):
         for i in range(n):
             res = func(*arg, **kw)
         t2 = time.time()
-        logger.info(func.__name__, (t2 - t1) / n)
-        return res
+        # logger.info(
+        #     func.__name__,(t2 - t1) / n
+        # )
+        return ResTuple(res, (t2 - t1) / n)
 
     return wrapper

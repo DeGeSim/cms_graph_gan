@@ -161,6 +161,7 @@ class BranchingLayer(nn.Module):
         return new_graph
 
 
+@torch.jit.script
 def reshape_features(
     mtx: torch.Tensor,
     n_parents: int,
