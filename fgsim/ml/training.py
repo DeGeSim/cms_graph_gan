@@ -57,6 +57,9 @@ def training_procedure() -> None:
     exitcode = 0
     try:
         while not early_stopping(holder.state):
+            if holder.state.grad_step == 0:
+                holder.models.eval()
+                validate(holder, loader)
             # switch model in training mode
             holder.models.train()
             for _ in tqdm(
