@@ -168,10 +168,10 @@ def demo_mtx(*, n_parents, n_events, n_branches, n_features):
     return mtx
 
 
-@pytest.mark.parametrize("n_parents", [3])
-@pytest.mark.parametrize("n_events", [3])
+@pytest.mark.parametrize("n_parents", [4])
+@pytest.mark.parametrize("n_events", [2])
 @pytest.mark.parametrize("n_branches", [3])
-@pytest.mark.parametrize("n_features", [4])
+@pytest.mark.parametrize("n_features", [5])
 def test_reshape_features(n_parents, n_events, n_branches, n_features):
     mtx = demo_mtx(
         n_parents=n_parents,

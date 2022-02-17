@@ -1,9 +1,43 @@
 import torch
 
-from fgsim.models.subnetworks.gen_deeptree_pc.branching import reshape_features
 from fgsim.utils.timeit import timeit
 
 device = torch.device("cpu")
+
+# fgsim.models.subnetworks.gen_deeptree_pc.branching
+def reshape_features(
+    mtx: torch.Tensor,
+    n_parents: int,
+    n_events: int,
+    n_branches: int,
+    n_features: int,
+):
+    magic_list = [colmtx.split(n_features, dim=1) for colmtx in mtx.split(1, dim=0)]
+
+    out_list = []
+    for iparent in range(n_parents):
+        for ibranch in range(n_branches):
+            for ievent in range(n_events):
+                row = ievent + iparent * n_events
+                out_list.append(magic_list[row][ibranch])
+    return torch.cat(out_list)
+
+
+def reshape_features2(
+    mtx: torch.Tensor,
+    n_parents: int,
+    n_events: int,
+    n_branches: int,
+    n_features: int,
+):
+    return (
+        mtx.reshape(n_parents, n_events, n_features * n_branches)
+        .transpose(1, 2)
+        .reshape(n_parents * n_branches, n_features, n_events)
+        .transpose(1, 2)
+        .reshape(n_parents * n_branches * n_events, n_features)
+    )
+
 
 # Test the reshaping
 def demo_mtx(*, n_parents, n_events, n_branches, n_features):
@@ -45,14 +79,16 @@ def measure_reshape_features():
     }
 
     iterations = 100
-    jitted = torch.jit.script(reshape_features)
 
-    t_vanilla = timeit(reshape_features, n=iterations)(**args)
-    t_jitted = timeit(jitted, n=iterations)(**args)
-    print(
-        f"Time for {iterations} iterations: vanilla {t_vanilla.time} jitted"
-        f" {t_jitted.time} speedup {t_vanilla.time/t_jitted.time} "
-    )
+    functions = {
+        "iterate_reshape": reshape_features,
+        "reshape_reshape": reshape_features2,
+    }
+    for name, fct in functions.items():
+        t = timeit(fct, n=iterations)(**args)
+        print(f"Time for {name} in {iterations} iterations: {t.time}")
+        t_jitted = timeit(fct, n=iterations)(**args)
+        print(f"Time for {name} in {iterations} iterations jitted: {t_jitted.time}")
 
 
 if __name__ == "__main__":

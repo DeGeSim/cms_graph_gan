@@ -169,12 +169,10 @@ def reshape_features(
     n_branches: int,
     n_features: int,
 ):
-    magic_list = [colmtx.split(n_features, dim=1) for colmtx in mtx.split(1, dim=0)]
-
-    out_list = []
-    for iparent in range(n_parents):
-        for ibranch in range(n_branches):
-            for ievent in range(n_events):
-                row = ievent + iparent * n_events
-                out_list.append(magic_list[row][ibranch])
-    return torch.cat(out_list)
+    return (
+        mtx.reshape(n_parents, n_events, n_features * n_branches)
+        .transpose(1, 2)
+        .reshape(n_parents * n_branches, n_features, n_events)
+        .transpose(1, 2)
+        .reshape(n_parents * n_branches * n_events, n_features)
+    )
