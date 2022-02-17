@@ -73,7 +73,7 @@ must queue an epoch via `queue_epoch()` and iterate over the instance of the cla
         self.postprocess_switch = postprocess_switch
 
         if conf.command != "preprocess" and conf.loader.preprocess_training:
-            qf.init()
+            qf.init(False)
             self.qfseq = qf.Sequence(*preprocessed_seq())
         else:
             qf.init()
