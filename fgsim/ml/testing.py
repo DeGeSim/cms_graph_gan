@@ -12,6 +12,7 @@ from tqdm import tqdm
 
 from fgsim.config import conf
 from fgsim.io.queued_dataset import QueuedDataLoader
+from fgsim.io.sel_seq import batch_tools
 from fgsim.ml.holder import Holder
 from fgsim.monitoring.logger import logger
 from fgsim.monitoring.train_log import TrainLog
@@ -58,15 +59,12 @@ def test_procedure() -> None:
             gen_batch = holder.gen_points.clone().cpu()
             gen_batches.append(gen_batch)
 
-    # compute hlvs with a pool
-    def compute_hlvs(batch):
-        batch.compute_hlvs()
-        return batch
-
     # with Pool(10) as p:
-    #     gen_batches = list(tqdm(p.imap(compute_hlvs, gen_batches))
-    for batch in tqdm(gen_batches, desc="Compute HLVs"):
-        batch.compute_hlvs()
+    #     gen_batches = list(tqdm(p.imap(batch_tools.batch_compute_hlvs, gen_batches))
+    gen_batches = [
+        batch_tools.batch_compute_hlvs(batch)
+        for batch in tqdm(gen_batches, desc="Compute HLVs gen_batches")
+    ]
 
     for sim_batch, gen_batch in zip(sim_batches, gen_batches):
         for key in gen_batch.hlvs:

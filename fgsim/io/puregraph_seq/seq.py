@@ -12,7 +12,7 @@ from torch_geometric.data import Batch, Data
 from fgsim.config import conf
 from fgsim.geo.geo_lup import geo_lup
 
-# from .utils import compute_hlvs
+from .batch_tools import compute_hlvs
 
 # Sharded switch for the postprocessing
 postprocess_switch = Value("i", 0)
@@ -74,8 +74,8 @@ def magic_do_nothing(batch: Batch) -> Batch:
 def transform(hitlist: ak.Record) -> Data:
     pointcloud = hitlist_to_pc(hitlist)
     graph = Data(x=pointcloud)
-    # if postprocess_switch.value:
-    #     graph = compute_hlvs(graph)
+    if postprocess_switch.value:
+        graph.hlvs = compute_hlvs(graph)
     return graph
 
 

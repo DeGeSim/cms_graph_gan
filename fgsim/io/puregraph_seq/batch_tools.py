@@ -116,7 +116,7 @@ batch_from_pcs_list = pcs_to_batch_sort_list
 def batch_compute_hlvs(batch: Batch) -> Batch:
     event_list = [x for x in batch.to_data_list()]
     for event in event_list:
-        event.compute_hlvs()
+        event.hlvs = compute_hlvs(event)
     batch = Batch.from_data_list(event_list)
     return batch
 

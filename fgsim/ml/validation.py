@@ -5,6 +5,7 @@ from tqdm import tqdm
 
 from fgsim.config import conf, device
 from fgsim.io.queued_dataset import QueuedDataLoader
+from fgsim.io.sel_seq import batch_tools
 from fgsim.ml.holder import Holder
 from fgsim.monitoring.logger import logger
 from fgsim.utils.check_for_nans import check_chain_for_nans
@@ -20,7 +21,7 @@ def validate(holder: Holder, loader: QueuedDataLoader) -> None:
         with torch.no_grad():
             batch = batch.clone().to(device)
             holder.reset_gen_points()
-            holder.gen_points.compute_hlvs()
+            holder.gen_points = batch_tools.batch_compute_hlvs(holder.gen_points)
             holder.val_loss(holder, batch)
     logger.warning("Validation batches evaluated")
     holder.val_loss.log_losses(holder.state)
