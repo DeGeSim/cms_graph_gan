@@ -33,7 +33,7 @@ def training_step(
         holder.optims.disc.zero_grad()
 
     # generator
-    if holder.state.ibatch % conf.training.disc_steps_per_gen_step == 0:
+    if holder.state.grad_step % conf.training.disc_steps_per_gen_step == 0:
         # generate a new batch with the generator, but with
         # points thought the generator this time
         with gpu_mem_monitor("gen_training_points"):
@@ -73,7 +73,6 @@ def training_procedure() -> None:
                     # If there is no next batch go to the next epoch
                     train_log.next_epoch()
                     holder.state.epoch += 1
-                    holder.state.ibatch = 0
                     loader.queue_epoch(n_skip_events=holder.state.processed_events)
                     batch = next(loader.qfseq)
                 with gpu_mem_monitor("batch"):
@@ -82,7 +81,6 @@ def training_procedure() -> None:
                 training_step(batch, holder)
                 holder.state.time_training_done = time.time()
                 train_log.write_trainstep_logs()
-                holder.state.ibatch += 1
                 holder.state.processed_events += conf.loader.batch_size
                 holder.state["grad_step"] += 1
             holder.models.eval()

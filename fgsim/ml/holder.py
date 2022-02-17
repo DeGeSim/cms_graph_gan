@@ -27,7 +27,6 @@ def start_training_state() -> DictConfig:
         {
             "epoch": 0,
             "processed_events": 0,
-            "ibatch": 0,
             "grad_step": 0,
             "losses": {
                 snwname: {lossname: [] for lossname in snwconf.losses}
@@ -104,7 +103,6 @@ class Holder:
         logger.warning(
             "Loading model from checkpoint at"
             + f" epoch {self.state['epoch']}"
-            + f" batch {self.state['ibatch']}"
             + f" grad_step {self.state['grad_step']}."
         )
 
