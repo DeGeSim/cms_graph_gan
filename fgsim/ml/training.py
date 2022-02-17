@@ -83,6 +83,7 @@ def training_procedure() -> None:
                 train_log.write_trainstep_logs()
                 holder.state.processed_events += conf.loader.batch_size
                 holder.state["grad_step"] += 1
+                holder.checkpoint_after_time()
             holder.models.eval()
             validate(holder, loader)
             holder.save_checkpoint()

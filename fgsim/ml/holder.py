@@ -4,6 +4,7 @@ depending on the config. Contains the code for checkpointing of model and optimz
 
 
 import os
+from datetime import datetime
 
 import torch
 from omegaconf import OmegaConf
@@ -79,6 +80,7 @@ class Holder:
         # Keep the generated samples ready, to be accessed by the losses
         self.gen_points: Batch = None
         self.gen_points_w_grad: Batch = None
+        self._last_checkpoint_time = datetime.now()
 
     def __load_checkpoint(self):
         if not (
@@ -122,6 +124,15 @@ class Holder:
         )
         push_to_old(conf.path.state, conf.path.state_old)
         OmegaConf.save(config=self.state, f=conf.path.state)
+        self._last_checkpoint_time = datetime.now()
+        logger.info("Checkpoint saved")
+
+    def checkpoint_after_time(self):
+        now = datetime.now()
+        if (
+            now - self._last_checkpoint_time
+        ).seconds // 60 > conf.training.checkpoint_minutes:
+            self.save_checkpoint()
 
     # Define the methods, that equip the with the generated batches
     def gen_noise(self, requires_grad=False) -> torch.Tensor:

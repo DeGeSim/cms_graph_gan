@@ -79,6 +79,7 @@ training:
     early_stopping:
         validation_steps: 15
         improvement: 0.02
+    checkpoint_minutes: 30
 validation:
     interval: "${div:${training.events_processed_before_validation},${loader.batch_size}}"
     stop_key: stop_key
