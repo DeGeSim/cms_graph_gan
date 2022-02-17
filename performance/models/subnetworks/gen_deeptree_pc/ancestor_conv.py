@@ -27,7 +27,7 @@ def demo_mtx(*, n_parents, n_events, n_branches, n_features):
 
 def measure_reshape_features():
     n_parents = 100
-    n_events = 5
+    n_events = 50
     n_branches = 2
     n_features = 10
     mtx = demo_mtx(
@@ -44,7 +44,7 @@ def measure_reshape_features():
         "n_features": n_features,
     }
 
-    iterations = 10000
+    iterations = 100
     jitted = torch.jit.script(reshape_features)
 
     t_vanilla = timeit(reshape_features, n=iterations)(**args)
