@@ -128,7 +128,7 @@ function logerror {
     logerrormsg $@
     return 1
 }
-function logandrun() (
+function _logandrun() {
     # set bash to exit if as soon as a part of a pipe has a non-zero exit value
     set -o pipefail
     set +e
@@ -145,12 +145,17 @@ function logandrun() (
     start=`date +%s`
     #######
     # execute the command and log it
-    (
     set -e
-    $@ 2>&1 |  tee -a $logfile
-    )
-    # capture the return code ( without  pipefail this would be the exit code of tee )
+    echo Running $@
+    $@ 2>&1 > >( tee -a $logfile ) &
+    export WORKERPID=$!
+    trap "echo _logandrun got SIGTERM, killing $WORKERPID && kill $WORKERPID" SIGINT SIGTERM
+    wait $WORKERPID
+    # capture the return code of the process we waited for
     return_code=$?
+    set +e
+
+
     end=`date +%s`
     # evaluate the end data
     # if the there was no error...
@@ -173,7 +178,18 @@ function logandrun() (
         unset LOGANDRUN_IS_TOP_LEVEL
     fi
     return $return_code
-)
+}
+
+#isolate _logandrun
+function logandrun() {
+    ( _logandrun $@ ) &
+    export LOGANDRUNPID=$!
+    trap "echo \$1;echo logandrun got SIGTERM, killing $LOGANDRUNPID && kill $LOGANDRUNPID" SIGINT SIGTERM
+    wait $LOGANDRUNPID
+    # capture the return code of the process we waited for
+    return $?
+}
+
 function logclean () {
     find output/log -type f -iname "*.log" -delete
 }

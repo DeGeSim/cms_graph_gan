@@ -16,5 +16,8 @@ cd ~/fgsim
 source bashFunctionCollection.sh
 
 source venv1.10.1+cu111/bin/activate
-logandrun python3 -m fgsim $@
+logandrun python3 -m fgsim $@ &
+export COMMANDPID=$!
+trap "echo 'run_in_env.sh got SIGTERM' && kill $COMMANDPID " SIGINT SIGTERM
+wait $COMMANDPID
 echo "Command python3 -m fgsim $@ finished."

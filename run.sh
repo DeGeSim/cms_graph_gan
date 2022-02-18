@@ -31,7 +31,10 @@ for line in ${lines[@]}; do
         --output=wd/slurm-$CMD-$TAG-%j.out \
         --job-name=$CMD-$TAG-%j run_in_env.sh $RESTCMD
     else
-        ./run_in_env.sh $RESTCMD
+        ./run_in_env.sh $RESTCMD &
+        export COMMANDPID=$!
+        trap "echo 'run.sh got SIGTERM' && kill $COMMANDPID " SIGINT SIGTERM
+        wait $COMMANDPID
     fi
 done
 
