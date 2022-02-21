@@ -75,7 +75,7 @@ optim_options:
 
 training:
     events_processed_before_validation: 100000
-    disc_steps_per_gen_step: 1
+    disc_steps_per_gen_step: 2
     early_stopping:
         validation_steps: 15
         improvement: 0.02
@@ -93,7 +93,8 @@ testing:
     n_events: 2000
 
 path:
-    dataset: "data/hgcal_william"
+    dataset: "${loader.dataset_path}"
+    # dataset: "data/hgcal_william"
     dataset_glob: "**/*.root"
     dataset_processed: "${path.dataset}/pkl_${loader_name}_${loader_hash}"
     ds_lenghts: "${path.dataset_processed}/filelengths.yaml"
@@ -115,7 +116,7 @@ path:
     loader_log: "${path.run_path}/${command}_loader.log"
 
 loader: "${merge:${loader_options[default]},${loader_options[${loader_name}]}}"
-loader_name: puregraph
+loader_name: normal
 
 loader_options:
     default:
@@ -138,6 +139,7 @@ loader_options:
         num_workers_postprocess: 5
         max_points: 4085
         qf_seq_name: "${loader_name}_seq"
+        dataset_path: "data/hgcal_william"
     hgcal:
         cell_prop_keys: ["x", "y", "z", "celltype", "issilicon"]
         batch_size: 100
@@ -145,3 +147,10 @@ loader_options:
         debug: True
     puregraph:
         preprocess_training: False
+    normal:
+        cell_prop_keys: ["x", "y"]
+        n_features: 2
+        # chunksize: 5000
+        events_per_file: 10000
+        points_per_event: 500
+        dataset_path: "data/normal"

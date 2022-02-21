@@ -33,7 +33,7 @@
                 "args": [
                     "--tag",
                     "deeptree_wd_nopl_nomd_slim_ancconv",
-                    "--debug",
+                    // "--debug",
                     "train"
                 ],
                 "module": "fgsim",
@@ -45,35 +45,14 @@
             {
                 "args": [
                     "--tag",
-                    "deeptree_lowpl",
-                    "test"
-                ],
-                "module": "fgsim",
-                "name": "test deeptree_lowpl",
-                "request": "launch",
-                "type": "python"
-            },
-            {
-                "args": [
-                    "--tag",
-                    "treepc",
+                    "deeptree_wd_nopl_nomd_slim_ancconv",
                     "preprocess"
                 ],
                 "module": "fgsim",
                 "name": "preprocess",
                 "request": "launch",
-                "type": "python"
-            },
-            {
-                "args": [
-                    "--tag",
-                    // "`fd  --type d \".*\" --maxdepth 1 ~/fgsim/wd | sd \".*/(.+)$\" \"\\$1\"|fzf`",
-                    "train"
-                ],
-                "module": "fgsim",
-                "name": "t seltag",
-                "request": "launch",
-                "type": "python"
+                "type": "python",
+                "justMyCode": false,
             },
             {
                 "args": [
