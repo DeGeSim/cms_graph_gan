@@ -29,7 +29,7 @@ def subsample(arr: np.ndarray):
 
 def test_procedure() -> None:
     holder: Holder = Holder()
-    # holder.select_best_model()
+    holder.select_best_model()
     holder.models.eval()
 
     train_log: TrainLog = holder.train_log
