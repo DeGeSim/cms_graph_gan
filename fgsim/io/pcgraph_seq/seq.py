@@ -106,7 +106,7 @@ def hitlist_to_pc(event: ak.highlevel.Record) -> torch.Tensor:
         list(id_to_energy_dict.values()), dtype=torch.float32
     )
     xyzpos = torch.tensor(
-        geo_lup_filtered[conf.loader.cell_prop_keys].values, dtype=torch.float32
+        geo_lup_filtered[conf.loader.cell_prop_keys[1:]].values, dtype=torch.float32
     )
 
     pc = torch.hstack((hit_energies.view(-1, 1), xyzpos))

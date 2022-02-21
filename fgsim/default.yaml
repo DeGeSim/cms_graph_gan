@@ -126,7 +126,7 @@ loader_options:
             id: "simHit_detid"
             energy: "genPh_E"
             hit_energy: "simHit_E"
-        cell_prop_keys: ["x", "y", "z"]
+        cell_prop_keys: ["E","x", "y", "z"]
         n_features: 4
         chunksize: 100
         batch_size: 50

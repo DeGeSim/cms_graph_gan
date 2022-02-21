@@ -42,7 +42,9 @@ class Event:
         #     logger.warning(f"y: vec {min_mean_max(self.pc[:, 2])}")
         #     logger.warning(f"z: vec {min_mean_max(self.pc[:, 3])}")
 
-        for irow, key in enumerate(conf.loader.cell_prop_keys, start=1):
+        for irow, key in enumerate(conf.loader.cell_prop_keys):
+            if key == "E":
+                continue
             vec = self.pc[:, irow]
 
             vec_ew = vec * e_weight
