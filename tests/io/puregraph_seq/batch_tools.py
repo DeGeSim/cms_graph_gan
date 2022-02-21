@@ -1,6 +1,6 @@
 import torch
 
-from fgsim.io.puregraph_seq.batch_tools import (
+from fgsim.io.batch_tools import (
     pcs_to_batch_reshape_direct,
     pcs_to_batch_reshape_list,
     pcs_to_batch_sort_direct,
@@ -38,7 +38,7 @@ def ftx_eq(x1: torch.Tensor, x2: torch.Tensor) -> bool:
     return bool(torch.all(x1 == x2))
 
 
-# from fgsim.io.puregraph_seq.batch_tools import (
+# from fgsim.io.batch_tools import (
 #     batch_from_pcs_list_events,
 #     batch_from_pcs_list_magic,
 #     batch_from_pcs_list_reorder,

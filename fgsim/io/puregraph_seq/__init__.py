@@ -17,7 +17,7 @@ if "pytest" not in sys.modules:
 
     # from torch_geometric.data.batch import DataBatch as Batch
     from fgsim.config import conf
-    from fgsim.io.puregraph_seq import batch_tools
+    from fgsim.io import batch_tools
 
     from .seq import postprocess_switch, process_seq
 

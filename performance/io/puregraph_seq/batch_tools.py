@@ -1,6 +1,6 @@
 import torch
 
-from fgsim.io.puregraph_seq.batch_tools import (
+from fgsim.io.batch_tools import (
     pcs_to_batch_reshape_direct,
     pcs_to_batch_reshape_list,
     pcs_to_batch_sort_direct,
