@@ -49,19 +49,19 @@ def option_ce(input_conf: DictConfig) -> Dict[str, DictConfig]:
     mod_conf["models"]["disc"]["losses_list"].remove("GradientPenalty")
     mod_conf["models"]["disc"]["losses_list"].append("CEDiscLoss")
     mod_conf["model_param_options"]["disc_treepc"]["activation"] = "Sigmoid"
-    return {"wd": input_conf}  # , "ce": mod_conf
+    return {"wd": input_conf, "ce": mod_conf}  # ,
 
 
 def option_physics_loss(input_conf: DictConfig) -> Dict[str, DictConfig]:
     mod_conf = input_conf.copy()
     mod_conf["models"]["gen"]["losses_list"].append("physics")
-    return {"nopl": input_conf}  # , "pl": mod_conf
+    return {"nopl": input_conf, "pl": mod_conf}  #
 
 
 def option_mean_dist_loss(input_conf: DictConfig) -> Dict[str, DictConfig]:
     mod_conf = input_conf.copy()
     mod_conf["models"]["gen"]["losses_list"].append("mean_dist")
-    return {"nomd": input_conf}  # , "md": mod_conf
+    return {"nomd": input_conf, "md": mod_conf}  #
 
 
 def option_wide(input_conf: DictConfig) -> Dict[str, DictConfig]:
@@ -72,17 +72,14 @@ def option_wide(input_conf: DictConfig) -> Dict[str, DictConfig]:
         input_conf["models"]["gen"]["params"] = {}
     mod_conf["models"]["gen"]["params"]["n_branches"] = 4
     mod_conf["models"]["gen"]["params"]["n_levels"] = 7
-    return {"slim": input_conf}  # , "wide": mod_conf
+    return {"slim": input_conf, "wide": mod_conf}  #
 
 
 def option_conv(input_conf: DictConfig) -> Dict[str, DictConfig]:
     mod_conf = input_conf.copy()
     mod_conf["models"]["gen"]["params"]["conv_name"] = "GINConv"
     input_conf["models"]["gen"]["params"]["conv_name"] = "AncestorConv"
-    # return { }
-    return {
-        "ancconv": input_conf,  # "gin": mod_conf
-    }
+    return {"ancconv": input_conf, "gin": mod_conf}  #
 
 
 exp_list: List[ExperimentConfig] = [base_config]
@@ -109,3 +106,4 @@ for exp in exp_list:
     if not isdir(folder):
         mkdir(folder)
     OmegaConf.save(exp.config, f"{folder}/config.yaml")
+print(",".join(["deeptree_" + "_".join(exp.tags) for exp in exp_list]))
