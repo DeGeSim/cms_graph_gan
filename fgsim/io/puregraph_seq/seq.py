@@ -11,8 +11,7 @@ from torch_geometric.data import Batch, Data
 
 from fgsim.config import conf
 from fgsim.geo.geo_lup import geo_lup
-
-from .batch_tools import compute_hlvs
+from fgsim.io.batch_tools import compute_hlvs
 
 # Sharded switch for the postprocessing
 postprocess_switch = Value("i", 0)
