@@ -86,13 +86,12 @@ class ValidationMetrics:
         ratio_better = [float(val) for val in ratio_better]
         state.stop_crit = list(ratio_better)
         if not conf.debug:
-            with self.train_log.experiment.validate():
-                self.train_log.experiment.log_curve(
-                    "ratio_better",
-                    x=np.arange(len(ratio_better)),
-                    y=ratio_better,
-                    overwrite=True,
-                    step=self.train_log.state["grad_step"],
+            for ivalstep in range(len(ratio_better)):
+                # with self.train_log.experiment.validate():
+                self.train_log.experiment.log_metric(
+                    name="ratio_better",
+                    value=ratio_better[ivalstep],
+                    step=ivalstep * conf.validation.interval,
                 )
 
     def __getitem__(self, lossname: str) -> Callable:
