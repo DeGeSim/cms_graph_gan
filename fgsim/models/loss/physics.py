@@ -29,9 +29,9 @@ class LossGen:
 
     def __call__(self, holder: Holder, batch: Batch):
         with torch.no_grad():
-            real_loss = self.lossf(batch.pc)
+            real_loss = self.lossf(batch.x)
             if real_loss != 0:
                 raise RuntimeError
-        loss = self.factor * self.lossf(holder.gen_points_w_grad.pc)
+        loss = self.factor * self.lossf(holder.gen_points_w_grad.x)
         loss.backward(retain_graph=True)
         return float(loss)

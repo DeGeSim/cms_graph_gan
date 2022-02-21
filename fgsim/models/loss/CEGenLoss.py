@@ -18,7 +18,8 @@ class LossGen:
     def __call__(self, holder: Holder, *args, **kwargs):
         # Loss of the generated samples
 
-        D_gen = holder.models.disc(holder.gen_points_w_grad)
+        D_gen = holder.models.disc(holder.gen_points_w_grad).squeeze()
+        assert D_gen.dim() == 1
         # minimize log(1−D(G(z)))
         # errG = (
         #     torch.log(torch.ones_like(D_gen) - D_gen).mean() * self.factor

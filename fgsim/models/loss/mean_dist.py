@@ -8,6 +8,7 @@ between these two means. It then backpropagates the loss
 and returns the loss.
 """
 import torch
+from torch_scatter import scatter_mean
 
 from fgsim.config import conf
 from fgsim.io.sel_seq import Batch
@@ -21,8 +22,14 @@ class LossGen:
 
     def __call__(self, holder: Holder, batch: Batch):
         # Aggregate the means of over the points in a event
-        sim_means = torch.mean(batch.pc, -2).sort(dim=0).values
-        gen_means = torch.mean(holder.gen_points_w_grad.pc, -2).sort(dim=0).values
+        sim_means = scatter_mean(batch.x, batch.batch, dim=0).sort(dim=0).values
+        gen_means = (
+            scatter_mean(
+                holder.gen_points_w_grad.x, holder.gen_points_w_grad.batch, dim=0
+            )
+            .sort(dim=0)
+            .values
+        )
         assert (
             list(sim_means.shape)
             == list(gen_means.shape)
