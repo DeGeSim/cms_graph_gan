@@ -22,7 +22,7 @@ if "pytest" not in sys.modules:
 
     from .seq import postprocess_switch, process_seq
 
-    files = list(range(20))
+    files = [Path("/dev/null") for _ in range(20)]
     len_dict = defaultdict(lambda: conf.loader.events_per_file)
 
     loader = Loader(

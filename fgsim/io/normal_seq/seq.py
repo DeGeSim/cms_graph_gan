@@ -37,15 +37,15 @@ def process_seq():
 
 # Methods used in the Sequence
 # reading from the filesystem
-def read_chunk(chunks: ChunkType) -> List[int]:
-    return [[1] for chunk in chunks for _ in range(chunk[2] - chunk[1])]
+def read_chunk(chunks: ChunkType) -> List[None]:
+    return [None for chunk in chunks for _ in range(chunk[2] - chunk[1])]
 
 
-def transform(*args) -> Data:
+def transform(_: None) -> Data:
     mu = [1, 1]
     covar = [[1.0, 0.5], [0.5, 1.0]]
     x1 = np.random.multivariate_normal(mu, covar, conf.loader.points_per_event)
-    pointcloud = torch.tensor(x1)
+    pointcloud = torch.tensor(x1).float()
     graph = Data(x=pointcloud)
     if postprocess_switch.value:
         graph.hlvs = compute_hlvs(graph)
