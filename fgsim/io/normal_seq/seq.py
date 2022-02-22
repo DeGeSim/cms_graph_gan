@@ -44,7 +44,7 @@ def read_chunk(chunks: ChunkType) -> List[None]:
 def transform(_: None) -> Data:
     mu = [1, 1]
     covar = [[1.0, 0.5], [0.5, 1.0]]
-    x1 = np.random.multivariate_normal(mu, covar, conf.loader.points_per_event)
+    x1 = np.random.multivariate_normal(mu, covar, conf.loader.max_points)
     pointcloud = torch.tensor(x1).float()
     graph = Data(x=pointcloud)
     if postprocess_switch.value:
