@@ -1,3 +1,5 @@
+from typing import Dict
+
 import torch
 
 from fgsim.config import conf, device
@@ -19,7 +21,7 @@ class LossGen:
             (conf.loader.batch_size,), dtype=torch.float, device=device
         )
 
-    def __call__(self, holder: Holder, batch: Batch) -> torch.float:
+    def __call__(self, holder: Holder, batch: Batch) -> Dict[str, float]:
         # Loss of the simulated samples
         D_sim = holder.models.disc(batch).squeeze()
         assert D_sim.dim() == 1
@@ -42,4 +44,4 @@ class LossGen:
         gen_disc_loss = self.criterion(D_gen, self.fake_label)
         gen_disc_loss.backward()
 
-        return float(sample_disc_loss) + float(gen_disc_loss)
+        return {"gen": float(gen_disc_loss), "sim": float(sample_disc_loss)}

@@ -1,6 +1,6 @@
 """Dynamically import the losses"""
 import importlib
-from typing import Dict, Protocol
+from typing import Dict, Protocol, Union
 
 import torch
 from omegaconf.dictconfig import DictConfig
@@ -12,7 +12,7 @@ from fgsim.utils.check_for_nans import contains_nans
 
 
 class LossFunction(Protocol):
-    def __call__(self, holder, batch: Batch) -> float:
+    def __call__(self, holder, batch: Batch) -> Union[float, Dict[str, float]]:
         ...
 
 
@@ -46,9 +46,27 @@ class SubNetworkLoss:
         }
         # write the loss to state so it can be logged later
         for lossname, loss in lossesdict.items():
-            self.train_log.log_loss(f"loss.{self.name}.{lossname}", loss)
-            holder.state.losses[self.name][lossname].append(loss)
-        summedloss = sum([e for e in lossesdict.values()])
+            if isinstance(loss, float):
+                self.train_log.log_loss(f"loss.{self.name}.{lossname}", loss)
+                holder.state.losses[self.name][lossname].append(loss)
+            else:
+                assert isinstance(loss, dict)
+                # loss the sublosses
+                for sublossname, subloss in loss.items():
+                    self.train_log.log_loss(
+                        f"loss.{self.name}.{lossname}.{sublossname}", subloss
+                    )
+                sumloss = sum(loss.values())
+                self.train_log.log_loss(f"loss.{self.name}.{lossname}", sumloss)
+                holder.state.losses[self.name][lossname].append(sumloss)
+
+        # Some of the losses are in dicts, other are not so we need to upack them
+        summedloss = sum(
+            [
+                (lambda x: sum(list(x.values())) if isinstance(e, dict) else x)(e)
+                for e in lossesdict.values()
+            ]
+        )
         assert not contains_nans(summedloss)[0]
         return summedloss
 

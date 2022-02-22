@@ -1,6 +1,5 @@
 from dataclasses import dataclass
-
-import torch
+from typing import Dict
 
 from fgsim.io.sel_seq import Batch
 from fgsim.ml.holder import Holder
@@ -10,7 +9,7 @@ from fgsim.ml.holder import Holder
 class LossGen:
     factor: float
 
-    def __call__(self, holder: Holder, batch: Batch) -> torch.float:
+    def __call__(self, holder: Holder, batch: Batch) -> Dict[str, float]:
         # EM dist loss:
         D_realm = holder.models.disc(batch).mean()
         sample_disc_loss = -D_realm * self.factor
@@ -19,4 +18,4 @@ class LossGen:
         D_fakem = holder.models.disc(holder.gen_points).mean()
         gen_disc_loss = D_fakem * self.factor
         gen_disc_loss.backward()
-        return float(gen_disc_loss) + float(sample_disc_loss)
+        return {"gen": float(gen_disc_loss), "sim": float(sample_disc_loss)}
