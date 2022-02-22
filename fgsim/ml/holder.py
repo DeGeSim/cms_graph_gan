@@ -125,7 +125,7 @@ class Holder:
         push_to_old(conf.path.state, conf.path.state_old)
         OmegaConf.save(config=self.state, f=conf.path.state)
         self._last_checkpoint_time = datetime.now()
-        logger.info("Checkpoint saved")
+        logger.info(f"Checkpoint saved to {conf.path.checkpoint}")
 
     def checkpoint_after_time(self):
         now = datetime.now()
