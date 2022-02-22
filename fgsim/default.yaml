@@ -116,7 +116,7 @@ path:
     loader_log: "${path.run_path}/${command}_loader.log"
 
 loader: "${merge:${loader_options[default]},${loader_options[${loader_name}]}}"
-loader_name: normal
+loader_name: puregraph
 
 loader_options:
     default:
