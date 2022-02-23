@@ -3,11 +3,13 @@ Given a trained model, it will generate a set of random events
 and compare the generated events to the simulated events.
 """
 
+from pathlib import Path
 from typing import Dict, List
 
 import numpy as np
 import torch
 from scipy.stats import kstest
+from torch_scatter import scatter_mean
 from tqdm import tqdm
 
 from fgsim.config import conf
@@ -16,7 +18,8 @@ from fgsim.io.sel_seq import batch_tools
 from fgsim.ml.holder import Holder
 from fgsim.monitoring.logger import logger
 from fgsim.monitoring.train_log import TrainLog
-from fgsim.plot.test import diffhist
+from fgsim.plot.hlv_marginals import hlv_marginals
+from fgsim.plot.xyscatter import xyscatter
 
 
 def convert(tensorarr: List[torch.Tensor]) -> np.ndarray:
@@ -30,6 +33,10 @@ def subsample(arr: np.ndarray):
 def test_procedure() -> None:
     holder: Holder = Holder()
     holder.select_best_model()
+    plot_path = Path(f"{conf.path.run_path}/plots_best/")
+    # plot_path = Path(f"{conf.path.run_path}/plots_last/")
+    plot_path.mkdir(exist_ok=True)
+
     holder.models.eval()
 
     train_log: TrainLog = holder.train_log
@@ -98,21 +105,46 @@ def test_procedure() -> None:
         }
         for sim_or_gen in ("sim", "gen")
     }
-
+    # KS tests
     for var in sample["gen"].keys():
         res = kstest(sample["sim"][var], sample["gen"][var])
         with train_log.experiment.test():
             train_log.experiment.log_metric(f"kstest-{var}", res.pvalue)
+
+    # Scatterplots
+    logger.info(f"Plotting  xyscatter")
+    # Scatter of a single event
+    figure = xyscatter(
+        sim=sim_batch[0].x.numpy(),
+        gen=gen_batch[0].x.numpy(),
+        outputpath=plot_path / f"xyscatter_single.pdf",
+    )
+    with train_log.experiment.test():
+        train_log.experiment.log_figure(
+            figure_name=f"test-xyscatter", figure=figure, overwrite=True
+        )
+
+    figure = xyscatter(
+        sim=scatter_mean(sim_batch.x, sim_batch.batch, dim=0).numpy(),
+        gen=scatter_mean(gen_batch.x, gen_batch.batch, dim=0).numpy(),
+        outputpath=plot_path / f"xyscatter_batch_means.pdf",
+    )
+    with train_log.experiment.test():
+        train_log.experiment.log_figure(
+            figure_name=f"xyscatter_batch_means", figure=figure, overwrite=True
+        )
 
     # # Sample 2k events and plot the distribution
     for var in sample["gen"]:
         xsim = sample["sim"][var]
         xgen = sample["gen"][var]
         logger.info(f"Plotting  var {var}")
-        figure = diffhist(var, xsim=xsim, xgen=xgen)
+        figure = hlv_marginals(
+            var, xsim=xsim, xgen=xgen, outputpath=plot_path / f"{var}.pdf"
+        )
         with train_log.experiment.test():
             train_log.experiment.log_figure(
-                figure_name=f"test-distplot-{var}", figure=figure, overwrite=True
+                figure_name=f"distplot-{var}", figure=figure, overwrite=True
             )
 
     exit(0)

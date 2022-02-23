@@ -4,10 +4,10 @@ import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
 
-from fgsim.config import conf
 
-
-def diffhist(var, xsim: np.array, xgen: np.array) -> plt.Figure:
+def hlv_marginals(
+    var, xsim: np.array, xgen: np.array, outputpath: Path
+) -> plt.Figure:
     assert xsim.shape == xgen.shape
     xgen_nan_ratio = np.sum(np.isnan(xgen)) / len(xgen) * 100
     # filter out the nans
@@ -73,11 +73,6 @@ def diffhist(var, xsim: np.array, xgen: np.array) -> plt.Figure:
             legend=True,
         )
         plt.title(f"{var}, all gen values are nan")
-
-    path = Path(f"{conf.path.run_path}/diffplots/")
-    path.mkdir(exist_ok=True)
-    outputpath = path / f"{var}.pdf"
-
     plt.savefig(outputpath)
 
     return fig
