@@ -140,7 +140,7 @@ function _logandrun() {
     # set the name of the logfile based on the command
     logfile=$( pwd )/logandrun/$( capargs "$@" ).log
     # print the startmessage and log it
-    echo -e "\e[43m[RUN]\e[0m" $( date +"%y-%m-%d %R" ): $@ | tee -a $( pwd )/logandrun/event.log | tee -a $logfile
+    echo -e "\e[43m[RUN]\e[0m" $( date +"%y-%m-%d %R" ): $@ | tee -a $( pwd )/logandrun/event.log | tee $logfile
     # evaluate the current date in seconds as the start date
     start=`date +%s`
     #######
@@ -171,7 +171,20 @@ function _logandrun() {
     # if [[ $((end-start)) -gt 2400 && $LOGANDRUN_IS_TOP_LEVEL==1 ]] && hash sendmsg.py 2>/dev/null ; then
     if [[ $LOGANDRUN_IS_TOP_LEVEL==1 ]] && hash sendmsg.py 2>/dev/null ; then
         #notify the user
-        sendmsg.py "$(hostname) $( date +"%y-%m-%d %R" ) {$((end-start))s} $return_code: $@ \n $(grep -v "COMET INFO:" $logfile | tail -n 15 )" &>/dev/null
+        tmpfile=$(mktemp)
+        echo -e "🖥$(hostname)\n 🕜$( date +'%y-%m-%d %R' )\n $return_code: $@" >> $tmpfile
+        cat $logfile |\
+            grep -v "COMET INFO:" |\
+            grep -v "COMET WARNING:" |\
+            tail -n 15 |\
+            sed -r 's@\x1b\[43m\[RUN\]\x1b\[0m@▶@' |\
+            sed -r 's@\x1b\[42m\[COMPLETE\]\x1b\[0m@🏁@' |\
+            sed -r 's@\x1b\[41m\[ERROR\]\x1b\[0m@❌@' |\
+            sed -r 's@\x1b\[104m\{([0-9]+s)\}\x1b\[0m@⌛\1@' |\
+            sed '/^[[:space:]]*$/d' |\
+            sed -E 's@[a-z_/.]+:[0-9]+$@@' >> $tmpfile # this removes the codemarkers \
+        sendmsg.py $tmpfile &>/dev/null
+        rm $tmpfile
     fi
     if [[ $LOGANDRUN_IS_TOP_LEVEL==1 ]]; then
         unset LOGANDRUN_TOPLEVELSET
