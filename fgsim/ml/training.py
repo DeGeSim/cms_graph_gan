@@ -49,6 +49,8 @@ def training_step(
 
 def training_procedure() -> None:
     holder: Holder = Holder()
+    if early_stopping(holder.state):
+        exit()
     train_log: TrainLog = holder.train_log
     loader: QueuedDataLoader = QueuedDataLoader()
 
