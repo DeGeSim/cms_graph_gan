@@ -31,9 +31,10 @@ model_param_options:
         n_global: 4
         n_branches: 2
         n_levels: 12
-        post_gen_mp_steps: 5
+        post_gen_mp_steps: 9
+        conv_during_branching: False
+        conv_name: AncestorConv
         n_events: "${loader.batch_size}"
-        conv_name: GINConv
         conv_parem: ${conv_options[${models.gen.params.conv_name}]}
     disc_hlvs:
         activation: Identity
@@ -45,6 +46,11 @@ conv_options:
     GINConv: {}
     AncestorConv:
         add_self_loops: True
+        msg_nn: True
+        msg_nn_include_edge_attr: False
+        msg_nn_include_global: True
+        upd_nn: True
+        upd_nn_include_global: True
 
 
 loss_options:
