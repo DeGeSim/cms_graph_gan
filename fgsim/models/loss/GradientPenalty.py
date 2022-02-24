@@ -63,7 +63,10 @@ def interpol_pcs(pc1: torch.Tensor, pc2: torch.Tensor) -> torch.Tensor:
     else:
         big_pc = pc2
         small_pc = pc1
-    new_pc_len = int(torch.randint(len(small_pc), len(big_pc), size=(1,)))
+    if len(small_pc) == len(big_pc):
+        new_pc_len = len(big_pc)
+    else:
+        new_pc_len = int(torch.randint(len(small_pc), len(big_pc), size=(1,)))
 
     big_downsample = big_pc[
         torch.multinomial(

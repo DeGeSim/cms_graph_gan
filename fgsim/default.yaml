@@ -152,5 +152,5 @@ loader_options:
         n_features: 2
         # chunksize: 5000
         events_per_file: 10000
-        max_points: 500
+        max_points: 511
         dataset_path: "data/normal"
