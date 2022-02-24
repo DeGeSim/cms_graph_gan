@@ -75,9 +75,37 @@ def removekeys(omconf: DictConfig, excluded_keys: List[str]) -> DictConfig:
     return filtered_omconf
 
 
+def dict_to_kv(o, keystr=""):
+    """Converts a nested dict {"a":"foo", "b": {"foo":"bar"}} to \
+    [("a","foo"),("b.foo","bar")]."""
+    if hasattr(o, "keys"):
+        outL = []
+        for k in o.keys():
+            elemres = dict_to_kv(o[k], keystr + str(k) + ".")
+            if (
+                len(elemres) == 2
+                and type(elemres[0]) == str
+                and type(elemres[1]) == str
+            ):
+                outL.append(elemres)
+            else:
+                for e in elemres:
+                    outL.append(e)
+        return outL
+    elif hasattr(o, "__str__"):
+
+        return (keystr.strip("."), str(o))
+    else:
+        raise ValueError
+
+
+# convert the config to  key-value pairs
+# sort them, hash the results
 def gethash(omconf: DictConfig) -> str:
     OmegaConf.resolve(omconf)
-    omhash = str(hashlib.sha1(str(omconf).encode()).hexdigest()[:7])
+    kv_list = [f"{e[0]}: {e[1]}" for e in dict_to_kv(omconf)]
+    kv_str = "\n".join(sorted(kv_list))
+    omhash = str(hashlib.sha1(kv_str.encode()).hexdigest()[:7])
     return omhash
 
 

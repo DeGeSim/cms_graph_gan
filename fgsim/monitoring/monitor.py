@@ -6,7 +6,7 @@ from omegaconf import OmegaConf
 from omegaconf.dictconfig import DictConfig
 from torch.utils.tensorboard.writer import SummaryWriter
 
-from fgsim.config import conf
+from fgsim.config import conf, dict_to_kv
 from fgsim.monitoring.logger import logger
 
 comet_conf = OmegaConf.load("fgsim/comet.yaml")
@@ -16,30 +16,6 @@ project_name = (
     if "comet_project_name" in conf
     else comet_conf.project_name
 )
-
-
-def dict_to_kv(o, keystr=""):
-    """Converts a nested dict {"a":"foo", "b": {"foo":"bar"}} to \
-    [("a","foo"),("b.foo","bar")]."""
-    if hasattr(o, "keys"):
-        outL = []
-        for k in o.keys():
-            elemres = dict_to_kv(o[k], keystr + str(k) + ".")
-            if (
-                len(elemres) == 2
-                and type(elemres[0]) == str
-                and type(elemres[1]) == str
-            ):
-                outL.append(elemres)
-            else:
-                for e in elemres:
-                    outL.append(e)
-        return outL
-    elif hasattr(o, "__str__"):
-
-        return (keystr.strip("."), str(o))
-    else:
-        raise ValueError
 
 
 def get_exps_with_hash(hash: str) -> List[comet_ml.APIExperiment]:
