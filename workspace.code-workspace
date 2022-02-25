@@ -20,39 +20,29 @@
         "configurations": [
             {
                 "args": [
-                    "--hash",
-                    "0b1ce95",
-                    "dump"
-                ],
-                "module": "fgsim",
-                "name": "hash",
-                "request": "launch",
-                "type": "python"
-            },
-            {
-                "args": [
                     "--tag",
-                    "deeptree_wd_nopl_nomd_slim_ancconv",
+                    "normal",
                     // "--debug",
                     "train"
                 ],
                 "module": "fgsim",
-                "name": "t deeptree",
+                "name": "train normal",
                 "request": "launch",
                 "type": "python",
-                "justMyCode": false,
+                // "justMyCode": false,
             },
             {
                 "args": [
-                    "--tag",
-                    "deeptree_wd_nopl_nomd_slim_ancconv",
-                    "preprocess"
+                    "--hash",
+                    "c59e3bf",
+                    "--debug",
+                    "test"
                 ],
                 "module": "fgsim",
-                "name": "preprocess",
+                "name": "test c59e3bf",
                 "request": "launch",
                 "type": "python",
-                "justMyCode": false,
+                // "justMyCode": false,
             },
             {
                 "args": [
