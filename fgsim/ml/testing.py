@@ -32,9 +32,11 @@ def subsample(arr: np.ndarray):
 
 def test_procedure() -> None:
     holder: Holder = Holder()
-    holder.select_best_model()
-    plot_path = Path(f"{conf.path.run_path}/plots_best/")
-    # plot_path = Path(f"{conf.path.run_path}/plots_last/")
+    if False:
+        holder.select_best_model()
+        plot_path = Path(f"{conf.path.run_path}/plots_best/")
+    else:
+        plot_path = Path(f"{conf.path.run_path}/plots_last/")
     plot_path.mkdir(exist_ok=True)
 
     holder.models.eval()
