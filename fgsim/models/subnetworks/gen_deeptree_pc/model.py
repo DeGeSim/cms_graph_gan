@@ -4,11 +4,11 @@ from torch_geometric.data import Data
 
 from fgsim.config import conf, device
 from fgsim.io.sel_seq import Batch, batch_tools
+from fgsim.models.dnn_gen import dnn_gen
 from fgsim.monitoring.logger import logger
 
 from .ancestor_conv import AncestorConv
 from .branching import BranchingLayer
-from .dnn import dnn_gen
 from .dyn_hlvs import DynHLVsLayer
 from .tree import Node
 
