@@ -29,10 +29,7 @@ def start_training_state() -> DictConfig:
             "epoch": 0,
             "processed_events": 0,
             "grad_step": 0,
-            "losses": {
-                snwname: {lossname: [] for lossname in snwconf.losses}
-                for snwname, snwconf in conf.models.items()
-            },
+            "losses": {snwname: {} for snwname in conf.models},
             "val_metrics": {},
             "complete": False,
         }
@@ -101,6 +98,7 @@ class Holder:
         self.models.load_state_dict(checkpoint["models"])
         self.optims.load_state_dict(checkpoint["optims"])
         self.best_model_state = checkpoint["best_model"]
+        self.checkpoint_loaded = True
 
         logger.warning(
             "Loading model from checkpoint at"

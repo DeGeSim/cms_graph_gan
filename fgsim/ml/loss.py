@@ -1,12 +1,14 @@
 """Dynamically import the losses"""
 import importlib
-from typing import Dict, Protocol, Union
+import math
+from typing import Dict, Optional, Protocol, Union
 
 import torch
 from omegaconf.dictconfig import DictConfig
 
 from fgsim.config import conf, device
 from fgsim.io.sel_seq import Batch
+from fgsim.monitoring.logger import logger
 from fgsim.monitoring.train_log import TrainLog
 from fgsim.utils.check_for_nans import contains_nans
 
@@ -40,25 +42,26 @@ class SubNetworkLoss:
             self.parts[lossname] = loss
             setattr(self, lossname, loss)
 
+    def __getitem__(self, lossname: str) -> LossFunction:
+        return self.parts[lossname]
+
     def __call__(self, holder, batch: Batch):
         lossesdict = {
             lossname: loss(holder, batch) for lossname, loss in self.parts.items()
         }
+        losses_state = holder.state.losses
         # write the loss to state so it can be logged later
         for lossname, loss in lossesdict.items():
             if isinstance(loss, float):
-                self.train_log.log_loss(f"loss.{self.name}.{lossname}", loss)
-                holder.state.losses[self.name][lossname].append(loss)
+                self.log_loss(losses_state, loss, lossname)
             else:
+                # For the case the loss return Dict[str,float]
                 assert isinstance(loss, dict)
                 # loss the sublosses
-                for sublossname, subloss in loss.items():
-                    self.train_log.log_loss(
-                        f"loss.{self.name}.{lossname}.{sublossname}", subloss
-                    )
+                for sublossname, sublossvalue in loss.items():
+                    self.log_loss(losses_state, sublossvalue, lossname, sublossname)
                 sumloss = sum(loss.values())
-                self.train_log.log_loss(f"loss.{self.name}.{lossname}", sumloss)
-                holder.state.losses[self.name][lossname].append(sumloss)
+                self.log_loss(losses_state, sumloss, lossname, "sum")
 
         # Some of the losses are in dicts, other are not so we need to upack them
         summedloss = sum(
@@ -70,8 +73,38 @@ class SubNetworkLoss:
         assert not contains_nans(summedloss)[0]
         return summedloss
 
-    def __getitem__(self, lossname: str) -> LossFunction:
-        return self.parts[lossname]
+    def log_loss(
+        self,
+        losses_state: DictConfig,
+        value: float,
+        lossname: str,
+        sublossname: Optional[str] = None,
+    ):
+        lossstr = (
+            f"loss.{self.name}.{lossname}"
+            if sublossname is None
+            else f"loss.{self.name}.{lossname}.{sublossname}"
+        )
+        # Check for invalid values
+        if math.isnan(value) or math.isinf(value):
+            logger.error(f"{lossstr} returned invalid value: {value}")
+            raise RuntimeError
+        # Log to comet.ml
+        self.train_log.log_loss(lossstr, value)
+        # Make sure the fields in the state are available
+        if sublossname is None:
+            if lossname not in losses_state[self.name]:
+                losses_state[self.name][lossname] = []
+        else:
+            if lossname not in losses_state[self.name]:
+                losses_state[self.name][lossname] = {}
+            if sublossname not in losses_state[self.name][lossname]:
+                losses_state[self.name][lossname][sublossname] = []
+        # Write values to the state
+        if sublossname is None:
+            losses_state[self.name][lossname].append(value)
+        else:
+            losses_state[self.name][lossname][sublossname].append(value)
 
 
 class LossesCol:
