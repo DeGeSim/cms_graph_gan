@@ -20,7 +20,7 @@ class SubNetworkCollector(torch.nn.Module):
             modelparams = (
                 submodelconf.params if submodelconf.params is not None else {}
             )
-            submodel = import_nn(submodelconf.name, modelparams)
+            submodel = import_nn(name, submodelconf.name, modelparams)
 
             self.parts[name] = submodel
             setattr(self, name, submodel)
@@ -40,12 +40,14 @@ class SubNetworkCollector(torch.nn.Module):
 
 
 # Import the python file containing the models with dynamically
-def import_nn(nn_name, modelparams) -> torch.nn.Module:
+def import_nn(
+    partname: str, nn_name: str, modelparams: DictConfig
+) -> torch.nn.Module:
     model_module: Optional[Module] = None
     for import_path in [
-        f"fgsim.models.subnetworks.{nn_name}",
-        f"fgsim.models.subnetworks.{nn_name}.model",
-        f"fgsim.models.subnetworks.{nn_name}.{nn_name}",
+        f"fgsim.models.{partname}.{nn_name}",
+        f"fgsim.models.{partname}.{nn_name}.model",
+        f"fgsim.models.{partname}.{nn_name}.{nn_name}",
     ]:
         try:
             model_module = importlib.import_module(import_path)
