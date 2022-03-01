@@ -61,9 +61,10 @@ def training_procedure() -> None:
     exitcode = 0
     try:
         while not early_stopping(holder.state):
-            if holder.state.grad_step == 0:
+            if not holder.checkpoint_loaded:
                 holder.models.eval()
                 validate(holder, loader)
+                holder.save_checkpoint()
             # switch model in training mode
             holder.models.train()
             for _ in tqdm(
@@ -86,7 +87,7 @@ def training_procedure() -> None:
                 holder.state.time_training_done = time.time()
                 train_log.write_trainstep_logs()
                 holder.state.processed_events += conf.loader.batch_size
-                holder.state["grad_step"] += 1
+                holder.state.grad_step += 1
                 holder.checkpoint_after_time()
             holder.models.eval()
             validate(holder, loader)
