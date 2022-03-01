@@ -21,12 +21,12 @@
             {
                 "args": [
                     "--tag",
-                    "normal",
-                    // "--debug",
+                    "normal_simple",
+                    "--debug",
                     "train"
                 ],
                 "module": "fgsim",
-                "name": "train normal",
+                "name": "train normal simple",
                 "request": "launch",
                 "type": "python",
                 // "justMyCode": false,
@@ -36,10 +36,10 @@
                     "--hash",
                     "c59e3bf",
                     "--debug",
-                    "test"
+                    "train"
                 ],
                 "module": "fgsim",
-                "name": "test c59e3bf",
+                "name": "c59e3bf train",
                 "request": "launch",
                 "type": "python",
                 // "justMyCode": false,
