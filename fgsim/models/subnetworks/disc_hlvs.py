@@ -11,7 +11,7 @@ class ModelClass(torch.nn.Module):
         self.activation = getattr(torch.nn, activation)()
         n_features = conf.loader.n_features
         self.hlv_dnn = dnn_gen(
-            n_features * 2, 1, n_layers=4, activation_last_layer=False
+            n_features * 2, 1, n_layers=4, activation_last_layer=self.activation
         )
 
     def forward(self, batch):
@@ -23,4 +23,4 @@ class ModelClass(torch.nn.Module):
             ]
         )
         x = self.hlv_dnn(x)
-        return self.activation(x)
+        return x
