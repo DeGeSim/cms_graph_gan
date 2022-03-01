@@ -146,7 +146,6 @@ loader_options:
         num_workers_stack: 1
         num_workers_postprocess: 5
         max_points: 4085
-        qf_seq_name: "${loader_name}_seq"
         dataset_path: "data/hgcal_william"
     hgcal:
         cell_prop_keys: ["x", "y", "z", "celltype", "issilicon"]

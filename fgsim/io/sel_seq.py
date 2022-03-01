@@ -5,9 +5,7 @@ from fgsim.config import conf
 from fgsim.io.loader import Loader
 
 # Import the specified processing sequence
-loader: Loader = importlib.import_module(
-    f"fgsim.io.{conf.loader.qf_seq_name}"
-).loader
+loader: Loader = importlib.import_module(f"fgsim.loaders.{conf.loader_name}").loader
 
 Batch = loader.Batch
 DataSetType = List[Batch]

@@ -59,17 +59,17 @@ def main():
     logger.info(f"Running command {conf['command']}")
 
     if conf["command"] == "train":
-        from fgsim.ml.training import training_procedure
+        from fgsim.commands.training import training_procedure
 
         training_procedure()
 
     if conf["command"] == "test":
-        from fgsim.ml.testing import test_procedure
+        from fgsim.commands.testing import test_procedure
 
         test_procedure()
 
     if conf["command"] == "preprocess":
-        from fgsim.utils.preprocess import preprocess_procedure
+        from fgsim.commands.preprocess import preprocess_procedure
 
         preprocess_procedure()
 
@@ -82,7 +82,9 @@ def main():
         importlib.import_module(file_name, "fgsim")
 
     if conf["command"] == "dump":
-        from fgsim.utils import dump_training
+        from fgsim.commands.dump import dump_procedure
+
+        dump_procedure()
 
 
 if __name__ == "__main__":
