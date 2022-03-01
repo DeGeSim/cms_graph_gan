@@ -23,9 +23,7 @@ def validate(holder: Holder, loader: QueuedDataLoader) -> None:
             holder.reset_gen_points()
             holder.gen_points = batch_tools.batch_compute_hlvs(holder.gen_points)
             holder.val_loss(holder, batch)
-    logger.warning("Validation batches evaluated")
     holder.val_loss.log_losses(holder.state)
-    logger.warning("Validation loss logged")
 
     min_stop_crit = min(holder.state.stop_crit)
     if min_stop_crit == holder.state.stop_crit[-1]:

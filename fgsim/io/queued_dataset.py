@@ -132,23 +132,23 @@ must queue an epoch via `queue_epoch()` and iterate over the instance of the cla
     @property
     def validation_batches(self) -> DataSetType:
         if not hasattr(self, "_validation_batches"):
-            logger.warning("Validation batches not loaded, loading from disk.")
+            logger.debug("Validation batches not loaded, loading from disk.")
             self._validation_batches = torch.load(
                 conf.path.validation, map_location=torch.device("cpu")
             )
-            logger.warning(
-                f"Finished loading. Type is{type(self._validation_batches)}"
+            logger.debug(
+                f"Finished loading. Type is {type(self._validation_batches)}"
             )
         return self._validation_batches
 
     @property
     def testing_batches(self) -> DataSetType:
         if not hasattr(self, "_testing_batches"):
-            logger.warning("Testing batches not loaded, loading from disk.")
+            logger.debug("Testing batches not loaded, loading from disk.")
             self._testing_batches = torch.load(
                 conf.path.test, map_location=torch.device("cpu")
             )
-            logger.warning("Finished loading.")
+            logger.debug("Finished loading.")
         return self._testing_batches
 
     def queue_epoch(self, n_skip_events=0) -> None:
