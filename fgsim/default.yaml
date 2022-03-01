@@ -38,6 +38,8 @@ model_param_options:
         conv_parem: ${conv_options[${models.gen.params.conv_name}]}
     disc_hlvs:
         activation: Identity
+    disc_graphgym:
+        activation: Identity
     disc_treepc:
         features: [4, 64, 128, 256]
         activation: Identity

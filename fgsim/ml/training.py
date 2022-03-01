@@ -61,7 +61,7 @@ def training_procedure() -> None:
     exitcode = 0
     try:
         while not early_stopping(holder.state):
-            if not holder.checkpoint_loaded:
+            if not holder.checkpoint_loaded and not conf.debug:
                 holder.models.eval()
                 validate(holder, loader)
                 holder.save_checkpoint()

@@ -123,32 +123,24 @@ def batch_compute_hlvs(batch: Batch) -> Batch:
 
 def compute_hlvs(graph: Data) -> Dict[str, torch.Tensor]:
     hlvs: Dict[str, torch.Tensor] = {}
-    hlvs["energy_sum"] = torch.sum(graph.x[:, 0])
-    hlvs["energy_sum_std"] = torch.std(graph.x[:, 0])
-    e_weight = graph.x[:, 0] / hlvs["energy_sum"]
-    # if torch.isnan(torch.sum(e_weight)):
-    #     logger.warning(f"energy: vec {min_mean_max(graph.x[:, 0])}")
-    #     logger.warning(f"x: vec {min_mean_max(graph.x[:, 1])}")
-    #     logger.warning(f"y: vec {min_mean_max(graph.x[:, 2])}")
-    #     logger.warning(f"z: vec {min_mean_max(graph.x[:, 3])}")
+
+    if "E" in conf.loader.cell_prop_keys:
+        E_idx = conf.loader.cell_prop_keys.index("E")
+        e_weight = graph.x[:, E_idx] / torch.sum(graph.x[:, E_idx])
 
     for irow, key in enumerate(conf.loader.cell_prop_keys):
-        if key == "E":
-            continue
         vec = graph.x[:, irow]
-
-        vec_ew = vec * e_weight
-        mean = torch.mean(vec_ew)
-        std = torch.std(vec_ew)
-        hlvs[key + "_mean_ew"] = mean
-        hlvs[key + "_std_ew"] = std
-        # hlvs[key + "_mom3_ew"] = self._stand_mom(vec, mean, std, 3)
-        # hlvs[key + "_mom4_ew"] = self._stand_mom(vec, mean, std, 4)
-        for var, v in hlvs.items():
-            if not var.startswith(key):
+        hlvs[key + "_mean"] = torch.mean(vec)
+        hlvs[key + "_std"] = torch.std(vec)
+        if "E" in conf.loader.cell_prop_keys:
+            if key == "E":
                 continue
-            if torch.isnan(v):
-                logger.error(f"NaN Computed for hlv {var}")
+            vec_ew = vec * e_weight
+            hlvs[key + "_mean_ew"] = torch.mean(vec_ew)
+            hlvs[key + "_std_ew"] = torch.std(vec_ew)
+    for var, v in hlvs.items():
+        if torch.isnan(v):
+            logger.error(f"NaN Computed for hlv {var}")
     return hlvs
 
 
