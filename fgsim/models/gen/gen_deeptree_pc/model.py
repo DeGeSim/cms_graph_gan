@@ -7,7 +7,7 @@ from torch_geometric.data import Data
 from fgsim.config import conf, device
 from fgsim.io.sel_seq import Batch, batch_tools
 from fgsim.models.branching.branching import BranchingLayer, Tree
-from fgsim.models.branching.tree import Node
+from fgsim.models.branching.node import Node
 from fgsim.models.dnn_gen import dnn_gen
 from fgsim.models.layer.ancestor_conv import AncestorConv
 from fgsim.models.pooling.dyn_hlvs import DynHLVsLayer

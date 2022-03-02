@@ -1,7 +1,8 @@
+import pytest
 import torch
 from torch_geometric.data import Data
 
-from fgsim.models.subnetworks.gen_deeptree_pc.ancestor_conv import AncestorConv
+from fgsim.models.layer.ancestor_conv import AncestorConv
 
 device = torch.device("cpu")
 
@@ -20,17 +21,35 @@ class IdentityLayer(torch.nn.Module):
         return self.f(*args, **kwargs)
 
 
-def test_ancestorconv_single_event():
-    do_nothing = IdentityLayer()
-    ancestor_conv = AncestorConv(do_nothing, do_nothing, add_self_loops=False)
+@pytest.fixture
+def default_pars():
+    return {
+        "n_features": 1,
+        "n_branches": 2,
+        "n_levels": 2,
+        "n_global": 2,
+        "n_events": 1,
+    }
 
+
+@pytest.fixture
+def ancestor_conv(default_pars):
+    do_nothing = IdentityLayer()
+    ancestor_conv = AncestorConv(
+        n_features=default_pars["n_features"],
+        n_global=default_pars["n_global"],
+        add_self_loops=False,
+        msg_nn_include_edge_attr=True,
+    )
+    ancestor_conv.msg_nn = do_nothing
+    ancestor_conv.update_nn = do_nothing
+    return ancestor_conv
+
+
+@pytest.fixture
+def graph():
     # Create a graph with 1 event, 2 levels, 2 branches
-    # n_features = 1
-    # n_branches = 2
-    # n_levels = 2
-    n_global = 2
-    n_events = 1
-    graph = Data(
+    return Data(
         x=torch.tensor(
             [[1], [2], [5]], dtype=torch.float, device=device, requires_grad=True
         ),
@@ -38,6 +57,15 @@ def test_ancestorconv_single_event():
         edge_attr=torch.tensor([1, 1], dtype=torch.long, device=device),
         event=torch.tensor([0, 0, 0], dtype=torch.long, device=device),
     )
+
+
+def test_ancestorconv_single_event(ancestor_conv, graph):
+    # n_features = 1
+    # n_branches = 2
+    # n_levels = 2
+    n_global = 2
+    n_events = 1
+
     global_features = torch.tensor(
         [[0.3, 0.2]], dtype=torch.float, device=device
     ).reshape(n_events, n_global)
@@ -53,19 +81,18 @@ def test_ancestorconv_single_event():
     messages = torch.stack([torch.zeros_like(m1), m1, m1])
 
     res_expect = torch.hstack([graph.x, global_features[graph.event], messages])
-    assert torch.all(res == res_expect)
+
+    assert torch.allclose(res, res_expect)
 
 
-def test_ancestorconv_double_event():
-    do_nothing = IdentityLayer()
-    ancestor_conv = AncestorConv(do_nothing, do_nothing, add_self_loops=False)
-
+def test_ancestorconv_double_event(ancestor_conv):
     # Create a graph with 1 event, 2 levels, 2 branches
     # n_features = 1
     # n_branches = 2
     # n_levels = 2
     n_global = 2
     n_events = 2
+
     graph = Data(
         x=torch.tensor(
             [[1], [1.5], [2], [2.5], [5], [5.5]],
@@ -107,16 +134,14 @@ def test_ancestorconv_double_event():
     assert torch.all(res == res_expect)
 
 
-def test_ancestorconv_three_levels():
-    do_nothing = IdentityLayer()
-    ancestor_conv = AncestorConv(do_nothing, do_nothing, add_self_loops=False)
-
+def test_ancestorconv_three_levels(ancestor_conv):
     # Create a graph with 1 event, 2 levels, 2 branches
     # n_features = 1
     # n_branches = 2
     # n_levels = 2
     n_global = 2
     n_events = 1
+
     graph = Data(
         x=torch.arange(
             7, dtype=torch.float, device=device, requires_grad=True

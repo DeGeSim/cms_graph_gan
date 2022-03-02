@@ -18,13 +18,14 @@ class AncestorConv(MessagePassing):
         self,
         n_features: int,
         n_global: int,
-        add_self_loops: bool,
-        msg_nn: bool,
-        msg_nn_include_edge_attr: bool,
-        msg_nn_include_global: bool,
-        upd_nn: bool,
-        upd_nn_include_global: bool,
+        add_self_loops: bool = True,
+        msg_nn: bool = True,
+        msg_nn_include_edge_attr: bool = False,
+        msg_nn_include_global: bool = True,
+        upd_nn: bool = True,
+        upd_nn_include_global: bool = True,
     ):
+
         super().__init__(aggr="add", flow="source_to_target")
         self.n_features = n_features
         self.n_global = n_global
@@ -36,9 +37,9 @@ class AncestorConv(MessagePassing):
         self.upd_nn_include_global = upd_nn_include_global
 
         # MSG NN
-        self.msg_gen: Union[torch.Module, torch.nn.Identity] = torch.nn.Identity()
+        self.msg_nn: Union[torch.Module, torch.nn.Identity] = torch.nn.Identity()
         if msg_nn:
-            self.msg_gen = dnn_gen(
+            self.msg_nn = dnn_gen(
                 n_features
                 + (n_global if msg_nn_include_global else 0)
                 + (1 if msg_nn_include_edge_attr else 0),
@@ -98,7 +99,7 @@ class AncestorConv(MessagePassing):
         # before the message instead of transforming the message
         else:
             # Generate a global feature vector in shape of x
-            xtransform = self.msg_gen(
+            xtransform = self.msg_nn(
                 torch.hstack(
                     [x] + ([glo_ftx_mtx] if self.msg_nn_include_global else [])
                 )
@@ -124,7 +125,7 @@ class AncestorConv(MessagePassing):
     ) -> torch.Tensor:
         # Transform node feature matrix with the global features
         if self.msg_nn and self.msg_nn_include_edge_attr:
-            xtransform = self.msg_gen(
+            xtransform = self.msg_nn(
                 torch.hstack(
                     [x_j]
                     + ([glo_ftx_mtx_j] if self.msg_nn_include_global else [])

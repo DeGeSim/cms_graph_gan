@@ -1,12 +1,12 @@
 import pytest
 import torch
 
-from fgsim.models.subnetworks.gen_deeptree_pc.tree import Node
+from fgsim.models.branching.node import Node
 
 
 # The tree is initialized with a root node, which has two children.
 # The root node has two children, each of which have two children.
-class Tree:
+class ExampleTree:
     def __init__(self):
         #   /b -d
         # a-
@@ -25,8 +25,8 @@ class Tree:
 
 
 @pytest.fixture
-def tree() -> Tree:
-    return Tree()
+def tree() -> ExampleTree:
+    return ExampleTree()
 
 
 class TestTree:

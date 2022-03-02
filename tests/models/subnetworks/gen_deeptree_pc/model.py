@@ -69,7 +69,7 @@ def test_full_NN_compute_graph(static_objects):
     x_old = graph.x
     for ilevel in range(n_levels):
         if ilevel > 0:
-            leaf = branching_layer.tree[ilevel][0]
+            leaf = branching_layer.tree.tree_lists[ilevel][0]
             pc_leaf_point = graph.x[leaf.idxs[2]]
             sum(pc_leaf_point).backward(retain_graph=True)
 

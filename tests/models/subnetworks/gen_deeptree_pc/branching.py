@@ -4,8 +4,8 @@ import numpy as np
 import pytest
 import torch
 
-from fgsim.models.subnetworks.gen_deeptree_pc.branching import reshape_features
-from fgsim.models.subnetworks.gen_deeptree_pc.tree import Node
+from fgsim.models.branching.branching import reshape_features
+from fgsim.models.branching.node import Node
 
 device = torch.device("cpu")
 
@@ -25,7 +25,7 @@ def test_BranchingLayer_compute_graph(static_objects):
     global_features = static_objects.global_features
 
     new_graph1 = branching_layer(graph, global_features)
-    leaf = branching_layer.tree[1][0]
+    leaf = branching_layer.tree.tree_lists[1][0]
     pc_leaf_point = new_graph1.x[leaf.idxs[2]]
     sum(pc_leaf_point).backward(retain_graph=True)
 
@@ -36,7 +36,7 @@ def test_BranchingLayer_compute_graph(static_objects):
     assert torch.any(graph.x.grad[2] != zero_feature)
 
     new_graph2 = branching_layer(new_graph1, global_features)
-    leaf = branching_layer.tree[2][0]
+    leaf = branching_layer.tree.tree_lists[2][0]
     pc_leaf_point = new_graph2.x[leaf.idxs[2]]
     sum(pc_leaf_point).backward()
 
@@ -105,8 +105,11 @@ def test_BranchingLayer_connectivity_dyn(dyn_objects):
     n_levels = props["n_levels"]
     # Shape
     for ilevel in range(n_levels):
-        n_parents = len(branching_layer.tree[ilevel])
-        assert len(branching_layer.tree[ilevel + 1]) == n_parents * n_branches
+        n_parents = len(branching_layer.tree.tree_lists[ilevel])
+        assert (
+            len(branching_layer.tree.tree_lists[ilevel + 1])
+            == n_parents * n_branches
+        )
 
     for ilevel in range(n_levels):
         # split once
@@ -145,7 +148,7 @@ def test_BranchingLayer_connectivity_dyn(dyn_objects):
                     assert (source, target) in connections
                 recurr_check_connection(child, new_ancestors_idxs)
 
-    recurr_check_connection(branching_layer.tree[0][0], [])
+    recurr_check_connection(branching_layer.tree.tree_lists[0][0], [])
 
 
 # Test the reshaping

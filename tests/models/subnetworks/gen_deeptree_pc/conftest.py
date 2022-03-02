@@ -7,9 +7,10 @@ import torch
 from torch import nn
 from torch_geometric.data import Data
 
-from fgsim.models.subnetworks.gen_deeptree_pc.ancestor_conv import AncestorConv
-from fgsim.models.subnetworks.gen_deeptree_pc.branching import BranchingLayer
-from fgsim.models.subnetworks.gen_deeptree_pc.dyn_hlvs import DynHLVsLayer
+from fgsim.models.branching.branching import BranchingLayer
+from fgsim.models.branching.tree import Tree
+from fgsim.models.layer.ancestor_conv import AncestorConv
+from fgsim.models.pooling.dyn_hlvs import DynHLVsLayer
 
 device = torch.device("cpu")
 
@@ -50,16 +51,20 @@ def object_gen(props: Dict[str, int]) -> DTColl:
         device=device,
     )
 
-    branching_layer = BranchingLayer(
+    tree = Tree(
         n_levels=n_levels,
         n_events=n_events,
         n_features=n_features,
         n_branches=n_branches,
+        device=device,
+    )
+
+    branching_layer = BranchingLayer(
+        tree=tree,
         proj_nn=nn.Sequential(
             nn.Linear(n_features + n_global, n_features * n_branches),
             nn.ReLU(),
         ),
-        device=device,
     ).to(device)
 
     dyn_hlvs_layer = DynHLVsLayer(
@@ -75,15 +80,8 @@ def object_gen(props: Dict[str, int]) -> DTColl:
     ).to(device)
 
     ancestor_conv_layer = AncestorConv(
-        msg_gen=nn.Sequential(
-            nn.Linear(n_features + n_global + 1, n_features),
-            nn.ReLU(),
-        ),
-        update_nn=nn.Sequential(
-            # agreegated features + previous feature vector + global
-            nn.Linear(2 * n_features + n_global, n_features),
-            nn.ReLU(),
-        ),
+        n_features=n_features,
+        n_global=n_global,
     ).to(device)
     return DTColl(
         props=props,
