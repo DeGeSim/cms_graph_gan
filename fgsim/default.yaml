@@ -94,7 +94,6 @@ validation:
     metrics:
         hlv_w1:
             factor: 1.0
-            function_file: hlv_w1
             wgrad: False
             foreach_hlv: True
 testing:

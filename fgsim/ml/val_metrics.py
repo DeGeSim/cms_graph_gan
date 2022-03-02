@@ -1,9 +1,10 @@
 """Dynamically import the losses"""
 import importlib
-from typing import Callable, Dict
+from typing import Callable, Dict, Optional
 
 import numpy as np
 import torch
+from omegaconf import DictConfig
 
 from fgsim.config import conf
 from fgsim.io.sel_seq import Batch
@@ -17,22 +18,41 @@ class ValidationMetrics:
         self.parts: Dict[str, Callable] = {}
         self._lastlosses: Dict[str, float] = {}
 
-        for lossname, lossconf in conf.validation.metrics.items():
-            assert lossname != "parts"
-            params = lossconf if lossconf is not None else {}
-            filename = (
-                params["function_file"] if "function_file" in params else lossname
-            )
-            if not hasattr(torch.nn, lossname):
-                loss_class = importlib.import_module(
-                    f"fgsim.models.loss.{filename}"
-                ).LossGen
-            else:
-                loss_class = getattr(torch.nn, lossname)
+        for metric_name, metric_conf in conf.validation.metrics.items():
+            assert metric_name != "parts"
+            params = metric_conf if metric_conf is not None else DictConfig({})
+            loss = self.import_metric(metric_name, params)
 
-            loss = loss_class(**params)
-            self.parts[lossname] = loss
-            setattr(self, lossname, loss)
+            self.parts[metric_name] = loss
+            setattr(self, metric_name, loss)
+
+    def import_metric(self, metric_name: str, params: DictConfig) -> Callable:
+        MetricClass: Optional = None
+        for import_path in [
+            f"torch.nn.{metric_name}",
+            f"fgsim.models.metrics.{metric_name}",
+        ]:
+            try:
+                model_module = importlib.import_module(import_path)
+                # Check if it is a class
+                if not isinstance(model_module, type):
+                    if not hasattr(model_module, "LossGen"):
+                        raise ModuleNotFoundError
+                    else:
+                        MetricClass = model_module.LossGen
+                else:
+                    MetricClass = model_module
+
+                break
+            except ModuleNotFoundError:
+                MetricClass = None
+
+        if MetricClass is None:
+            raise ImportError
+
+        metric = MetricClass(**params)
+
+        return metric
 
     def __call__(self, holder, batch: Batch) -> None:
         # During the validation, this function is called once per batch.
