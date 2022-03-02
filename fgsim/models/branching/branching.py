@@ -38,14 +38,15 @@ class BranchingLayer(nn.Module):
         # Clone everything to avoid changing the input object
 
         x = graph.x.clone()
-        if not hasattr(graph, "isplit"):
-            isplit = 0
+        if not hasattr(graph, "level_cur"):
+            level_cur = 1
         else:
-            isplit = graph.isplit
+            level_cur = graph.level_cur + 1
         del graph
 
         tree = self.tree.tree_lists
-        n_parents = len(tree[isplit])
+        parents = tree[level_cur - 1]
+        n_parents = len(parents)
         n_events = self.tree.n_events
         n_branches = self.tree.n_branches
         n_features = self.tree.n_features
@@ -53,7 +54,7 @@ class BranchingLayer(nn.Module):
         edge_attrs_p_level = self.tree.edge_attrs_p_level
 
         # Compute the new feature vectors:
-        parents_idxs = torch.cat([parent.idxs for parent in tree[isplit]])
+        parents_idxs = torch.cat([parent.idxs for parent in parents])
         # for the parents indeces generate a matrix where
         # each row is the global vector of the respective event
         parent_global = global_features[parents_idxs % n_events, :]
@@ -78,9 +79,9 @@ class BranchingLayer(nn.Module):
         )
         new_graph = Data(
             x=torch.cat([x, children_ftxs]),
-            edge_index=torch.hstack(edge_index_p_level[: isplit + 1]),
-            edge_attr=torch.hstack(edge_attrs_p_level[: isplit + 1]),
-            isplit=isplit + 1,
+            edge_index=torch.hstack(edge_index_p_level[: level_cur + 1]),
+            edge_attr=torch.hstack(edge_attrs_p_level[: level_cur + 1]),
+            level_cur=level_cur,
         )
         new_graph.event = torch.arange(
             n_events, dtype=torch.long, device=device

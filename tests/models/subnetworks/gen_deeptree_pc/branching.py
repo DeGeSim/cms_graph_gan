@@ -104,11 +104,10 @@ def test_BranchingLayer_connectivity_dyn(dyn_objects):
     n_events = props["n_events"]
     n_levels = props["n_levels"]
     # Shape
-    for ilevel in range(n_levels):
-        n_parents = len(branching_layer.tree.tree_lists[ilevel])
+    for ilevel in range(1, n_levels):
+        n_parents = len(branching_layer.tree.tree_lists[ilevel - 1])
         assert (
-            len(branching_layer.tree.tree_lists[ilevel + 1])
-            == n_parents * n_branches
+            len(branching_layer.tree.tree_lists[ilevel]) == n_parents * n_branches
         )
 
     for ilevel in range(n_levels):

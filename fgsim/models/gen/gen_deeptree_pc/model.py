@@ -42,7 +42,9 @@ class ModelClass(nn.Module):
         self.branching_indp = branching_indp
 
         # Calculate the output points
-        self.output_points = sum([n_branches ** i for i in range(self.n_levels)])
+        self.output_points = sum(
+            [n_branches ** i for i in range(self.n_levels - 1)]
+        )
         logger.debug(f"Generator output will be {self.output_points}")
         if conf.loader.max_points > self.output_points:
             raise RuntimeError(
@@ -52,8 +54,10 @@ class ModelClass(nn.Module):
         conf.models.gen.output_points = self.output_points
 
         self.dyn_hlvs_layer = DynHLVsLayer(
-            pre_nn=dnn_gen(self.n_features, self.n_features, n_layers=4),
-            post_nn=dnn_gen(self.n_features * 2, self.n_global, n_layers=4),
+            pre_nn=dnn_gen(self.n_features, self.n_features, n_layers=4).to(device),
+            post_nn=dnn_gen(self.n_features * 2, self.n_global, n_layers=4).to(
+                device
+            ),
             n_events=n_events,
         )
 
@@ -72,11 +76,11 @@ class ModelClass(nn.Module):
                     self.n_features + n_global,
                     self.n_features * n_branches,
                     n_layers=4,
-                ),
+                ).to(device),
             )
 
         if self.branching_indp:
-            self.conv_layers = [
+            self.branching_layers = [
                 gen_branching_layer() for _ in range(self.n_levels - 1)
             ]
         else:
@@ -90,14 +94,16 @@ class ModelClass(nn.Module):
                 from torch_geometric.nn.conv import GINConv
 
                 conv = GINConv(
-                    dnn_gen(self.n_features + n_global, self.n_features, n_layers=4)
+                    dnn_gen(
+                        self.n_features + n_global, self.n_features, n_layers=4
+                    ).to(device)
                 )
             elif self.convname == "AncestorConv":
                 conv = AncestorConv(
                     n_features=self.n_features,
                     n_global=n_global,
                     **conv_parem,
-                )
+                ).to(device)
             else:
                 raise ImportError
             return conv
