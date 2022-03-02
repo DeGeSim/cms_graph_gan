@@ -46,8 +46,8 @@ def test_procedure() -> None:
 
     for best_or_last in ["best", "last"]:
         if best_or_last == "best":
-            if not hasattr(holder, "best_model_state"):
-                continue
+            # if not hasattr(holder, "best_model_state"):
+            #     continue
             holder.select_best_model()
         holder.models.eval()
         plot_path = Path(f"{conf.path.run_path}/plots_{best_or_last}/")
@@ -119,6 +119,7 @@ def test_procedure() -> None:
             sim=sim_batch[0].x.numpy(),
             gen=gen_batch[0].x.numpy(),
             outputpath=plot_path / f"xyscatter_single.pdf",
+            title="Scatter event",
         )
         with train_log.experiment.test():
             train_log.experiment.log_figure(
@@ -129,6 +130,7 @@ def test_procedure() -> None:
             sim=scatter_mean(sim_batch.x, sim_batch.batch, dim=0).numpy(),
             gen=scatter_mean(gen_batch.x, gen_batch.batch, dim=0).numpy(),
             outputpath=plot_path / f"xyscatter_batch_means.pdf",
+            title="Scatter event means",
         )
         with train_log.experiment.test():
             train_log.experiment.log_figure(

@@ -6,7 +6,9 @@ import pandas as pd
 import seaborn as sns
 
 
-def xyscatter(sim: np.array, gen: np.array, outputpath: Path) -> plt.Figure:
+def xyscatter(
+    sim: np.array, gen: np.array, outputpath: Path, title: str
+) -> plt.Figure:
     np.set_printoptions(formatter={"float_kind": "{:.3g}".format})
     mean_sim = np.around(np.mean(sim, axis=0), 2)
     cov_sim = str(np.around(np.cov(sim, rowvar=0), 2)).replace("\n", "")
@@ -31,7 +33,7 @@ def xyscatter(sim: np.array, gen: np.array, outputpath: Path) -> plt.Figure:
     plt.cla()
     plt.clf()
     g: sns.JointGrid = sns.jointplot(data=df, x="x", y="y", hue="cls", legend=False)
-    g.fig.suptitle("Scatter single event")
+    g.fig.suptitle(title)
     g.figure
     # g.ax_joint.collections[0].set_alpha(0)
     # g.fig.tight_layout()
