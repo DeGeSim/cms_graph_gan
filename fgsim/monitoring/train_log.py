@@ -3,7 +3,7 @@ from torch.utils.tensorboard import SummaryWriter
 
 from fgsim.config import conf
 from fgsim.monitoring.logger import logger
-from fgsim.monitoring.monitor import setup_experiment, setup_writer
+from fgsim.monitoring.monitor import get_writer, setup_experiment
 
 
 class TrainLog:
@@ -13,7 +13,7 @@ class TrainLog:
         if conf.debug:
             return
         self.state = state
-        self.writer: SummaryWriter = setup_writer()
+        self.writer: SummaryWriter = get_writer()
         self.experiment: BaseExperiment = setup_experiment(self.state)
 
     def log_model_graph(self, model):

@@ -1,49 +1,29 @@
-import hashlib
 import os
 import random
 from glob import glob
-from typing import List
 
 import numpy as np
 import torch
 from omegaconf import DictConfig, OmegaConf
 
 from fgsim.utils.cli import args
+from fgsim.utils.oc_resolvers import register_resolvers
+from fgsim.utils.oc_utils import gethash, removekeys
 
-
-# Add a custum resolver to OmegaConf allowing for divisions
-# Give int back if you can:
-def divide(numerator, denominator):
-    if numerator // denominator == numerator / denominator:
-        return numerator // denominator
-    else:
-        return numerator / denominator
-
-
-OmegaConf.register_new_resolver("div", divide, replace=True)
-
-
-def optionlist(options, ol):
-    return DictConfig({item: options[item] for item in ol})
-
-
-OmegaConf.register_new_resolver("optionlist", optionlist, replace=True)
-
-
-def merge(*configs):
-    return OmegaConf.merge(*configs)
-
-
-OmegaConf.register_new_resolver("merge", merge, replace=True)
+register_resolvers()
 
 
 # Load the default settings, overwrite them
 # witht the tag-specific settings and then
 # overwrite those with cli arguments.
+conf: DictConfig
 if args.hash is not None:
-    fn = glob(f"wd/*/{args.hash}/full_config.yaml")[0]
+    try:
+        fn = glob(f"wd/*/{args.hash}/full_config.yaml")[0]
+    except IndexError:
+        raise IndexError("No such {args.hash} hash!")
     conf = OmegaConf.load(fn)
-    conf["command"] = args.command
+    conf["command"] = str(args.command)
 else:
     with open("fgsim/default.yaml", "r") as fp:
         defaultconf = OmegaConf.load(fp)
@@ -59,57 +39,6 @@ else:
 
     conf = OmegaConf.unsafe_merge(defaultconf, tagconf, vars(args))
 
-
-# Select the CPU/GPU
-if torch.cuda.is_available() and conf["command"] in ["train", "test"]:
-    device = torch.device("cuda:" + str(torch.cuda.device_count() - 1))
-else:
-    device = torch.device("cpu")
-
-# Exclude the keys that do not affect the training
-def removekeys(omconf: DictConfig, excluded_keys: List[str]) -> DictConfig:
-    filtered_omconf = OmegaConf.masked_copy(
-        omconf,
-        [k for k in omconf.keys() if k not in excluded_keys],
-    )
-    return filtered_omconf
-
-
-def dict_to_kv(o, keystr=""):
-    """Converts a nested dict {"a":"foo", "b": {"foo":"bar"}} to \
-    [("a","foo"),("b.foo","bar")]."""
-    if hasattr(o, "keys"):
-        outL = []
-        for k in o.keys():
-            elemres = dict_to_kv(o[k], keystr + str(k) + ".")
-            if (
-                len(elemres) == 2
-                and type(elemres[0]) == str
-                and type(elemres[1]) == str
-            ):
-                outL.append(elemres)
-            else:
-                for e in elemres:
-                    outL.append(e)
-        return outL
-    elif hasattr(o, "__str__"):
-
-        return (keystr.strip("."), str(o))
-    else:
-        raise ValueError
-
-
-# convert the config to  key-value pairs
-# sort them, hash the results
-def gethash(omconf: DictConfig) -> str:
-    OmegaConf.resolve(omconf)
-    kv_list = [f"{e[0]}: {e[1]}" for e in dict_to_kv(omconf)]
-    kv_str = "\n".join(sorted(kv_list))
-    omhash = str(hashlib.sha1(kv_str.encode()).hexdigest()[:7])
-    return omhash
-
-
-if args.hash is None:
     # remove the dependency on hash and loader hash to be able to resolve
     conf_without_paths = removekeys(
         conf,
@@ -143,15 +72,13 @@ if args.hash is None:
 
     conf["hash"] = gethash(hyperparameters)
 
-    os.makedirs(conf.path.run_path, exist_ok=True)
-
-    if conf.command == "train":
-        OmegaConf.save(hyperparameters, conf.path.train_config)
-
-    # Infer the parameters here
-    OmegaConf.resolve(conf)
-    OmegaConf.save(conf, conf.path.full_config)
 
 torch.manual_seed(conf.seed)
 np.random.seed(conf.seed)
 random.seed(conf.seed)
+
+# Select the CPU/GPU
+if torch.cuda.is_available() and conf["command"] in ["train", "test"]:
+    device = torch.device("cuda:" + str(torch.cuda.device_count() - 1))
+else:
+    device = torch.device("cpu")
