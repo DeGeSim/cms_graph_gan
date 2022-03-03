@@ -42,9 +42,7 @@ class ModelClass(nn.Module):
         self.branching_indp = branching_indp
 
         # Calculate the output points
-        self.output_points = sum(
-            [n_branches ** i for i in range(self.n_levels - 1)]
-        )
+        self.output_points = sum([n_branches ** i for i in range(self.n_levels)])
         logger.debug(f"Generator output will be {self.output_points}")
         if conf.loader.max_points > self.output_points:
             raise RuntimeError(
