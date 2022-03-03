@@ -2,12 +2,12 @@
 import importlib
 import os
 import sys
+from pathlib import Path
 
-import comet_ml
-import pretty_errors
-from omegaconf import OmegaConf
+import comet_ml  # noqa
+import pretty_errors  # noqa
 
-from fgsim.monitoring.logger import logger
+from fgsim.utils.cli import args
 
 # Add the project to the path, -> `import fgsim.x`
 sys.path.append(os.path.dirname(os.path.realpath(".")))
@@ -50,30 +50,63 @@ def main():
     #     logger.info(f"Unloading {modulename}")
     #     del sys.modules[modulename]
     # logger.info("Unloading complete")
+
+    # If we are running from tags, run the setup
+    if args.command == "train" and args.hash is None:
+        from fgsim.commands.setup import setup_procedure
+
+        setup_procedure()
+    if args.command == "setup":
+        from fgsim.commands.setup import setup_procedure
+
+        print(setup_procedure())
+        exit()
+
+    # If it is called by the hash, manipulate then
+    if args.hash is not None:
+        from fgsim.config import conf
+
+        new_fgsim_path = str((Path(conf.path.run_path)).absolute())
+        del conf
+        del sys.modules["fgsim"]
+        #
+        pathlist = [e for e in sys.path if e.endswith("fgsim")]
+        # make sure that this is unique
+        if len(pathlist) != 1:
+            raise Exception
+        # remove the old path
+        old_path = pathlist[0]
+        sys.path.remove("")
+        sys.path.remove(pathlist[0])
+        sys.path.append(new_fgsim_path)
+        from fgsim.monitoring.logger import logger
+
+        logger.warning(f"Replaced path {old_path} with {new_fgsim_path}.")
+
     from fgsim.config import conf
+    from fgsim.monitoring.logger import logger
 
     logger.warning(
         f"Using hash {conf['hash']} and loader_hash {conf['loader_hash']}"
     )
+    logger.info(f"Running command {args.command}")
 
-    logger.info(f"Running command {conf['command']}")
-
-    if conf["command"] == "train":
+    if args.command == "train":
         from fgsim.commands.training import training_procedure
 
         training_procedure()
 
-    if conf["command"] == "test":
+    if args.command == "test":
         from fgsim.commands.testing import test_procedure
 
         test_procedure()
 
-    if conf["command"] == "preprocess":
+    if args.command == "preprocess":
         from fgsim.commands.preprocess import preprocess_procedure
 
         preprocess_procedure()
 
-    if conf["command"] == "loadfile":
+    if args.command == "loadfile":
         file_name = str(conf.file_to_load)
         import re
 
@@ -81,7 +114,7 @@ def main():
         file_name = re.sub("/", ".", file_name)
         importlib.import_module(file_name, "fgsim")
 
-    if conf["command"] == "dump":
+    if args.command == "dump":
         from fgsim.commands.dump import dump_procedure
 
         dump_procedure()

@@ -15,13 +15,13 @@ group.add_argument("--hash")
 parser.add_argument(
     "--debug",
     dest="debug",
-    help="Dump the old model",
     action="store_true",
     default=False,
     required=False,
 )
 subparsers = parser.add_subparsers(help="Available Commands", dest="command")
 
+setup_parser = subparsers.add_parser("setup")
 train_parser = subparsers.add_parser("train")
 test_parser = subparsers.add_parser("test")
 preprocess_parser = subparsers.add_parser("preprocess")
