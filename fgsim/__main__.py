@@ -51,12 +51,9 @@ def main():
     #     del sys.modules[modulename]
     # logger.info("Unloading complete")
 
-    # If we are running from tags, run the setup
-    if args.command == "train" and args.hash is None:
-        from fgsim.commands.setup import setup_procedure
-
-        setup_procedure()
     if args.command == "setup":
+        if args.hash is not None:
+            raise Exception
         from fgsim.commands.setup import setup_procedure
 
         print(setup_procedure())
