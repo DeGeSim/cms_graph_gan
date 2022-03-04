@@ -4,7 +4,7 @@ from shutil import copytree
 
 from omegaconf import OmegaConf
 
-from fgsim.config import conf, hyperparameters
+from fgsim.config import conf
 
 
 def setup_procedure() -> str:
@@ -15,11 +15,6 @@ def setup_procedure() -> str:
 
     os.makedirs(conf.path.run_path, exist_ok=True)
 
-    if conf.command == "train":
-        OmegaConf.save(hyperparameters, conf.path.train_config)
-
-    # Infer the parameters here
-    OmegaConf.resolve(conf)
     OmegaConf.save(conf, conf.path.full_config)
 
     # Backup the python files

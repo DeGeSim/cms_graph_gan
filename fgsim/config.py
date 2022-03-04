@@ -71,6 +71,8 @@ else:
     )
 
     conf["hash"] = gethash(hyperparameters)
+    # Infer the parameters here
+    OmegaConf.resolve(conf)
 
 
 torch.manual_seed(conf.seed)
