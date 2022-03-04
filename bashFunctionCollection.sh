@@ -145,12 +145,12 @@ function _logandrun() {
     start=`date +%s`
     #######
     # execute the command and log it
-    set -e
-    echo Running $@
-    $@ 2>&1 > >( tee -a $logfile ) &
-    export WORKERPID=$!
-    trap "echo _logandrun got SIGTERM, killing $WORKERPID && kill $WORKERPID" SIGINT SIGTERM
-    wait $WORKERPID
+    # set -e
+    # $@ 2>&1 > >( tee -a $logfile ) &
+    # export WORKERPID=$!
+    # trap "echo _logandrun got SIGTERM, killing $WORKERPID && kill $WORKERPID" SIGINT SIGTERM
+    # wait $WORKERPID
+    $@ 2>&1 > >( tee -a $logfile )
     # capture the return code of the process we waited for
     return_code=$?
     set +e

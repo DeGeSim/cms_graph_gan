@@ -113,7 +113,6 @@ class SigTermHandel:
         self.loader = loader
         signal.signal(signal.SIGTERM, self.handle)
         signal.signal(signal.SIGINT, self.handle)
-        print("Handle Initialized")
 
     def handle(self, _signo, _stack_frame):
         print("SIGTERM detected")

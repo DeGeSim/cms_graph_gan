@@ -1,4 +1,3 @@
-from pathlib import Path
 from typing import List
 
 import comet_ml
@@ -7,7 +6,6 @@ from omegaconf.dictconfig import DictConfig
 from torch.utils.tensorboard.writer import SummaryWriter
 
 from fgsim.config import conf
-from fgsim.monitoring.logger import logger
 from fgsim.utils.oc_utils import dict_to_kv
 
 comet_conf = OmegaConf.load("fgsim/comet.yaml")
@@ -60,10 +58,8 @@ def experiment_from_hash(hash) -> comet_ml.ExistingExperiment:
     elif len(qres) > 1:
         raise ValueError("Experiment exist multiple times in comet.ml")
 
-    logger.warning("Found existing experiment.")
     exp_key = qres[0].id
 
-    logger.info(f"Experiment ID {exp_key}")
     experiment = experiment_from_key(exp_key)
     return experiment
 
@@ -77,15 +73,10 @@ def get_experiment(state: DictConfig) -> comet_ml.ExistingExperiment:
 
 
 def setup_experiment() -> None:
-    """Tries to find for an existing experiment with the given hash and \
- -- if unsuccessfull -- generates a new one."""
-    try:
-        _ = get_exps_with_hash(conf.hash)
-        return
-    except ValueError:
-        pass
+    """Generates a new experiment."""
+    if len(get_exps_with_hash(conf.hash)):
+        raise Exception("Experiment exists")
 
-    logger.warning("Creating new experiment.")
     new_api_exp = api._create_experiment(
         workspace=comet_conf.workspace, project_name=project_name
     )
@@ -99,10 +90,10 @@ def setup_experiment() -> None:
     new_api_exp.log_parameters(hyperparameters_keyval_list)
     new_api_exp.add_tags(list(set(conf.tag.split("_"))))
 
-    exp_key = new_api_exp.id
+    # exp_key = new_api_exp.id
 
-    experiment = experiment_from_key(exp_key)
-    experiment.log_code(Path(conf.path.run_path) / "fgsim")
+    # experiment = experiment_from_key(exp_key)
+    # experiment.log_code(Path(conf.path.run_path) / "fgsim")
 
 
 def get_writer():

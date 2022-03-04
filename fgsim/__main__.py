@@ -60,21 +60,23 @@ def main():
         exit()
 
     # If it is called by the hash, manipulate then
-    if args.hash is not None:
+    if args.hash is not None and args.command != "dump":
         from fgsim.config import conf
 
         new_fgsim_path = str((Path(conf.path.run_path)).absolute())
+        if not (Path(conf.path.run_path) / "fgsim").is_dir():
+            raise Exception("setup has not been executed")
         del conf
         del sys.modules["fgsim"]
         #
         pathlist = [e for e in sys.path if e.endswith("fgsim")]
         # make sure that this is unique
-        if len(pathlist) != 1:
+        if len({e for e in pathlist}) != 1:
             raise Exception
         # remove the old path
         old_path = pathlist[0]
-        sys.path.remove("")
-        sys.path.remove(pathlist[0])
+        for path in pathlist:
+            sys.path.remove(path)
         sys.path.append(new_fgsim_path)
         from fgsim.monitoring.logger import logger
 
