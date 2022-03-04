@@ -79,32 +79,31 @@ class ValidationMetrics:
                         self._lastlosses[lossname] = 0
                     self._lastlosses[lossname] += float(loss(holder, batch))
 
-    def log_losses(self, state) -> None:
+    def log_losses(self, history) -> None:
+        val_metrics = history["val_metrics"]
         for lossname, loss in self._lastlosses.items():
             # Update the state
-            if lossname not in state.val_metrics:
-                state.val_metrics[lossname] = []
-            state.val_metrics[lossname].append(loss)
+            if lossname not in val_metrics:
+                val_metrics[lossname] = []
+            val_metrics[lossname].append(loss)
             # Reset to 0
             self._lastlosses[lossname] = 0
 
         # Log the validation loss
         if not conf.debug:
             with self.train_log.experiment.validate():
-                for lossname, loss_history in state.val_metrics.items():
+                for lossname, loss_history in val_metrics.items():
                     self.train_log.log_loss(
                         f"{self.name}.{lossname}", loss_history[-1]
                     )
 
         # compute the stop_metric
-        loss_history = np.stack(
-            [state.val_metrics[metric] for metric in state.val_metrics]
-        )
+        loss_history = np.stack([val_metrics[metric] for metric in val_metrics])
         ratio_better = np.apply_along_axis(
             lambda row: np.array([np.mean(row <= e) for e in row]), 1, loss_history
         ).mean(0)
         ratio_better = [float(val) for val in ratio_better]
-        state.stop_crit = list(ratio_better)
+        history["stop_crit"] = list(ratio_better)
         if not conf.debug:
             for ivalstep in range(len(ratio_better)):
                 # with self.train_log.experiment.validate():

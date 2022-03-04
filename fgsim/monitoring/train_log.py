@@ -1,20 +1,24 @@
+from typing import Dict
+
 from comet_ml.experiment import BaseExperiment
+from omegaconf import DictConfig
 from torch.utils.tensorboard import SummaryWriter
 
 from fgsim.config import conf
 from fgsim.monitoring.logger import logger
-from fgsim.monitoring.monitor import get_writer, setup_experiment
+from fgsim.monitoring.monitor import get_experiment, get_writer
 
 
 class TrainLog:
     """Initialized with the `holder`, provides the logging with cometml/tensorboard."""
 
-    def __init__(self, state):
+    def __init__(self, state, history):
         if conf.debug:
             return
-        self.state = state
+        self.state: DictConfig = state
+        self.history: Dict = history
         self.writer: SummaryWriter = get_writer()
-        self.experiment: BaseExperiment = setup_experiment(self.state)
+        self.experiment: BaseExperiment = get_experiment(self.state)
 
     def log_model_graph(self, model):
         if conf.debug:

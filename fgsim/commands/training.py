@@ -49,7 +49,7 @@ def training_step(
 
 def training_procedure() -> None:
     holder: Holder = Holder()
-    if early_stopping(holder.state):
+    if early_stopping(holder.history):
         exit()
     train_log: TrainLog = holder.train_log
     loader: QueuedDataLoader = QueuedDataLoader()
@@ -60,11 +60,11 @@ def training_procedure() -> None:
 
     exitcode = 0
     try:
-        while not early_stopping(holder.state):
-            if not holder.checkpoint_loaded and not conf.debug:
-                holder.models.eval()
-                validate(holder, loader)
-                holder.save_checkpoint()
+        if not holder.checkpoint_loaded and not conf.debug:
+            holder.models.eval()
+            validate(holder, loader)
+            holder.save_checkpoint()
+        while not early_stopping(holder.history):
             # switch model in training mode
             holder.models.train()
             for _ in tqdm(

@@ -49,19 +49,21 @@ class SubNetworkLoss:
         lossesdict = {
             lossname: loss(holder, batch) for lossname, loss in self.parts.items()
         }
-        losses_state = holder.state.losses
+        losses_history = holder.history["losses"]
         # write the loss to state so it can be logged later
         for lossname, loss in lossesdict.items():
             if isinstance(loss, float):
-                self.log_loss(losses_state, loss, lossname)
+                self.log_loss(losses_history, loss, lossname)
             else:
                 # For the case the loss return Dict[str,float]
                 assert isinstance(loss, dict)
                 # loss the sublosses
                 for sublossname, sublossvalue in loss.items():
-                    self.log_loss(losses_state, sublossvalue, lossname, sublossname)
+                    self.log_loss(
+                        losses_history, sublossvalue, lossname, sublossname
+                    )
                 sumloss = sum(loss.values())
-                self.log_loss(losses_state, sumloss, lossname, "sum")
+                self.log_loss(losses_history, sumloss, lossname, "sum")
 
         # Some of the losses are in dicts, other are not so we need to upack them
         summedloss = sum(
@@ -75,7 +77,7 @@ class SubNetworkLoss:
 
     def log_loss(
         self,
-        losses_state: DictConfig,
+        losses_history: Dict,
         value: float,
         lossname: str,
         sublossname: Optional[str] = None,
@@ -93,18 +95,18 @@ class SubNetworkLoss:
         self.train_log.log_loss(lossstr, value)
         # Make sure the fields in the state are available
         if sublossname is None:
-            if lossname not in losses_state[self.name]:
-                losses_state[self.name][lossname] = []
+            if lossname not in losses_history[self.name]:
+                losses_history[self.name][lossname] = []
         else:
-            if lossname not in losses_state[self.name]:
-                losses_state[self.name][lossname] = {}
-            if sublossname not in losses_state[self.name][lossname]:
-                losses_state[self.name][lossname][sublossname] = []
+            if lossname not in losses_history[self.name]:
+                losses_history[self.name][lossname] = {}
+            if sublossname not in losses_history[self.name][lossname]:
+                losses_history[self.name][lossname][sublossname] = []
         # Write values to the state
         if sublossname is None:
-            losses_state[self.name][lossname].append(value)
+            losses_history[self.name][lossname].append(value)
         else:
-            losses_state[self.name][lossname][sublossname].append(value)
+            losses_history[self.name][lossname][sublossname].append(value)
 
 
 class LossesCol:

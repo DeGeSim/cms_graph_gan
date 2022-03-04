@@ -23,19 +23,6 @@ from fgsim.utils.memory import gpu_mem_monitor
 from fgsim.utils.push_to_old import push_to_old
 
 
-def start_training_state() -> DictConfig:
-    return OmegaConf.create(
-        {
-            "epoch": 0,
-            "processed_events": 0,
-            "grad_step": 0,
-            "losses": {snwname: {} for snwname in conf.models},
-            "val_metrics": {},
-            "complete": False,
-        }
-    )
-
-
 class Holder:
     """ "This class holds the models, the loss functions and the optimizers.
     It manages the checkpointing and holds a member 'state' that contains
@@ -43,10 +30,24 @@ class Holder:
 
     # Nameing convention snw = snw
     def __init__(self) -> None:
-        self.state: DictConfig = start_training_state()
-        self.train_log = TrainLog(self.state)
+        # Human readable, few values
+        self.state: DictConfig = OmegaConf.create(
+            {
+                "epoch": 0,
+                "processed_events": 0,
+                "grad_step": 0,
+                "complete": False,
+            }
+        )
+        self.history = {
+            "losses": {snwname: {} for snwname in conf.models},
+            "val_metrics": {},
+        }
+        self.train_log = TrainLog(self.state, self.history)
 
         self.models: SubNetworkCollector = SubNetworkCollector(conf.models)
+        with gpu_mem_monitor("models"):
+            self.models = self.models.float().to(device)
         self.train_log.log_model_graph(self.models)
         self.losses: LossesCol = LossesCol(self.train_log)
         self.val_loss: ValidationMetrics = ValidationMetrics(self.train_log)
@@ -56,23 +57,14 @@ class Holder:
         self.checkpoint_loaded = False
         self.__load_checkpoint()
 
-        with gpu_mem_monitor("models"):
-            self.models = self.models.float().to(device)
-        # Hack to move the optim parameters to the correct device
-        # https://github.com/pytorch/pytorch/issues/8741
-        with gpu_mem_monitor("optims"):
-            self.optims.load_state_dict(self.optims.state_dict())
+        # # Hack to move the optim parameters to the correct device
+        # # https://github.com/pytorch/pytorch/issues/8741
+        # with gpu_mem_monitor("optims"):
+        #     self.optims.load_state_dict(self.optims.state_dict())
 
-        state_filtered = OmegaConf.create(
-            {key: self.state[key] for key in self.state if "loss" not in key}
-        )
         logger.warning(
-            f"Starting training with state {str(OmegaConf.to_yaml(state_filtered))}"
+            f"Starting training with state {str(OmegaConf.to_yaml(self.state))}"
         )
-
-        if self.state.complete and conf["command"] == "train":
-            logger.warning("Training has been completed, stopping.")
-            exit(0)
 
         # Keep the generated samples ready, to be accessed by the losses
         self.gen_points: Batch = None
@@ -85,7 +77,6 @@ class Holder:
         ):
             logger.warning("Proceeding without loading checkpoint.")
             return
-
         self.state = OmegaConf.load(conf.path.state)
         # Once the state has been loaded from the checkpoint,
         #  update the logger state
@@ -98,10 +89,11 @@ class Holder:
         self.models.load_state_dict(checkpoint["models"])
         self.optims.load_state_dict(checkpoint["optims"])
         self.best_model_state = checkpoint["best_model"]
+        self.history = checkpoint["history"]
         self.checkpoint_loaded = True
 
         logger.warning(
-            "Loading model from checkpoint at"
+            "Loaded model from checkpoint at"
             + f" epoch {self.state['epoch']}"
             + f" grad_step {self.state['grad_step']}."
         )
@@ -117,6 +109,7 @@ class Holder:
                 "models": self.models.state_dict(),
                 "optims": self.optims.state_dict(),
                 "best_model": self.best_model_state,
+                "history": self.history,
             },
             conf.path.checkpoint,
         )

@@ -23,10 +23,10 @@ def validate(holder: Holder, loader: QueuedDataLoader) -> None:
             holder.reset_gen_points()
             holder.gen_points = batch_tools.batch_compute_hlvs(holder.gen_points)
             holder.val_loss(holder, batch)
-    holder.val_loss.log_losses(holder.state)
+    holder.val_loss.log_losses(holder.history)
 
-    min_stop_crit = min(holder.state.stop_crit)
-    if min_stop_crit == holder.state.stop_crit[-1]:
+    min_stop_crit = min(holder.history["stop_crit"])
+    if min_stop_crit == holder.history["stop_crit"][-1]:
         holder.state.best_grad_step = holder.state["grad_step"]
         holder.best_model_state = deepcopy(holder.models.state_dict())
 
