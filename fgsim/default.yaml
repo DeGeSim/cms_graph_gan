@@ -46,13 +46,7 @@ model_param_options:
 
 conv_options:
     GINConv: {}
-    AncestorConv:
-        add_self_loops: True
-        msg_nn: True
-        msg_nn_include_edge_attr: False
-        msg_nn_include_global: True
-        upd_nn: True
-        upd_nn_include_global: True
+    AncestorConv: {}
 
 
 loss_options:
