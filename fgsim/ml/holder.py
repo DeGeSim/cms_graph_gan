@@ -7,7 +7,6 @@ import os
 from datetime import datetime
 
 import torch
-import torcheck
 from omegaconf import OmegaConf
 from omegaconf.dictconfig import DictConfig
 
@@ -73,11 +72,13 @@ class Holder:
         self._last_checkpoint_time = datetime.now()
 
         # checking
-        for partname, model in self.models.parts.items():
-            torcheck.register(self.optims[partname])
-            torcheck.add_module_changing_check(model, module_name=partname)
-            torcheck.add_module_inf_check(model, module_name=partname)
-            torcheck.add_module_nan_check(model, module_name=partname)
+        # import torcheck
+
+        # for partname, model in self.models.parts.items():
+        #     torcheck.register(self.optims[partname])
+        #     torcheck.add_module_changing_check(model, module_name=partname)
+        #     # torcheck.add_module_inf_check(model, module_name=partname)
+        #     # torcheck.add_module_nan_check(model, module_name=partname)
 
     def __load_checkpoint(self):
         if not (

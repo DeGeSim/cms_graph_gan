@@ -30,6 +30,7 @@ install_requirements = [
     "comet-ml",
     "tensorboard",
     "tblib",
+    "torcheck",
 ]
 
 extras = {
