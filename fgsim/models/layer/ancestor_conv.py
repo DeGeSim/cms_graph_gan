@@ -19,10 +19,10 @@ class AncestorConv(MessagePassing):
         n_features: int,
         n_global: int,
         add_self_loops: bool = True,
-        msg_nn: bool = True,
+        msg_nn_bool: bool = True,
         msg_nn_include_edge_attr: bool = False,
         msg_nn_include_global: bool = True,
-        upd_nn: bool = True,
+        upd_nn_bool: bool = True,
         upd_nn_include_global: bool = True,
     ):
 
@@ -30,15 +30,13 @@ class AncestorConv(MessagePassing):
         self.n_features = n_features
         self.n_global = n_global
         self.add_self_loops = add_self_loops
-        self.msg_nn = msg_nn
         self.msg_nn_include_edge_attr = msg_nn_include_edge_attr
         self.msg_nn_include_global = msg_nn_include_global
-        self.upd_nn = upd_nn
         self.upd_nn_include_global = upd_nn_include_global
 
         # MSG NN
-        self.msg_nn: Union[torch.Module, torch.nn.Identity] = torch.nn.Identity()
-        if msg_nn:
+        self.msg_nn: Union[torch.nn.Module, torch.nn.Identity] = torch.nn.Identity()
+        if msg_nn_bool:
             self.msg_nn = dnn_gen(
                 n_features
                 + (n_global if msg_nn_include_global else 0)
@@ -51,7 +49,7 @@ class AncestorConv(MessagePassing):
 
         # UPD NN
         self.update_nn: Union[torch.Module, torch.nn.Identity] = torch.nn.Identity()
-        if upd_nn:
+        if upd_nn_bool:
             self.update_nn = dnn_gen(
                 2 * n_features + (n_global if upd_nn_include_global else 0),
                 n_features,
@@ -66,8 +64,8 @@ class AncestorConv(MessagePassing):
         x: torch.Tensor,
         edge_index: torch.Tensor,
         event: torch.Tensor,
-        edge_attr: Optional[torch.Tensor],
-        global_features: Optional[torch.Tensor],
+        edge_attr: Optional[torch.Tensor] = None,
+        global_features: Optional[torch.Tensor] = None,
     ):
         if self.msg_nn_include_edge_attr:
             assert edge_attr is not None
@@ -75,12 +73,18 @@ class AncestorConv(MessagePassing):
             assert global_features is not None
         num_nodes = x.size(0)
         if self.add_self_loops:
-            edge_index, edge_attr = add_self_loops(
-                edge_index=edge_index,
-                edge_attr=edge_attr,
-                fill_value=0,
-                num_nodes=num_nodes,
-            )
+            if edge_attr is not None:
+                edge_index, edge_attr = add_self_loops(
+                    edge_index=edge_index,
+                    edge_attr=edge_attr,
+                    fill_value=0,
+                    num_nodes=num_nodes,
+                )
+            else:
+                edge_index, _ = add_self_loops(
+                    edge_index=edge_index,
+                    num_nodes=num_nodes,
+                )
 
         # Generate a global feature vector in shape of x
         glo_ftx_mtx = (
