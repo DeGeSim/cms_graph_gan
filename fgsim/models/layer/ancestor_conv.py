@@ -72,12 +72,12 @@ class AncestorConv(MessagePassing):
         num_nodes = x.shape[0]
 
         num_edges = edge_index.shape[1]
-        num_events = max(event) + 1
+        num_events = event[-1] + 1
 
         if len(edge_attr) == 0:
             edge_attr = torch.tensor(
                 [], dtype=torch.float, device=x.device
-            ).reshape(-1, num_edges)
+            ).reshape(num_edges, -1)
         if len(global_features) == 0:
             global_features = torch.tensor(
                 [[]], dtype=torch.float, device=x.device

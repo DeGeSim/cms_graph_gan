@@ -191,3 +191,50 @@ def test_reshape_features(n_parents, n_events, n_branches, n_features):
     for i in range(n_parents * n_events):
         assert torch.all(mtx_reshaped[i, :] == i)
     torch.all(torch.arange(n_parents * n_events * n_branches) == mtx_reshaped[:, 0])
+
+
+# def test_branching_by_training():
+#     from torch_geometric.data import Batch, Data
+
+#     from fgsim.models.branching.branching import BranchingLayer, Tree
+#     from fgsim.models.dnn_gen import dnn_gen
+
+#     n_features = 2
+#     n_events = 1
+#     n_branches = 2
+#     n_levels = 3
+#     n_global = 0
+#     device = torch.device("cpu")
+#     tree = Tree(
+#         n_events=n_events,
+#         n_features=n_features,
+#         n_branches=n_branches,
+#         n_levels=n_levels,
+#         device=device,
+#     )
+#     branching_layer = BranchingLayer(
+#         tree=tree,
+#         proj_nn=dnn_gen(
+#             n_features + n_global,
+#             n_features * n_branches,
+#             n_layers=4,
+#         ).to(device),
+#     )
+#     batch = Batch.from_data_list([Data(x=torch.tensor([[1.0, 1.0]]))])
+#     global_features = torch.tensor([[]])
+#     target = torch.tensor([[4.0, 7.0], [5.0, 1.0], [2.0, 2.5], [3.0, 3.5]])
+#     loss_fn = torch.nn.MSELoss()
+#     optimizer = torch.optim.Adam(branching_layer.parameters())
+#     # check the branching layer
+#     for _ in range(10000):
+#         optimizer.zero_grad()
+#         b1 = branching_layer(batch, global_features)
+#         b2 = branching_layer(b1, global_features)
+#         loss = loss_fn(b2.x[3:, :], target)
+#         loss.backward()
+#         optimizer.step()
+#         if _ % 1000 == 0:
+#             print(loss)
+#         if torch.allclose(target, b2.x[3:, :], rtol=1e-4, atol=1e-4):
+#             return
+#     raise Exception

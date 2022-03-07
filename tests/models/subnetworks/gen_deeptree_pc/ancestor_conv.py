@@ -243,3 +243,65 @@ def test_ancestorconv_all_modes():
                             kwargs["edge_attr"] = graph.edge_attr
                             kwargs["global_features"] = global_features
                             ancestor_conv(**kwargs)
+
+
+# def test_ancester_conv_by_training():
+#     from torch_geometric.data import Batch, Data
+#     from torch_geometric.nn.conv import GINConv
+
+#     from fgsim.models.branching.branching import BranchingLayer, Tree
+#     from fgsim.models.dnn_gen import dnn_gen
+#     from fgsim.models.layer.ancestor_conv import AncestorConv
+
+#     n_features = 2
+#     n_events = 1
+#     n_branches = 2
+#     n_levels = 3
+#     n_global = 0
+#     device = torch.device("cpu")
+#     tree = Tree(
+#         n_events=n_events,
+#         n_features=n_features,
+#         n_branches=n_branches,
+#         n_levels=n_levels,
+#         device=device,
+#     )
+#     anc_conv = AncestorConv(
+#         n_features=n_features,
+#         n_global=n_global,
+#         msg_nn_include_global=False,
+#         upd_nn_include_global=False,
+#         msg_nn_include_edge_attr=False,
+#     ).to(device)
+
+#     branching_layer = BranchingLayer(
+#         tree=tree,
+#         proj_nn=dnn_gen(
+#             n_features + n_global,
+#             n_features * n_branches,
+#             n_layers=4,
+#         ).to(device),
+#     )
+#     batch = Batch.from_data_list([Data(x=torch.tensor([[1.0, 1.0]]))])
+#     global_features = torch.tensor([[]])
+#     target = torch.tensor([[4.0, 7.0], [5.0, 1.0], [2.0, 2.5], [3.0, 3.5]])
+#     loss_fn = torch.nn.MSELoss()
+#     optimizer = torch.optim.Adam(anc_conv.parameters())
+#     for _ in range(10000):
+#         optimizer.zero_grad()
+#         b1 = branching_layer(batch, global_features)
+#         b2 = branching_layer(b1, global_features)
+#         res = anc_conv(
+#             x=b2.x,
+#             edge_index=b2.edge_index,
+#             event=b2.event,
+#             global_features=global_features,
+#         )
+#         loss = loss_fn(res[3:, :], target)
+#         loss.backward()
+#         optimizer.step()
+#         if _ % 1000 == 0:
+#             print(loss)
+#         if torch.allclose(target, res[3:, :], rtol=1e-4, atol=1e-4):
+#             return
+#     raise Exception
