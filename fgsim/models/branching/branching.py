@@ -80,7 +80,7 @@ class BranchingLayer(nn.Module):
         new_graph = Data(
             x=torch.cat([x, children_ftxs]),
             edge_index=torch.hstack(edge_index_p_level[: level_cur + 1]),
-            edge_attr=torch.hstack(edge_attrs_p_level[: level_cur + 1]),
+            edge_attr=torch.vstack(edge_attrs_p_level[: level_cur + 1]),
             level_cur=level_cur,
         )
         new_graph.event = torch.arange(

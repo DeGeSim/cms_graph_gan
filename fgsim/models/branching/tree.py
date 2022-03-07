@@ -19,11 +19,13 @@ class Tree:
         n_events = self.n_events
         device = self.device
         # initialize the root
+        # shape : 2 x num_edges
         self.edge_index_p_level: List[torch.Tensor] = [
             torch.tensor([[], []], dtype=torch.long, device=device)
         ]
+        # shape : num_edges x 1
         self.edge_attrs_p_level: List[torch.Tensor] = [
-            torch.tensor([], dtype=torch.long, device=device)
+            torch.tensor([], dtype=torch.long, device=device).reshape(0, 1)
         ]
         self.tree_lists: List[List[Node]] = [
             [Node(torch.arange(self.n_events, dtype=torch.long, device=device))]
@@ -84,7 +86,9 @@ class Tree:
                             degree,
                             dtype=torch.long,
                             device=device,
-                        ).repeat(n_branches * n_events)
+                        )
+                        .repeat(n_branches * n_events)
+                        .reshape(-1, 1)
                     )
             self.edge_index_p_level.append(torch.hstack(new_edges))
-            self.edge_attrs_p_level.append(torch.hstack(new_edge_attrs))
+            self.edge_attrs_p_level.append(torch.vstack(new_edge_attrs))

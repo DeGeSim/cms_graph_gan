@@ -1,4 +1,4 @@
-from typing import Optional, Union
+from typing import Union
 
 import torch
 from torch_geometric.nn import MessagePassing
@@ -20,9 +20,9 @@ class AncestorConv(MessagePassing):
         n_global: int,
         add_self_loops: bool = True,
         msg_nn_bool: bool = True,
+        upd_nn_bool: bool = True,
         msg_nn_include_edge_attr: bool = False,
         msg_nn_include_global: bool = True,
-        upd_nn_bool: bool = True,
         upd_nn_include_global: bool = True,
     ):
 
@@ -30,13 +30,15 @@ class AncestorConv(MessagePassing):
         self.n_features = n_features
         self.n_global = n_global
         self.add_self_loops = add_self_loops
+        self.msg_nn_bool = msg_nn_bool
+        self.upd_nn_bool = upd_nn_bool
         self.msg_nn_include_edge_attr = msg_nn_include_edge_attr
         self.msg_nn_include_global = msg_nn_include_global
         self.upd_nn_include_global = upd_nn_include_global
 
         # MSG NN
         self.msg_nn: Union[torch.nn.Module, torch.nn.Identity] = torch.nn.Identity()
-        if msg_nn_bool:
+        if self.msg_nn_bool:
             self.msg_nn = dnn_gen(
                 n_features
                 + (n_global if msg_nn_include_global else 0)
@@ -64,20 +66,40 @@ class AncestorConv(MessagePassing):
         x: torch.Tensor,
         edge_index: torch.Tensor,
         event: torch.Tensor,
-        edge_attr: Optional[torch.Tensor] = None,
-        global_features: Optional[torch.Tensor] = None,
+        edge_attr: torch.Tensor = torch.tensor([]),
+        global_features: torch.Tensor = torch.tensor([]),
     ):
+        num_nodes = x.shape[0]
+
+        num_edges = edge_index.shape[1]
+        num_events = max(event) + 1
+
+        if len(edge_attr) == 0:
+            edge_attr = torch.tensor(
+                [], dtype=torch.float, device=x.device
+            ).reshape(-1, num_edges)
+        if len(global_features) == 0:
+            global_features = torch.tensor(
+                [[]], dtype=torch.float, device=x.device
+            ).reshape(num_events, -1)
+
+        assert x.dim() == global_features.dim() == edge_attr.dim() == 2
+        assert event.dim() == 1
+        assert x.shape[1] == self.n_features
+
+        assert global_features.shape[0] == num_events
+        assert global_features.shape[1] == self.n_global
+
+        assert edge_attr.shape[0] == num_edges
         if self.msg_nn_include_edge_attr:
-            assert edge_attr is not None
-        if self.msg_nn_include_global:
-            assert global_features is not None
-        num_nodes = x.size(0)
+            assert edge_attr.shape[1] != 0
+
         if self.add_self_loops:
-            if edge_attr is not None:
+            if self.msg_nn_include_edge_attr:
                 edge_index, edge_attr = add_self_loops(
                     edge_index=edge_index,
                     edge_attr=edge_attr,
-                    fill_value=0,
+                    fill_value=0.0,
                     num_nodes=num_nodes,
                 )
             else:
@@ -87,9 +109,7 @@ class AncestorConv(MessagePassing):
                 )
 
         # Generate a global feature vector in shape of x
-        glo_ftx_mtx = (
-            global_features[event, :] if self.msg_nn_include_global else None
-        )
+        glo_ftx_mtx = global_features[event, :]
         # If the egde_attrs are included, we transforming the message
         if self.msg_nn_include_edge_attr:
             new_x = self.propagate(
@@ -103,18 +123,16 @@ class AncestorConv(MessagePassing):
         # before the message instead of transforming the message
         else:
             # Generate a global feature vector in shape of x
-            xtransform = self.msg_nn(
-                torch.hstack(
-                    [x] + ([glo_ftx_mtx] if self.msg_nn_include_global else [])
-                )
-            )
+            if self.msg_nn_include_global:
+                xtransform = self.msg_nn(torch.hstack([x, glo_ftx_mtx]))
+            else:
+                xtransform = self.msg_nn(x)
+
             new_x = self.propagate(
                 edge_index=edge_index,
-                edge_attr=torch.empty_like(edge_attr),  # required, pass as empty
+                edge_attr=edge_attr,  # required, pass as empty
                 x=xtransform,
-                glo_ftx_mtx=torch.empty_like(
-                    glo_ftx_mtx
-                ),  # required, pass as empty
+                glo_ftx_mtx=glo_ftx_mtx,  # required, pass as empty
                 size=(num_nodes, num_nodes),
             )
 
@@ -124,22 +142,18 @@ class AncestorConv(MessagePassing):
     def message(
         self,
         x_j: torch.Tensor,
-        edge_attr: Optional[torch.Tensor],
-        glo_ftx_mtx_j: Optional[torch.Tensor],
+        edge_attr: torch.Tensor,
+        glo_ftx_mtx_j: torch.Tensor,
     ) -> torch.Tensor:
-        # Transform node feature matrix with the global features
-        if self.msg_nn and self.msg_nn_include_edge_attr:
-            xtransform = self.msg_nn(
-                torch.hstack(
-                    [x_j]
-                    + ([glo_ftx_mtx_j] if self.msg_nn_include_global else [])
-                    + (
-                        [edge_attr.reshape(x_j.size(0), -1)]
-                        if self.msg_nn_include_edge_attr
-                        else []
-                    )
-                )
-            )
+        # This only needs to be done on message level if we consider edge attributes
+        if self.msg_nn_bool and self.msg_nn_include_edge_attr:
+            msg_parts = [x_j]
+            if self.msg_nn_include_global:
+                msg_parts.append(glo_ftx_mtx_j)
+            if self.msg_nn_include_edge_attr:
+                msg_parts.append(edge_attr)
+            # Transform node feature matrix with the global features
+            xtransform = self.msg_nn(torch.hstack(msg_parts))
         else:
             xtransform = x_j
         return xtransform
@@ -150,14 +164,11 @@ class AncestorConv(MessagePassing):
         x: torch.Tensor,
         glo_ftx_mtx: torch.Tensor,
     ) -> torch.Tensor:
-        if self.upd_nn:
-            upd = self.update_nn(
-                torch.hstack(
-                    [x]
-                    + ([glo_ftx_mtx] if self.upd_nn_include_global else [])
-                    + [aggr_out]
-                )
-            )
+        if self.upd_nn_bool:
+            if self.upd_nn_include_global:
+                upd = self.update_nn(torch.hstack([x, glo_ftx_mtx, aggr_out]))
+            else:
+                upd = self.update_nn(torch.hstack([x, aggr_out]))
         else:
             upd = aggr_out
         return upd
