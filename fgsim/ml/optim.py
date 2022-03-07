@@ -12,7 +12,7 @@ class OptimCol:
     def __init__(self, pconf: DictConfig, submodelpar_dict: Dict):
 
         self.pconf = pconf
-        self.parts: Dict[str, torch.optim] = {}
+        self.parts: Dict[str, torch.optim.Optimizer] = {}
 
         for name, submodelconf in pconf.items():
             assert name != "parts"
@@ -45,3 +45,6 @@ class OptimCol:
     def step(self):
         for optim in self.parts.values():
             optim.step()
+
+    def __getitem__(self, subnetworkname: str) -> torch.optim.Optimizer:
+        return self.parts[subnetworkname]
