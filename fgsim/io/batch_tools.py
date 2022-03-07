@@ -7,7 +7,6 @@ from torch_geometric.data import Batch, Data
 from torch_geometric.nn import global_add_pool, global_mean_pool
 
 from fgsim.config import conf
-from fgsim.monitoring.logger import logger
 
 
 def pcs_to_batch_v1(pcs: torch.Tensor, events: torch.Tensor) -> Batch:
@@ -140,7 +139,7 @@ def compute_hlvs(graph: Data) -> Dict[str, torch.Tensor]:
             hlvs[key + "_std_ew"] = torch.std(vec_ew)
     for var, v in hlvs.items():
         if torch.isnan(v):
-            logger.error(f"NaN Computed for hlv {var}")
+            print(f"NaN Computed for hlv {var}")
     return hlvs
 
 

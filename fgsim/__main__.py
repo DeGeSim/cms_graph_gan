@@ -78,12 +78,14 @@ def main():
         for path in pathlist:
             sys.path.remove(path)
         sys.path.append(new_fgsim_path)
-        from fgsim.monitoring.logger import logger
 
+    from fgsim.monitoring.logger import init_logger, logger
+
+    init_logger()
+    if args.hash is not None and args.command != "dump":
         logger.warning(f"Replaced path {old_path} with {new_fgsim_path}.")
 
     from fgsim.config import conf
-    from fgsim.monitoring.logger import logger
 
     logger.warning(
         f"Using hash {conf['hash']} and loader_hash {conf['loader_hash']}"
