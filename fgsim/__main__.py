@@ -82,6 +82,7 @@ def main():
     from fgsim.monitoring.logger import init_logger, logger
 
     init_logger()
+
     if args.hash is not None and args.command != "dump":
         logger.warning(f"Replaced path {old_path} with {new_fgsim_path}.")
 
