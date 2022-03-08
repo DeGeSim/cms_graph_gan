@@ -55,7 +55,8 @@ class Holder:
 
         # try to load a check point
         self.checkpoint_loaded = False
-        self.__load_checkpoint()
+        if not conf.debug:
+            self.__load_checkpoint()
 
         # # Hack to move the optim parameters to the correct device
         # # https://github.com/pytorch/pytorch/issues/8741
@@ -112,6 +113,8 @@ class Holder:
         self.models = self.models.float().to(device)
 
     def save_checkpoint(self):
+        if conf.debug:
+            return
         push_to_old(conf.path.checkpoint, conf.path.checkpoint_old)
         torch.save(
             {
