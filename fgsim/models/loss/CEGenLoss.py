@@ -7,10 +7,11 @@ from fgsim.ml.holder import Holder
 class LossGen:
     def __init__(self, factor: float) -> None:
         self.factor = factor
-        self.criterion = torch.nn.BCELoss()
-        self.fake_label = torch.zeros(
-            (conf.loader.batch_size,), dtype=torch.float, device=device
-        )
+        # sigmoid layer + Binary cross entropy
+        self.criterion = torch.nn.BCEWithLogitsLoss()
+        # self.fake_label = torch.zeros(
+        #     (conf.loader.batch_size,), dtype=torch.float, device=device
+        # )
         self.real_label = torch.ones(
             (conf.loader.batch_size,), dtype=torch.float, device=device
         )

@@ -13,7 +13,8 @@ class LossGen:
 
     def __init__(self, factor: float) -> None:
         self.factor = factor
-        self.criterion = torch.nn.BCELoss()
+        # sigmoid layer + Binary cross entropy
+        self.criterion = torch.nn.BCEWithLogitsLoss()
         self.real_label = torch.ones(
             (conf.loader.batch_size,), dtype=torch.float, device=device
         )

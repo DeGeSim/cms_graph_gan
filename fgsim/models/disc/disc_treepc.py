@@ -6,7 +6,7 @@ from fgsim.config import conf
 
 
 class ModelClass(nn.Module):
-    def __init__(self, features, activation):
+    def __init__(self, features):
         self.batch_size = conf.loader.batch_size
 
         self.layer_num = len(features) - 1
@@ -25,7 +25,6 @@ class ModelClass(nn.Module):
             nn.Linear(features[-2], features[0]),
             nn.Linear(features[0], 1),
         )
-        self.activation = getattr(nn, activation)()
 
     def forward(self, f):
         feat = f.transpose(1, 2)
@@ -38,6 +37,5 @@ class ModelClass(nn.Module):
         out = F.max_pool1d(input=feat, kernel_size=max_hits).squeeze(-1)
         out = self.final_layer(out)  # (B, 1)
         out = out.reshape(conf.loader.batch_size)
-        out = self.activation(out)
         assert not torch.any(torch.isnan(out))
         return out

@@ -36,13 +36,10 @@ model_param_options:
         conv_name: AncestorConv
         n_events: "${loader.batch_size}"
         conv_parem: ${conv_options[${models.gen.params.conv_name}]}
-    disc_hlvs:
-        activation: Identity
-    disc_graphgym:
-        activation: Identity
+    disc_hlvs: {}
+    disc_graphgym: {}
     disc_treepc:
         features: [4, 64, 128, 256]
-        activation: Identity
 
 conv_options:
     GINConv: {}

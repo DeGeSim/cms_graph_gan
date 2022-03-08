@@ -6,12 +6,11 @@ from fgsim.models.dnn_gen import dnn_gen
 
 
 class ModelClass(torch.nn.Module):
-    def __init__(self, activation):
+    def __init__(self):
         super(ModelClass, self).__init__()
-        self.activation = getattr(torch.nn, activation)()
         n_features = conf.loader.n_features
         self.hlv_dnn = dnn_gen(
-            n_features * 2, 1, n_layers=4, activation_last_layer=self.activation
+            n_features * 2, 1, n_layers=4, activation_last_layer=torch.nn.Identity()
         )
 
     def forward(self, batch):

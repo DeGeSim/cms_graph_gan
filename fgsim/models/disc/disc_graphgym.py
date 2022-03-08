@@ -6,7 +6,7 @@ from fgsim.config import conf, device
 
 
 class ModelClass(torch.nn.Module):
-    def __init__(self, activation):
+    def __init__(self):
         super(ModelClass, self).__init__()
         n_features = conf.loader.n_features
         self.hlv_dnn = torch.nn.Sequential(
@@ -17,7 +17,6 @@ class ModelClass(torch.nn.Module):
             Linear(n_features * 4, n_features),
             LeakyReLU(0.2),
             Linear(n_features, 1),
-            getattr(torch.nn, activation)(),
         ).to(device)
         self.graph_gym_nn = Sequential(
             "x, edge_index",
