@@ -31,11 +31,13 @@ model_param_options:
         n_global: 4
         n_branches: 2
         n_levels: 12
+        all_points: False
         post_gen_mp_steps: 9
         conv_during_branching: False
+        conv_indp: True
+        branching_indp: True
         conv_name: AncestorConv
-        n_events: "${loader.batch_size}"
-        conv_parem: ${conv_options[${models.gen.params.conv_name}]}
+        conv_parem: ${conv_options[${model_param_options.gen_deeptree_pc.conv_name}]}
     disc_hlvs: {}
     disc_graphgym: {}
     disc_treepc:
@@ -113,7 +115,7 @@ path:
     loader_log: "${path.run_path}/${command}_loader.log"
 
 loader: "${merge:${loader_options[default]},${loader_options[${loader_name}]}}"
-loader_name: puregraph
+loader_name: normal
 
 loader_options:
     default:
@@ -148,5 +150,5 @@ loader_options:
         n_features: 2
         # chunksize: 5000
         events_per_file: 10000
-        max_points: 511
+        max_points: 512
         dataset_path: "data/normal"
