@@ -52,10 +52,8 @@ class ModelClass(nn.Module):
         conf.models.gen.output_points = self.output_points
 
         self.dyn_hlvs_layer = DynHLVsLayer(
-            pre_nn=dnn_gen(self.n_features, self.n_features, n_layers=4).to(device),
-            post_nn=dnn_gen(self.n_features * 2, self.n_global, n_layers=4).to(
-                device
-            ),
+            pre_nn=dnn_gen(self.n_features, self.n_features).to(device),
+            post_nn=dnn_gen(self.n_features * 2, self.n_global).to(device),
             n_events=n_events,
         )
 
@@ -71,9 +69,7 @@ class ModelClass(nn.Module):
             return BranchingLayer(
                 tree=self.tree,
                 proj_nn=dnn_gen(
-                    self.n_features + n_global,
-                    self.n_features * n_branches,
-                    n_layers=4,
+                    self.n_features + n_global, self.n_features * n_branches
                 ).to(device),
             )
 
@@ -92,9 +88,7 @@ class ModelClass(nn.Module):
                 from torch_geometric.nn.conv import GINConv
 
                 conv = GINConv(
-                    dnn_gen(
-                        self.n_features + n_global, self.n_features, n_layers=4
-                    ).to(device)
+                    dnn_gen(self.n_features + n_global, self.n_features).to(device)
                 )
             elif self.convname == "AncestorConv":
                 conv = AncestorConv(
