@@ -136,11 +136,9 @@ class Holder:
 
     # Define the methods, that equip the with the generated batches
     def gen_noise(self, requires_grad=False) -> torch.Tensor:
-        n_features = (
-            conf.loader.n_features + conf.models.gen.params.n_hidden_features
-        )
+
         return torch.randn(
-            conf.loader.batch_size, 1, n_features, requires_grad=requires_grad
+            *self.models.gen.z_shape, requires_grad=requires_grad
         ).to(device)
 
     def reset_gen_points(self) -> None:
