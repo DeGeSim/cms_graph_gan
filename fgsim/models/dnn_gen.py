@@ -14,7 +14,7 @@ def dnn_gen(
         )
     else:
         inter_dim = max(30, input_dim + output_dim)
-    print(f"inter_dim {inter_dim} nodes {inter_dim*n_layers}")
+    # print(f"inter_dim {inter_dim} nodes {inter_dim*n_layers}")
     assert inter_dim * n_layers > 100, "Use at least 100 nodes"
     layers = (
         [nn.Linear(input_dim, inter_dim)]

@@ -1,12 +1,16 @@
 import torch.nn as nn
+from torch_geometric.data import Batch, Data
 
 from fgsim.config import conf
-from fgsim.models.gcn.treegcn import TreeGCN
+from fgsim.models.branching.treegcn import TreeGCN
 
 
 class ModelClass(nn.Module):
     def __init__(self, features, degrees, support):
         self.batch_size = conf.loader.batch_size
+
+        self.z_shape = conf.loader.batch_size, 1, features[0]
+
         self.layer_num = len(features) - 1
         assert self.layer_num == len(
             degrees
@@ -52,8 +56,8 @@ class ModelClass(nn.Module):
         feat = self.gcn(tree)
 
         self.pointcloud = feat[-1]
-
-        return self.pointcloud
+        batch = Batch.from_data_list([Data(x=points) for points in self.pointcloud])
+        return batch
 
     def getPointcloud(self):
         return self.pointcloud[-1]

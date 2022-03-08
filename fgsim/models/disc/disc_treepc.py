@@ -26,7 +26,22 @@ class ModelClass(nn.Module):
             nn.Linear(features[0], 1),
         )
 
-    def forward(self, f):
+    def forward(self, batch):
+        n_features = batch.x.shape[1]
+        batch_size = conf.loader.batch_size
+
+        f = batch.x.reshape(batch_size, -1, n_features)
+        # # check if the reshape worked as expected:
+        # f_slow = torch.stack(
+        #     [
+        #         batch.x[batch.ptr[ibatch] : batch.ptr[ibatch + 1]]
+        #         for ibatch in range(batch_size)
+        #     ]
+        # )
+        # assert torch.all(f == f_slow)
+
+        # expected shape here: (batch_size,points,features)
+        # transpose to do convolutions on the features
         feat = f.transpose(1, 2)
         max_hits = feat.size(2)
 
