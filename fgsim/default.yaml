@@ -76,7 +76,7 @@ training:
     events_processed_before_validation: 100000
     disc_steps_per_gen_step: 2
     early_stopping:
-        validation_steps: 15
+        validation_steps: 100
         improvement: 0.02
     checkpoint_minutes: 30
 validation:
