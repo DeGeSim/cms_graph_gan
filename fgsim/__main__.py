@@ -77,7 +77,7 @@ def main():
         old_path = pathlist[0]
         for path in pathlist:
             sys.path.remove(path)
-        sys.path.append(new_fgsim_path)
+        sys.path.insert(0, new_fgsim_path)
 
     from fgsim.monitoring.logger import init_logger, logger
 
