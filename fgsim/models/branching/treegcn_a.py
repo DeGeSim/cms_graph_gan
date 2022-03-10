@@ -2,7 +2,8 @@ import math
 
 import torch
 import torch.nn as nn
-import torch.nn.init as init
+
+from fgsim.models.dnn_gen import dnn_gen
 
 
 class TreeGCN(nn.Module):
@@ -36,11 +37,12 @@ class TreeGCN(nn.Module):
 
         # This is the matrix for the branching
         # U^l_j
-        self.W_branch = nn.Parameter(
-            torch.FloatTensor(
-                self.n_parents, self.in_feature, self.degree * self.in_feature
-            )
-        )
+        # self.W_branch = nn.Parameter(
+        #     torch.FloatTensor(
+        #         self.n_parents, self.in_feature, self.degree * self.in_feature
+        #     )
+        # )
+        self.branch_nn = dnn_gen(self.in_feature, self.degree * self.in_feature)
 
         # Loop term, F^l_K in the paper
         self.W_loop = nn.Sequential(
@@ -55,10 +57,15 @@ class TreeGCN(nn.Module):
 
         self.leaky_relu = nn.LeakyReLU(negative_slope=0.2)
 
-        self.init_param()
+        def init_weights(m):
+            if isinstance(m, nn.Linear):
+                torch.nn.init.xavier_uniform_(
+                    m.weight, gain=torch.nn.init.calculate_gain("relu")
+                )
+                m.bias.data.fill_(0.01)
 
-    def init_param(self):
-        init.xavier_uniform_(self.W_branch.data, gain=init.calculate_gain("relu"))
+        self.branch_nn.apply(init_weights)
+        # init.xavier_uniform_(self.W_branch.data,init.calculate_gain("relu") )
 
         stdv = 1.0 / math.sqrt(self.out_feature)
         self.bias.data.uniform_(-stdv, stdv)
@@ -74,7 +81,8 @@ class TreeGCN(nn.Module):
         # unsqueze  -> batch_size x parents x 1 x in_feature
         # self.W_branch: parents x in_feature x self.in_feature*branches
         # @ multiplies the last two dimension and broadcasts the rest
-        branch = tree[-1].unsqueeze(2) @ self.W_branch
+        # branch = tree[-1].unsqueeze(2) @ self.W_branch
+        branch = self.branch_nn(tree[-1])
         # => branch shape: batch_size x parents x 1 x in_feature*branches
         branch = self.leaky_relu(branch)
         branch = branch.view(
