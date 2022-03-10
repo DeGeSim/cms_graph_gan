@@ -4,6 +4,8 @@ import torch
 import torch.nn as nn
 import torch.nn.init as init
 
+from fgsim.models.dnn_gen import dnn_gen
+
 
 class TreeGCN(nn.Module):
     def __init__(
@@ -27,12 +29,18 @@ class TreeGCN(nn.Module):
 
         # Is the transformation matrix, that brings the root node
         # to the correct feature size
-        self.W_root = nn.ModuleList(
+        self.ancestor_nn = nn.ModuleList(
             [
-                nn.Linear(features[inx], self.out_feature, bias=False)
+                dnn_gen(features[inx], self.out_feature)
                 for inx in range(self.depth + 1)
             ]
         )
+        # self.W_root = nn.ModuleList(
+        #     [
+        #         nn.Linear(features[inx], self.out_feature, bias=False)
+        #         for inx in range(self.depth + 1)
+        #     ]
+        # )
 
         # This is the matrix for the branching
         # U^l_j
@@ -55,13 +63,19 @@ class TreeGCN(nn.Module):
 
         self.leaky_relu = nn.LeakyReLU(negative_slope=0.2)
 
-        self.init_param()
-
-    def init_param(self):
         init.xavier_uniform_(self.W_branch.data, gain=init.calculate_gain("relu"))
 
         stdv = 1.0 / math.sqrt(self.out_feature)
         self.bias.data.uniform_(-stdv, stdv)
+
+        def init_weights(m):
+            if isinstance(m, nn.Linear):
+                torch.nn.init.xavier_uniform_(
+                    m.weight, gain=torch.nn.init.calculate_gain("relu")
+                )
+                m.bias.data.fill_(0.01)
+
+        self.ancestor_nn.apply(init_weights)
 
     def forward(self, tree):
         # the tree is a the feature matrix
@@ -88,7 +102,7 @@ class TreeGCN(nn.Module):
         root = 0
         for inx in range(self.depth + 1):
             # Project the parents to the correct features
-            root_node = self.W_root[inx](tree[inx])
+            root_node = self.ancestor_nn[inx](tree[inx])
             # shape: batch_size x points x features
 
             # this is the number of points in the last layer /
