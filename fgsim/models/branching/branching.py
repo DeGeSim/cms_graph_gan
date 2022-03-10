@@ -32,6 +32,13 @@ class BranchingLayer(nn.Module):
         self.proj_nn = proj_nn
         self.tree = tree
 
+        def init_weights(m):
+            if isinstance(m, nn.Linear):
+                torch.nn.init.xavier_uniform_(m.weight)
+                m.bias.data.fill_(0.01)
+
+        self.proj_nn.apply(init_weights)
+
     # Split each of the leafs in the the graph.tree into n_branches and connect them
     def forward(self, graph: Data, global_features: torch.Tensor) -> Data:
         device = graph.x.device
