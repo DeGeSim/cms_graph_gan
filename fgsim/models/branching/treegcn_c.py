@@ -63,17 +63,6 @@ class TreeGCN(nn.Module):
 
         self.leaky_relu = nn.LeakyReLU(negative_slope=0.2)
 
-        def init_weights(m):
-            if isinstance(m, nn.Linear):
-                torch.nn.init.xavier_uniform_(
-                    m.weight, gain=torch.nn.init.calculate_gain("relu")
-                )
-                m.bias.data.fill_(0.01)
-
-        self.branch_nn.apply(init_weights)
-        self.ancestor_nn.apply(init_weights)
-        # init.xavier_uniform_(self.W_branch.data,init.calculate_gain("relu") )
-
         stdv = 1.0 / math.sqrt(self.out_feature)
         self.bias.data.uniform_(-stdv, stdv)
 

@@ -25,7 +25,7 @@ class TreeGCN(nn.Module):
         self.activation = activation
         super(TreeGCN, self).__init__()
 
-        # Is the transformation matrix, that brings the root node
+        # Is the transformation matrix, that brings the ancestors node
         # to the correct feature size
         self.W_root = nn.ModuleList(
             [

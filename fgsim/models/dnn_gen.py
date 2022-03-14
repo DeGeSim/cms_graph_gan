@@ -28,4 +28,12 @@ def dnn_gen(
             seq.append(nn.LeakyReLU(0.2))
         else:
             seq.append(activation_last_layer)
-    return nn.Sequential(*seq)
+    net = nn.Sequential(*seq)
+
+    def init_weights(m):
+        if isinstance(m, nn.Linear):
+            nn.init.xavier_uniform_(m.weight, gain=nn.init.calculate_gain("relu"))
+            m.bias.data.fill_(0.01)
+
+    net.apply(init_weights)
+    return net

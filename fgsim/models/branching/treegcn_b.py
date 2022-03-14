@@ -68,15 +68,6 @@ class TreeGCN(nn.Module):
         stdv = 1.0 / math.sqrt(self.out_feature)
         self.bias.data.uniform_(-stdv, stdv)
 
-        def init_weights(m):
-            if isinstance(m, nn.Linear):
-                torch.nn.init.xavier_uniform_(
-                    m.weight, gain=torch.nn.init.calculate_gain("relu")
-                )
-                m.bias.data.fill_(0.01)
-
-        self.ancestor_nn.apply(init_weights)
-
     def forward(self, tree):
         # the tree is a the feature matrix
         # this tree passed forward between the the TreeGCN layers
