@@ -21,25 +21,12 @@
             {
                 "args": [
                     "--tag",
-                    "normal_simple",
+                    "treepc_c",
                     "--debug",
                     "train"
                 ],
                 "module": "fgsim",
-                "name": "train normal simple",
-                "request": "launch",
-                "type": "python",
-                // "justMyCode": false,
-            },
-            {
-                "args": [
-                    "--hash",
-                    "c59e3bf",
-                    "--debug",
-                    "train"
-                ],
-                "module": "fgsim",
-                "name": "c59e3bf train",
+                "name": "tr treepc_c",
                 "request": "launch",
                 "type": "python",
                 // "justMyCode": false,
@@ -47,13 +34,27 @@
             {
                 "args": [
                     "--tag",
-                    "`ls ~/fgsim/wd | fzf`",
-                    "test"
+                    "normal",
+                    "--debug",
+                    "train"
                 ],
                 "module": "fgsim",
-                "name": "test",
+                "name": "tr normal",
                 "request": "launch",
-                "type": "python"
+                "type": "python",
+                // "justMyCode": false,
+            },
+            {
+                "args": [
+                    "--hash",
+                    "25a5aa5",
+                    // "--debug",
+                    "train"
+                ],
+                "module": "fgsim",
+                "name": "25a5aa5 train",
+                "request": "launch",
+                "type": "python",
             },
             {
                 "args": [

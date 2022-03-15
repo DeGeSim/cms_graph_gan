@@ -36,7 +36,8 @@ def default_pars():
 def ancestor_conv(default_pars):
     do_nothing = IdentityLayer()
     ancestor_conv = AncestorConv(
-        n_features=default_pars["n_features"],
+        in_features=default_pars["n_features"],
+        out_features=default_pars["n_features"],
         n_global=default_pars["n_global"],
         add_self_loops=False,
         msg_nn_include_edge_attr=True,
@@ -226,7 +227,8 @@ def test_ancestorconv_all_modes():
                                     continue
 
                             ancestor_conv = AncestorConv(
-                                n_features=n_features,
+                                in_features=n_features,
+                                out_features=n_features,
                                 n_global=n_global,
                                 add_self_loops=add_self_loops,
                                 msg_nn_bool=msg_nn_bool,
@@ -267,7 +269,8 @@ def test_ancestorconv_all_modes():
 #         device=device,
 #     )
 #     anc_conv = AncestorConv(
-#         n_features=n_features,
+#         in_features=n_features,
+#         out_features=n_features,
 #         n_global=n_global,
 #         msg_nn_include_global=False,
 #         upd_nn_include_global=False,

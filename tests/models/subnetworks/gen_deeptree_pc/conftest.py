@@ -1,10 +1,9 @@
 from dataclasses import dataclass
 from itertools import product
-from typing import Dict
+from typing import Dict, List
 
 import pytest
 import torch
-from torch import nn
 from torch_geometric.data import Data
 
 from fgsim.models.branching.branching import BranchingLayer
@@ -19,8 +18,7 @@ device = torch.device("cpu")
 class DTColl:
     props: Dict[str, int]
     graph: Data
-    global_features: torch.Tensor
-    branching_layer: BranchingLayer
+    branching_layers: List[BranchingLayer]
     dyn_hlvs_layer: DynHLVsLayer
     ancestor_conv_layer: AncestorConv
 
@@ -31,6 +29,10 @@ def object_gen(props: Dict[str, int]) -> DTColl:
     n_global = props["n_global"]
     n_events = props["n_events"]
     n_levels = props["n_levels"]
+
+    # features = [n_features for _ in range(n_levels)]
+    branches = [0] + [n_branches for _ in range(n_levels - 1)]
+
     graph = Data(
         x=torch.randn(
             n_events,
@@ -39,55 +41,45 @@ def object_gen(props: Dict[str, int]) -> DTColl:
             device=device,
             requires_grad=True,
         ),
-        edge_index=torch.tensor([[], []], dtype=torch.long, device=device),
-        edge_attr=torch.tensor([], dtype=torch.long, device=device),
+        edge_index=torch.empty(2, 0, dtype=torch.long, device=device),
+        edge_attr=torch.empty(0, 1, dtype=torch.float, device=device),
         event=torch.arange(n_events, dtype=torch.long, device=device),
-    )
-
-    global_features = torch.randn(
-        n_events,
-        n_global,
-        dtype=torch.float,
-        device=device,
+        global_features=torch.randn(
+            n_events,
+            n_global,
+            dtype=torch.float,
+            device=device,
+        ),
     )
 
     tree = Tree(
-        n_levels=n_levels,
+        branches=branches,
         n_events=n_events,
+        device=device,
+    )
+    branching_layers = [
+        BranchingLayer(
+            tree=tree, level=level, n_features=n_features, n_global=n_global
+        ).to(device)
+        for level in range(1, n_levels)
+    ]
+
+    dyn_hlvs_layer = DynHLVsLayer(
         n_features=n_features,
-        n_branches=n_branches,
+        n_events=n_events,
+        n_global=n_global,
         device=device,
     )
 
-    branching_layer = BranchingLayer(
-        tree=tree,
-        proj_nn=nn.Sequential(
-            nn.Linear(n_features + n_global, n_features * n_branches),
-            nn.ReLU(),
-        ),
-    ).to(device)
-
-    dyn_hlvs_layer = DynHLVsLayer(
-        pre_nn=nn.Sequential(
-            nn.Linear(n_features, n_features),
-            nn.ReLU(),
-        ),
-        post_nn=nn.Sequential(
-            nn.Linear(n_features * 2, n_global),
-            nn.ReLU(),
-        ),
-        n_events=n_events,
-    ).to(device)
-
     ancestor_conv_layer = AncestorConv(
-        n_features=n_features,
+        in_features=n_features,
+        out_features=n_features,
         n_global=n_global,
     ).to(device)
     return DTColl(
         props=props,
         graph=graph,
-        global_features=global_features,
-        branching_layer=branching_layer,
+        branching_layers=branching_layers,
         dyn_hlvs_layer=dyn_hlvs_layer,
         ancestor_conv_layer=ancestor_conv_layer,
     )
@@ -105,7 +97,7 @@ def static_props():
     return props
 
 
-@pytest.fixture(params=product([2], [1, 2], [3], [2], [1, 4]))
+@pytest.fixture(params=product([2], [1, 2], [3], [2], [2, 4]))
 def dyn_props(request):
     n_features, n_branches, n_events, n_global, n_levels = request.param
     props = {

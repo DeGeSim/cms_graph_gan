@@ -6,7 +6,7 @@ def dnn_gen(
     output_dim: int,
     n_layers: int = 8,
     activation_last_layer=nn.Identity(),
-):
+) -> nn.Sequential:
     assert n_layers >= 4
     if (input_dim + output_dim) * n_layers > 300:
         inter_dim = max(

@@ -2,6 +2,8 @@ import torch
 import torch.nn as nn
 from torch_geometric.data import Data
 
+from fgsim.models.dnn_gen import dnn_gen
+
 from .tree import Tree
 
 
@@ -26,37 +28,41 @@ class BranchingLayer(nn.Module):
     def __init__(
         self,
         tree: Tree,
-        proj_nn: nn.Module,
+        n_features: int,
+        n_global: int,
+        level: int,
     ):
         super().__init__()
-        self.proj_nn = proj_nn
         self.tree = tree
-
-        def init_weights(m):
-            if isinstance(m, nn.Linear):
-                torch.nn.init.xavier_uniform_(m.weight)
-                m.bias.data.fill_(0.01)
-
-        self.proj_nn.apply(init_weights)
+        self.n_branches = tree.branches[level]
+        self.n_events = self.tree.n_events
+        self.n_features = n_features
+        self.n_global = n_global
+        self.level = level
+        assert 1 <= level < len(tree.branches)
+        self.proj_nn = dnn_gen(
+            self.n_features + n_global, self.n_features * self.n_branches
+        )
 
     # Split each of the leafs in the the graph.tree into n_branches and connect them
-    def forward(self, graph: Data, global_features: torch.Tensor) -> Data:
+    def forward(self, graph: Data) -> Data:
         device = graph.x.device
         # Clone everything to avoid changing the input object
 
         x = graph.x.clone()
-        if not hasattr(graph, "level_cur"):
-            level_cur = 1
-        else:
-            level_cur = graph.level_cur + 1
+        global_features = graph.global_features.clone()
+        # if self.n_global > 0:
+        #     global_features = graph.global_features.clone()
+        # else:
+        #     global_features = torch.empty(self.n_events, self.n_global)
         del graph
 
-        tree = self.tree.tree_lists
-        parents = tree[level_cur - 1]
+        n_events = self.n_events
+        n_branches = self.n_branches
+        n_features = self.n_features
+        parents = self.tree.tree_lists[self.level - 1]
         n_parents = len(parents)
-        n_events = self.tree.n_events
-        n_branches = self.tree.n_branches
-        n_features = self.tree.n_features
+
         edge_index_p_level = self.tree.edge_index_p_level
         edge_attrs_p_level = self.tree.edge_attrs_p_level
 
@@ -86,9 +92,9 @@ class BranchingLayer(nn.Module):
         )
         new_graph = Data(
             x=torch.cat([x, children_ftxs]),
-            edge_index=torch.hstack(edge_index_p_level[: level_cur + 1]),
-            edge_attr=torch.vstack(edge_attrs_p_level[: level_cur + 1]),
-            level_cur=level_cur,
+            edge_index=torch.hstack(edge_index_p_level[: self.level + 1]),
+            edge_attr=torch.vstack(edge_attrs_p_level[: self.level + 1]),
+            global_features=global_features,
         )
         new_graph.event = torch.arange(
             n_events, dtype=torch.long, device=device

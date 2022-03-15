@@ -13,7 +13,7 @@ models:
             name: Adam
             params: ${optim_options[Adam]}
     disc:
-        name: disc_hlvs
+        name: disc_treepc
         params: ${model_param_options[${models.disc.name}]}
         losses: "${optionlist:${loss_options},${models.disc.losses_list}}"
         losses_list: [WDiscLoss,GradientPenalty]
@@ -27,15 +27,9 @@ model_param_options:
         degrees: [2, 2, 2, 2, 2, 64]
         support: 10
     gen_deeptree_pc:
-        n_hidden_features: 3
-        n_global: 4
-        n_branches: 2
-        n_levels: 12
-        all_points: False
-        post_gen_mp_steps: 9
-        conv_during_branching: False
-        conv_indp: True
-        branching_indp: True
+        features: [256,64,64,4]
+        branches: [1,4,8,16]
+        n_global: 0
         conv_name: AncestorConv
         conv_parem: ${conv_options[${model_param_options.gen_deeptree_pc.conv_name}]}
     disc_hlvs: {}

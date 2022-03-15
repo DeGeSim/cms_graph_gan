@@ -4,7 +4,7 @@ from modulefinder import Module
 from typing import Dict, Optional
 
 import torch
-from omegaconf.dictconfig import DictConfig
+from omegaconf import DictConfig, OmegaConf
 
 
 class SubNetworkCollector(torch.nn.Module):
@@ -60,6 +60,6 @@ def import_nn(
     if model_module is None:
         raise ImportError
 
-    submodel = model_module.ModelClass(**modelparams)
+    submodel = model_module.ModelClass(**OmegaConf.to_container(modelparams))
 
     return submodel

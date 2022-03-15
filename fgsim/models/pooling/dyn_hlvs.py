@@ -3,13 +3,21 @@ import torch.nn as nn
 from torch_geometric.data import Data
 from torch_geometric.nn import global_add_pool, global_mean_pool
 
+from fgsim.models.dnn_gen import dnn_gen
+
 
 class DynHLVsLayer(nn.Module):
-    def __init__(self, pre_nn: nn.Module, post_nn: nn.Module, n_events: int):
+    def __init__(self, n_features, n_global, n_events: int, device: torch.device):
         super().__init__()
-        self.pre_nn = pre_nn
-        self.post_nn = post_nn
+        self.n_features = n_features
+        self.n_global = n_global
         self.n_events = n_events
+        self.pre_nn: nn.Module = dnn_gen(self.n_features, self.n_features).to(
+            device
+        )
+        self.post_nn: nn.Module = dnn_gen(self.n_features * 2, self.n_global).to(
+            device
+        )
 
     def forward(self, graph: Data):
         ftx_mtx = self.pre_nn(graph.x)

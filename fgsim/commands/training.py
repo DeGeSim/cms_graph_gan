@@ -46,6 +46,18 @@ def training_step(
         with gpu_mem_monitor("gen_trainingreset"):
             holder.models.gen.zero_grad()
 
+    if holder.state.grad_step % 100 == 0:
+        import numpy as np
+        import torch
+
+        with torch.no_grad():
+            mean_gen = torch.mean(holder.gen_points[0].x, dim=0).cpu().numpy()
+            cov_gen = torch.cov(holder.gen_points[0].x.T).cpu().numpy()
+            np.set_printoptions(formatter={"float_kind": "{:.3g}".format})
+            logger.info(
+                f"gen batch mean {mean_gen} cov: [{cov_gen[0]},{cov_gen[1]}]"
+            )
+
 
 def training_procedure() -> None:
     holder: Holder = Holder()

@@ -1,4 +1,4 @@
-from typing import Union
+from typing import Optional, Union
 
 import torch
 from torch_geometric.nn import MessagePassing
@@ -16,7 +16,8 @@ class AncestorConv(MessagePassing):
 
     def __init__(
         self,
-        n_features: int,
+        in_features: int,
+        out_features: int,
         n_global: int,
         add_self_loops: bool = True,
         msg_nn_bool: bool = True,
@@ -27,23 +28,28 @@ class AncestorConv(MessagePassing):
     ):
 
         super().__init__(aggr="add", flow="source_to_target")
-        self.n_features = n_features
+        self.in_features = in_features
+        self.out_features = out_features
         self.n_global = n_global
         self.add_self_loops = add_self_loops
         self.msg_nn_bool = msg_nn_bool
         self.upd_nn_bool = upd_nn_bool
         self.msg_nn_include_edge_attr = msg_nn_include_edge_attr
+
+        if n_global == 0:
+            msg_nn_include_global = False
+            upd_nn_include_global = False
         self.msg_nn_include_global = msg_nn_include_global
         self.upd_nn_include_global = upd_nn_include_global
 
         # MSG NN
         self.msg_nn: Union[torch.nn.Module, torch.nn.Identity] = torch.nn.Identity()
-        if self.msg_nn_bool:
+        if msg_nn_bool:
             self.msg_nn = dnn_gen(
-                n_features
+                in_features
                 + (n_global if msg_nn_include_global else 0)
                 + (1 if msg_nn_include_edge_attr else 0),
-                self.n_features,
+                in_features if self.upd_nn_bool else out_features,
                 n_layers=4,
             )
         else:
@@ -53,8 +59,8 @@ class AncestorConv(MessagePassing):
         self.update_nn: Union[torch.Module, torch.nn.Identity] = torch.nn.Identity()
         if upd_nn_bool:
             self.update_nn = dnn_gen(
-                2 * n_features + (n_global if upd_nn_include_global else 0),
-                n_features,
+                2 * in_features + (n_global if upd_nn_include_global else 0),
+                out_features,
                 n_layers=4,
             )
         else:
@@ -66,26 +72,26 @@ class AncestorConv(MessagePassing):
         x: torch.Tensor,
         edge_index: torch.Tensor,
         event: torch.Tensor,
-        edge_attr: torch.Tensor = torch.tensor([]),
-        global_features: torch.Tensor = torch.tensor([]),
-    ):
+        edge_attr: Optional[torch.Tensor] = None,
+        global_features: Optional[torch.Tensor] = None,
+    ) -> torch.Tensor:
         num_nodes = x.shape[0]
 
         num_edges = edge_index.shape[1]
         num_events = event[-1] + 1
 
-        if len(edge_attr) == 0:
-            edge_attr = torch.tensor(
-                [], dtype=torch.float, device=x.device
-            ).reshape(num_edges, -1)
-        if len(global_features) == 0:
-            global_features = torch.tensor(
-                [[]], dtype=torch.float, device=x.device
-            ).reshape(num_events, -1)
+        if edge_attr is None:
+            edge_attr = torch.empty(
+                num_edges, 1, dtype=torch.float, device=x.device
+            )
+        if global_features is None:
+            global_features = torch.empty(
+                num_events, self.n_global, dtype=torch.float, device=x.device
+            )
 
         assert x.dim() == global_features.dim() == edge_attr.dim() == 2
         assert event.dim() == 1
-        assert x.shape[1] == self.n_features
+        assert x.shape[1] == self.in_features
 
         assert global_features.shape[0] == num_events
         assert global_features.shape[1] == self.n_global
