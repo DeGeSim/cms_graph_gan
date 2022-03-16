@@ -130,7 +130,7 @@ def test_procedure() -> None:
             sim=scatter_mean(sim_batch.x, sim_batch.batch, dim=0).numpy(),
             gen=scatter_mean(gen_batch.x, gen_batch.batch, dim=0).numpy(),
             outputpath=plot_path / f"xyscatter_batch_means.pdf",
-            title="Scatter event means",
+            title=f"Event means for a batch ({len(sim_batch.batch)})",
         )
         with train_log.experiment.test():
             train_log.experiment.log_figure(

@@ -29,7 +29,7 @@ model_param_options:
     gen_deeptree_pc:
         features: [256,64,64,4]
         branches: [1,4,8,16]
-        n_global: 0
+        n_global: 4
         conv_name: AncestorConv
         conv_parem: ${conv_options[${model_param_options.gen_deeptree_pc.conv_name}]}
     disc_hlvs: {}
