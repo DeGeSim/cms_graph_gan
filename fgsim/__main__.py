@@ -60,7 +60,10 @@ def main():
         exit()
 
     # If it is called by the hash, manipulate then
-    if args.hash is not None and args.command != "dump":
+    overwrite_path = (
+        args.hash is not None and args.command != "dump" and args.debug is None
+    )
+    if overwrite_path:
         from fgsim.config import conf
 
         new_fgsim_path = str((Path(conf.path.run_path)).absolute())
@@ -83,7 +86,7 @@ def main():
 
     init_logger()
 
-    if args.hash is not None and args.command != "dump":
+    if overwrite_path:
         logger.warning(f"Replaced path {old_path} with {new_fgsim_path}.")
 
     from fgsim.config import conf
