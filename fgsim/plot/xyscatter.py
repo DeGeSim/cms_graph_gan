@@ -46,5 +46,6 @@ def xyscatter(
     plt.tight_layout()
 
     g.savefig(outputpath)
+    g.savefig(outputpath.with_suffix(".png"))
 
     return g.figure

@@ -127,6 +127,13 @@ def test_procedure() -> None:
             )
 
         figure = xyscatter(
+            sim=sim_batch.x.numpy(),
+            gen=gen_batch.x.numpy(),
+            outputpath=plot_path / f"xyscatter_batch.pdf",
+            title="Scatter all points in batch",
+        )
+
+        figure = xyscatter(
             sim=scatter_mean(sim_batch.x, sim_batch.batch, dim=0).numpy(),
             gen=scatter_mean(gen_batch.x, gen_batch.batch, dim=0).numpy(),
             outputpath=plot_path / f"xyscatter_batch_means.pdf",
