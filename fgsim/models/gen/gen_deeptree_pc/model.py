@@ -136,6 +136,7 @@ class ModelClass(nn.Module):
         branches = self.branches
         levels = len(branches)
 
+        # Init the graph object
         graph = Data(
             x=random_vector.reshape(n_events, features[0]),
             edge_index=torch.empty(2, 0, dtype=torch.long, device=device),
@@ -147,6 +148,7 @@ class ModelClass(nn.Module):
             tree=[[Node(torch.arange(n_events, dtype=torch.long, device=device))]],
         )
 
+        # Do the branching
         for level in range(levels - 1):
             graph.global_features = self.dyn_hlvs_layers[level](graph)
             graph = self.branching_layers[level](graph)
