@@ -5,7 +5,7 @@ comet_project_name: "gan"
 
 models:
     gen:
-        name: gen_deeptree_pc
+        name: gen_deeptree
         params: ${model_param_options[${models.gen.name}]}
         losses: "${optionlist:${loss_options},${models.gen.losses_list}}"
         losses_list: [WGenLoss]
@@ -26,12 +26,12 @@ model_param_options:
         features: [96, 64, 64, 64, 64, 64, 4]
         degrees: [2, 2, 2, 2, 2, 64]
         support: 10
-    gen_deeptree_pc:
+    gen_deeptree:
         features: [256,64,64,2]
         branches: [1,4,8,16]
         n_global: 5
         conv_name: AncestorConv
-        conv_parem: ${conv_options[${model_param_options.gen_deeptree_pc.conv_name}]}
+        conv_parem: ${conv_options[${model_param_options.gen_deeptree.conv_name}]}
         pp_conv: True
     disc_hlvs: {}
     disc_graphgym: {}
