@@ -1,5 +1,5 @@
 import torch
-from torch.nn import LeakyReLU, Linear, PReLU
+from torch.nn import Linear, PReLU
 from torch_geometric.nn import (
     BatchNorm,
     GeneralConv,
@@ -10,6 +10,7 @@ from torch_geometric.nn import (
 )
 
 from fgsim.config import conf, device
+from fgsim.models.dnn_gen import dnn_gen
 
 
 class ModelClass(torch.nn.Module):
@@ -43,17 +44,7 @@ class ModelClass(torch.nn.Module):
             ],
         ).to(device)
 
-        self.hlv_dnn = torch.nn.Sequential(
-            Linear(
-                n_features * (len(self.convs) + 1), n_features * len(self.convs) * 4
-            ),
-            LeakyReLU(0.2),
-            Linear(n_features * len(self.convs) * 4, n_features * 4),
-            LeakyReLU(0.2),
-            Linear(n_features * 4, n_features),
-            LeakyReLU(0.2),
-            Linear(n_features, 1),
-        ).to(device)
+        self.hlv_dnn = dnn_gen(n_features * (len(self.convs) + 1), 1).to(device)
 
     def forward(self, data):
         data.edge_index = knn_graph(x=data.x, k=6, batch=data.batch)
