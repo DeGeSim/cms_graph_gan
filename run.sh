@@ -50,12 +50,13 @@ for line in ${lines[@]}; do
     export TAG_OR_HASH=${linesplit[1]}
     export TAG_OR_HASH_ARG=${linesplit[2]}
     export RESTCMD=${linesplit[@]:2}
-    if [[ $REMOTE == 'true' ]]; then
+    if [[ $REMOTE == 'true' || $CMD != 'train' ]]; then
         elementf &
     else
         elementf
     fi
 done
+wait
 
 
 
