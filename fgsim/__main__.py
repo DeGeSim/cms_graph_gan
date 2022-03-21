@@ -93,8 +93,8 @@ def main():
 
     from fgsim.config import conf
 
-    logger.warning(
-        f"Using hash {conf['hash']} and loader_hash {conf['loader_hash']}"
+    logger.info(
+        f"tag: {conf.tag} hash: {conf.hash} loader_hash: {conf.loader_hash}"
     )
     logger.info(f"Running command {args.command}")
 
