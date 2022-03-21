@@ -1,7 +1,7 @@
 tag: default
 loglevel: 1
 seed: 0
-comet_project_name: "gan"
+comet_project_name: "normal"
 
 models:
     gen:
@@ -33,6 +33,10 @@ model_param_options:
         conv_name: AncestorConv
         conv_parem: ${conv_options[${model_param_options.gen_deeptree.conv_name}]}
         pp_conv: True
+    gen_edgeconv:
+        n_layers: 5
+        n_features: 2
+        n_global: 5
     disc_hlvs: {}
     disc_graphgym: {}
     disc_treepc:
