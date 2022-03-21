@@ -45,3 +45,29 @@ def gethash(omconf: DictConfig) -> str:
     kv_str = "\n".join(sorted(kv_list))
     omhash = str(hashlib.sha1(kv_str.encode()).hexdigest()[:7])
     return omhash
+
+
+# recurrsive function that calculates the needed update for base
+def compute_update_config(base, updated):
+    keys_base = set(base.keys())
+    keys_updated = set(updated.keys())
+    keys_removed = keys_base - keys_updated
+    assert len(keys_removed) == 0
+    keys_both = keys_base & keys_updated
+    keys_added = keys_updated - keys_base
+    if keys_added != set():
+        print(keys_added)
+    out_dict = {k: updated[k] for k in keys_added}
+    for k in keys_both:
+        if isinstance(base[k], DictConfig):
+            if OmegaConf.is_interpolation(base, k):
+                continue
+            assert isinstance(updated[k], DictConfig)
+            subdiff = compute_update_config(base[k], updated[k])
+            # dont add empty dicts
+            if len(subdiff.keys()):
+                out_dict[k] = subdiff
+        else:
+            if base[k] != updated[k]:
+                out_dict[k] = updated[k]
+    return out_dict
