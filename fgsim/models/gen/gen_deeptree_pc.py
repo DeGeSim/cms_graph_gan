@@ -4,6 +4,8 @@ from typing import Dict, List
 import torch
 import torch.nn as nn
 from torch_geometric.data import Data
+from torch_geometric.nn import knn_graph
+from torch_geometric.nn.conv import EdgeConv
 
 from fgsim.config import conf, device
 from fgsim.io.sel_seq import Batch, batch_tools
@@ -25,6 +27,7 @@ class ModelClass(nn.Module):
         conv_name: str = "AncestorConv",
         conv_during_branching: bool = True,
         all_points: bool = False,
+        pp_conv: bool = False,
     ):
         super().__init__()
         self.features = features
@@ -35,6 +38,7 @@ class ModelClass(nn.Module):
         self.all_points = all_points
         self.n_events = conf.loader.batch_size
         self.z_shape = conf.loader.batch_size, 1, self.features[0]
+        self.pp_conv = pp_conv
 
         levels = len(self.branches)
         assert levels == len(features)
@@ -110,6 +114,17 @@ class ModelClass(nn.Module):
             [gen_conv_layer(level) for level in range(1, levels)]
         )
 
+        if pp_conv:
+            self.pp_convs = nn.ModuleList(
+                [
+                    EdgeConv(
+                        nn=dnn_gen(self.features[-1] * 2, self.features[-1]),
+                        aggr="add",
+                    )
+                    for _ in range(3)
+                ]
+            )
+
     def wrap_conv(self, graph: Data) -> Dict[str, torch.Tensor]:
         if self.conv_name == "GINConv":
             return {
@@ -154,6 +169,12 @@ class ModelClass(nn.Module):
             graph = self.branching_layers[level](graph)
             if self.conv_during_branching:
                 graph.x = self.conv_layers[level](**(self.wrap_conv(graph)))
+
+        # Edge_conv
+        if self.pp_conv:
+            ei = knn_graph(x=graph.x, k=25, batch=graph.batch)
+            for conv in self.pp_convs:
+                graph.x = conv(x=graph.x, edge_index=ei)
 
         # slice the output the the corrent number of dimesions and create the batch
         if self.all_points:
