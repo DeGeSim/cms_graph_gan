@@ -65,7 +65,7 @@ def option_gen(exp_config: ExperimentConfig) -> Dict[str, DictConfig]:
     generators = ["gen_edgeconv", "gen_deeptree"]  # "gen_treepc",
     for gen_name in generators:
         mod_conf = input_conf.copy()
-        mod_conf["models"]["disc"]["name"] = gen_name
+        mod_conf["models"]["gen"]["name"] = gen_name
         out_dict[gen_name.replace("gen_", "G")] = mod_conf
     return out_dict
 
