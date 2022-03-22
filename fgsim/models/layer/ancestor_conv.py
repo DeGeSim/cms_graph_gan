@@ -25,6 +25,7 @@ class AncestorConv(MessagePassing):
         msg_nn_include_edge_attr: bool = False,
         msg_nn_include_global: bool = True,
         upd_nn_include_global: bool = True,
+        residual: bool = True,
     ):
 
         super().__init__(aggr="add", flow="source_to_target")
@@ -35,6 +36,7 @@ class AncestorConv(MessagePassing):
         self.msg_nn_bool = msg_nn_bool
         self.upd_nn_bool = upd_nn_bool
         self.msg_nn_include_edge_attr = msg_nn_include_edge_attr
+        self.residual = residual
 
         if n_global == 0:
             msg_nn_include_global = False
@@ -125,6 +127,8 @@ class AncestorConv(MessagePassing):
                 glo_ftx_mtx=glo_ftx_mtx,
                 size=(num_nodes, num_nodes),
             )
+            if self.residual:
+                new_x = new_x + x[..., : self.out_features]
         # If the egde attr are not included, we apply a transformation
         # before the message instead of transforming the message
         else:
@@ -141,6 +145,8 @@ class AncestorConv(MessagePassing):
                 glo_ftx_mtx=glo_ftx_mtx,  # required, pass as empty
                 size=(num_nodes, num_nodes),
             )
+            if self.residual:
+                new_x = new_x + x[..., : self.out_features]
 
         # self loop
         return new_x

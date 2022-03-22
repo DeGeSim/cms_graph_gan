@@ -31,6 +31,7 @@ class BranchingLayer(nn.Module):
         n_features: int,
         n_global: int,
         level: int,
+        residual: bool,
     ):
         super().__init__()
         self.tree = tree
@@ -39,6 +40,7 @@ class BranchingLayer(nn.Module):
         self.n_features = n_features
         self.n_global = n_global
         self.level = level
+        self.residual = residual
         assert 1 <= level < len(tree.branches)
         self.proj_nn = dnn_gen(
             self.n_features + n_global, self.n_features * self.n_branches
@@ -78,6 +80,12 @@ class BranchingLayer(nn.Module):
         # (n_parents * n_event) x (n_features*n_branches) matrix
         proj_ftx = self.proj_nn(torch.hstack([parents_ftxs, parent_global]))
 
+        # If residual, add the features of the parent to the
+        if self.residual:
+            proj_ftx = proj_ftx + parents_ftxs.repeat_interleave(
+                dim=-1, repeats=n_branches
+            )
+
         assert list(proj_ftx.shape) == [
             n_parents * n_events,
             n_branches * n_features,
@@ -90,6 +98,7 @@ class BranchingLayer(nn.Module):
             n_branches=n_branches,
             n_features=n_features,
         )
+
         new_graph = Data(
             x=torch.cat([x, children_ftxs]),
             edge_index=torch.hstack(edge_index_p_level[: self.level + 1]),

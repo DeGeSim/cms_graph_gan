@@ -38,8 +38,9 @@ model_param_options:
         branches: [1,4,8,16]
         n_global: 5
         conv_name: AncestorConv
-        conv_parem: ${conv_options[${model_param_options.gen_deeptree.conv_name}]}
-        pp_conv: True
+        conv_parem: ${layer_options[${model_param_options.gen_deeptree.conv_name}]}
+        branching_param: ${layer_options[BranchingLayer]}
+        pp_conv: False
     gen_edgeconv:
         n_layers: 5
         n_features: 2
@@ -49,9 +50,12 @@ model_param_options:
     disc_treepc:
         features: [4, 64, 128, 256]
 
-conv_options:
+layer_options:
     GINConv: {}
-    AncestorConv: {}
+    AncestorConv:
+        residual: True
+    BranchingLayer:
+        residual: True
 
 
 loss_options:

@@ -24,6 +24,7 @@ class ModelClass(nn.Module):
         branches: List[int],
         n_global: int,
         conv_parem: Dict,
+        branching_param: Dict,
         conv_name: str = "AncestorConv",
         conv_during_branching: bool = True,
         all_points: bool = False,
@@ -85,6 +86,7 @@ class ModelClass(nn.Module):
                     level=level,
                     n_features=features[level - 1],
                     n_global=n_global,
+                    **branching_param,
                 )
                 for level in range(1, levels)
             ]
@@ -171,8 +173,8 @@ class ModelClass(nn.Module):
                 graph.x = self.conv_layers[level](**(self.wrap_conv(graph)))
 
         # Edge_conv
+        ei = knn_graph(x=graph.x, k=25, batch=graph.batch)
         if self.pp_conv:
-            ei = knn_graph(x=graph.x, k=25, batch=graph.batch)
             for conv in self.pp_convs:
                 graph.x = conv(x=graph.x, edge_index=ei)
 
