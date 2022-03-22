@@ -34,45 +34,44 @@ else:
             raise FileNotFoundError
         with open(fn, "r") as fp:
             tagconf = OmegaConf.load(fp)
-    else:
-        tagconf = OmegaConf.create({})
+        conf = OmegaConf.unsafe_merge(defaultconf, tagconf, vars(args))
 
-    conf = OmegaConf.unsafe_merge(defaultconf, tagconf, vars(args))
+        # remove the dependency on hash and loader hash to be able to resolve
+        conf_without_paths = removekeys(
+            conf,
+            [
+                "path",
+            ],
+        )
+        OmegaConf.resolve(conf_without_paths)
 
-    # remove the dependency on hash and loader hash to be able to resolve
-    conf_without_paths = removekeys(
-        conf,
-        [
-            "path",
-        ],
-    )
-    OmegaConf.resolve(conf_without_paths)
-
-    # Compute a loader_hash
-    # this hash will be part of where the preprocessed
-    # dataset is safed to ensure the parameters dont change
-    # Exclude the keys that do not affect the training
-    exclude_keys = ["preprocess_training", "debug"] + [
-        x for x in conf["loader"] if "num_workers" in x
-    ]
-
-    loader_params = removekeys(conf_without_paths["loader"], exclude_keys)
-    conf["loader_hash"] = gethash(loader_params)
-
-    hyperparameters = removekeys(
-        conf_without_paths,
-        [
-            "command",
-            "debug",
-            "loglevel",
-            "path",
+        # Compute a loader_hash
+        # this hash will be part of where the preprocessed
+        # dataset is safed to ensure the parameters dont change
+        # Exclude the keys that do not affect the training
+        exclude_keys = ["preprocess_training", "debug"] + [
+            x for x in conf["loader"] if "num_workers" in x
         ]
-        + [key for key in conf.keys() if key.endswith("_options")],
-    )
 
-    conf["hash"] = gethash(hyperparameters)
-    # Infer the parameters here
-    OmegaConf.resolve(conf)
+        loader_params = removekeys(conf_without_paths["loader"], exclude_keys)
+        conf["loader_hash"] = gethash(loader_params)
+
+        hyperparameters = removekeys(
+            conf_without_paths,
+            [
+                "command",
+                "debug",
+                "loglevel",
+                "path",
+            ]
+            + [key for key in conf.keys() if key.endswith("_options")],
+        )
+
+        conf["hash"] = gethash(hyperparameters)
+        # Infer the parameters here
+        OmegaConf.resolve(conf)
+    else:
+        conf = OmegaConf.unsafe_merge(defaultconf, vars(args))
 
 
 torch.manual_seed(conf.seed)
