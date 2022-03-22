@@ -173,8 +173,8 @@ class ModelClass(nn.Module):
                 graph.x = self.conv_layers[level](**(self.wrap_conv(graph)))
 
         # Edge_conv
-        ei = knn_graph(x=graph.x, k=25, batch=graph.batch)
         if self.pp_conv:
+            ei = knn_graph(x=graph.x, k=25, batch=graph.batch)
             for conv in self.pp_convs:
                 graph.x = conv(x=graph.x, edge_index=ei)
 
