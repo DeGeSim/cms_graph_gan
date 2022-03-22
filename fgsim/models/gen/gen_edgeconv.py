@@ -51,9 +51,10 @@ class ModelClass(nn.Module):
 
         batch = Batch.from_data_list([Data(x=e) for e in random_vector])
 
+        batch.edge_index = knn_graph(x=batch.x, k=25, batch=batch.batch)
+
         for ilayer in range(self.n_layers):
             # hlvs = self.dyn_hlvs_layers[ilayer]
-            batch.edge_index = knn_graph(x=batch.x, k=25, batch=batch.batch)
             batch.x = self.pp_convs[ilayer](x=batch.x, edge_index=batch.edge_index)
 
         return batch
