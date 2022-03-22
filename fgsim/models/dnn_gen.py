@@ -1,5 +1,7 @@
 from torch import nn
 
+from fgsim.config import conf
+
 
 class FFN(nn.Sequential):
     def __init__(
@@ -29,7 +31,9 @@ class FFN(nn.Sequential):
         for ilayer, e in enumerate(layers):
             seq.append(e)
             if ilayer != n_layers - 1:
-                seq.append(nn.LeakyReLU(0.2))
+                seq.append(
+                    getattr(nn, conf.ffn.activation)(**conf.ffn.activation_params)
+                )
             else:
                 seq.append(activation_last_layer)
         super(FFN, self).__init__(*seq)
@@ -46,11 +50,22 @@ class FFN(nn.Sequential):
 
     def init_weights(self, m):
         if isinstance(m, nn.Linear):
+            nonlinearity = {
+                "SELU": "selu",
+                "Sigmoid": "sigmoid",
+                "ReLU": "relu",
+                "LeakyReLU": "leaky_relu",
+            }[conf.ffn.activation]
+
+            # nn.init.kaiming_normal_(m.weight, mode="fan_in", nonlinearity="linear")
             nn.init.xavier_uniform_(
-                m.weight, gain=nn.init.calculate_gain("leaky_relu", 0.2)
+                m.weight, gain=nn.init.calculate_gain(nonlinearity)
             )
-            m.bias.data.fill_(0.0)
+            m.bias.data.fill_(conf.ffn.init_weights_bias_const)
 
 
 def dnn_gen(*args, **kwargs) -> nn.Sequential:
     return FFN(*args, **kwargs)
+
+
+nn.ReLU

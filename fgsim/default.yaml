@@ -21,6 +21,13 @@ models:
             name: Adam
             params: ${optim_options[Adam]}
 
+ffn:
+    activation: SELU
+    activation_params: {}
+    init_weights_bias_const: 0.1
+    init_weights: xavier_uniform_
+
+
 model_param_options:
     gen_treepc:
         features: [96, 64, 64, 64, 64, 64, 4]
