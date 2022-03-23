@@ -33,7 +33,6 @@ def subsample(arr: np.ndarray):
 def get_testing_datasets(holder: Holder):
     # Make sure the batches are loaded
     loader: QueuedDataLoader = QueuedDataLoader()
-    loader.qfseq.stop()
     # Sample at least 2k events
     n_batches = int(conf.testing.n_events / conf.loader.batch_size)
     assert n_batches <= len(loader.testing_batches)

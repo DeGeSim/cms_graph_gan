@@ -72,6 +72,7 @@ must queue an epoch via `queue_epoch()` and iterate over the instance of the cla
         # Get access to the postprocess switch for computing the validation dataset
         self.postprocess_switch = postprocess_switch
 
+        self.qfseq: qf.Sequence
         if conf.command != "preprocess" and conf.loader.preprocess_training:
             qf.init(False)
             self.qfseq = qf.Sequence(*preprocessed_seq())
@@ -152,7 +153,8 @@ must queue an epoch via `queue_epoch()` and iterate over the instance of the cla
         return self._testing_batches
 
     def queue_epoch(self, n_skip_events=0) -> None:
-
+        if not self.qfseq.started:
+            self.qfseq.start()
         n_skip_epochs = n_skip_events // (
             conf.loader.chunksize * len(self.training_chunks)
         )
