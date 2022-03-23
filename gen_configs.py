@@ -55,14 +55,14 @@ def option_gan(exp_config: ExperimentConfig) -> Dict[str, DictConfig]:
     mod_conf["models"]["disc"]["losses_list"].remove("WDiscLoss")
     mod_conf["models"]["disc"]["losses_list"].remove("GradientPenalty")
     mod_conf["models"]["disc"]["losses_list"].append("CEDiscLoss")
-    return {"wd": input_conf, "ce": mod_conf}  # ,
+    return {"ce": mod_conf}  # ,"wd": input_conf,
 
 
 @add_option
 def option_gen(exp_config: ExperimentConfig) -> Dict[str, DictConfig]:
     input_conf = exp_config.config
     out_dict = {}
-    generators = ["gen_edgeconv", "gen_deeptree"]  # "gen_treepc",
+    generators = ["gen_deeptree", "gen_edgeconv"]  # "gen_treepc",,
     for gen_name in generators:
         mod_conf = input_conf.copy()
         mod_conf["models"]["gen"]["name"] = gen_name
@@ -70,7 +70,47 @@ def option_gen(exp_config: ExperimentConfig) -> Dict[str, DictConfig]:
     return out_dict
 
 
+# Option for the generator
+# @add_option
+def option_conv(exp_config: ExperimentConfig) -> Dict[str, DictConfig]:
+    if exp_config.config["models"]["gen"]["name"] != "gen_deeptree":
+        return {}
+    input_conf = exp_config.config
+    mod_conf = input_conf.copy()
+    mod_conf["models"]["gen"]["params"]["conv_name"] = "GINConv"
+    mod_conf = input_conf.copy()
+
+    return {"ancconv": input_conf, "gin": mod_conf}
+
+
 @add_option
+def option_branching_res(exp_config: ExperimentConfig) -> Dict[str, DictConfig]:
+    if exp_config.config["models"]["gen"]["name"] != "gen_deeptree":
+        return {}
+    brres_conf = exp_config.config.copy()
+    brres_conf["layer_options"]["BranchingLayer"]["residual"] = True
+    brresno_conf = exp_config.config.copy()
+    brresno_conf["layer_options"]["BranchingLayer"]["residual"] = False
+    return {"brres": brres_conf, "brresno": brresno_conf}
+
+
+@add_option
+def option_ancestorconv_res(exp_config: ExperimentConfig) -> Dict[str, DictConfig]:
+    if exp_config.config["models"]["gen"]["name"] != "gen_deeptree":
+        return {}
+    if (
+        exp_config.config["model_param_options"]["gen_deeptree"]["conv_name"]
+        != "AncestorConv"
+    ):
+        return {}
+    acres_conf = exp_config.config.copy()
+    acres_conf["layer_options"]["AncestorConv"]["residual"] = True
+    acresno_conf = exp_config.config.copy()
+    acresno_conf["layer_options"]["AncestorConv"]["residual"] = False
+    return {"acres": acres_conf, "acresno": acresno_conf}
+
+
+# @add_option
 def option_disc(exp_config: ExperimentConfig) -> Dict[str, DictConfig]:
     input_conf = exp_config.config
     out_dict = {}
@@ -82,6 +122,17 @@ def option_disc(exp_config: ExperimentConfig) -> Dict[str, DictConfig]:
     return out_dict
 
 
+# FFN config
+@add_option
+def option_ffn_activation(exp_config: ExperimentConfig) -> Dict[str, DictConfig]:
+    input_conf = exp_config.config
+    mod_conf = input_conf.copy()
+    mod_conf["ffn"]["activation"] = "LeakyReLU"
+    mod_conf["ffn"]["activation_params"] = {"negative_slope": 0.2}
+    return {"selu": input_conf, "leakyrelu": mod_conf}
+
+
+# Losses
 # @add_option
 def option_physics_loss(exp_config: ExperimentConfig) -> Dict[str, DictConfig]:
     input_conf = exp_config.config
@@ -90,24 +141,12 @@ def option_physics_loss(exp_config: ExperimentConfig) -> Dict[str, DictConfig]:
     return {"nopl": input_conf, "pl": mod_conf}  #
 
 
-# @add_option
+@add_option
 def option_mean_dist_loss(exp_config: ExperimentConfig) -> Dict[str, DictConfig]:
     input_conf = exp_config.config
     mod_conf = input_conf.copy()
     mod_conf["models"]["gen"]["losses_list"].append("mean_dist")
-    return {"nomd": input_conf, "md": mod_conf}  #
-
-
-@add_option
-def option_conv(exp_config: ExperimentConfig) -> Dict[str, DictConfig]:
-    if "gen_deeptree" not in exp_config.tags:
-        return {}
-    input_conf = exp_config.config
-    mod_conf = input_conf.copy()
-    mod_conf["models"]["gen"]["params"]["conv_name"] = "GINConv"
-    mod_conf = input_conf.copy()
-
-    return {"ancconv": input_conf, "gin": mod_conf}  #
+    return {"md": mod_conf, "nomd": input_conf}
 
 
 for option in optionslist:
