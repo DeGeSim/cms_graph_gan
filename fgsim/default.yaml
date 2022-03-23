@@ -121,8 +121,7 @@ path:
     state: "${path.run_path}/state.yaml"
     state_old: "${path.run_path}/state_old.yaml"
     comet_exp_key: "${path.run_path}/comet_experiment_key"
-    log: "${path.run_path}/${command}.log"
-    loader_log: "${path.run_path}/${command}_loader.log"
+
 
 loader: "${merge:${loader_options[default]},${loader_options[${loader_name}]}}"
 loader_name: normal

@@ -13,16 +13,18 @@ logger = logging.getLogger(__name__)
 
 def init_logger():
     if not logger.handlers:
+        log_path = f"{conf.path.run_path}/{conf.command}.log"
+        loader_log = f"{conf.path.run_path}/{conf.command}_loader.log"
         if not conf.debug:
             logging.basicConfig(
-                filename=conf.path.log,
+                filename=log_path,
                 level=logging.DEBUG if conf.loader.debug else logging.INFO,
                 filemode="w",
                 format="%(asctime)s - %(levelname)s - %(message)s",
                 datefmt="%y-%m-%d %H:%M",
             )
             qf.logger.setup_logger(
-                conf.path.loader_log,
+                loader_log,
                 print_bool=conf.loader.debug,
                 debug=conf.loader.debug,
             )
