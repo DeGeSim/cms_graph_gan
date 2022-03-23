@@ -55,7 +55,7 @@ class Holder:
 
         # try to load a check point
         self.checkpoint_loaded = False
-        if not conf.debug:
+        if not conf.debug or conf.command == "test":
             self.__load_checkpoint()
 
         # # Hack to move the optim parameters to the correct device

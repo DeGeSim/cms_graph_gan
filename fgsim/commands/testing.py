@@ -30,6 +30,64 @@ def subsample(arr: np.ndarray):
     return np.random.choice(arr, size=conf.testing.n_events, replace=False)
 
 
+def get_testing_datasets(holder: Holder):
+    # Make sure the batches are loaded
+    loader: QueuedDataLoader = QueuedDataLoader()
+    loader.qfseq.stop()
+    # Sample at least 2k events
+    n_batches = int(conf.testing.n_events / conf.loader.batch_size)
+    assert n_batches <= len(loader.testing_batches)
+    ds_dict = {"sim": loader.testing_batches[:n_batches]}
+
+    for best_or_last in ["best", "last"]:
+        ds_path = Path(conf.path.run_path) / f"test_{best_or_last}.pt"
+        ds_is_available = ds_path.is_file()
+
+        if best_or_last == "best":
+            step = holder.state.best_grad_step
+        else:
+            step = holder.state.grad_step
+
+        # Check if we need to rerun the model
+        if ds_is_available:
+            unp = torch.load(ds_path)
+            if unp["step"] != step:
+                ds_is_available = False
+            elif len(unp["batches"]) != n_batches:
+                ds_is_available = False
+            else:
+                gen_batches = unp["batches"]
+        # if yes, pickle it
+        if not ds_is_available:
+            if best_or_last == "best":
+                holder.select_best_model()
+
+            holder.models.eval()
+
+            gen_batches = []
+            # generate a batch for each simulated one:
+            for _ in tqdm(
+                range(n_batches), desc=f"Generating Batches {best_or_last}"
+            ):
+                with torch.no_grad():
+                    holder.reset_gen_points()
+                    gen_batch = holder.gen_points.clone().cpu()
+                    gen_batches.append(gen_batch)
+
+            # with Pool(10) as p:
+            #     gen_batches =
+            # list(tqdm(p.imap(batch_tools.batch_compute_hlvs, gen_batches))
+            gen_batches = [
+                batch_tools.batch_compute_hlvs(batch)
+                for batch in tqdm(gen_batches, desc="Compute HLVs gen_batches")
+            ]
+
+            torch.save({"step": step, "batches": gen_batches}, ds_path)
+        ds_dict[best_or_last] = gen_batches
+
+    return ds_dict["sim"], ds_dict["best"], ds_dict["last"]
+
+
 def test_procedure() -> None:
     holder: Holder = Holder()
     train_log: TrainLog = holder.train_log
@@ -38,41 +96,16 @@ def test_procedure() -> None:
     #     logger.error("Training has not completed, stopping.")
     #     loader.qfseq.stop()
     #     exit(0)
-
-    # Make sure the batches are loaded
-    loader: QueuedDataLoader = QueuedDataLoader()
-    _ = loader.testing_batches
-    loader.qfseq.stop()
+    sim_batches, gen_batches_best, gen_batches_last = get_testing_datasets(holder)
 
     for best_or_last in ["best", "last"]:
-        if best_or_last == "best":
-            # if not hasattr(holder, "best_model_state"):
-            #     continue
-            holder.select_best_model()
-        holder.models.eval()
         plot_path = Path(f"{conf.path.run_path}/plots_{best_or_last}/")
         plot_path.mkdir(exist_ok=True)
+        gen_batches = (
+            gen_batches_best if best_or_last == "best" else gen_batches_last
+        )
 
         vals: Dict[str, Dict[str, List[torch.Tensor]]] = {"gen": {}, "sim": {}}
-
-        # Sample at least 2k events
-        n_batches = int(conf.testing.n_events / conf.loader.batch_size)
-        assert n_batches <= len(loader.testing_batches)
-        sim_batches = loader.testing_batches[:n_batches]
-        gen_batches = []
-        # generate a batch for each simulated one:
-        for _ in tqdm(range(n_batches), desc="Generating Batches"):
-            with torch.no_grad():
-                holder.reset_gen_points()
-                gen_batch = holder.gen_points.clone().cpu()
-                gen_batches.append(gen_batch)
-
-        # with Pool(10) as p:
-        #     gen_batches = list(tqdm(p.imap(batch_tools.batch_compute_hlvs, gen_batches))
-        gen_batches = [
-            batch_tools.batch_compute_hlvs(batch)
-            for batch in tqdm(gen_batches, desc="Compute HLVs gen_batches")
-        ]
 
         for sim_batch, gen_batch in zip(sim_batches, gen_batches):
             for key in gen_batch.hlvs:
@@ -116,8 +149,8 @@ def test_procedure() -> None:
         logger.info(f"Plotting  xyscatter")
         # Scatter of a single event
         figure = xyscatter(
-            sim=sim_batch[0].x.numpy(),
-            gen=gen_batch[0].x.numpy(),
+            sim=sim_batches[0][0].x.numpy(),
+            gen=gen_batches[0][0].x.numpy(),
             outputpath=plot_path / f"xyscatter_single.pdf",
             title="Scatter event",
         )
@@ -127,17 +160,17 @@ def test_procedure() -> None:
             )
 
         figure = xyscatter(
-            sim=sim_batch.x.numpy(),
-            gen=gen_batch.x.numpy(),
+            sim=sim_batches[0].x.numpy(),
+            gen=gen_batches[0].x.numpy(),
             outputpath=plot_path / f"xyscatter_batch.pdf",
             title="Scatter all points in batch",
         )
 
         figure = xyscatter(
-            sim=scatter_mean(sim_batch.x, sim_batch.batch, dim=0).numpy(),
-            gen=scatter_mean(gen_batch.x, gen_batch.batch, dim=0).numpy(),
+            sim=scatter_mean(sim_batches[0].x, sim_batches[0].batch, dim=0).numpy(),
+            gen=scatter_mean(gen_batches[0].x, gen_batches[0].batch, dim=0).numpy(),
             outputpath=plot_path / f"xyscatter_batch_means.pdf",
-            title=f"Event means for a batch ({len(sim_batch.batch)})",
+            title=f"Event means for a batch ({len(sim_batches[0].batch)})",
         )
         with train_log.experiment.test():
             train_log.experiment.log_figure(
