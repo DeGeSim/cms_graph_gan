@@ -19,15 +19,12 @@ parser.add_argument(
     default=False,
     required=False,
 )
+commands = ["setup", "train", "test", "preprocess", "dump", "overwrite", "loadfile"]
 subparsers = parser.add_subparsers(help="Available Commands", dest="command")
 
-setup_parser = subparsers.add_parser("setup")
-train_parser = subparsers.add_parser("train")
-test_parser = subparsers.add_parser("test")
-preprocess_parser = subparsers.add_parser("preprocess")
-dump_parser = subparsers.add_parser("dump")
-loadfile_parser = subparsers.add_parser("loadfile")
-loadfile_parser.add_argument(
+commandparsers = {command: subparsers.add_parser(command) for command in commands}
+
+commandparsers["loadfile"].add_argument(
     "file_to_load",
     help="python file to load",
 )

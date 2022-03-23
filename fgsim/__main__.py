@@ -61,7 +61,9 @@ def main():
 
     # If it is called by the hash, manipulate then
     overwrite_path = (
-        args.hash is not None and args.command != "dump" and not args.debug
+        args.hash is not None
+        and args.command not in ["dump", "overwrite"]
+        and not args.debug
     )
     if overwrite_path:
         from fgsim.config import conf
@@ -120,6 +122,11 @@ def main():
         file_name = re.sub(".*fgsim/(.*?).py", ".\\1", file_name)
         file_name = re.sub("/", ".", file_name)
         importlib.import_module(file_name, "fgsim")
+
+    if args.command == "overwrite":
+        from fgsim.commands.overwrite import overwrite_procedure
+
+        overwrite_procedure()
 
     if args.command == "dump":
         from fgsim.commands.dump import dump_procedure
