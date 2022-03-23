@@ -13,7 +13,7 @@ models:
             name: Adam
             params: ${optim_options[Adam]}
     disc:
-        name: disc_treepc
+        name: disc_graphgym
         params: ${model_param_options[${models.disc.name}]}
         losses: "${optionlist:${loss_options},${models.disc.losses_list}}"
         losses_list: [WDiscLoss,GradientPenalty]
