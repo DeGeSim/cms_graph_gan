@@ -61,7 +61,7 @@ def main():
 
     # If it is called by the hash, manipulate then
     overwrite_path = (
-        args.hash is not None and args.command != "dump" and args.debug is None
+        args.hash is not None and args.command != "dump" and not args.debug
     )
     if overwrite_path:
         from fgsim.config import conf
