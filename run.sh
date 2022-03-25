@@ -28,7 +28,7 @@ function elementf {
             --partition=allgpu,cms-desy \
             --time=78:00:00 \
             --nodes=1 \
-            --constraint="P100" \
+            --constraint="P100|V100|A100" \
             --output=wd/slurm-$CMD-${HASH}-%j.out \
             --job-name=${HASH} run_in_env.sh --hash $HASH $CMD
         else
