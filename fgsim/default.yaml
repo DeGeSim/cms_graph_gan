@@ -34,13 +34,13 @@ model_param_options:
         degrees: [2, 2, 2, 2, 2, 64]
         support: 10
     gen_deeptree:
-        features: [256,64,64,2]
-        branches: [1,4,8,16]
         n_global: 5
         conv_name: AncestorConv
         conv_parem: ${layer_options[${model_param_options.gen_deeptree.conv_name}]}
         branching_param: ${layer_options[BranchingLayer]}
         pp_conv: False
+        iterative_disc_layerwise: True
+        iterative_disc_branchwise: True
     gen_edgeconv:
         n_layers: 5
         n_features: 2
@@ -49,6 +49,11 @@ model_param_options:
     disc_graphgym: {}
     disc_treepc:
         features: [4, 64, 128, 256]
+
+tree:
+    branches: [1,4,8,16]
+    features: [256,64,64,2]
+
 
 layer_options:
     GINConv: {}

@@ -10,6 +10,8 @@ from torch_geometric.data import Batch, Data
 from fgsim.config import conf
 from fgsim.io.batch_tools import compute_hlvs
 
+from .tree_builder import add_batch_to_branching, reverse_construct_tree
+
 # Sharded switch for the postprocessing
 postprocess_switch = Value("i", 0)
 
@@ -49,11 +51,13 @@ def transform(_: None) -> Data:
     graph = Data(x=pointcloud)
     if postprocess_switch.value:
         graph.hlvs = compute_hlvs(graph)
+    graph = reverse_construct_tree(graph)
     return graph
 
 
 def aggregate_to_batch(list_of_events: List[Data]) -> Batch:
     batch = Batch.from_data_list(list_of_events)
+    batch = add_batch_to_branching(batch)
     return batch
 
 

@@ -21,12 +21,12 @@
             {
                 "args": [
                     "--tag",
-                    "treepc_c",
+                    "normal",
                     "--debug",
-                    "train"
+                    "preprocess"
                 ],
                 "module": "fgsim",
-                "name": "tr treepc_c",
+                "name": "pp normal",
                 "request": "launch",
                 "type": "python",
                 // "justMyCode": false,
@@ -34,12 +34,25 @@
             {
                 "args": [
                     "--tag",
-                    "normal",
+                    "ce_Gdeeptree_brres_acresno_selu_md",
+                    "--debug",
+                    "test"
+                ],
+                "module": "fgsim",
+                "name": "te ce_Gdeeptree_brres_acresno_selu_md",
+                "request": "launch",
+                "type": "python",
+                // "justMyCode": false,
+            },
+            {
+                "args": [
+                    "--tag",
+                    "normal_graphgym",
                     "--debug",
                     "train"
                 ],
                 "module": "fgsim",
-                "name": "tr normal",
+                "name": "tr normal_graphgym",
                 "request": "launch",
                 "type": "python",
                 // "justMyCode": false,
@@ -47,12 +60,12 @@
             {
                 "args": [
                     "--hash",
-                    "25a5aa5",
+                    "ac0ecd5",
                     // "--debug",
                     "train"
                 ],
                 "module": "fgsim",
-                "name": "25a5aa5 train",
+                "name": "tr ac0ecd5",
                 "request": "launch",
                 "type": "python",
             },
@@ -90,7 +103,7 @@
         "python.envFile": "~/fgsim/.env",
         "python.formatting.blackPath": "${env:HOME}/.local/bin/black",
         "python.formatting.provider": "black",
-        "python.languageServer": "Default",
+        "python.languageServer": "Pylance",
         "python.linting.enabled": true,
         "python.linting.flake8Enabled": true,
         "python.linting.flake8Path": "${env:HOME}/.local/bin/pflake8",
@@ -107,7 +120,12 @@
         "python.pythonPath": "~/fgsim/venv1.10.1+cu111/bin/python",
         "python.testing.pytestEnabled": true,
         "python.testing.unittestEnabled": false,
-        "docwriter.style": "Google"
+        "docwriter.style": "Google",
+        "python.linting.ignorePatterns": [
+            "**/site-packages/**/*.py",
+            ".vscode/*.py",
+            "wd/**"
+        ]
     },
     "tasks": {
         "tasks": [
