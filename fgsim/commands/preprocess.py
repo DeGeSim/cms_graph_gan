@@ -20,6 +20,7 @@ Processing validation batches, queuing {len(data_loader.validation_chunks)} chun
     # Turn the postprocessing off for the validation and testing
     data_loader.postprocess_switch.value = 1
     data_loader.qfseq.queue_iterable(data_loader.validation_chunks)
+    data_loader.qfseq.start()
     validation_batches = [batch for batch in tqdm(data_loader.qfseq)]
     torch.save(validation_batches, conf.path.validation)
     logger.warning("Validation batches pickled.")
