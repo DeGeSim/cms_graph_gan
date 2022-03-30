@@ -64,8 +64,4 @@ class FFN(nn.Sequential):
             m.bias.data.fill_(conf.ffn.init_weights_bias_const)
 
 
-def dnn_gen(*args, **kwargs) -> nn.Sequential:
-    return FFN(*args, **kwargs)
-
-
 nn.ReLU

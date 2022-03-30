@@ -4,7 +4,7 @@ from torch_geometric.data import Batch, Data
 from torch_geometric.nn import EdgeConv, knn_graph
 
 from fgsim.config import conf
-from fgsim.models.dnn_gen import dnn_gen
+from fgsim.models.ffn import FFN
 from fgsim.monitoring.logger import logger
 
 
@@ -39,7 +39,7 @@ class ModelClass(nn.Module):
         self.pp_convs = nn.ModuleList(
             [
                 EdgeConv(
-                    nn=dnn_gen(n_features * 2, n_features),  # + n_global
+                    nn=FFN(n_features * 2, n_features),  # + n_global
                     aggr="add",
                 )
                 for _ in range(n_layers)

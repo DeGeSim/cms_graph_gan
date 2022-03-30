@@ -4,7 +4,7 @@ import torch
 from torch_geometric.nn import MessagePassing
 from torch_geometric.utils import add_self_loops
 
-from fgsim.models.dnn_gen import dnn_gen
+from fgsim.models.ffn import FFN
 
 
 class AncestorConv(MessagePassing):
@@ -47,7 +47,7 @@ class AncestorConv(MessagePassing):
         # MSG NN
         self.msg_nn: Union[torch.nn.Module, torch.nn.Identity] = torch.nn.Identity()
         if msg_nn_bool:
-            self.msg_nn = dnn_gen(
+            self.msg_nn = FFN(
                 in_features
                 + (n_global if msg_nn_include_global else 0)
                 + (1 if msg_nn_include_edge_attr else 0),
@@ -60,7 +60,7 @@ class AncestorConv(MessagePassing):
         # UPD NN
         self.update_nn: Union[torch.Module, torch.nn.Identity] = torch.nn.Identity()
         if upd_nn_bool:
-            self.update_nn = dnn_gen(
+            self.update_nn = FFN(
                 2 * in_features + (n_global if upd_nn_include_global else 0),
                 out_features,
                 n_layers=4,

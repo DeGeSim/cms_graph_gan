@@ -3,7 +3,7 @@ import math
 import torch
 import torch.nn as nn
 
-from fgsim.models.dnn_gen import dnn_gen
+from fgsim.models.ffn import FFN
 
 
 class TreeGCN(nn.Module):
@@ -42,7 +42,7 @@ class TreeGCN(nn.Module):
         #         self.n_parents, self.in_feature, self.degree * self.in_feature
         #     )
         # )
-        self.branch_nn = dnn_gen(self.in_feature, self.degree * self.in_feature)
+        self.branch_nn = FFN(self.in_feature, self.degree * self.in_feature)
 
         # Loop term, F^l_K in the paper
         self.W_loop = nn.Sequential(

@@ -2,14 +2,14 @@ import torch
 from torch_geometric.nn import global_add_pool, global_mean_pool
 
 from fgsim.config import conf
-from fgsim.models.dnn_gen import dnn_gen
+from fgsim.models.ffn import FFN
 
 
 class ModelClass(torch.nn.Module):
     def __init__(self):
         super(ModelClass, self).__init__()
         n_features = conf.loader.n_features
-        self.hlv_dnn = dnn_gen(
+        self.hlv_dnn = FFN(
             n_features * 2, 1, n_layers=4, activation_last_layer=torch.nn.Identity()
         )
 

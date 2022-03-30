@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 from torch_geometric.data import Data
 
-from fgsim.models.dnn_gen import dnn_gen
+from fgsim.models.ffn import FFN
 
 from .tree import Tree
 
@@ -42,7 +42,7 @@ class BranchingLayer(nn.Module):
         self.level = level
         self.residual = residual
         assert 1 <= level < len(tree.branches)
-        self.proj_nn = dnn_gen(
+        self.proj_nn = FFN(
             self.n_features + n_global, self.n_features * self.n_branches
         )
 

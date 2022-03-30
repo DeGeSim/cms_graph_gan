@@ -4,7 +4,7 @@ import torch
 import torch.nn as nn
 import torch.nn.init as init
 
-from fgsim.models.dnn_gen import dnn_gen
+from fgsim.models.ffn import FFN
 
 
 class TreeGCN(nn.Module):
@@ -30,10 +30,7 @@ class TreeGCN(nn.Module):
         # Is the transformation matrix, that brings the root node
         # to the correct feature size
         self.ancestor_nn = nn.ModuleList(
-            [
-                dnn_gen(features[inx], self.out_feature)
-                for inx in range(self.depth + 1)
-            ]
+            [FFN(features[inx], self.out_feature) for inx in range(self.depth + 1)]
         )
         # self.W_root = nn.ModuleList(
         #     [

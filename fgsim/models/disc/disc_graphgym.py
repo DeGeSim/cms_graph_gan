@@ -10,7 +10,7 @@ from torch_geometric.nn import (
 )
 
 from fgsim.config import conf, device
-from fgsim.models.dnn_gen import dnn_gen
+from fgsim.models.ffn import FFN
 
 
 class ModelClass(torch.nn.Module):
@@ -44,7 +44,7 @@ class ModelClass(torch.nn.Module):
             ],
         ).to(device)
 
-        self.hlv_dnn = dnn_gen(n_features * (len(self.convs) + 1), 1).to(device)
+        self.hlv_dnn = FFN(n_features * (len(self.convs) + 1), 1).to(device)
 
     def forward(self, data):
         data.edge_index = knn_graph(x=data.x, k=6, batch=data.batch)

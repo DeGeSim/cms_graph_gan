@@ -11,7 +11,7 @@ from fgsim.config import conf, device
 from fgsim.io.sel_seq import Batch, batch_tools
 from fgsim.models.branching.branching import BranchingLayer, Tree
 from fgsim.models.branching.node import Node
-from fgsim.models.dnn_gen import dnn_gen
+from fgsim.models.ffn import FFN
 from fgsim.models.layer.ancestor_conv import AncestorConv
 from fgsim.models.pooling.dyn_hlvs import DynHLVsLayer
 from fgsim.monitoring.logger import logger
@@ -97,7 +97,7 @@ class ModelClass(nn.Module):
                 from torch_geometric.nn.conv import GINConv
 
                 conv = GINConv(
-                    dnn_gen(
+                    FFN(
                         self.features[level - 1] + n_global, self.features[level]
                     ).to(device)
                 )
@@ -120,7 +120,7 @@ class ModelClass(nn.Module):
             self.pp_convs = nn.ModuleList(
                 [
                     EdgeConv(
-                        nn=dnn_gen(self.features[-1] * 2, self.features[-1]),
+                        nn=FFN(self.features[-1] * 2, self.features[-1]),
                         aggr="add",
                     )
                     for _ in range(3)
