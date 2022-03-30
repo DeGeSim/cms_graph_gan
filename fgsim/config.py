@@ -4,6 +4,7 @@ from glob import glob
 
 import numpy as np
 import torch
+from matplotlib import pyplot as plt
 from omegaconf import DictConfig, OmegaConf
 
 from fgsim.utils.cli import args
@@ -83,3 +84,8 @@ if torch.cuda.is_available() and conf["command"] in ["train", "test"]:
     device = torch.device("cuda:" + str(torch.cuda.device_count() - 1))
 else:
     device = torch.device("cpu")
+
+
+plt.rcParams["savefig.bbox"] = "tight"
+
+np.set_printoptions(formatter={"float_kind": "{:.3g}".format})
