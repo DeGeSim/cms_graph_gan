@@ -27,7 +27,7 @@ def object_gen(props: Dict[str, int]) -> DTColl:
     n_features = props["n_features"]
     n_branches = props["n_branches"]
     n_global = props["n_global"]
-    n_events = props["n_events"]
+    batch_size = props["batch_size"]
     n_levels = props["n_levels"]
 
     # features = [n_features for _ in range(n_levels)]
@@ -35,7 +35,7 @@ def object_gen(props: Dict[str, int]) -> DTColl:
 
     graph = Data(
         x=torch.randn(
-            n_events,
+            batch_size,
             n_features,
             dtype=torch.float,
             device=device,
@@ -43,9 +43,9 @@ def object_gen(props: Dict[str, int]) -> DTColl:
         ),
         edge_index=torch.empty(2, 0, dtype=torch.long, device=device),
         edge_attr=torch.empty(0, 1, dtype=torch.float, device=device),
-        event=torch.arange(n_events, dtype=torch.long, device=device),
+        event=torch.arange(batch_size, dtype=torch.long, device=device),
         global_features=torch.randn(
-            n_events,
+            batch_size,
             n_global,
             dtype=torch.float,
             device=device,
@@ -54,7 +54,7 @@ def object_gen(props: Dict[str, int]) -> DTColl:
 
     tree = Tree(
         branches=branches,
-        n_events=n_events,
+        batch_size=batch_size,
         device=device,
     )
     branching_layers = [
@@ -66,7 +66,7 @@ def object_gen(props: Dict[str, int]) -> DTColl:
 
     dyn_hlvs_layer = DynHLVsLayer(
         n_features=n_features,
-        n_events=n_events,
+        batch_size=batch_size,
         n_global=n_global,
         device=device,
     )
@@ -91,7 +91,7 @@ def static_props():
         "n_features": 4,
         "n_branches": 2,
         "n_global": 6,
-        "n_events": 3,
+        "batch_size": 3,
         "n_levels": 4,
     }
     return props
@@ -99,11 +99,11 @@ def static_props():
 
 @pytest.fixture(params=product([2], [1, 2], [3], [2], [2, 4]))
 def dyn_props(request):
-    n_features, n_branches, n_events, n_global, n_levels = request.param
+    n_features, n_branches, batch_size, n_global, n_levels = request.param
     props = {
         "n_features": n_features,
         "n_branches": n_branches,
-        "n_events": n_events,
+        "batch_size": batch_size,
         "n_global": n_global,
         "n_levels": n_levels,
     }

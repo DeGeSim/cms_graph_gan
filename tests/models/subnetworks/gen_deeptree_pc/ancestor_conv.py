@@ -28,7 +28,7 @@ def default_pars():
         "n_branches": 2,
         "n_levels": 2,
         "n_global": 2,
-        "n_events": 1,
+        "batch_size": 1,
     }
 
 
@@ -41,6 +41,7 @@ def ancestor_conv(default_pars):
         n_global=default_pars["n_global"],
         add_self_loops=False,
         msg_nn_include_edge_attr=True,
+        residual=False,
     )
     ancestor_conv.msg_nn = do_nothing
     ancestor_conv.update_nn = do_nothing
@@ -65,11 +66,11 @@ def test_ancestorconv_single_event(ancestor_conv, graph):
     # n_branches = 2
     # n_levels = 2
     n_global = 2
-    n_events = 1
+    batch_size = 1
 
     global_features = torch.tensor(
         [[0.3, 0.2]], dtype=torch.float, device=device
-    ).reshape(n_events, n_global)
+    ).reshape(batch_size, n_global)
 
     res = ancestor_conv(
         x=graph.x,
@@ -92,7 +93,7 @@ def test_ancestorconv_double_event(ancestor_conv):
     # n_branches = 2
     # n_levels = 2
     n_global = 2
-    n_events = 2
+    batch_size = 2
 
     graph = Data(
         x=torch.tensor(
@@ -111,7 +112,7 @@ def test_ancestorconv_double_event(ancestor_conv):
     )
     global_features = torch.tensor(
         [[0.3, 0.3], [0.1, 0.1]], dtype=torch.float, device=device
-    ).reshape(n_events, n_global)
+    ).reshape(batch_size, n_global)
 
     res = ancestor_conv(
         x=graph.x,
@@ -143,7 +144,7 @@ def test_ancestorconv_three_levels(ancestor_conv):
     # n_branches = 2
     # n_levels = 2
     n_global = 2
-    n_events = 1
+    batch_size = 1
 
     graph = Data(
         x=torch.arange(
@@ -159,7 +160,7 @@ def test_ancestorconv_three_levels(ancestor_conv):
     )
     global_features = torch.tensor(
         [[0.3, 0.2]], dtype=torch.float, device=device
-    ).reshape(n_events, n_global)
+    ).reshape(batch_size, n_global)
 
     res = ancestor_conv(
         x=graph.x,
@@ -193,7 +194,7 @@ def test_ancestorconv_all_modes():
     # n_branches = 2
     # n_levels = 2
     n_global = 2
-    n_events = 1
+    batch_size = 1
 
     graph = Data(
         x=torch.arange(
@@ -209,7 +210,7 @@ def test_ancestorconv_all_modes():
     )
     global_features = torch.tensor(
         [[0.3, 0.2]], dtype=torch.float, device=device
-    ).reshape(n_events, n_global)
+    ).reshape(batch_size, n_global)
 
     for add_self_loops in [True, False]:
         for msg_nn_bool in [True, False]:
@@ -256,13 +257,13 @@ def test_ancestorconv_all_modes():
 #     from fgsim.models.layer.ancestor_conv import AncestorConv
 
 #     n_features = 2
-#     n_events = 1
+#     batch_size = 1
 #     n_branches = 2
 #     n_levels = 3
 #     n_global = 0
 #     device = torch.device("cpu")
 #     tree = Tree(
-#         n_events=n_events,
+#         batch_size=batch_size,
 #         n_features=n_features,
 #         n_branches=n_branches,
 #         n_levels=n_levels,

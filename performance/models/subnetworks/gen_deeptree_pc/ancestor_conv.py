@@ -8,7 +8,7 @@ device = torch.device("cpu")
 def reshape_features(
     mtx: torch.Tensor,
     n_parents: int,
-    n_events: int,
+    batch_size: int,
     n_branches: int,
     n_features: int,
 ):
@@ -17,8 +17,8 @@ def reshape_features(
     out_list = []
     for iparent in range(n_parents):
         for ibranch in range(n_branches):
-            for ievent in range(n_events):
-                row = ievent + iparent * n_events
+            for ievent in range(batch_size):
+                row = ievent + iparent * batch_size
                 out_list.append(magic_list[row][ibranch])
     return torch.cat(out_list)
 
@@ -26,54 +26,54 @@ def reshape_features(
 def reshape_features2(
     mtx: torch.Tensor,
     n_parents: int,
-    n_events: int,
+    batch_size: int,
     n_branches: int,
     n_features: int,
 ):
     return (
-        mtx.reshape(n_parents, n_events, n_features * n_branches)
+        mtx.reshape(n_parents, batch_size, n_features * n_branches)
         .transpose(1, 2)
-        .reshape(n_parents * n_branches, n_features, n_events)
+        .reshape(n_parents * n_branches, n_features, batch_size)
         .transpose(1, 2)
-        .reshape(n_parents * n_branches * n_events, n_features)
+        .reshape(n_parents * n_branches * batch_size, n_features)
     )
 
 
 # Test the reshaping
-def demo_mtx(*, n_parents, n_events, n_branches, n_features):
-    mtx = torch.ones(n_parents * n_events, n_branches * n_features)
+def demo_mtx(*, n_parents, batch_size, n_branches, n_features):
+    mtx = torch.ones(n_parents * batch_size, n_branches * n_features)
     i, j = 0, 0
     ifield = 0
     for iparent in range(n_parents):
         for ibranch in range(n_branches):
-            for ievent in range(n_events):
+            for ievent in range(batch_size):
                 for ifeature in range(n_features):
                     # print(f"Acessing {i}, {j+ifeature}")
                     mtx[i, ifeature + ibranch * n_features] = ifield
                 ifield = ifield + 1
                 i = i + 1
-            i = i - n_events
+            i = i - batch_size
             j = j + 1
-        i = i + n_events
+        i = i + batch_size
         j = j - n_branches
     return mtx
 
 
 def measure_reshape_features():
     n_parents = 100
-    n_events = 50
+    batch_size = 50
     n_branches = 2
     n_features = 10
     mtx = demo_mtx(
         n_parents=n_parents,
-        n_events=n_events,
+        batch_size=batch_size,
         n_branches=n_branches,
         n_features=n_features,
     )
     args = {
         "mtx": mtx,
         "n_parents": n_parents,
-        "n_events": n_events,
+        "batch_size": batch_size,
         "n_branches": n_branches,
         "n_features": n_features,
     }

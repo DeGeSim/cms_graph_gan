@@ -31,12 +31,12 @@ class BranchingLayer(nn.Module):
         n_features: int,
         n_global: int,
         level: int,
-        residual: bool,
+        residual: bool = True,
     ):
         super().__init__()
         self.tree = tree
         self.n_branches = tree.branches[level]
-        self.n_events = self.tree.n_events
+        self.batch_size = self.tree.batch_size
         self.n_features = n_features
         self.n_global = n_global
         self.level = level
@@ -53,13 +53,9 @@ class BranchingLayer(nn.Module):
 
         x = graph.x.clone()
         global_features = graph.global_features.clone()
-        # if self.n_global > 0:
-        #     global_features = graph.global_features.clone()
-        # else:
-        #     global_features = torch.empty(self.n_events, self.n_global)
         del graph
 
-        n_events = self.n_events
+        batch_size = self.batch_size
         n_branches = self.n_branches
         n_features = self.n_features
         parents = self.tree.tree_lists[self.level - 1]
@@ -72,7 +68,7 @@ class BranchingLayer(nn.Module):
         parents_idxs = torch.cat([parent.idxs for parent in parents])
         # for the parents indeces generate a matrix where
         # each row is the global vector of the respective event
-        parent_global = global_features[parents_idxs % n_events, :]
+        parent_global = global_features[parents_idxs % batch_size, :]
         # With the idxs of the parent index the event vector
         parents_ftxs = x[parents_idxs, ...]
 
@@ -87,14 +83,14 @@ class BranchingLayer(nn.Module):
             )
 
         assert list(proj_ftx.shape) == [
-            n_parents * n_events,
+            n_parents * batch_size,
             n_branches * n_features,
         ]
 
         children_ftxs = reshape_features(
             proj_ftx,
             n_parents=n_parents,
-            n_events=n_events,
+            batch_size=batch_size,
             n_branches=n_branches,
             n_features=n_features,
         )
@@ -106,8 +102,8 @@ class BranchingLayer(nn.Module):
             global_features=global_features,
         )
         new_graph.event = torch.arange(
-            n_events, dtype=torch.long, device=device
-        ).repeat(len(new_graph.x) // n_events)
+            batch_size, dtype=torch.long, device=device
+        ).repeat(len(new_graph.x) // batch_size)
         return new_graph
 
 
@@ -115,14 +111,14 @@ class BranchingLayer(nn.Module):
 def reshape_features(
     mtx: torch.Tensor,
     n_parents: int,
-    n_events: int,
+    batch_size: int,
     n_branches: int,
     n_features: int,
 ):
     return (
-        mtx.reshape(n_parents, n_events, n_features * n_branches)
+        mtx.reshape(n_parents, batch_size, n_features * n_branches)
         .transpose(1, 2)
-        .reshape(n_parents * n_branches, n_features, n_events)
+        .reshape(n_parents * n_branches, n_features, batch_size)
         .transpose(1, 2)
-        .reshape(n_parents * n_branches * n_events, n_features)
+        .reshape(n_parents * n_branches * batch_size, n_features)
     )

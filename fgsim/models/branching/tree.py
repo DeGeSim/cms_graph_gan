@@ -8,13 +8,13 @@ from .node import Node
 
 @dataclass
 class Tree:
-    n_events: int
+    batch_size: int
     branches: List[int]
     device: torch.device
 
     def __post_init__(self):
         branches = self.branches
-        n_events = self.n_events
+        batch_size = self.batch_size
         n_levels = len(branches)
         device = self.device
         # initialize the root
@@ -27,9 +27,9 @@ class Tree:
             torch.empty(0, 1, dtype=torch.long, device=device)
         ]
         self.tree_lists: List[List[Node]] = [
-            [Node(torch.arange(self.n_events, dtype=torch.long, device=device))]
+            [Node(torch.arange(self.batch_size, dtype=torch.long, device=device))]
         ]
-        next_x_index = self.n_events
+        next_x_index = self.batch_size
 
         # Start with 1 because the root is initialized
         for level in range(1, n_levels):
@@ -47,9 +47,9 @@ class Tree:
                 # # Calculate the index of the childern
                 # last_idx_in_prev_level = int(self.tree_lists[level - 1][-1].idxs[-1])
                 # points_in_cur_level = (
-                #     branches[level] * n_events * len(self.tree_lists[level])
+                #     branches[level] * batch_size * len(self.tree_lists[level])
                 # )
-                # points_used_cur = branches[level] * n_events * iparent
+                # points_used_cur = branches[level] * batch_size * iparent
                 # next_x_index = (
                 #     last_idx_in_prev_level
                 #     + points_in_cur_level
@@ -59,11 +59,11 @@ class Tree:
 
                 children_idxs = torch.arange(
                     next_x_index,
-                    next_x_index + branches[level] * n_events,
+                    next_x_index + branches[level] * batch_size,
                     dtype=torch.long,
                     device=device,
                 )
-                next_x_index = next_x_index + branches[level] * n_events
+                next_x_index = next_x_index + branches[level] * batch_size
                 # ### 3. Make the connections to parent in the node ###
                 # Add the child to the self.tree to keep a reference
                 for child_idxs in children_idxs.reshape(branches[level], -1):
@@ -86,7 +86,7 @@ class Tree:
                             dtype=torch.long,
                             device=device,
                         )
-                        .repeat(branches[level] * n_events)
+                        .repeat(branches[level] * batch_size)
                         .reshape(-1, 1)
                     )
             self.edge_index_p_level.append(torch.hstack(new_edges))

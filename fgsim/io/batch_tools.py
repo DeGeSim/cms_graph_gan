@@ -29,19 +29,19 @@ def batch_sort_by_reshape(
     pcs: torch.Tensor, batch_idxs: torch.Tensor
 ) -> Tuple[torch.Tensor, torch.Tensor]:
     n_features = int(pcs.shape[1])
-    n_events = int(batch_idxs.max() + 1)
-    n_points_per_event = len(pcs) // n_events
+    batch_size = int(batch_idxs.max() + 1)
+    n_points_per_event = len(pcs) // batch_size
     # events.reshape(-1,5).T
     assert torch.all(
         batch_idxs
-        == torch.arange(n_events, device=pcs.device).repeat(n_points_per_event)
+        == torch.arange(batch_size, device=pcs.device).repeat(n_points_per_event)
     )
-    batch_idxs = batch_idxs.reshape(n_points_per_event, n_events).T.reshape(-1)
+    batch_idxs = batch_idxs.reshape(n_points_per_event, batch_size).T.reshape(-1)
     pcs = (
-        pcs.reshape(n_points_per_event, n_features * n_events)
-        .T.reshape(n_events, n_features, n_points_per_event)
+        pcs.reshape(n_points_per_event, n_features * batch_size)
+        .T.reshape(batch_size, n_features, n_points_per_event)
         .transpose(1, 2)
-        .reshape(n_events, n_features * n_points_per_event)
+        .reshape(batch_size, n_features * n_points_per_event)
     )
     return (pcs, batch_idxs)
 
@@ -77,10 +77,10 @@ def pcs_to_batch_sort_direct(pcs: torch.Tensor, batch_idxs: torch.Tensor) -> Bat
 
 def pcs_to_batch_sort_list(pcs: torch.Tensor, batch_idxs: torch.Tensor) -> Batch:
     n_features = int(pcs.shape[1])
-    n_events = int(batch_idxs.max() + 1)
-    n_points_per_event = len(pcs) // n_events
+    batch_size = int(batch_idxs.max() + 1)
+    n_points_per_event = len(pcs) // batch_size
     pcs, batch_idxs = batch_sort_by_sort(pcs, batch_idxs)
-    pcs = pcs.reshape(n_events, n_points_per_event, n_features)
+    pcs = pcs.reshape(batch_size, n_points_per_event, n_features)
     batch = Batch.from_data_list([Data(x=e) for e in pcs])
     return batch
 
@@ -89,21 +89,21 @@ def pcs_to_batch_reshape_direct(
     pcs: torch.Tensor, batch_idxs: torch.Tensor
 ) -> Batch:
     n_features = int(pcs.shape[1])
-    n_events = int(batch_idxs.max() + 1)
-    n_points_per_event = len(pcs) // n_events
+    batch_size = int(batch_idxs.max() + 1)
+    n_points_per_event = len(pcs) // batch_size
     pcs, batch_idxs = batch_sort_by_reshape(pcs, batch_idxs)
     batch = batch_construct_direct(
-        pcs.reshape(n_events * n_points_per_event, n_features), batch_idxs
+        pcs.reshape(batch_size * n_points_per_event, n_features), batch_idxs
     )
     return batch
 
 
 def pcs_to_batch_reshape_list(pcs: torch.Tensor, batch_idxs: torch.Tensor) -> Batch:
     n_features = int(pcs.shape[1])
-    n_events = int(batch_idxs.max() + 1)
-    n_points_per_event = len(pcs) // n_events
+    batch_size = int(batch_idxs.max() + 1)
+    n_points_per_event = len(pcs) // batch_size
     pcs, batch_idxs = batch_sort_by_reshape(pcs, batch_idxs)
-    pcs = pcs.reshape(n_events, n_points_per_event, n_features)
+    pcs = pcs.reshape(batch_size, n_points_per_event, n_features)
     batch = Batch.from_data_list([Data(x=e) for e in pcs])
     return batch
 

@@ -7,11 +7,11 @@ from fgsim.models.dnn_gen import dnn_gen
 
 
 class DynHLVsLayer(nn.Module):
-    def __init__(self, n_features, n_global, n_events: int, device: torch.device):
+    def __init__(self, n_features, n_global, batch_size: int, device: torch.device):
         super().__init__()
         self.n_features = n_features
         self.n_global = n_global
-        self.n_events = n_events
+        self.batch_size = batch_size
         self.pre_nn: nn.Module = dnn_gen(self.n_features, self.n_features).to(
             device
         )

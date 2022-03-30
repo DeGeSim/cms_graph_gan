@@ -18,7 +18,7 @@ class ModelClass(nn.Module):
         super().__init__()
         self.n_features = n_features
         self.n_global = n_global
-        self.n_events = conf.loader.batch_size
+        self.batch_size = conf.loader.batch_size
         self.n_layers = n_layers
         self.z_shape = conf.loader.batch_size, conf.loader.max_points, n_features
 
@@ -31,7 +31,7 @@ class ModelClass(nn.Module):
         #             n_features=n_features,
         #             n_global=n_global,
         #             device=device,
-        #             n_events=self.n_events,
+        #             batch_size=self.batch_size,
         #         )
         #         for _ in range(n_layers)
         #     ]

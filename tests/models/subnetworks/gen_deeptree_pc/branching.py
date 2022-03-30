@@ -97,7 +97,7 @@ def test_BranchingLayer_connectivity_dyn(dyn_objects: DTColl):
     n_features = props["n_features"]
     n_branches = props["n_branches"]
     # n_global = props["n_global"]
-    n_events = props["n_events"]
+    batch_size = props["batch_size"]
     n_levels = props["n_levels"]
     # Shape
     tree_lists = branching_layers[0].tree.tree_lists
@@ -111,14 +111,14 @@ def test_BranchingLayer_connectivity_dyn(dyn_objects: DTColl):
         # split once
         # x shape testing
         assert graph.x.shape[1] == n_features
-        assert graph.x.shape[0] == n_events * sum(
+        assert graph.x.shape[0] == batch_size * sum(
             [n_branches ** i for i in range(ilevel + 1)]
         )
         # edge_index shape testing
         assert graph.edge_index.shape[0] == 2
         # Number of connections
         # Sum n_branches^ilayer*ilayer for ilayer in 0..nlayers
-        assert graph.edge_index.shape[1] == n_events * sum(
+        assert graph.edge_index.shape[1] == batch_size * sum(
             [n_branches ** i * i for i in range(ilevel + 1)]
         )
 
@@ -146,46 +146,48 @@ def test_BranchingLayer_connectivity_dyn(dyn_objects: DTColl):
 
 
 # Test the reshaping
-def demo_mtx(*, n_parents, n_events, n_branches, n_features):
-    mtx = torch.ones(n_parents * n_events, n_branches * n_features)
+def demo_mtx(*, n_parents, batch_size, n_branches, n_features):
+    mtx = torch.ones(n_parents * batch_size, n_branches * n_features)
     i, j = 0, 0
     ifield = 0
     for iparent in range(n_parents):
         for ibranch in range(n_branches):
-            for ievent in range(n_events):
+            for ievent in range(batch_size):
                 for ifeature in range(n_features):
                     # print(f"Acessing {i}, {j+ifeature}")
                     mtx[i, ifeature + ibranch * n_features] = ifield
                 ifield = ifield + 1
                 i = i + 1
-            i = i - n_events
+            i = i - batch_size
             j = j + 1
-        i = i + n_events
+        i = i + batch_size
         j = j - n_branches
     return mtx
 
 
 @pytest.mark.parametrize("n_parents", [4])
-@pytest.mark.parametrize("n_events", [2])
+@pytest.mark.parametrize("batch_size", [2])
 @pytest.mark.parametrize("n_branches", [3])
 @pytest.mark.parametrize("n_features", [5])
-def test_reshape_features(n_parents, n_events, n_branches, n_features):
+def test_reshape_features(n_parents, batch_size, n_branches, n_features):
     mtx = demo_mtx(
         n_parents=n_parents,
-        n_events=n_events,
+        batch_size=batch_size,
         n_branches=n_branches,
         n_features=n_features,
     )
     mtx_reshaped = reshape_features(
         mtx,
         n_parents=n_parents,
-        n_events=n_events,
+        batch_size=batch_size,
         n_branches=n_branches,
         n_features=n_features,
     )
-    for i in range(n_parents * n_events):
+    for i in range(n_parents * batch_size):
         assert torch.all(mtx_reshaped[i, :] == i)
-    torch.all(torch.arange(n_parents * n_events * n_branches) == mtx_reshaped[:, 0])
+    torch.all(
+        torch.arange(n_parents * batch_size * n_branches) == mtx_reshaped[:, 0]
+    )
 
 
 # def test_branching_by_training():
@@ -195,13 +197,13 @@ def test_reshape_features(n_parents, n_events, n_branches, n_features):
 #     from fgsim.models.dnn_gen import dnn_gen
 
 #     n_features = 2
-#     n_events = 1
+#     batch_size = 1
 #     n_branches = 2
 #     n_levels = 3
 #     n_global = 0
 #     device = torch.device("cpu")
 #     tree = Tree(
-#         n_events=n_events,
+#         batch_size=batch_size,
 #         n_features=n_features,
 #         n_branches=n_branches,
 #         n_levels=n_levels,

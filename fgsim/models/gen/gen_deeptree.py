@@ -37,7 +37,7 @@ class ModelClass(nn.Module):
         self.conv_name = conv_name
         self.conv_during_branching = conv_during_branching
         self.all_points = all_points
-        self.n_events = conf.loader.batch_size
+        self.batch_size = conf.loader.batch_size
         self.z_shape = conf.loader.batch_size, 1, self.features[0]
         self.pp_conv = pp_conv
 
@@ -63,7 +63,7 @@ class ModelClass(nn.Module):
         conf.models.gen.output_points = self.output_points
 
         self.tree = Tree(
-            n_events=self.n_events,
+            batch_size=self.batch_size,
             branches=self.branches,
             device=device,
         )
@@ -73,7 +73,7 @@ class ModelClass(nn.Module):
                     n_features=n_features,
                     n_global=n_global,
                     device=device,
-                    n_events=self.n_events,
+                    batch_size=self.batch_size,
                 )
                 for n_features in features
             ]
@@ -147,7 +147,7 @@ class ModelClass(nn.Module):
 
     # Random vector to pc
     def forward(self, random_vector: torch.Tensor) -> Batch:
-        n_events = self.n_events
+        batch_size = self.batch_size
         n_global = self.n_global
         features = self.features
         branches = self.branches
@@ -155,14 +155,16 @@ class ModelClass(nn.Module):
 
         # Init the graph object
         graph = Data(
-            x=random_vector.reshape(n_events, features[0]),
+            x=random_vector.reshape(batch_size, features[0]),
             edge_index=torch.empty(2, 0, dtype=torch.long, device=device),
             edge_attr=torch.empty(0, 1, dtype=torch.float, device=device),
             global_features=torch.empty(
-                n_events, n_global, dtype=torch.float, device=device
+                batch_size, n_global, dtype=torch.float, device=device
             ),
-            event=torch.arange(n_events, dtype=torch.long, device=device),
-            tree=[[Node(torch.arange(n_events, dtype=torch.long, device=device))]],
+            event=torch.arange(batch_size, dtype=torch.long, device=device),
+            tree=[
+                [Node(torch.arange(batch_size, dtype=torch.long, device=device))]
+            ],
         )
 
         # Do the branching
