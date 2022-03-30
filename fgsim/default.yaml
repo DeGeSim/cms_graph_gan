@@ -8,7 +8,8 @@ models:
         name: gen_deeptree
         params: ${model_param_options[${models.gen.name}]}
         losses: "${optionlist:${loss_options},${models.gen.losses_list}}"
-        losses_list: [WGenLoss]
+        # losses_list: [WGenLoss]
+        losses_list: [CEGenLoss]
         optim:
             name: Adam
             params: ${optim_options[Adam]}
@@ -16,7 +17,8 @@ models:
         name: disc_graphgym
         params: ${model_param_options[${models.disc.name}]}
         losses: "${optionlist:${loss_options},${models.disc.losses_list}}"
-        losses_list: [WDiscLoss,GradientPenalty]
+        # losses_list: [WDiscLoss,GradientPenalty]
+        losses_list: [CEDiscLoss]
         optim:
             name: Adam
             params: ${optim_options[Adam]}
@@ -39,8 +41,6 @@ model_param_options:
         conv_parem: ${layer_options[${model_param_options.gen_deeptree.conv_name}]}
         branching_param: ${layer_options[BranchingLayer]}
         pp_conv: False
-        iterative_disc_layerwise: True
-        iterative_disc_branchwise: True
     gen_edgeconv:
         n_layers: 5
         n_features: 2
