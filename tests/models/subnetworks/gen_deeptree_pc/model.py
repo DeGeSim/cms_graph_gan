@@ -21,7 +21,7 @@ def test_GlobalFeedBackNN_ancestor_conv(static_objects: DTColl):
             x=graph.x,
             edge_index=graph.edge_index,
             edge_attr=graph.edge_attr,
-            event=graph.event,
+            batch=graph.batch,
             global_features=graph.global_features,
         )
 
@@ -47,7 +47,7 @@ def test_GlobalFeedBackNN_GINConv(static_objects: DTColl):
         assert global_features.shape[1] == n_global
 
         graph.x = conv(
-            x=torch.hstack([graph.x, global_features[graph.event]]),
+            x=torch.hstack([graph.x, global_features[graph.batch]]),
             edge_index=graph.edge_index,
         )
 
@@ -79,7 +79,7 @@ def test_full_NN_compute_graph(static_objects: DTColl):
                 x=graph.x,
                 edge_index=graph.edge_index,
                 edge_attr=graph.edge_attr,
-                event=graph.event,
+                batch=graph.batch,
                 global_features=graph.global_features,
             )
             leaf = tree_lists[ilevel][0]

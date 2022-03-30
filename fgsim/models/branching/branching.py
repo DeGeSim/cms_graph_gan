@@ -101,7 +101,7 @@ class BranchingLayer(nn.Module):
             edge_attr=torch.vstack(edge_attrs_p_level[: self.level + 1]),
             global_features=global_features,
         )
-        new_graph.event = torch.arange(
+        new_graph.batch = torch.arange(
             batch_size, dtype=torch.long, device=device
         ).repeat(len(new_graph.x) // batch_size)
         return new_graph

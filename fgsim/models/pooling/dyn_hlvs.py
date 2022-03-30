@@ -17,7 +17,7 @@ class DynHLVsLayer(nn.Module):
 
     def forward(self, graph: Data):
         ftx_mtx = self.pre_nn(graph.x)
-        gsum = global_add_pool(ftx_mtx, graph.event)
-        gmean = global_mean_pool(ftx_mtx, graph.event)
+        gsum = global_add_pool(ftx_mtx, graph.batch)
+        gmean = global_mean_pool(ftx_mtx, graph.batch)
         global_ftx = self.post_nn(torch.hstack([gsum, gmean]))
         return global_ftx

@@ -73,14 +73,14 @@ class AncestorConv(MessagePassing):
         *,
         x: torch.Tensor,
         edge_index: torch.Tensor,
-        event: torch.Tensor,
+        batch: torch.Tensor,
         edge_attr: Optional[torch.Tensor] = None,
         global_features: Optional[torch.Tensor] = None,
     ) -> torch.Tensor:
         num_nodes = x.shape[0]
 
         num_edges = edge_index.shape[1]
-        num_events = event[-1] + 1
+        num_events = batch[-1] + 1
 
         if edge_attr is None:
             edge_attr = torch.empty(
@@ -92,7 +92,7 @@ class AncestorConv(MessagePassing):
             )
 
         assert x.dim() == global_features.dim() == edge_attr.dim() == 2
-        assert event.dim() == 1
+        assert batch.dim() == 1
         assert x.shape[1] == self.in_features
 
         assert global_features.shape[0] == num_events
@@ -117,7 +117,7 @@ class AncestorConv(MessagePassing):
                 )
 
         # Generate a global feature vector in shape of x
-        glo_ftx_mtx = global_features[event, :]
+        glo_ftx_mtx = global_features[batch, :]
         # If the egde_attrs are included, we transforming the message
         if self.msg_nn_include_edge_attr:
             new_x = self.propagate(

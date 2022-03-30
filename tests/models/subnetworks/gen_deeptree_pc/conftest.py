@@ -43,7 +43,7 @@ def object_gen(props: Dict[str, int]) -> DTColl:
         ),
         edge_index=torch.empty(2, 0, dtype=torch.long, device=device),
         edge_attr=torch.empty(0, 1, dtype=torch.float, device=device),
-        event=torch.arange(batch_size, dtype=torch.long, device=device),
+        batch=torch.arange(batch_size, dtype=torch.long, device=device),
         global_features=torch.randn(
             batch_size,
             n_global,
@@ -59,7 +59,11 @@ def object_gen(props: Dict[str, int]) -> DTColl:
     )
     branching_layers = [
         BranchingLayer(
-            tree=tree, level=level, n_features=n_features, n_global=n_global
+            tree=tree,
+            level=level,
+            n_features=n_features,
+            n_global=n_global,
+            residual=False,
         ).to(device)
         for level in range(1, n_levels)
     ]
@@ -75,6 +79,7 @@ def object_gen(props: Dict[str, int]) -> DTColl:
         in_features=n_features,
         out_features=n_features,
         n_global=n_global,
+        residual=False,
     ).to(device)
     return DTColl(
         props=props,

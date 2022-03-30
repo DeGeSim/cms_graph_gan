@@ -57,7 +57,7 @@ def graph():
         ),
         edge_index=torch.tensor([[0, 0], [1, 2]], dtype=torch.long, device=device),
         edge_attr=torch.tensor([[1], [1]], dtype=torch.long, device=device),
-        event=torch.tensor([0, 0, 0], dtype=torch.long, device=device),
+        batch=torch.tensor([0, 0, 0], dtype=torch.long, device=device),
     )
 
 
@@ -76,13 +76,13 @@ def test_ancestorconv_single_event(ancestor_conv, graph):
         x=graph.x,
         edge_index=graph.edge_index,
         edge_attr=graph.edge_attr,
-        event=graph.event,
+        batch=graph.batch,
         global_features=global_features,
     )
     m1 = torch.hstack([graph.x[0], global_features[0], torch.tensor(1)])
     messages = torch.stack([torch.zeros_like(m1), m1, m1])
 
-    res_expect = torch.hstack([graph.x, global_features[graph.event], messages])
+    res_expect = torch.hstack([graph.x, global_features[graph.batch], messages])
 
     assert torch.allclose(res, res_expect)
 
@@ -108,7 +108,7 @@ def test_ancestorconv_double_event(ancestor_conv):
         edge_attr=torch.tensor(
             [[1], [1], [1], [1]], dtype=torch.long, device=device
         ),
-        event=torch.tensor([0, 1, 0, 1, 0, 1], dtype=torch.long, device=device),
+        batch=torch.tensor([0, 1, 0, 1, 0, 1], dtype=torch.long, device=device),
     )
     global_features = torch.tensor(
         [[0.3, 0.3], [0.1, 0.1]], dtype=torch.float, device=device
@@ -118,7 +118,7 @@ def test_ancestorconv_double_event(ancestor_conv):
         x=graph.x,
         edge_index=graph.edge_index,
         edge_attr=graph.edge_attr,
-        event=graph.event,
+        batch=graph.batch,
         global_features=global_features,
     )
     m0 = torch.hstack([graph.x[0], global_features[0], torch.tensor(1)])
@@ -134,7 +134,7 @@ def test_ancestorconv_double_event(ancestor_conv):
         ]
     )
 
-    res_expect = torch.hstack([graph.x, global_features[graph.event], messages])
+    res_expect = torch.hstack([graph.x, global_features[graph.batch], messages])
     assert torch.all(res == res_expect)
 
 
@@ -156,7 +156,7 @@ def test_ancestorconv_three_levels(ancestor_conv):
             device=device,
         ),
         edge_attr=torch.ones(10, dtype=torch.long, device=device).reshape(-1, 1),
-        event=torch.zeros(7, dtype=torch.long, device=device),
+        batch=torch.zeros(7, dtype=torch.long, device=device),
     )
     global_features = torch.tensor(
         [[0.3, 0.2]], dtype=torch.float, device=device
@@ -166,7 +166,7 @@ def test_ancestorconv_three_levels(ancestor_conv):
         x=graph.x,
         edge_index=graph.edge_index,
         edge_attr=graph.edge_attr,
-        event=graph.event,
+        batch=graph.batch,
         global_features=global_features,
     )
     m0 = torch.hstack([graph.x[0], global_features[0], torch.tensor(1)])
@@ -184,7 +184,7 @@ def test_ancestorconv_three_levels(ancestor_conv):
         ]
     )
 
-    res_expect = torch.hstack([graph.x, global_features[graph.event], messages])
+    res_expect = torch.hstack([graph.x, global_features[graph.batch], messages])
     assert torch.all(res == res_expect)
 
 
@@ -206,7 +206,7 @@ def test_ancestorconv_all_modes():
             device=device,
         ),
         edge_attr=torch.ones(10, dtype=torch.long, device=device).reshape(-1, 1),
-        event=torch.zeros(7, dtype=torch.long, device=device),
+        batch=torch.zeros(7, dtype=torch.long, device=device),
     )
     global_features = torch.tensor(
         [[0.3, 0.2]], dtype=torch.float, device=device
@@ -241,7 +241,7 @@ def test_ancestorconv_all_modes():
                             kwargs = {
                                 "x": graph.x,
                                 "edge_index": graph.edge_index,
-                                "event": graph.event,
+                                "batch": graph.batch,
                             }
                             kwargs["edge_attr"] = graph.edge_attr
                             kwargs["global_features"] = global_features
@@ -298,7 +298,7 @@ def test_ancestorconv_all_modes():
 #         res = anc_conv(
 #             x=b2.x,
 #             edge_index=b2.edge_index,
-#             event=b2.event,
+#             batch=b2.event,
 #             global_features=global_features,
 #         )
 #         loss = loss_fn(res[3:, :], target)
