@@ -8,6 +8,7 @@ from torch_geometric.data import Data
 
 from fgsim.models.branching.branching import BranchingLayer
 from fgsim.models.branching.tree import Tree
+from fgsim.models.ffn import FFN
 from fgsim.models.layer.ancestor_conv import AncestorConv
 from fgsim.models.pooling.dyn_hlvs import DynHLVsLayer
 
@@ -80,7 +81,29 @@ def object_gen(props: Dict[str, int]) -> DTColl:
         out_features=n_features,
         n_global=n_global,
         residual=False,
-    ).to(device)
+    )
+
+    # BatchNorm makes the batches dependent
+    # If we want to check the gradients for independence,
+    # we need to disable batchnorm
+    def overwrite_ffn_without_batchnorm(ow_nn):
+        assert isinstance(ow_nn, FFN)
+        ow_nn = FFN(ow_nn.input_dim, ow_nn.output_dim, normalize=False)
+        return ow_nn
+
+    for brl in branching_layers:
+        brl.proj_nn = overwrite_ffn_without_batchnorm(brl.proj_nn)
+
+    dyn_hlvs_layer.pre_nn = overwrite_ffn_without_batchnorm(dyn_hlvs_layer.pre_nn)
+    dyn_hlvs_layer.post_nn = overwrite_ffn_without_batchnorm(dyn_hlvs_layer.post_nn)
+
+    ancestor_conv_layer.msg_nn = overwrite_ffn_without_batchnorm(
+        ancestor_conv_layer.msg_nn
+    )
+    ancestor_conv_layer.update_nn = overwrite_ffn_without_batchnorm(
+        ancestor_conv_layer.update_nn
+    )
+
     return DTColl(
         props=props,
         graph=graph,

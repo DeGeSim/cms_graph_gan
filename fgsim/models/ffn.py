@@ -12,6 +12,7 @@ class FFN(nn.Sequential):
         output_dim: int,
         n_layers: int = 4,
         activation_last_layer=nn.Identity(),
+        normalize=True,
     ) -> None:
         assert n_layers >= 4
         # +2 for input and output
@@ -33,7 +34,8 @@ class FFN(nn.Sequential):
                 seq.append(
                     getattr(nn, conf.ffn.activation)(**conf.ffn.activation_params)
                 )
-                seq.append(nn.BatchNorm1d(features[ilayer + 1]))
+                if normalize:
+                    seq.append(nn.BatchNorm1d(features[ilayer + 1]))
             else:
                 seq.append(activation_last_layer)
         super(FFN, self).__init__(*seq)
