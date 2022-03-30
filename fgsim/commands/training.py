@@ -128,6 +128,6 @@ class SigTermHandel:
 
     def handle(self, _signo, _stack_frame):
         print("SIGTERM detected")
-        self.holder.save_checkpoint()
+        #  self.holder.save_checkpoint()
         self.loader.qfseq.stop()
         exit()
