@@ -1,3 +1,5 @@
+from math import ceil
+
 from torch import nn
 
 from fgsim.config import conf
@@ -8,25 +10,22 @@ class FFN(nn.Sequential):
         self,
         input_dim: int,
         output_dim: int,
-        n_layers: int = 8,
+        n_layers: int = 4,
         activation_last_layer=nn.Identity(),
     ) -> None:
         assert n_layers >= 4
-        if (input_dim + output_dim) * n_layers > 300:
-            inter_dim = max(
-                int(300 / n_layers / (input_dim + output_dim)),
-                input_dim,
-                output_dim,
+        # +2 for input and output
+        features = [
+            ceil(
+                (1 - ilayer / (n_layers)) * input_dim
+                + (ilayer / (n_layers) * output_dim)
             )
-        else:
-            inter_dim = max(30, input_dim + output_dim)
-        # print(f"inter_dim {inter_dim} nodes {inter_dim*n_layers}")
-        assert inter_dim * n_layers > 100, "Use at least 100 nodes"
-        layers = (
-            [nn.Linear(input_dim, inter_dim)]
-            + [nn.Linear(inter_dim, inter_dim) for _ in range(n_layers - 2)]
-            + [nn.Linear(inter_dim, output_dim)]
-        )
+            for ilayer in range(n_layers + 1)
+        ]
+        layers = [
+            nn.Linear(features[ilayer], features[ilayer + 1])
+            for ilayer in range(n_layers)
+        ]
         seq = []
         for ilayer, e in enumerate(layers):
             seq.append(e)
@@ -34,6 +33,7 @@ class FFN(nn.Sequential):
                 seq.append(
                     getattr(nn, conf.ffn.activation)(**conf.ffn.activation_params)
                 )
+                seq.append(nn.BatchNorm1d(features[ilayer + 1]))
             else:
                 seq.append(activation_last_layer)
         super(FFN, self).__init__(*seq)
@@ -62,6 +62,3 @@ class FFN(nn.Sequential):
                 m.weight, gain=nn.init.calculate_gain(nonlinearity)
             )
             m.bias.data.fill_(conf.ffn.init_weights_bias_const)
-
-
-nn.ReLU
