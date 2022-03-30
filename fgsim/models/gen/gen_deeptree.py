@@ -1,5 +1,5 @@
 from math import prod
-from typing import Dict, List
+from typing import Dict
 
 import torch
 import torch.nn as nn
@@ -16,12 +16,16 @@ from fgsim.models.layer.ancestor_conv import AncestorConv
 from fgsim.models.pooling.dyn_hlvs import DynHLVsLayer
 from fgsim.monitoring.logger import logger
 
+tree = Tree(
+    batch_size=conf.loader.batch_size,
+    branches=conf.tree.branches,
+    device=device,
+)
+
 
 class ModelClass(nn.Module):
     def __init__(
         self,
-        features: List[int],
-        branches: List[int],
         n_global: int,
         conv_parem: Dict,
         branching_param: Dict,
@@ -31,19 +35,21 @@ class ModelClass(nn.Module):
         pp_conv: bool = False,
     ):
         super().__init__()
-        self.features = features
-        self.branches = branches
         self.n_global = n_global
         self.conv_name = conv_name
         self.conv_during_branching = conv_during_branching
         self.all_points = all_points
         self.batch_size = conf.loader.batch_size
-        self.z_shape = conf.loader.batch_size, 1, self.features[0]
         self.pp_conv = pp_conv
 
+        self.features = conf.tree.features
+        self.branches = conf.tree.branches
         levels = len(self.branches)
-        assert levels == len(features)
-        assert branches[0] == 1
+        assert levels == len(self.features)
+        assert self.branches[0] == 1
+
+        # Shape of the random vector
+        self.z_shape = conf.loader.batch_size, 1, self.features[0]
 
         # Calculate the output points
         if all_points:
@@ -62,11 +68,8 @@ class ModelClass(nn.Module):
             )
         conf.models.gen.output_points = self.output_points
 
-        self.tree = Tree(
-            batch_size=self.batch_size,
-            branches=self.branches,
-            device=device,
-        )
+        self.tree = tree
+
         self.dyn_hlvs_layers = nn.ModuleList(
             [
                 DynHLVsLayer(
@@ -75,7 +78,7 @@ class ModelClass(nn.Module):
                     device=device,
                     batch_size=self.batch_size,
                 )
-                for n_features in features
+                for n_features in self.features
             ]
         )
 
@@ -84,7 +87,7 @@ class ModelClass(nn.Module):
                 BranchingLayer(
                     tree=self.tree,
                     level=level,
-                    n_features=features[level - 1],
+                    n_features=self.features[level - 1],
                     n_global=n_global,
                     **branching_param,
                 )
