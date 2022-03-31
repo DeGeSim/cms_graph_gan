@@ -51,7 +51,7 @@ model_param_options:
         features: [4, 64, 128, 256]
 
 tree:
-    branches: [1,4,8,16]
+    branches: [4,8,16]
     features: [256,64,64,2]
 
 
