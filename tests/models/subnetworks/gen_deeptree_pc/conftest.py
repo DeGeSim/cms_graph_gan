@@ -31,8 +31,8 @@ def object_gen(props: Dict[str, int]) -> DTColl:
     batch_size = props["batch_size"]
     n_levels = props["n_levels"]
 
-    # features = [n_features for _ in range(n_levels)]
-    branches = [0] + [n_branches for _ in range(n_levels - 1)]
+    features = [n_features for _ in range(n_levels)]
+    branches = [n_branches for _ in range(n_levels - 1)]
 
     graph = Data(
         x=torch.randn(
@@ -55,6 +55,7 @@ def object_gen(props: Dict[str, int]) -> DTColl:
 
     tree = Tree(
         branches=branches,
+        features=features,
         batch_size=batch_size,
         device=device,
     )
@@ -62,11 +63,10 @@ def object_gen(props: Dict[str, int]) -> DTColl:
         BranchingLayer(
             tree=tree,
             level=level,
-            n_features=n_features,
             n_global=n_global,
             residual=False,
         ).to(device)
-        for level in range(1, n_levels)
+        for level in range(n_levels - 1)
     ]
 
     dyn_hlvs_layer = DynHLVsLayer(

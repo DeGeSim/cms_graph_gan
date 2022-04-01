@@ -28,20 +28,20 @@ class BranchingLayer(nn.Module):
     def __init__(
         self,
         tree: Tree,
-        n_features: int,
         n_global: int,
         level: int,
         residual: bool = True,
     ):
         super().__init__()
+        assert 0 <= level < len(tree.features)
         self.tree = tree
-        self.n_branches = tree.branches[level]
+        self.n_branches = self.tree.branches[level]
         self.batch_size = self.tree.batch_size
-        self.n_features = n_features
+        self.n_features = self.tree.features[level]
         self.n_global = n_global
         self.level = level
         self.residual = residual
-        assert 1 <= level < len(tree.branches)
+
         self.proj_nn = FFN(
             self.n_features + n_global, self.n_features * self.n_branches
         )
@@ -58,7 +58,7 @@ class BranchingLayer(nn.Module):
         batch_size = self.batch_size
         n_branches = self.n_branches
         n_features = self.n_features
-        parents = self.tree.tree_lists[self.level - 1]
+        parents = self.tree.tree_lists[self.level]
         n_parents = len(parents)
 
         edge_index_p_level = self.tree.edge_index_p_level
@@ -97,8 +97,8 @@ class BranchingLayer(nn.Module):
 
         new_graph = Data(
             x=torch.cat([x, children_ftxs]),
-            edge_index=torch.hstack(edge_index_p_level[: self.level + 1]),
-            edge_attr=torch.vstack(edge_attrs_p_level[: self.level + 1]),
+            edge_index=torch.hstack(edge_index_p_level[: self.level + 2]),
+            edge_attr=torch.vstack(edge_attrs_p_level[: self.level + 2]),
             global_features=global_features,
         )
         new_graph.batch = torch.arange(

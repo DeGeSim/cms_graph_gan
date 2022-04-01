@@ -101,6 +101,7 @@ def test_BranchingLayer_connectivity_dyn(dyn_objects: DTColl):
     n_levels = props["n_levels"]
     # Shape
     tree_lists = branching_layers[0].tree.tree_lists
+    assert len(tree_lists) == n_levels
     for ilevel in range(1, n_levels):
         n_parents = len(tree_lists[ilevel - 1])
         assert len(tree_lists[ilevel]) == n_parents * n_branches

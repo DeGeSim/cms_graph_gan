@@ -10,12 +10,14 @@ from .node import Node
 class Tree:
     batch_size: int
     branches: List[int]
+    features: List[int]
     device: torch.device
 
     def __post_init__(self):
+        assert len(self.features) - 1 == len(self.branches)
         branches = self.branches
         batch_size = self.batch_size
-        n_levels = len(branches)
+        n_levels = len(self.features)
         device = self.device
         # initialize the root
         # shape : 2 x num_edges
