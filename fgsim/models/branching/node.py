@@ -1,16 +1,21 @@
 from __future__ import annotations
 
+from dataclasses import dataclass, field
 from typing import List, Optional
 
 import torch
 
 
+@dataclass
 class Node:
-    def __init__(self, idxs: torch.Tensor):
-        assert torch.long == idxs.dtype
-        self.idxs: torch.Tensor = idxs
-        self.children: List[Node] = []
-        self.parent: Optional[Node] = None
+    idxs: torch.Tensor
+    parent: Optional[Node] = None
+    children: List[Node] = field(default_factory=lambda: [])
+
+    def __post_init__(self):
+        assert torch.long == self.idxs.dtype
+        if self.children is None:
+            self.children = []
 
     def add_child(self, child: Node):
         assert child.parent is None
@@ -38,3 +43,8 @@ class Node:
         root = self.get_root()
         node_list = [root] + root.recur_descendants()
         return node_list
+
+    def __hash__(self):
+        return hash(
+            tuple([self.idxs, self.parent] + [e.idxs for e in self.children])
+        )

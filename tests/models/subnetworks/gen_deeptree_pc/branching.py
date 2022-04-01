@@ -25,7 +25,13 @@ def test_BranchingLayer_compute_graph(static_objects: DTColl):
     branching_layers = static_objects.branching_layers
 
     new_graph1 = branching_layers[0](graph)
-    leaf = branching_layers[0].tree.tree_lists[1][0]
+    tree = branching_layers[0].tree
+    assert torch.all(
+        new_graph1.x[new_graph1.level_idxs[1]]
+        == new_graph1.x[torch.hstack([e.idxs for e in tree.tree_lists[1]])]
+    )
+    leaf = tree.tree_lists[1][0]
+
     pc_leaf_point = new_graph1.x[leaf.idxs[2]]
     sum(pc_leaf_point).backward(retain_graph=True)
 
@@ -36,6 +42,11 @@ def test_BranchingLayer_compute_graph(static_objects: DTColl):
     assert torch.any(graph.x.grad[2] != zero_feature)
 
     new_graph2 = branching_layers[1](new_graph1)
+    assert torch.all(
+        new_graph2.x[new_graph2.level_idxs[2]]
+        == new_graph2.x[torch.hstack([e.idxs for e in tree.tree_lists[2]])]
+    )
+
     leaf = branching_layers[1].tree.tree_lists[2][0]
     pc_leaf_point = new_graph2.x[leaf.idxs[2]]
     sum(pc_leaf_point).backward()

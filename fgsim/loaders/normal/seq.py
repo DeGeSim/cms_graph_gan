@@ -43,6 +43,9 @@ def read_chunk(chunks: ChunkType) -> List[None]:
     return [None for chunk in chunks for _ in range(chunk[2] - chunk[1])]
 
 
+branches = list(conf.tree.branches)
+
+
 def transform(_: None) -> Data:
     mu = [1, 1]
     covar = [[1.0, 0.5], [0.5, 1.0]]
@@ -51,15 +54,13 @@ def transform(_: None) -> Data:
     graph = Data(x=pointcloud)
     if postprocess_switch.value:
         graph.hlvs = compute_hlvs(graph)
-    graph = reverse_construct_tree(graph, conf.tree.branches)
+    graph = reverse_construct_tree(graph, branches)
     return graph
 
 
 def aggregate_to_batch(list_of_events: List[Data]) -> Batch:
     batch = Batch.from_data_list(list_of_events)
-    batch = add_batch_to_branching(
-        batch, conf.loader.max_points, conf.tree.branches, conf.loader.batch_size
-    )
+    batch = add_batch_to_branching(batch, branches, conf.loader.batch_size)
     return batch
 
 

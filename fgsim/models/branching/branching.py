@@ -1,3 +1,5 @@
+from math import prod
+
 import torch
 import torch.nn as nn
 from torch_geometric.data import Data
@@ -48,29 +50,22 @@ class BranchingLayer(nn.Module):
 
     # Split each of the leafs in the the graph.tree into n_branches and connect them
     def forward(self, graph: Data) -> Data:
-        device = graph.x.device
-        # Clone everything to avoid changing the input object
-
-        x = graph.x.clone()
-        global_features = graph.global_features.clone()
-        del graph
-
         batch_size = self.batch_size
         n_branches = self.n_branches
         n_features = self.n_features
         parents = self.tree.tree_lists[self.level]
         n_parents = len(parents)
 
-        edge_index_p_level = self.tree.edge_index_p_level
-        edge_attrs_p_level = self.tree.edge_attrs_p_level
+        parents_ftxs = graph.x[graph.level_idxs[self.level]]
+        device = parents_ftxs.device
 
         # Compute the new feature vectors:
         parents_idxs = torch.cat([parent.idxs for parent in parents])
+
         # for the parents indeces generate a matrix where
         # each row is the global vector of the respective event
-        parent_global = global_features[parents_idxs % batch_size, :]
+        parent_global = graph.global_features[parents_idxs % batch_size, :]
         # With the idxs of the parent index the event vector
-        parents_ftxs = x[parents_idxs, ...]
 
         # The proj_nn projects the (n_parents * n_event) x n_features to a
         # (n_parents * n_event) x (n_features*n_branches) matrix
@@ -95,19 +90,53 @@ class BranchingLayer(nn.Module):
             n_features=n_features,
         )
 
-        new_graph = Data(
-            x=torch.cat([x, children_ftxs]),
-            edge_index=torch.hstack(edge_index_p_level[: self.level + 2]),
-            edge_attr=torch.vstack(edge_attrs_p_level[: self.level + 2]),
-            global_features=global_features,
+        points = prod([br for br in self.tree.branches[: self.level]])
+        children = (
+            (
+                torch.repeat_interleave(
+                    torch.arange(batch_size), n_branches * points
+                ).reshape(-1, n_branches)
+            )
+            * n_branches
+            * points
         )
-        new_graph.batch = torch.arange(
-            batch_size, dtype=torch.long, device=device
-        ).repeat(len(new_graph.x) // batch_size)
+        level_idx = torch.arange(
+            len(children_ftxs), dtype=torch.long, device=device
+        ) + len(graph.x)
+
+        new_graph = Data(
+            x=torch.vstack([graph.x, children_ftxs]),
+            level_idxs=graph.level_idxs + [level_idx],
+            children=graph.children + [children],
+            edge_index=torch.hstack(self.tree.edge_index_p_level[: self.level + 2]),
+            edge_attr=torch.vstack(self.tree.edge_attrs_p_level[: self.level + 2]),
+            global_features=graph.global_features,
+            batch=torch.arange(batch_size, dtype=torch.long, device=device).repeat(
+                (len(graph.x) + len(children_ftxs)) // batch_size
+            ),
+        )
         return new_graph
 
 
-@torch.jit.script
+# new_graph = Data(
+#     x:
+#       [currentpoints*batch_size,n_features]
+#       full feature vector
+#     level_idxs:
+#       [n_levels]:
+#           idxs to that x[level_idxs[ilevel]]==levels[ilevel]
+#           is the features for the current level
+#     children:
+#       [n_levels-1]:
+#           get the children of the nodes
+#           in ilevel via x[level_idxs[ilevel+1]][children[ilevel]]
+#     edge_index=torch.hstack(self.tree.edge_index_p_level[: self.level + 2]),
+#     edge_attr=torch.vstack(self.tree.edge_attrs_p_level[: self.level + 2]),
+#     global_features=global_features,
+# )
+
+
+# @torch.jit.script
 def reshape_features(
     mtx: torch.Tensor,
     n_parents: int,

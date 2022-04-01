@@ -15,7 +15,7 @@ def test_GlobalFeedBackNN_ancestor_conv(static_objects: DTColl):
         if ilevel > 0:
             graph = branching_layers[ilevel - 1](graph)
         # ### Global
-        graph.global_features = dyn_hlvs_layer(graph)
+        graph.global_features = dyn_hlvs_layer(graph.x, graph.batch)
         assert graph.global_features.shape[1] == n_global
         graph.x = ancestor_conv_layer(
             x=graph.x,
@@ -43,7 +43,7 @@ def test_GlobalFeedBackNN_GINConv(static_objects: DTColl):
         if ilevel > 0:
             graph = branching_layers[ilevel - 1](graph)
         # ### Global
-        global_features = dyn_hlvs_layer(graph)
+        global_features = dyn_hlvs_layer(graph.x, graph.batch)
         assert global_features.shape[1] == n_global
 
         graph.x = conv(
@@ -91,5 +91,5 @@ def test_full_NN_compute_graph(static_objects: DTColl):
             assert torch.all(x_old.grad[1] == zero_feature)
             assert torch.any(x_old.grad[2] != zero_feature)
 
-        global_features = dyn_hlvs_layer(graph)
+        global_features = dyn_hlvs_layer(graph.x, graph.batch)
         assert global_features.shape[1] == n_global

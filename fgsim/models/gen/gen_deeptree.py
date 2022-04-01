@@ -158,7 +158,8 @@ class ModelClass(nn.Module):
 
         # Init the graph object
         graph = Data(
-            x=random_vector.reshape(batch_size, features[0]),
+            levels=[random_vector.reshape(batch_size, features[0])],
+            children=[],
             edge_index=torch.empty(2, 0, dtype=torch.long, device=device),
             edge_attr=torch.empty(0, 1, dtype=torch.float, device=device),
             global_features=torch.empty(
@@ -171,11 +172,13 @@ class ModelClass(nn.Module):
         )
 
         # Do the branching
-        for level in range(levels - 1):
-            graph.global_features = self.dyn_hlvs_layers[level](graph)
-            graph = self.branching_layers[level](graph)
+        for ilevel in range(levels - 1):
+            graph.global_features = self.dyn_hlvs_layers[ilevel](
+                graph.levels[ilevel], graph.batch
+            )
+            graph = self.branching_layers[ilevel](graph)
             if self.conv_during_branching:
-                graph.x = self.conv_layers[level](**(self.wrap_conv(graph)))
+                graph.x = self.conv_layers[ilevel](**(self.wrap_conv(graph)))
 
         # # Edge_conv
         # if self.pp_conv:
