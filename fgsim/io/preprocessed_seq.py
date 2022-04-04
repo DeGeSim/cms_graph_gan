@@ -16,7 +16,7 @@ from fgsim.config import conf
 # Import the specified processing sequence
 sel_seq = importlib.import_module(f"fgsim.loaders.{conf.loader_name}")
 
-Batch = sel_seq.Batch
+Batch = sel_seq.loader.Batch
 DataSetType = List[Batch]
 
 # Load files

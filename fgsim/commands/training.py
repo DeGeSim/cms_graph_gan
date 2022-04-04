@@ -51,8 +51,11 @@ def training_step(
         import torch
 
         with torch.no_grad():
-            mean_gen = torch.mean(holder.gen_points[0].x, dim=0).cpu().numpy()
-            cov_gen = torch.cov(holder.gen_points[0].x.T).cpu().numpy()
+            event0_x = holder.gen_points.x_by_level[-1][
+                holder.gen_points.batch_by_level[-1] == 0
+            ]
+            mean_gen = torch.mean(event0_x, dim=0).cpu().numpy()
+            cov_gen = torch.cov(event0_x.T).cpu().numpy()
             np.set_printoptions(formatter={"float_kind": "{:.3g}".format})
             logger.info(
                 f"gen batch mean {mean_gen} cov: [{cov_gen[0]},{cov_gen[1]}]"

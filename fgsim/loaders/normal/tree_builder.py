@@ -1,3 +1,4 @@
+from math import prod
 from typing import List
 
 import numpy as np
@@ -5,12 +6,14 @@ import torch
 from torch_geometric.data import Batch, Data
 from torch_geometric.nn import global_mean_pool
 
+from fgsim.models.branching.graph_tree import GraphTree
+
 
 # construct the branching for each graph individually
 def reverse_construct_tree(graph: Data, branches: List[int]) -> Data:
     # set the last level
-    graph.levels: List[torch.Tensor] = [graph.x]
-    graph.children: List[torch.Tensor] = []
+    x_by_level: List[torch.Tensor] = [graph.x]
+    children: List[torch.Tensor] = []
 
     # reverse construct the tree
     cur_nodes = graph.x.shape[0]
@@ -26,20 +29,29 @@ def reverse_construct_tree(graph: Data, branches: List[int]) -> Data:
 
         # np.random.shuffle(branching)
         cur_nodes = cur_nodes // n_branches
-        graph.levels.append(global_mean_pool(graph.levels[-1], branching))
+        x_by_level.append(global_mean_pool(x_by_level[-1], branching))
         # reverse the mapping of the of the branchings
-        graph.children.append(torch.argsort(branching).reshape(-1, n_branches))
+        children.append(torch.argsort(branching).reshape(-1, n_branches))
 
-    graph.levels.reverse()
-    graph.children.reverse()
+    x_by_level.reverse()
+    children.reverse()
+    idxs_by_level = [
+        torch.arange(len(level), dtype=torch.long)
+        + sum([len(lvl) for lvl in x_by_level[:ilevel]])
+        for ilevel, level in enumerate(x_by_level)
+    ]
+    graph.x = torch.vstack(x_by_level)
+    graph.children = children
+    graph.idxs_by_level = idxs_by_level
+    # graph.batch=torch.arange(sum([len(lvl) for lvl in x_by_level]), dtype=torch.long),
 
-    # for ilevel, level in enumerate(graph.levels):
+    # for ilevel, level in enumerate(levels):
     #     setattr(
     #         graph,
     #         f"level_{ilevel}",
     #         level,
     #     )
-    # for ichild, child in enumerate(graph.children):
+    # for ichild, child in enumerate(children):
     #     setattr(
     #         graph,
     #         f"branching_{ichild}",
@@ -54,7 +66,7 @@ def reverse_construct_tree(graph: Data, branches: List[int]) -> Data:
 # respective graph.branching_? vectors
 def add_batch_to_branching(
     batch: Batch, branches: List[int], batch_size: int
-) -> Batch:
+) -> GraphTree:
     points = 1
     for ilevel, n_branches in enumerate(branches):
         # goal: create add_to_branching, so that each event has
@@ -71,6 +83,22 @@ def add_batch_to_branching(
 
         batch.children[ilevel] += add_to_branching
         points *= n_branches
+
+    sum_points = sum(
+        [prod(branches[:ilevel]) for ilevel in range(len(branches) + 1)]
+    )
+
+    for ilevel in range(len(branches) + 1):
+        points = prod(branches[:ilevel])
+        add_to_idxs_by_level = np.arange(batch_size).repeat(points) * sum_points
+        batch.idxs_by_level[ilevel] += add_to_idxs_by_level
+
+    return GraphTree(
+        x=batch.x,
+        batch=batch.batch,
+        children=batch.children,
+        idxs_by_level=batch.idxs_by_level,
+    )
 
     # for ibranching, n_branches in list(enumerate(branches))[::-1]:
 
@@ -89,4 +117,4 @@ def add_batch_to_branching(
     #         f"branching_{ibranching}",
     #         add_to_branching + branching,
     #     )
-    return batch
+    # return batch

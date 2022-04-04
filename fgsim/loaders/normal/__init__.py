@@ -14,11 +14,10 @@ if "pytest" not in sys.modules:
 
     import uproot
     import yaml
-    from torch_geometric.data import Batch
 
-    # from torch_geometric.data.batch import DataBatch as Batch
     from fgsim.config import conf
     from fgsim.io import batch_tools
+    from fgsim.models.branching.graph_tree import GraphTree
 
     from .seq import postprocess_switch, process_seq
 
@@ -27,7 +26,7 @@ if "pytest" not in sys.modules:
 
     loader = Loader(
         process_seq=process_seq,
-        Batch=Batch,
+        Batch=GraphTree,
         files=files,
         len_dict=len_dict,
         postprocess_switch=postprocess_switch,

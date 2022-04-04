@@ -42,7 +42,7 @@ def object_gen(props: Dict[str, int]) -> DTColl:
             device=device,
             requires_grad=True,
         ),
-        level_idxs=[torch.arange(batch_size, dtype=torch.long, device=device)],
+        idxs_by_level=[torch.arange(batch_size, dtype=torch.long, device=device)],
         children=[],
         edge_index=torch.empty(2, 0, dtype=torch.long, device=device),
         edge_attr=torch.empty(0, 1, dtype=torch.float, device=device),

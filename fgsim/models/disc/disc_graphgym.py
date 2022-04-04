@@ -46,9 +46,9 @@ class ModelClass(torch.nn.Module):
 
         self.hlv_dnn = FFN(n_features * (len(self.convs) + 1), 1).to(device)
 
-    def forward(self, data):
-        data.edge_index = knn_graph(x=data.x, k=6, batch=data.batch)
-        x, edge_index, batch = data.x, data.edge_index, data.batch
+    def forward(self, x, batch):
+        edge_index = knn_graph(x=x, k=6, batch=batch)
+        x, edge_index, batch = x, edge_index, batch
 
         x = self.pre_nn(x)
         xs = [x]
@@ -56,6 +56,6 @@ class ModelClass(torch.nn.Module):
             x = self.act(conv(x, edge_index))
             xs += [x]
         x = self.jk(xs)
-        x_aggr = global_add_pool(x, batch, size=data.num_graphs)
+        x_aggr = global_add_pool(x, batch)
         x = self.hlv_dnn(x_aggr)
         return x

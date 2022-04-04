@@ -2,10 +2,10 @@ from math import prod
 
 import torch
 import torch.nn as nn
-from torch_geometric.data import Data
 
 from fgsim.models.ffn import FFN
 
+from .graph_tree import GraphTreeGen
 from .tree import Tree
 
 
@@ -49,14 +49,14 @@ class BranchingLayer(nn.Module):
         )
 
     # Split each of the leafs in the the graph.tree into n_branches and connect them
-    def forward(self, graph: Data) -> Data:
+    def forward(self, graph: GraphTreeGen) -> GraphTreeGen:
         batch_size = self.batch_size
         n_branches = self.n_branches
         n_features = self.n_features
         parents = self.tree.tree_lists[self.level]
         n_parents = len(parents)
 
-        parents_ftxs = graph.x[graph.level_idxs[self.level]]
+        parents_ftxs = graph.x[graph.idxs_by_level[self.level]]
         device = parents_ftxs.device
 
         # Compute the new feature vectors:
@@ -104,9 +104,9 @@ class BranchingLayer(nn.Module):
             len(children_ftxs), dtype=torch.long, device=device
         ) + len(graph.x)
 
-        new_graph = Data(
+        new_graph = GraphTreeGen(
             x=torch.vstack([graph.x, children_ftxs]),
-            level_idxs=graph.level_idxs + [level_idx],
+            idxs_by_level=graph.idxs_by_level + [level_idx],
             children=graph.children + [children],
             edge_index=torch.hstack(self.tree.edge_index_p_level[: self.level + 2]),
             edge_attr=torch.vstack(self.tree.edge_attrs_p_level[: self.level + 2]),
@@ -122,14 +122,14 @@ class BranchingLayer(nn.Module):
 #     x:
 #       [currentpoints*batch_size,n_features]
 #       full feature vector
-#     level_idxs:
+#     idxs_by_level:
 #       [n_levels]:
-#           idxs to that x[level_idxs[ilevel]]==levels[ilevel]
+#           idxs to that x[idxs_by_level[ilevel]]==levels[ilevel]
 #           is the features for the current level
 #     children:
 #       [n_levels-1]:
 #           get the children of the nodes
-#           in ilevel via x[level_idxs[ilevel+1]][children[ilevel]]
+#           in ilevel via x[idxs_by_level[ilevel+1]][children[ilevel]]
 #     edge_index=torch.hstack(self.tree.edge_index_p_level[: self.level + 2]),
 #     edge_attr=torch.vstack(self.tree.edge_attrs_p_level[: self.level + 2]),
 #     global_features=global_features,

@@ -160,6 +160,7 @@ loader_options:
     puregraph:
         preprocess_training: False
     normal:
+        preprocess_training: False
         cell_prop_keys: ["x", "y"]
         n_features: 2
         # chunksize: 5000
