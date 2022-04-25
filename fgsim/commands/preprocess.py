@@ -23,7 +23,7 @@ Processing validation batches, queuing {len(data_loader.validation_chunks)} chun
     data_loader.qfseq.start()
     validation_batches = [batch for batch in tqdm(data_loader.qfseq)]
     torch.save(validation_batches, conf.path.validation)
-    logger.warning("Validation batches pickled.")
+    logger.warning(f"Validation batches pickled to {conf.path.validation}.")
 
     logger.warning(
         f"""\
@@ -32,7 +32,7 @@ Processing testing batches, queuing {len(data_loader.testing_chunks)} chunks."""
     data_loader.qfseq.queue_iterable(data_loader.testing_chunks)
     testing_batches = [batch for batch in tqdm(data_loader.qfseq)]
     torch.save(testing_batches, conf.path.test)
-    logger.warning("Testing batches pickled.")
+    logger.warning(f"Testing batches pickled to {conf.path.test}.")
 
     # if conf.loader.preprocess_training:
     logger.warning("Processing training batches")
