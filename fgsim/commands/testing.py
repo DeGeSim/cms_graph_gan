@@ -14,9 +14,11 @@ from torch_scatter import scatter_mean
 from tqdm import tqdm
 
 from fgsim.config import conf
+from fgsim.io.batch_tools import batch_from_pcs_list
 from fgsim.io.queued_dataset import QueuedDataLoader
 from fgsim.io.sel_seq import batch_tools
 from fgsim.ml.holder import Holder
+from fgsim.models.branching.graph_tree import GraphTreeWrapper
 from fgsim.monitoring.logger import logger
 from fgsim.monitoring.train_log import TrainLog
 from fgsim.plot.hlv_marginals import hlv_marginals
@@ -109,6 +111,7 @@ def get_testing_datasets(holder: Holder):
             ):
                 with torch.no_grad():
                     holder.reset_gen_points()
+                    holder.gen_points = holder.gen_points.to_pcs_batch()
                     gen_batch = holder.gen_points.clone().cpu()
                     gen_batches.append(gen_batch)
 
@@ -216,8 +219,18 @@ def test_plots(test_info: TestInfo):
 
     from torch_geometric.data import Batch
 
+    sim_batches_stacked_list = []
+    for sim_batch in sim_batches:
+        graph_tree = GraphTreeWrapper(sim_batch)
+        sim_batches_stacked_list.append(
+            batch_from_pcs_list(
+                graph_tree.x_by_level[-1],
+                graph_tree.batch_by_level[-1],
+            )
+        )
+
     sim_batches_stacked = Batch.from_data_list(
-        [e for ee in sim_batches for e in ee.to_data_list()]
+        [e for ee in sim_batches_stacked_list for e in ee.to_data_list()]
     )
     gen_batches_stacked = Batch.from_data_list(
         [e for ee in gen_batches for e in ee.to_data_list()]
