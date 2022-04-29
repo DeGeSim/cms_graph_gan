@@ -1,9 +1,10 @@
 from typing import List, Optional
 
 import torch
-from torch_geometric.data import Data
+from torch_geometric.data import Batch, Data
 
 from fgsim.config import conf, device
+from fgsim.io.batch_tools import batch_from_pcs_list
 
 
 # It's a wrapper around a `Data` object that makes it easier
@@ -102,4 +103,11 @@ class TreeGenType(Data):
             idxs_by_level=idxs_by_level,
             batch=batch,
             global_features=global_features,
+        )
+
+    def to_pcs_batch(self) -> Batch:
+        graph_tree = GraphTreeWrapper(self)
+        return batch_from_pcs_list(
+            graph_tree.x_by_level[-1],
+            graph_tree.batch_by_level[-1],
         )

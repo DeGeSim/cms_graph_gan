@@ -147,7 +147,6 @@ class ModelClass(nn.Module):
         else:
             raise Exception
 
-    # Random vector to pc
     def forward(self, random_vector: torch.Tensor) -> Data:
         batch_size = self.batch_size
         features = self.features
