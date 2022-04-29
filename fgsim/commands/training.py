@@ -1,6 +1,5 @@
 """Contain the training procedure, access point from __main__"""
 
-import signal
 import time
 import traceback
 
@@ -70,7 +69,6 @@ def training_procedure() -> None:
     train_log: TrainLog = holder.train_log
     loader: QueuedDataLoader = QueuedDataLoader()
 
-    sigterm_handler = SigTermHandel(holder, loader)
     # Queue that batches
     loader.queue_epoch(n_skip_events=holder.state.processed_events)
 
@@ -118,20 +116,5 @@ def training_procedure() -> None:
         logger.error(error)
         traceback.print_exc()
     finally:
-        del sigterm_handler
         loader.qfseq.stop()
         exit(exitcode)
-
-
-class SigTermHandel:
-    def __init__(self, holder: Holder, loader: QueuedDataLoader) -> None:
-        self.holder = holder
-        self.loader = loader
-        signal.signal(signal.SIGTERM, self.handle)
-        signal.signal(signal.SIGINT, self.handle)
-
-    def handle(self, _signo, _stack_frame):
-        print("SIGTERM detected")
-        #  self.holder.save_checkpoint()
-        self.loader.qfseq.stop()
-        exit()
