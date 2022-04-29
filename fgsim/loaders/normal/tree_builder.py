@@ -6,8 +6,6 @@ import torch
 from torch_geometric.data import Batch, Data
 from torch_geometric.nn import global_mean_pool
 
-from fgsim.models.branching.graph_tree import GraphTree
-
 
 # construct the branching for each graph individually
 def reverse_construct_tree(graph: Data, branches: List[int]) -> Data:
@@ -66,7 +64,7 @@ def reverse_construct_tree(graph: Data, branches: List[int]) -> Data:
 # respective graph.branching_? vectors
 def add_batch_to_branching(
     batch: Batch, branches: List[int], batch_size: int
-) -> GraphTree:
+) -> Batch:
     points = 1
     for ilevel, n_branches in enumerate(branches):
         # goal: create add_to_branching, so that each event has
@@ -93,12 +91,7 @@ def add_batch_to_branching(
         add_to_idxs_by_level = np.arange(batch_size).repeat(points) * sum_points
         batch.idxs_by_level[ilevel] += add_to_idxs_by_level
 
-    return GraphTree(
-        x=batch.x,
-        batch=batch.batch,
-        children=batch.children,
-        idxs_by_level=batch.idxs_by_level,
-    )
+    return batch
 
     # for ibranching, n_branches in list(enumerate(branches))[::-1]:
 

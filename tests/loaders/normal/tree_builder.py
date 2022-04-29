@@ -8,6 +8,7 @@ from fgsim.loaders.normal.tree_builder import (
     add_batch_to_branching,
     reverse_construct_tree,
 )
+from fgsim.models.branching.graph_tree import GraphTreeWrapper
 
 
 def gen_graph(points):
@@ -22,7 +23,9 @@ def gen_graph(points):
 def test_reverse_construct_tree():
     branches = [2, 5]
     points = prod(branches)
-    graph = reverse_construct_tree(gen_graph(points), branches=branches)
+    graph = GraphTreeWrapper(
+        reverse_construct_tree(gen_graph(points), branches=branches)
+    )
 
     for ilevel in range(len(branches)):
         mean_of_children = graph.x_by_level[ilevel + 1][
@@ -41,7 +44,8 @@ def test_add_batch_to_branching():
         for _ in range(batch_size)
     ]
     batch = Batch.from_data_list(event_list)
-    batch = add_batch_to_branching(batch, branches, batch_size)
+    batch = GraphTreeWrapper(add_batch_to_branching(batch, branches, batch_size))
+    event_list = [GraphTreeWrapper(e) for e in event_list]
 
     assert torch.all(
         torch.hstack(batch.idxs_by_level).sort().values

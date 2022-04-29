@@ -5,12 +5,10 @@ import numpy as np
 import queueflow as qf
 import torch
 from torch.multiprocessing import Queue, Value
-from torch_geometric.data import Batch as DataBatch
-from torch_geometric.data import Data
+from torch_geometric.data import Batch, Data
 
 from fgsim.config import conf
 from fgsim.io.batch_tools import compute_hlvs
-from fgsim.models.branching.graph_tree import GraphTree
 
 from .tree_builder import add_batch_to_branching, reverse_construct_tree
 
@@ -60,11 +58,11 @@ def transform(_: None) -> Data:
     return graph
 
 
-def aggregate_to_batch(list_of_events: List[Data]) -> GraphTree:
-    batch = DataBatch.from_data_list(list_of_events)
+def aggregate_to_batch(list_of_events: List[Data]) -> Batch:
+    batch = Batch.from_data_list(list_of_events)
     batch = add_batch_to_branching(batch, branches, conf.loader.batch_size)
     return batch
 
 
-def magic_do_nothing(batch: GraphTree) -> GraphTree:
+def magic_do_nothing(batch: Batch) -> Batch:
     return batch

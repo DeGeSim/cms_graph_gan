@@ -5,7 +5,7 @@ import torch.nn as nn
 
 from fgsim.models.ffn import FFN
 
-from .graph_tree import GraphTreeGen
+from .graph_tree import TreeGenType
 from .tree import Tree
 
 
@@ -49,7 +49,7 @@ class BranchingLayer(nn.Module):
         )
 
     # Split each of the leafs in the the graph.tree into n_branches and connect them
-    def forward(self, graph: GraphTreeGen) -> GraphTreeGen:
+    def forward(self, graph: TreeGenType) -> TreeGenType:
         batch_size = self.batch_size
         n_branches = self.n_branches
         n_features = self.n_features
@@ -64,6 +64,10 @@ class BranchingLayer(nn.Module):
 
         # for the parents indeces generate a matrix where
         # each row is the global vector of the respective event
+        if graph.global_features.numel() == 0:
+            graph.global_features = torch.empty(
+                batch_size, self.n_global, dtype=torch.float, device=device
+            )
         parent_global = graph.global_features[parents_idxs % batch_size, :]
         # With the idxs of the parent index the event vector
 
@@ -104,7 +108,7 @@ class BranchingLayer(nn.Module):
             len(children_ftxs), dtype=torch.long, device=device
         ) + len(graph.x)
 
-        new_graph = GraphTreeGen(
+        new_graph = TreeGenType(
             x=torch.vstack([graph.x, children_ftxs]),
             idxs_by_level=graph.idxs_by_level + [level_idx],
             children=graph.children + [children],

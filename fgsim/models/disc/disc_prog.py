@@ -2,6 +2,7 @@ import torch
 from torch_geometric.data import Data
 
 from fgsim.config import conf
+from fgsim.models.branching.graph_tree import GraphTreeWrapper
 
 from .disc_graphgym import ModelClass as LevelDisc
 
@@ -21,6 +22,7 @@ class ModelClass(torch.nn.Module):
         # )
 
     def forward(self, batch: Data):
+        batch = GraphTreeWrapper(batch)
         disc_sum = 0
         for ilevel in range(self.x_by_level):
             disc_sum += self.level_discs[ilevel](
