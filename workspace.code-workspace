@@ -29,19 +29,21 @@
                 "name": "tr prog",
                 "request": "launch",
                 "type": "python",
+                "cwd": "/home/mscham/fgsim",
                 // "justMyCode": false,
             },
             {
                 "args": [
                     "--tag",
-                    "normal",
+                    "prog",
                     "--debug",
-                    "preprocess"
+                    "test"
                 ],
                 "module": "fgsim",
-                "name": "pp normal",
+                "name": "te prog",
                 "request": "launch",
                 "type": "python",
+                "cwd": "/home/mscham/fgsim",
                 // "justMyCode": false,
             },
             {
@@ -55,6 +57,7 @@
                 "name": "tr normal_graphgym",
                 "request": "launch",
                 "type": "python",
+                "cwd": "/home/mscham/fgsim",
                 // "justMyCode": false,
             },
             {
