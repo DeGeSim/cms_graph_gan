@@ -224,6 +224,9 @@ def test_plots(test_info: TestInfo):
     )
 
     def log_figure(figure, filename):
+        outputpath = plot_path / filename
+        figure.savefig(outputpath)
+        figure.savefig(outputpath.with_suffix(".png"), dpi=150)
         if best_or_last == "best":
             with train_log.experiment.test():
                 train_log.experiment.log_figure(
@@ -235,7 +238,6 @@ def test_plots(test_info: TestInfo):
     figure = xyscatter(
         sim=sim_batches[0][0].x.numpy(),
         gen=gen_batches[0][0].x.numpy(),
-        outputpath=plot_path / f"xyscatter_single.pdf",
         title=f"Scatter a single event ({conf.loader.max_points} points)",
     )
     log_figure(figure, "xyscatter_single.pdf")
@@ -243,7 +245,6 @@ def test_plots(test_info: TestInfo):
     figure = xyscatter_faint(
         sim=sim_batches[0].x.numpy(),
         gen=gen_batches[0].x.numpy(),
-        outputpath=plot_path / f"xyscatter_batch.pdf",
         title=(
             f"Scatter points ({conf.loader.max_points}) in batch"
             f" ({conf.loader.batch_size})"
@@ -254,7 +255,6 @@ def test_plots(test_info: TestInfo):
     figure = xy_hist(
         sim=sim_batches_stacked.x.numpy(),
         gen=gen_batches_stacked.x.numpy(),
-        outputpath=plot_path / f"xy_hist.pdf",
         title=(
             f"2D Histogram for {conf.loader.max_points} points in"
             f" {conf.testing.n_events} events"
@@ -269,7 +269,6 @@ def test_plots(test_info: TestInfo):
         gen=scatter_mean(
             gen_batches_stacked.x, gen_batches_stacked.batch, dim=0
         ).numpy(),
-        outputpath=plot_path / f"xy_event_means.pdf",
         title=f"Event means for ({conf.testing.n_events}) events",
     )
     log_figure(figure, "xy_event_means.pdf")
@@ -278,7 +277,5 @@ def test_plots(test_info: TestInfo):
         xsim = hlvs_dict["sim"][var]
         xgen = hlvs_dict["gen"][var]
         logger.info(f"Plotting  var {var}")
-        figure = hlv_marginals(
-            var, xsim=xsim, xgen=xgen, outputpath=plot_path / f"{var}.pdf"
-        )
+        figure = hlv_marginals(var, xsim=xsim, xgen=xgen)
         log_figure(figure, f"{var}.pdf")

@@ -1,14 +1,10 @@
-from pathlib import Path
-
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
 
 
-def xyscatter(
-    sim: np.array, gen: np.array, outputpath: Path, title: str
-) -> plt.Figure:
+def xyscatter(sim: np.array, gen: np.array, title: str) -> plt.Figure:
     np.set_printoptions(formatter={"float_kind": "{:.3g}".format})
     mean_sim = np.around(np.mean(sim, axis=0), 2)
     cov_sim = str(np.around(np.cov(sim, rowvar=0), 2)).replace("\n", "")
@@ -44,15 +40,10 @@ def xyscatter(
         labels=[f"gen μ{mean_gen}\nσ{cov_gen}", f"sim μ{mean_sim}\nσ{cov_sim}"],
     )
 
-    g.savefig(outputpath)
-    g.savefig(outputpath.with_suffix(".png"))
-
     return g.figure
 
 
-def xyscatter_faint(
-    sim: np.array, gen: np.array, outputpath: Path, title: str
-) -> plt.Figure:
+def xyscatter_faint(sim: np.array, gen: np.array, title: str) -> plt.Figure:
     np.set_printoptions(formatter={"float_kind": "{:.3g}".format})
     mean_sim = np.around(np.mean(sim, axis=0), 2)
     cov_sim = str(np.around(np.cov(sim, rowvar=0), 2)).replace("\n", "")
@@ -89,15 +80,10 @@ def xyscatter_faint(
         labels=[f"gen μ{mean_gen}\nσ{cov_gen}", f"sim μ{mean_sim}\nσ{cov_sim}"],
     )
 
-    g.savefig(outputpath)
-    g.savefig(outputpath.with_suffix(".png"))
-
     return g.figure
 
 
-def xy_hist(
-    sim: np.array, gen: np.array, outputpath: Path, title: str
-) -> plt.Figure:
+def xy_hist(sim: np.array, gen: np.array, title: str) -> plt.Figure:
     np.set_printoptions(formatter={"float_kind": "{:.3g}".format})
     mean_sim = np.around(np.mean(sim, axis=0), 2)
     cov_sim = str(np.around(np.cov(sim, rowvar=0), 2)).replace("\n", "")
@@ -127,8 +113,4 @@ def xy_hist(
     axes[1].hist2d(gen_df["x"], gen_df["y"], bins=[100, 100])
     axes[1].set_title("gen")
     fig.suptitle(title)
-
-    fig.savefig(outputpath)
-    fig.savefig(outputpath.with_suffix(".png"))
-
     return fig

@@ -1,13 +1,9 @@
-from pathlib import Path
-
 import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
 
 
-def hlv_marginals(
-    var, xsim: np.array, xgen: np.array, outputpath: Path
-) -> plt.Figure:
+def hlv_marginals(var, xsim: np.array, xgen: np.array) -> plt.Figure:
     assert xsim.shape == xgen.shape
     xgen_nan_ratio = np.sum(np.isnan(xgen)) / len(xgen) * 100
     # filter out the nans
@@ -73,6 +69,5 @@ def hlv_marginals(
             legend=True,
         )
         plt.title(f"{var}, all gen values are nan")
-    plt.savefig(outputpath)
 
     return fig
