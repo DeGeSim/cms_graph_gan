@@ -1,7 +1,7 @@
 """Manages the networks for the holder class"""
 import importlib
 from modulefinder import Module
-from typing import Dict, Optional
+from typing import Dict, Optional, Union
 
 import torch
 from omegaconf import DictConfig, OmegaConf
@@ -41,7 +41,7 @@ class SubNetworkCollector(torch.nn.Module):
 
 # Import the python file containing the models with dynamically
 def import_nn(
-    partname: str, nn_name: str, modelparams: DictConfig
+    partname: str, nn_name: str, modelparams: Union[DictConfig, dict]
 ) -> torch.nn.Module:
     model_module: Optional[Module] = None
     for import_path in [
@@ -59,7 +59,9 @@ def import_nn(
 
     if model_module is None:
         raise ImportError
+    if isinstance(modelparams, DictConfig):
+        modelparams = OmegaConf.to_container(modelparams)
 
-    submodel = model_module.ModelClass(**OmegaConf.to_container(modelparams))
+    submodel = model_module.ModelClass(**modelparams)
 
     return submodel

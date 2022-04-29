@@ -2,20 +2,22 @@ import torch
 from torch_geometric.data import Data
 
 from fgsim.config import conf
+from fgsim.ml.network import import_nn
 from fgsim.models.branching.graph_tree import GraphTreeWrapper
-
-from .disc_graphgym import ModelClass as LevelDisc
 
 
 class ModelClass(torch.nn.Module):
-    def __init__(self):
+    def __init__(self, leveldisc, levelparams):
         super(ModelClass, self).__init__()
         self.branches = conf.tree.branches
         self.features = conf.tree.features
         self.x_by_level = len(conf.tree.features)
 
         self.level_discs = torch.nn.ModuleList(
-            [LevelDisc() for _ in range(self.x_by_level)]
+            [
+                import_nn("disc", leveldisc, levelparams)
+                for _ in range(self.x_by_level)
+            ]
         )
         # self.branching_discs = torch.nn.ModuleList(
         #     [BranchingDisc() for _ in range(self.x_by_level - 1)]

@@ -14,7 +14,7 @@ models:
             name: Adam
             params: ${optim_options[Adam]}
     disc:
-        name: disc_graphgym
+        name: disc_prog
         params: ${model_param_options[${models.disc.name}]}
         losses: "${optionlist:${loss_options},${models.disc.losses_list}}"
         # losses_list: [WDiscLoss,GradientPenalty]
@@ -24,7 +24,7 @@ models:
             params: ${optim_options[Adam]}
 
 ffn:
-    activation: SELU
+    activation: ReLU
     activation_params: {}
     init_weights_bias_const: 0.1
     init_weights: xavier_uniform_
@@ -49,6 +49,9 @@ model_param_options:
     disc_graphgym: {}
     disc_treepc:
         features: [4, 64, 128, 256]
+    disc_prog:
+      leveldisc: disc_graphgym
+      levelparams: {}
 
 tree:
     branches: [4,8,16]
