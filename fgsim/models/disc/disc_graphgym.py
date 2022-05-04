@@ -1,5 +1,6 @@
 import torch
 from torch.nn import Linear, PReLU
+from torch_geometric.data import Batch
 from torch_geometric.nn import (
     BatchNorm,
     GeneralConv,
@@ -9,14 +10,12 @@ from torch_geometric.nn import (
     knn_graph,
 )
 
-from fgsim.config import conf, device
 from fgsim.models.ffn import FFN
 
 
 class ModelClass(torch.nn.Module):
-    def __init__(self):
+    def __init__(self, n_features):
         super(ModelClass, self).__init__()
-        n_features = conf.loader.n_features
 
         self.jk = JumpingKnowledge(mode="cat")
         self.act = PReLU(n_features)
@@ -29,7 +28,7 @@ class ModelClass(torch.nn.Module):
                 (PReLU(n_features), "x -> x"),
                 (BatchNorm(n_features), "x -> x"),
             ],
-        ).to(device)
+        )
         self.convs = torch.nn.ModuleList(
             [GeneralConv(n_features, n_features) for _ in range(4)]
         )
@@ -42,13 +41,14 @@ class ModelClass(torch.nn.Module):
                 (Linear(n_features, n_features), "x -> x"),
                 (PReLU(n_features), "x -> x"),
             ],
-        ).to(device)
+        )
 
-        self.hlv_dnn = FFN(n_features * (len(self.convs) + 1), 1).to(device)
+        self.hlv_dnn = FFN(n_features * (len(self.convs) + 1), 1)
 
-    def forward(self, x, batch):
-        edge_index = knn_graph(x=x, k=6, batch=batch)
-        x, edge_index, batch = x, edge_index, batch
+    def forward(self, batch: Batch):
+        x, batchidxs = batch.x, batch.batch
+        edge_index = knn_graph(x=x, k=6, batch=batchidxs)
+        x, edge_index, batchidxs = x, edge_index, batchidxs
 
         x = self.pre_nn(x)
         xs = [x]
@@ -56,6 +56,6 @@ class ModelClass(torch.nn.Module):
             x = self.act(conv(x, edge_index))
             xs += [x]
         x = self.jk(xs)
-        x_aggr = global_add_pool(x, batch)
+        x_aggr = global_add_pool(x, batchidxs)
         x = self.hlv_dnn(x_aggr)
         return x

@@ -1,7 +1,7 @@
 import torch
 from torch_geometric.data import Data
 
-from fgsim.config import conf
+from fgsim.config import conf, device
 from fgsim.ml.network import import_nn
 from fgsim.models.branching.graph_tree import GraphTreeWrapper
 
@@ -19,6 +19,7 @@ class ModelClass(torch.nn.Module):
                 for _ in range(self.x_by_level)
             ]
         )
+        self.level_discs = self.level_discs.to(device)
         # self.branching_discs = torch.nn.ModuleList(
         #     [BranchingDisc() for _ in range(self.x_by_level - 1)]
         # )

@@ -22,10 +22,14 @@ class OptimCol:
                 else {}
             )
 
-            # Import the python file containing the models with dynamically
-            optim: torch.optim = getattr(torch.optim, submodelconf.optim.name)(
-                submodelpar_dict[name], **params
-            )
+            optim: torch.optim
+            if submodelconf.optim.name == "FakeOptimizer":
+                optim = FakeOptimizer()
+            else:
+                # Import the python file containing the models with dynamically
+                optim = getattr(torch.optim, submodelconf.optim.name)(
+                    submodelpar_dict[name], **params
+                )
 
             self.parts[name] = optim
             setattr(self, name, optim)
@@ -48,3 +52,14 @@ class OptimCol:
 
     def __getitem__(self, subnetworkname: str) -> torch.optim.Optimizer:
         return self.parts[subnetworkname]
+
+
+class FakeOptimizer(torch.optim.Optimizer):
+    def __init__(self) -> None:
+        pass
+
+    def zero_grad(self) -> None:
+        pass
+
+    def step(self) -> None:
+        pass

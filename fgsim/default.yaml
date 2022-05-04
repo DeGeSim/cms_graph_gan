@@ -46,7 +46,8 @@ model_param_options:
         n_features: 2
         n_global: 5
     disc_hlvs: {}
-    disc_graphgym: {}
+    disc_graphgym:
+        n_features: ${loader[n_features]}
     disc_treepc:
         features: [4, 64, 128, 256]
     disc_prog:
@@ -91,6 +92,7 @@ optim_options:
         lr: 0.0002
     SGD:
         lr: 0.0002
+    FakeOptimizer: {}
 
 training:
     events_processed_before_validation: 100000
