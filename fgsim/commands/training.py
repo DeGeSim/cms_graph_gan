@@ -45,22 +45,6 @@ def training_step(
         with gpu_mem_monitor("gen_trainingreset"):
             holder.models.gen.zero_grad()
 
-    if holder.state.grad_step % 100 == 0:
-        import numpy as np
-        import torch
-
-        from fgsim.models.branching.graph_tree import GraphTreeWrapper
-
-        with torch.no_grad():
-            graph_tree = GraphTreeWrapper(holder.gen_points)
-            pc = graph_tree.pc[graph_tree.batch_by_level[-1] == 0]
-            mean_gen = torch.mean(pc, dim=0).cpu().numpy()
-            cov_gen = torch.cov(pc.T).cpu().numpy()
-            np.set_printoptions(formatter={"float_kind": "{:.3g}".format})
-            logger.info(
-                f"gen batch mean {mean_gen} cov: [{cov_gen[0]},{cov_gen[1]}]"
-            )
-
 
 def training_procedure() -> None:
     holder: Holder = Holder()
