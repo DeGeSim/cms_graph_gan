@@ -1,10 +1,28 @@
+from typing import Union
+
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
+import torch
 
 
-def xyscatter(sim: np.array, gen: np.array, title: str) -> plt.Figure:
+def to_np(arr) -> np.ndarray:
+    if isinstance(arr, torch.Tensor):
+        return arr.clone().detach().cpu().numpy()
+    elif isinstance(arr, np.ndarray):
+        return arr
+    else:
+        raise TypeError
+
+
+def xyscatter(
+    sim: Union[np.ndarray, torch.Tensor],
+    gen: Union[np.ndarray, torch.Tensor],
+    title: str,
+) -> plt.Figure:
+    sim = to_np(sim)
+    gen = to_np(gen)
     np.set_printoptions(formatter={"float_kind": "{:.3g}".format})
     mean_sim = np.around(np.mean(sim, axis=0), 2)
     cov_sim = str(np.around(np.cov(sim, rowvar=0), 2)).replace("\n", "")
