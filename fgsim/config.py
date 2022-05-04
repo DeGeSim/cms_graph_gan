@@ -26,7 +26,7 @@ if args.hash is not None:
     conf = OmegaConf.load(fn)
     conf["command"] = str(args.command)
 else:
-    with open("fgsim/default.yaml", "r") as fp:
+    with open("/home/mscham/fgsim/fgsim/default.yaml", "r") as fp:
         defaultconf = OmegaConf.load(fp)
 
     if args.tag != "default":
