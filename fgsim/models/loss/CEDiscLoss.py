@@ -1,6 +1,7 @@
 from typing import Dict
 
 import torch
+from sklearn.metrics import average_precision_score, confusion_matrix, roc_auc_score
 
 from fgsim.config import conf, device
 from fgsim.io.sel_seq import Batch
@@ -20,6 +21,9 @@ class LossGen:
         )
         self.fake_label = torch.zeros(
             (conf.loader.batch_size,), dtype=torch.float, device=device
+        )
+        self.y_true = (
+            torch.hstack([self.real_label, self.fake_label]).detach().cpu().numpy()
         )
 
     def __call__(self, holder: Holder, batch: Batch) -> Dict[str, float]:
@@ -44,5 +48,32 @@ class LossGen:
 
         gen_disc_loss = self.criterion(D_gen, self.fake_label)
         gen_disc_loss.backward()
+
+        if not conf.debug and holder.state.grad_step % 10 == 0:
+            y_pred = (
+                torch.sigmoid(torch.hstack([D_sim, D_gen])).detach().cpu().numpy()
+                > 0.5
+            )
+            cm = confusion_matrix(self.y_true, y_pred).ravel()
+            for lossname, loss in zip(
+                [
+                    "true negative",
+                    "false positive",
+                    "false negative",
+                    "true positive",
+                ],
+                cm,
+            ):
+                holder.train_log.log_loss(lossname, int(loss))
+
+            holder.train_log.log_loss(
+                "aoc", float(roc_auc_score(self.y_true, y_pred))
+            )
+            holder.train_log.log_loss(
+                "average_precision_score",
+                float(
+                    average_precision_score(self.y_true, y_pred),
+                ),
+            )
 
         return {"gen": float(gen_disc_loss), "sim": float(sample_disc_loss)}
