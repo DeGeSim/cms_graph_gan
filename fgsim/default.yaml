@@ -9,7 +9,7 @@ models:
         params: ${model_param_options[${models.gen.name}]}
         losses: "${optionlist:${loss_options},${models.gen.losses_list}}"
         # losses_list: [WGenLoss]
-        losses_list: [CEGenLoss,mean_dist]
+        losses_list: [CEGenLoss]
         optim:
             name: Adam
             params: ${optim_options[Adam]}
