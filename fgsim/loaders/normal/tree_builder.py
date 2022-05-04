@@ -8,22 +8,32 @@ from torch_geometric.nn import global_mean_pool
 
 
 # construct the branching for each graph individually
-def reverse_construct_tree(graph: Data, branches: List[int]) -> Data:
+def reverse_construct_tree(
+    graph: Data,
+    branches: List[int],
+    branchings_list: List[torch.Tensor],
+) -> Data:
     # set the last level
     x_by_level: List[torch.Tensor] = [graph.x]
     children: List[torch.Tensor] = []
 
     # reverse construct the tree
     cur_nodes = graph.x.shape[0]
-    for n_branches in branches[::-1]:
+    for ilevel, n_branches in reversed(list(enumerate(branches))):
         # randomly assign each node
         assert cur_nodes % n_branches == 0
         # create the vector that clusters the nodes
-        branching = torch.tensor(
+
+        branching_test_example = torch.tensor(
             np.arange(cur_nodes // n_branches).repeat(n_branches),
             dtype=torch.long,
         )
-        branching = branching[torch.randperm(branching.size()[0])]
+        # branching = branching_test_example[
+        #     torch.randperm(branching_test_example.size()[0])
+        # ]
+        branching = branchings_list[ilevel]
+        assert len(branching) == (cur_nodes // n_branches) * n_branches
+        assert torch.all(branching_test_example == torch.sort(branching)[0])
 
         # np.random.shuffle(branching)
         cur_nodes = cur_nodes // n_branches
@@ -41,20 +51,6 @@ def reverse_construct_tree(graph: Data, branches: List[int]) -> Data:
     graph.x = torch.vstack(x_by_level)
     graph.children = children
     graph.idxs_by_level = idxs_by_level
-    # graph.batch=torch.arange(sum([len(lvl) for lvl in x_by_level]), dtype=torch.long),
-
-    # for ilevel, level in enumerate(levels):
-    #     setattr(
-    #         graph,
-    #         f"level_{ilevel}",
-    #         level,
-    #     )
-    # for ichild, child in enumerate(children):
-    #     setattr(
-    #         graph,
-    #         f"branching_{ichild}",
-    #         child,
-    #     )
 
     return graph
 
@@ -92,22 +88,3 @@ def add_batch_to_branching(
         batch.idxs_by_level[ilevel] += add_to_idxs_by_level
 
     return batch
-
-    # for ibranching, n_branches in list(enumerate(branches))[::-1]:
-
-    #     current_batch_idxs = np.arange(batch_size).repeat(points)
-    #     # Note: np.repeat repeats elementwise, not the whole array
-    #     # The maximum of each event is the new number of points,
-    #     # so we just multiply the batch_idxs with it
-    #
-    #     add_to_branching = torch.tensor(
-    #         (current_batch_idxs * points),
-    #         dtype=torch.long,
-    #     )
-
-    #     setattr(
-    #         batch,
-    #         f"branching_{ibranching}",
-    #         add_to_branching + branching,
-    #     )
-    # return batch

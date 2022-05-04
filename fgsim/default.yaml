@@ -54,8 +54,8 @@ model_param_options:
       levelparams: {}
 
 tree:
-    branches: [4,8,16]
-    features: [256,64,64,2]
+    branches: [2, 4, 4, 16]
+    features: [64,64,32,16,2]
 
 
 layer_options:
@@ -150,7 +150,7 @@ loader_options:
         validation_set_size: 5000
         test_set_size: 30000
         prefetch_batches: 2
-        num_workers_transform: 10
+        num_workers_transform: 40
         num_workers_stack: 1
         num_workers_postprocess: 5
         max_points: 4085
@@ -170,3 +170,9 @@ loader_options:
         events_per_file: 10000
         max_points: 512
         dataset_path: "data/normal"
+    moons:
+        cell_prop_keys: ["x", "y"]
+        n_features: 2
+        events_per_file: 10000
+        max_points: 512
+        dataset_path: "data/moons"
