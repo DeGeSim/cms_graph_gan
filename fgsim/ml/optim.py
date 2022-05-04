@@ -63,3 +63,9 @@ class FakeOptimizer(torch.optim.Optimizer):
 
     def step(self) -> None:
         pass
+
+    def state_dict(self):
+        return {}
+
+    def load_state_dict(self, *args, **kwargs) -> None:
+        pass
