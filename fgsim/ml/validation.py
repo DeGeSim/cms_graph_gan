@@ -21,7 +21,8 @@ def validate(holder: Holder, loader: QueuedDataLoader) -> None:
         with torch.no_grad():
             batch = batch.clone().to(device)
             holder.reset_gen_points()
-            holder.gen_points = holder.gen_points.to_pcs_batch()
+            if hasattr(holder.gen_points, "to_pcs_batch"):
+                holder.gen_points = holder.gen_points.to_pcs_batch()
             holder.gen_points = batch_tools.batch_compute_hlvs(holder.gen_points)
             holder.val_loss(holder, batch)
     holder.val_loss.log_losses(holder.history)
