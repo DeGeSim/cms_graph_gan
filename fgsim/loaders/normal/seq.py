@@ -9,8 +9,10 @@ from torch_geometric.data import Batch, Data
 
 from fgsim.config import conf
 from fgsim.io.batch_tools import compute_hlvs
-
-from .tree_builder import add_batch_to_branching, reverse_construct_tree
+from fgsim.loaders.normal.tree_builder import (
+    add_batch_to_branching,
+    reverse_construct_tree,
+)
 
 # Sharded switch for the postprocessing
 postprocess_switch = Value("i", 0)
@@ -54,7 +56,10 @@ def transform(_: None) -> Data:
     graph = Data(x=pointcloud)
     if postprocess_switch.value:
         graph.hlvs = compute_hlvs(graph)
-    graph = reverse_construct_tree(graph, branches)
+    branchings_list = cluster_graph(graph, branches)
+    graph = reverse_construct_tree(
+        graph, branches=branches, branchings_list=branchings_list
+    )
     return graph
 
 
@@ -66,3 +71,17 @@ def aggregate_to_batch(list_of_events: List[Data]) -> Batch:
 
 def magic_do_nothing(batch: Batch) -> Batch:
     return batch
+
+
+def cluster_graph(graph: Data, branches: List[int]) -> List[torch.Tensor]:
+    cur_nodes = graph.x.shape[0]
+    branchings_list = []
+    for ilevel, n_branches in reversed(list(enumerate(branches))):
+        branching_test_example = torch.tensor(
+            np.arange(cur_nodes // n_branches).repeat(n_branches),
+            dtype=torch.long,
+        )
+        branchings_list.append(branching_test_example)
+        cur_nodes = cur_nodes // n_branches
+    branchings_list.reverse()
+    return branchings_list
