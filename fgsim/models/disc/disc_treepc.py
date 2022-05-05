@@ -1,3 +1,5 @@
+from typing import List
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -6,7 +8,8 @@ from fgsim.config import conf
 
 
 class ModelClass(nn.Module):
-    def __init__(self, features):
+    def __init__(self, features: List[int]):
+        features = features[::-1]
         self.batch_size = conf.loader.batch_size
 
         self.layer_num = len(features) - 1
