@@ -13,7 +13,6 @@ from fgsim.ml.holder import Holder
 from fgsim.ml.validation import validate
 from fgsim.monitoring.logger import logger
 from fgsim.monitoring.train_log import TrainLog
-from fgsim.utils.memory import gpu_mem_monitor
 
 
 def training_step(
@@ -23,27 +22,19 @@ def training_step(
     # set all optimizers to a 0 gradient
     holder.optims.zero_grad()
     # generate a new batch with the generator
-    with gpu_mem_monitor("disc_training_points"):
-        holder.reset_gen_points()
-    with gpu_mem_monitor("disc_training_forward"):
-        holder.losses.disc(holder, batch)
-    with gpu_mem_monitor("disc_training_grad"):
-        holder.optims.disc.step()
-    with gpu_mem_monitor("disc_training_reset"):
-        holder.optims.disc.zero_grad()
+    holder.reset_gen_points()
+    holder.losses.disc(holder, batch)
+    holder.optims.disc.step()
+    holder.optims.disc.zero_grad()
 
     # generator
     if holder.state.grad_step % conf.training.disc_steps_per_gen_step == 0:
         # generate a new batch with the generator, but with
         # points thought the generator this time
-        with gpu_mem_monitor("gen_training_points"):
-            holder.reset_gen_points_w_grad()
-        with gpu_mem_monitor("gen_training_forward"):
-            holder.losses.gen(holder, batch)
-        with gpu_mem_monitor("gen_training_grad"):
-            holder.optims.gen.step()
-        with gpu_mem_monitor("gen_trainingreset"):
-            holder.models.gen.zero_grad()
+        holder.reset_gen_points_w_grad()
+        holder.losses.gen(holder, batch)
+        holder.optims.gen.step()
+        holder.models.gen.zero_grad()
 
 
 def training_procedure() -> None:
@@ -78,8 +69,7 @@ def training_procedure() -> None:
                     holder.state.epoch += 1
                     loader.queue_epoch(n_skip_events=holder.state.processed_events)
                     batch = next(loader.qfseq)
-                with gpu_mem_monitor("batch"):
-                    batch = batch.to(device)
+                batch = batch.to(device)
                 holder.state.time_io_done = time.time()
                 training_step(batch, holder)
                 holder.state.time_training_done = time.time()
