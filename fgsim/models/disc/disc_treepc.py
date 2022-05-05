@@ -5,6 +5,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from fgsim.config import conf
+from fgsim.models.branching.graph_tree import graph_tree_to_graph
 
 
 class ModelClass(nn.Module):
@@ -30,6 +31,8 @@ class ModelClass(nn.Module):
         )
 
     def forward(self, batch):
+        batch = graph_tree_to_graph(batch)
+
         n_features = batch.x.shape[1]
         batch_size = conf.loader.batch_size
 

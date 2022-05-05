@@ -7,15 +7,16 @@ from torch_geometric.nn import (
     JumpingKnowledge,
     Sequential,
     global_add_pool,
-    knn_graph,
 )
 
+from fgsim.models.branching.graph_tree import graph_tree_to_graph
 from fgsim.models.ffn import FFN
 
 
 class ModelClass(torch.nn.Module):
-    def __init__(self, n_features):
+    def __init__(self, n_features, n_nn):
         super(ModelClass, self).__init__()
+        self.n_nn = n_nn
 
         self.jk = JumpingKnowledge(mode="cat")
         self.act = PReLU(n_features)
@@ -46,9 +47,8 @@ class ModelClass(torch.nn.Module):
         self.hlv_dnn = FFN(n_features * (len(self.convs) + 1), 1)
 
     def forward(self, batch: Batch):
-        x, batchidxs = batch.x, batch.batch
-        edge_index = knn_graph(x=x, k=6, batch=batchidxs)
-        x, edge_index, batchidxs = x, edge_index, batchidxs
+        batch = graph_tree_to_graph(batch, self.n_nn)
+        x, edge_index, batchidxs = batch.x, batch.edge_index, batch.batch
 
         x = self.pre_nn(x)
         xs = [x]

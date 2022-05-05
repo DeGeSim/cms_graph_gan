@@ -1,6 +1,6 @@
 import torch
 import torch.nn as nn
-from torch_geometric.nn import global_add_pool, global_mean_pool
+from torch_geometric.nn import global_add_pool
 
 from fgsim.models.ffn import FFN
 
@@ -12,11 +12,10 @@ class DynHLVsLayer(nn.Module):
         self.n_global = n_global
         self.batch_size = batch_size
         self.pre_nn: nn.Module = FFN(self.n_features, self.n_features).to(device)
-        self.post_nn: nn.Module = FFN(self.n_features * 2, self.n_global).to(device)
+        self.post_nn: nn.Module = FFN(self.n_features, self.n_global).to(device)
 
-    def forward(self, x: torch.Tensor, batch: torch.Tensor):
+    def forward(self, x: torch.Tensor, batch: torch.Tensor) -> torch.Tensor:
         ftx_mtx = self.pre_nn(x)
         gsum = global_add_pool(ftx_mtx, batch)
-        gmean = global_mean_pool(ftx_mtx, batch)
-        global_ftx = self.post_nn(torch.hstack([gsum, gmean]))
+        global_ftx = self.post_nn(gsum)
         return global_ftx

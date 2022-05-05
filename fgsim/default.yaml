@@ -45,15 +45,22 @@ model_param_options:
         n_layers: 5
         n_features: 2
         n_global: 5
-    disc_hlvs: {}
+    gen_moons: {}
+    disc_clic:
+        n_features: ${loader[n_features]}
+        n_prop: 20
+        n_global: 2
+        n_nn: 8
     disc_graphgym:
         n_features: ${loader[n_features]}
+        n_nn: 8
+    disc_hlvs: {}
     disc_treepc:
         features: ${tree[features]} # [4, 64, 128, 256]
     disc_prog:
       leveldisc: disc_graphgym
       levelparams: {}
-    gen_moons: {}
+
 
 tree:
     branches: [2, 4, 4, 16]

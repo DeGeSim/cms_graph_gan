@@ -1,7 +1,8 @@
-from typing import List, Optional
+from typing import List, Optional, Union
 
 import torch
 from torch_geometric.data import Batch, Data
+from torch_geometric.nn import knn_graph
 
 from fgsim.config import conf, device
 from fgsim.io.batch_tools import batch_from_pcs_list
@@ -12,7 +13,7 @@ from fgsim.io.batch_tools import batch_from_pcs_list
 class GraphTreeWrapper:
     def __init__(
         self,
-        data: Data,
+        data: Union[Data, Batch],
     ):
         assert hasattr(data, "x")
         assert hasattr(data, "batch")
@@ -111,3 +112,15 @@ class TreeGenType(Data):
             graph_tree.x_by_level[-1],
             graph_tree.batch_by_level[-1],
         )
+
+
+def graph_tree_to_graph(batch: Batch, n_nn: int = 0) -> Batch:
+    if hasattr(batch, "idxs_by_level"):
+        graph_tree = GraphTreeWrapper(batch)
+        batch = batch_from_pcs_list(
+            graph_tree.x_by_level[-1],
+            graph_tree.batch_by_level[-1],
+        )
+    if n_nn > 1:
+        batch.edge_index = knn_graph(x=batch.x, k=n_nn, batch=batch.batch)
+    return batch
