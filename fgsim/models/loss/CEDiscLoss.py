@@ -54,7 +54,7 @@ class LossGen:
                 torch.sigmoid(torch.hstack([D_sim, D_gen])).detach().cpu().numpy()
                 > 0.5
             )
-            cm = confusion_matrix(self.y_true, y_pred).ravel()
+            cm = confusion_matrix(self.y_true, y_pred, normalize="true").ravel()
             for lossname, loss in zip(
                 [
                     "true negative",
@@ -64,7 +64,7 @@ class LossGen:
                 ],
                 cm,
             ):
-                holder.train_log.log_loss(lossname, int(loss))
+                holder.train_log.log_loss(lossname, float(loss))
 
             holder.train_log.log_loss(
                 "aoc", float(roc_auc_score(self.y_true, y_pred))
