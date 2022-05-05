@@ -114,13 +114,16 @@ class TreeGenType(Data):
         )
 
 
-def graph_tree_to_graph(batch: Batch, n_nn: int = 0) -> Batch:
-    if hasattr(batch, "idxs_by_level"):
-        graph_tree = GraphTreeWrapper(batch)
-        batch = batch_from_pcs_list(
-            graph_tree.x_by_level[-1],
-            graph_tree.batch_by_level[-1],
-        )
+def graph_tree_to_graph(batch: Union[Batch, TreeGenType], n_nn: int = 0) -> Batch:
+    if isinstance(batch, TreeGenType):
+        batch = batch.to_pcs_batch()
+    else:
+        if hasattr(batch, "idxs_by_level"):
+            graph_tree = GraphTreeWrapper(batch)
+            batch = batch_from_pcs_list(
+                graph_tree.x_by_level[-1],
+                graph_tree.batch_by_level[-1],
+            )
     if n_nn > 1:
         batch.edge_index = knn_graph(x=batch.x, k=n_nn, batch=batch.batch)
     return batch
