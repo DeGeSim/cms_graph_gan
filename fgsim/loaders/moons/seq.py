@@ -60,14 +60,16 @@ def transform(_: None) -> Data:
     graph = Data(x=pointcloud)
     if postprocess_switch.value:
         graph.hlvs = compute_hlvs(graph)
-    branchings_list = cluster_graph(graph, branches, which_moon)
-    graph = reverse_construct_tree(graph, branches, branchings_list)
+    if conf.loader.cluster_tree:
+        branchings_list = cluster_graph(graph, branches, which_moon)
+        graph = reverse_construct_tree(graph, branches, branchings_list)
     return graph
 
 
 def aggregate_to_batch(list_of_events: List[Data]) -> Batch:
     batch = Batch.from_data_list(list_of_events)
-    batch = add_batch_to_branching(batch, branches, conf.loader.batch_size)
+    if conf.loader.cluster_tree:
+        batch = add_batch_to_branching(batch, branches, conf.loader.batch_size)
     return batch
 
 

@@ -148,7 +148,7 @@ loader_name: normal
 loader_options:
     default:
         rootprefix: "treeMaker/tree"
-        preprocess_training: False
+        preprocess_training: True
         debug: False
         braches:
             id: "simHit_detid"
@@ -161,9 +161,9 @@ loader_options:
         validation_set_size: 5000
         test_set_size: 30000
         prefetch_batches: 2
-        num_workers_transform: 40
+        num_workers_transform: 30
         num_workers_stack: 1
-        num_workers_postprocess: 5
+        num_workers_postprocess: 1
         max_points: 4085
         dataset_path: "data/hgcal_william"
     hgcal:
@@ -187,7 +187,6 @@ loader_options:
         events_per_file: 10000
         max_points: 512
         dataset_path: "data/moons"
-        chunksize: 10000
-        batch_size: 5000
-        validation_set_size: 10000
-        test_set_size: 30000
+        cluster_tree: false
+        chunksize: 1000
+        batch_size: 500
