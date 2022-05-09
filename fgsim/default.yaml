@@ -51,6 +51,7 @@ model_param_options:
         n_prop: 20
         n_global: 2
         n_nn: 8
+    disc_clicgat: ${model_param_options[disc_clic]}
     disc_graphgym:
         n_features: ${loader[n_features]}
         n_nn: 8
@@ -104,7 +105,7 @@ optim_options:
 
 training:
     events_processed_before_validation: 100000
-    disc_steps_per_gen_step: 2
+    disc_steps_per_gen_step: 5
     early_stopping:
         validation_steps: 100
         improvement: 0.02
@@ -147,7 +148,7 @@ loader_name: normal
 loader_options:
     default:
         rootprefix: "treeMaker/tree"
-        preprocess_training: True
+        preprocess_training: False
         debug: False
         braches:
             id: "simHit_detid"
@@ -186,3 +187,7 @@ loader_options:
         events_per_file: 10000
         max_points: 512
         dataset_path: "data/moons"
+        chunksize: 10000
+        batch_size: 5000
+        validation_set_size: 10000
+        test_set_size: 30000

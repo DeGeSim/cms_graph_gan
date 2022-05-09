@@ -18,15 +18,28 @@
     },
     "launch": {
         "configurations": [
+            // {
+            //     "args": [
+            //         "--hash",
+            //         "7642a1b",
+            //         "train"
+            //     ],
+            //     "module": "fgsim",
+            //     "name": "tr 7642a1b",
+            //     "request": "launch",
+            //     "type": "python",
+            //     "cwd": "/home/mscham/fgsim",
+            //     // "justMyCode": false,
+            // },
             {
                 "args": [
                     "--tag",
-                    "prog",
+                    "dcheck_clicgat",
                     "--debug",
                     "train"
                 ],
                 "module": "fgsim",
-                "name": "tr prog",
+                "name": "tr dcheck_clicgat",
                 "request": "launch",
                 "type": "python",
                 "cwd": "/home/mscham/fgsim",
@@ -35,12 +48,12 @@
             {
                 "args": [
                     "--tag",
-                    "prog",
+                    "dcheck_clicgat",
                     "--debug",
                     "test"
                 ],
                 "module": "fgsim",
-                "name": "te prog",
+                "name": "te dcheck_clicgat",
                 "request": "launch",
                 "type": "python",
                 "cwd": "/home/mscham/fgsim",
@@ -49,39 +62,17 @@
             {
                 "args": [
                     "--tag",
-                    "normal_graphgym",
+                    "dcheck_clicgat",
                     "--debug",
-                    "train"
+                    "preprocess"
                 ],
                 "module": "fgsim",
-                "name": "tr normal_graphgym",
+                "name": "pp dcheck_clicgat",
                 "request": "launch",
                 "type": "python",
                 "cwd": "/home/mscham/fgsim",
                 // "justMyCode": false,
             },
-            {
-                "args": [
-                    "--hash",
-                    "61e013c",
-                    "--debug",
-                    "train"
-                ],
-                "module": "fgsim",
-                "name": "tr 61e013c",
-                "request": "launch",
-                "type": "python",
-            },
-            {
-                "args": [
-                    "loadfile",
-                    "${file}"
-                ],
-                "module": "fgsim",
-                "name": "loadfile",
-                "request": "launch",
-                "type": "python"
-            }
         ],
         "version": "0.2.0"
     },
