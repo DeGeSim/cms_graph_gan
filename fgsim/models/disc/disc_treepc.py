@@ -7,6 +7,9 @@ import torch.nn.functional as F
 from fgsim.config import conf
 from fgsim.models.branching.graph_tree import graph_tree_to_graph
 
+# https://proceedings.mlr.press/v80/achlioptas18a.html
+# https://github.com/optas/latent_3d_points
+
 
 class ModelClass(nn.Module):
     def __init__(self, features: List[int]):

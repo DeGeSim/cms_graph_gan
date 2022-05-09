@@ -34,12 +34,12 @@
             {
                 "args": [
                     "--tag",
-                    "dcheck_clicgat",
+                    "dcheck_pointnet",
                     "--debug",
                     "train"
                 ],
                 "module": "fgsim",
-                "name": "tr dcheck_clicgat",
+                "name": "tr dcheck_pointnet",
                 "request": "launch",
                 "type": "python",
                 "cwd": "/home/mscham/fgsim",
@@ -48,12 +48,12 @@
             {
                 "args": [
                     "--tag",
-                    "dcheck_clicgat",
+                    "dcheck_pointnet",
                     "--debug",
                     "test"
                 ],
                 "module": "fgsim",
-                "name": "te dcheck_clicgat",
+                "name": "te dcheck_pointnet",
                 "request": "launch",
                 "type": "python",
                 "cwd": "/home/mscham/fgsim",
@@ -62,12 +62,12 @@
             {
                 "args": [
                     "--tag",
-                    "dcheck_clicgat",
+                    "dcheck_pointnet",
                     "--debug",
                     "preprocess"
                 ],
                 "module": "fgsim",
-                "name": "pp dcheck_clicgat",
+                "name": "pp dcheck_pointnet",
                 "request": "launch",
                 "type": "python",
                 "cwd": "/home/mscham/fgsim",

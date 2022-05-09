@@ -58,6 +58,10 @@ model_param_options:
     disc_hlvs: {}
     disc_treepc:
         features: ${tree[features]} # [4, 64, 128, 256]
+    disc_pointnet:
+        batch_size: ${loader[batch_size]}
+        n_points: ${loader[max_points]}
+        n_features: ${loader[n_features]}
     disc_prog:
       leveldisc: disc_graphgym
       levelparams: {}
