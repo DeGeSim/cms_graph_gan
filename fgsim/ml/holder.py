@@ -9,6 +9,7 @@ from datetime import datetime
 import torch
 from omegaconf import OmegaConf
 from omegaconf.dictconfig import DictConfig
+from torchinfo import summary
 
 from fgsim.config import conf, device
 from fgsim.io.sel_seq import Batch
@@ -19,7 +20,6 @@ from fgsim.ml.val_metrics import ValidationMetrics
 from fgsim.monitoring.logger import logger
 from fgsim.monitoring.train_log import TrainLog
 from fgsim.utils.check_for_nans import contains_nans
-from fgsim.utils.memory import gpu_mem_monitor
 from fgsim.utils.push_to_old import push_to_old
 
 
@@ -46,8 +46,12 @@ class Holder:
         self.train_log = TrainLog(self.state, self.history)
 
         self.models: SubNetworkCollector = SubNetworkCollector(conf.models)
-        with gpu_mem_monitor("models"):
-            self.models = self.models.float().to(device)
+        self.models = self.models.float().to(device)
+        for _, model in self.models.parts.items():
+            try:
+                summary(model)
+            except Exception:
+                pass
         self.train_log.log_model_graph(self.models)
         self.losses: LossesCol = LossesCol(self.train_log)
         self.val_loss: ValidationMetrics = ValidationMetrics(self.train_log)
