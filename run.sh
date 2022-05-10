@@ -30,9 +30,9 @@ function elementf {
             --nodes=1 \
             --constraint="P100|V100|A100" \
             --output=wd/slurm-$CMD-${HASH}-%j.out \
-            --job-name=${HASH} run_in_env.sh --hash $HASH $CMD
+            --job-name=${HASH} run_in_env.sh $RESTCMD
         else
-            ./run_in_env.sh --hash $HASH $CMD &
+            ./run_in_env.sh $RESTCMD &
             export COMMANDPID=$!
             trap "echo 'run.sh got SIGTERM' && kill $COMMANDPID " SIGINT SIGTERM
             wait $COMMANDPID
