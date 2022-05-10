@@ -62,6 +62,11 @@ def xyscatter(
 
 
 def xyscatter_faint(sim: np.array, gen: np.array, title: str) -> plt.Figure:
+    if len(sim) > 1000:
+        sampleidxs = np.random.choice(sim.shape[0], size=1000, replace=False)
+        sim = sim[sampleidxs]
+        gen = gen[sampleidxs]
+
     np.set_printoptions(formatter={"float_kind": "{:.3g}".format})
     mean_sim = np.around(np.mean(sim, axis=0), 2)
     cov_sim = str(np.around(np.cov(sim, rowvar=0), 2)).replace("\n", "")

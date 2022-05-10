@@ -154,43 +154,38 @@ loader_options:
         rootprefix: "treeMaker/tree"
         preprocess_training: True
         debug: False
+        chunksize: 100
+        batch_size: 50
+        validation_set_size: 5000
+        test_set_size: 5000
+        events_per_file: 100000
+        prefetch_batches: 5
+        num_workers_transform: 30
+        num_workers_stack: 1
+        num_workers_postprocess: 1
+    hgcal:
+        # cell_prop_keys: ["x", "y", "z", "celltype", "issilicon"]
+        batch_size: 100
+        max_points: 4085
+        dataset_path: "data/hgcal_william"
         braches:
             id: "simHit_detid"
             energy: "genPh_E"
             hit_energy: "simHit_E"
         cell_prop_keys: ["E","x", "y", "z"]
         n_features: 4
-        chunksize: 100
-        batch_size: 50
-        validation_set_size: 5000
-        test_set_size: 30000
-        prefetch_batches: 2
-        num_workers_transform: 30
-        num_workers_stack: 1
-        num_workers_postprocess: 1
-        max_points: 4085
-        dataset_path: "data/hgcal_william"
-    hgcal:
-        cell_prop_keys: ["x", "y", "z", "celltype", "issilicon"]
-        batch_size: 100
-    pcgraph:
-        debug: True
-    puregraph:
-        preprocess_training: False
+    pcgraph: ${loader_options[hgcal]}
+    puregraph: ${loader_options[hgcal]}
     normal:
-        preprocess_training: False
-        cell_prop_keys: ["x", "y"]
-        n_features: 2
-        # chunksize: 5000
-        events_per_file: 10000
-        max_points: 512
         dataset_path: "data/normal"
-    moons:
         cell_prop_keys: ["x", "y"]
         n_features: 2
-        events_per_file: 10000
         max_points: 512
+    moons:
         dataset_path: "data/moons"
+        cell_prop_keys: ["x", "y"]
+        n_features: 2
+        max_points: 512
         cluster_tree: false
         chunksize: 1000
         batch_size: 500
