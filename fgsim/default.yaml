@@ -79,7 +79,6 @@ layer_options:
     BranchingLayer:
         residual: True
 
-
 loss_options:
     WGenLoss:
         factor: 1.0
@@ -98,6 +97,9 @@ loss_options:
         factor: 1.0
     frechetpcdist:
         factor: 1.0
+    mmd:
+      factor: 1.0
+      kernel: rbf
 
 optim_options:
     Adam:
