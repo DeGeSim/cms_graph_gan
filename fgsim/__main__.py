@@ -58,6 +58,10 @@ def main():
 
         print(setup_procedure())
         exit()
+    if args.command == "dump":
+        from fgsim.commands.dump import dump_procedure
+
+        dump_procedure()
 
     # If it is called by the hash, manipulate then
     overwrite_path = (
@@ -127,11 +131,6 @@ def main():
         from fgsim.commands.overwrite import overwrite_procedure
 
         overwrite_procedure()
-
-    if args.command == "dump":
-        from fgsim.commands.dump import dump_procedure
-
-        dump_procedure()
 
 
 if __name__ == "__main__":
