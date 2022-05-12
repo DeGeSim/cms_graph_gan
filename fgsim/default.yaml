@@ -64,7 +64,7 @@ model_param_options:
         n_features: ${loader[n_features]}
     disc_prog:
       leveldisc: disc_graphgym
-      levelparams: {}
+      levelparams: ${model_param_options[disc_graphgym]}
 
 
 tree:

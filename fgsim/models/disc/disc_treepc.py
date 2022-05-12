@@ -4,9 +4,6 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from fgsim.config import conf
-from fgsim.models.branching.graph_tree import graph_tree_to_graph
-
 # https://proceedings.mlr.press/v80/achlioptas18a.html
 # https://github.com/optas/latent_3d_points
 
@@ -14,7 +11,6 @@ from fgsim.models.branching.graph_tree import graph_tree_to_graph
 class ModelClass(nn.Module):
     def __init__(self, features: List[int]):
         features = features[::-1]
-        self.batch_size = conf.loader.batch_size
 
         self.layer_num = len(features) - 1
         super().__init__()
@@ -34,10 +30,8 @@ class ModelClass(nn.Module):
         )
 
     def forward(self, batch):
-        batch = graph_tree_to_graph(batch)
-
         n_features = batch.x.shape[1]
-        batch_size = conf.loader.batch_size
+        batch_size = max(batch.batch) + 1
 
         f = batch.x.reshape(batch_size, -1, n_features)
         # # check if the reshape worked as expected:
@@ -59,7 +53,6 @@ class ModelClass(nn.Module):
             feat = self.leaky_relu(feat)
 
         out = F.max_pool1d(input=feat, kernel_size=max_hits).squeeze(-1)
-        out = self.final_layer(out)  # (B, 1)
-        out = out.reshape(conf.loader.batch_size)
+        out = self.final_layer(out).squeeze()  # (B, 1)
         assert not torch.any(torch.isnan(out))
         return out

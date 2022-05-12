@@ -1,6 +1,6 @@
 import torch
 from torch.nn import Linear, PReLU
-from torch_geometric.data import Batch
+from torch_geometric.data import Data
 from torch_geometric.nn import (
     BatchNorm,
     GeneralConv,
@@ -46,7 +46,7 @@ class ModelClass(torch.nn.Module):
 
         self.hlv_dnn = FFN(n_features * (len(self.convs) + 1), 1)
 
-    def forward(self, batch: Batch):
+    def forward(self, batch: Data):
         batch = graph_tree_to_graph(batch, self.n_nn)
         x, edge_index, batchidxs = batch.x, batch.edge_index, batch.batch
 

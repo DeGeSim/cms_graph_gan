@@ -108,8 +108,8 @@ class TreeGenType(Data):
 
 
 def graph_tree_to_graph(
-    batch: Union[Batch, TreeGenType, GraphTreeWrapper], n_nn: int = 0
-) -> Batch:
+    batch: Union[Data, TreeGenType, GraphTreeWrapper], n_nn: int = 0
+) -> Data:
     """
     It takes a batch of graphs and returns a batch of graphs
 

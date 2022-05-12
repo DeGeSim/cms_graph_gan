@@ -53,7 +53,7 @@ def test_procedure() -> None:
 
     test_data: TestDataset = get_testing_datasets(holder)
 
-    for best_or_last in ["best", "last"]:
+    for best_or_last in ["last"]:  # "best",
         plot_path = Path(f"{conf.path.run_path}/plots_{best_or_last}/")
         plot_path.mkdir(exist_ok=True)
 
