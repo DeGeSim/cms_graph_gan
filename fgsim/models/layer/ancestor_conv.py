@@ -71,29 +71,28 @@ class AncestorConv(MessagePassing):
     def forward(
         self,
         *,
-        x: torch.Tensor,
+        tftx: torch.Tensor,
         edge_index: torch.Tensor,
-        batch: torch.Tensor,
+        tbatch: torch.Tensor,
         edge_attr: Optional[torch.Tensor] = None,
         global_features: Optional[torch.Tensor] = None,
     ) -> torch.Tensor:
-        num_nodes = x.shape[0]
+        num_nodes = tftx.shape[0]
 
         num_edges = edge_index.shape[1]
-        num_events = batch[-1] + 1
+        num_events = int(tbatch[-1]) + 1
+        device = tftx.device
 
         if edge_attr is None:
-            edge_attr = torch.empty(
-                num_edges, 1, dtype=torch.float, device=x.device
-            )
+            edge_attr = torch.empty(num_edges, 1, dtype=torch.float).to(device)
         if global_features is None:
             global_features = torch.empty(
-                num_events, self.n_global, dtype=torch.float, device=x.device
-            )
+                num_events, self.n_global, dtype=torch.float
+            ).to(device)
 
-        assert x.dim() == global_features.dim() == edge_attr.dim() == 2
-        assert batch.dim() == 1
-        assert x.shape[1] == self.in_features
+        assert tftx.dim() == global_features.dim() == edge_attr.dim() == 2
+        assert tbatch.dim() == 1
+        assert tftx.shape[1] == self.in_features
 
         assert global_features.shape[0] == num_events
         assert global_features.shape[1] == self.n_global
@@ -117,26 +116,26 @@ class AncestorConv(MessagePassing):
                 )
 
         # Generate a global feature vector in shape of x
-        glo_ftx_mtx = global_features[batch, :]
+        glo_ftx_mtx = global_features[tbatch, :]
         # If the egde_attrs are included, we transforming the message
         if self.msg_nn_include_edge_attr:
             new_x = self.propagate(
                 edge_index=edge_index,
                 edge_attr=edge_attr,
-                x=x,
+                x=tftx,
                 glo_ftx_mtx=glo_ftx_mtx,
                 size=(num_nodes, num_nodes),
             )
             if self.residual:
-                new_x = new_x + x[..., : self.out_features]
+                new_x = new_x + tftx[..., : self.out_features]
         # If the egde attr are not included, we apply a transformation
         # before the message instead of transforming the message
         else:
             # Generate a global feature vector in shape of x
             if self.msg_nn_include_global:
-                xtransform = self.msg_nn(torch.hstack([x, glo_ftx_mtx]))
+                xtransform = self.msg_nn(torch.hstack([tftx, glo_ftx_mtx]))
             else:
-                xtransform = self.msg_nn(x)
+                xtransform = self.msg_nn(tftx)
 
             new_x = self.propagate(
                 edge_index=edge_index,
@@ -146,7 +145,7 @@ class AncestorConv(MessagePassing):
                 size=(num_nodes, num_nodes),
             )
             if self.residual:
-                new_x = new_x + x[..., : self.out_features]
+                new_x = new_x + tftx[..., : self.out_features]
 
         # self loop
         return new_x

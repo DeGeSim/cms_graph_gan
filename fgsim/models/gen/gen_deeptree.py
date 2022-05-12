@@ -7,7 +7,11 @@ from torch_geometric.data import Data
 
 from fgsim.config import conf, device
 from fgsim.models.branching.branching import BranchingLayer, Tree
-from fgsim.models.branching.graph_tree import GraphTreeWrapper, TreeGenType
+from fgsim.models.branching.graph_tree import (
+    GraphTreeWrapper,
+    TreeGenType,
+    graph_tree_to_graph,
+)
 from fgsim.models.ffn import FFN
 from fgsim.models.layer.ancestor_conv import AncestorConv
 from fgsim.models.pooling.dyn_hlvs import DynHLVsLayer
@@ -132,16 +136,18 @@ class ModelClass(nn.Module):
     def wrap_conv(self, graph: TreeGenType) -> Dict[str, torch.Tensor]:
         if self.conv_name == "GINConv":
             return {
-                "x": torch.hstack([graph.x, graph.global_features[graph.batch]]),
+                "x": torch.hstack(
+                    [graph.tftx, graph.global_features[graph.tbatch]]
+                ),
                 "edge_index": graph.edge_index,
             }
 
         elif self.conv_name == "AncestorConv":
             return {
-                "x": graph.x,
+                "tftx": graph.tftx,
                 "edge_index": graph.edge_index,
                 "edge_attr": graph.edge_attr,
-                "batch": graph.batch,
+                "tbatch": graph.tbatch,
                 "global_features": graph.global_features,
             }
         else:
@@ -154,18 +160,22 @@ class ModelClass(nn.Module):
         n_levels = len(branches)
 
         # Init the graph object
-        graph = GraphTreeWrapper(
-            TreeGenType(x=random_vector.reshape(batch_size, features[0]))
+        graph_tree = GraphTreeWrapper(
+            TreeGenType(tftx=random_vector.reshape(batch_size, features[0]))
         )
 
         # Do the branching
         for ilevel in range(n_levels):
-            graph.global_features = self.dyn_hlvs_layers[ilevel](
-                graph.x_by_level[ilevel][..., : features[-1]],
-                graph.batch[graph.idxs_by_level[ilevel]],
+            graph_tree.global_features = self.dyn_hlvs_layers[ilevel](
+                graph_tree.tftx_by_level[ilevel][..., : features[-1]],
+                graph_tree.tbatch[graph_tree.idxs_by_level[ilevel]],
             )
-            graph = GraphTreeWrapper(self.branching_layers[ilevel](graph.data))
+            graph_tree = GraphTreeWrapper(
+                self.branching_layers[ilevel](graph_tree.data)
+            )
             if self.conv_during_branching:
-                graph.x = self.conv_layers[ilevel](**(self.wrap_conv(graph.data)))
+                graph_tree.tftx = self.conv_layers[ilevel](
+                    **(self.wrap_conv(graph_tree.data))
+                )
 
-        return graph.data
+        return graph_tree_to_graph(graph_tree)

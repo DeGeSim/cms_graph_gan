@@ -56,7 +56,7 @@ def transform(_: None) -> Data:
     graph = Data(x=pointcloud)
     if postprocess_switch.value:
         graph.hlvs = compute_hlvs(graph)
-    branchings_list = cluster_graph(graph, branches)
+    branchings_list = cluster_graph_random(graph, branches)
     graph = reverse_construct_tree(
         graph, branches=branches, branchings_list=branchings_list
     )
@@ -73,7 +73,7 @@ def magic_do_nothing(batch: Batch) -> Batch:
     return batch
 
 
-def cluster_graph(graph: Data, branches: List[int]) -> List[torch.Tensor]:
+def cluster_graph_random(graph: Data, branches: List[int]) -> List[torch.Tensor]:
     cur_nodes = graph.x.shape[0]
     branchings_list = []
     for ilevel, n_branches in reversed(list(enumerate(branches))):

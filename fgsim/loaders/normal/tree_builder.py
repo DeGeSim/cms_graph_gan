@@ -14,7 +14,7 @@ def reverse_construct_tree(
     branchings_list: List[torch.Tensor],
 ) -> Data:
     # set the last level
-    x_by_level: List[torch.Tensor] = [graph.x]
+    tftx_by_level: List[torch.Tensor] = [graph.x]
     children: List[torch.Tensor] = []
 
     # reverse construct the tree
@@ -37,18 +37,18 @@ def reverse_construct_tree(
 
         # np.random.shuffle(branching)
         cur_nodes = cur_nodes // n_branches
-        x_by_level.append(global_mean_pool(x_by_level[-1], branching))
+        tftx_by_level.append(global_mean_pool(tftx_by_level[-1], branching))
         # reverse the mapping of the of the branchings
         children.append(torch.argsort(branching).reshape(-1, n_branches))
 
-    x_by_level.reverse()
+    tftx_by_level.reverse()
     children.reverse()
     idxs_by_level = [
         torch.arange(len(level), dtype=torch.long)
-        + sum([len(lvl) for lvl in x_by_level[:ilevel]])
-        for ilevel, level in enumerate(x_by_level)
+        + sum([len(lvl) for lvl in tftx_by_level[:ilevel]])
+        for ilevel, level in enumerate(tftx_by_level)
     ]
-    graph.x = torch.vstack(x_by_level)
+    graph.tftx = torch.vstack(tftx_by_level)
     graph.children = children
     graph.idxs_by_level = idxs_by_level
 
@@ -86,5 +86,7 @@ def add_batch_to_branching(
         points = prod(branches[:ilevel])
         add_to_idxs_by_level = np.arange(batch_size).repeat(points) * sum_points
         batch.idxs_by_level[ilevel] += add_to_idxs_by_level
+
+    batch.tbatch = torch.arange(batch_size).repeat_interleave(sum_points)
 
     return batch

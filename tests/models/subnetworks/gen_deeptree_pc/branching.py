@@ -27,34 +27,34 @@ def test_BranchingLayer_compute_graph(static_objects: DTColl):
     new_graph1 = branching_layers[0](graph)
     tree = branching_layers[0].tree
     assert torch.all(
-        new_graph1.x[new_graph1.idxs_by_level[1]]
-        == new_graph1.x[torch.hstack([e.idxs for e in tree.tree_lists[1]])]
+        new_graph1.tftx[new_graph1.idxs_by_level[1]]
+        == new_graph1.tftx[torch.hstack([e.idxs for e in tree.tree_lists[1]])]
     )
     leaf = tree.tree_lists[1][0]
 
-    pc_leaf_point = new_graph1.x[leaf.idxs[2]]
+    pc_leaf_point = new_graph1.tftx[leaf.idxs[2]]
     sum(pc_leaf_point).backward(retain_graph=True)
 
-    zero_feature = torch.zeros_like(graph.x[0])
-    assert graph.x.grad is not None
-    assert torch.all(graph.x.grad[0] == zero_feature)
-    assert torch.all(graph.x.grad[1] == zero_feature)
-    assert torch.any(graph.x.grad[2] != zero_feature)
+    zero_feature = torch.zeros_like(graph.tftx[0])
+    assert graph.tftx.grad is not None
+    assert torch.all(graph.tftx.grad[0] == zero_feature)
+    assert torch.all(graph.tftx.grad[1] == zero_feature)
+    assert torch.any(graph.tftx.grad[2] != zero_feature)
 
     new_graph2 = branching_layers[1](new_graph1)
     assert torch.all(
-        new_graph2.x[new_graph2.idxs_by_level[2]]
-        == new_graph2.x[torch.hstack([e.idxs for e in tree.tree_lists[2]])]
+        new_graph2.tftx[new_graph2.idxs_by_level[2]]
+        == new_graph2.tftx[torch.hstack([e.idxs for e in tree.tree_lists[2]])]
     )
 
     leaf = branching_layers[1].tree.tree_lists[2][0]
-    pc_leaf_point = new_graph2.x[leaf.idxs[2]]
+    pc_leaf_point = new_graph2.tftx[leaf.idxs[2]]
     sum(pc_leaf_point).backward()
 
-    assert graph.x.grad is not None
-    assert torch.all(graph.x.grad[0] == zero_feature)
-    assert torch.all(graph.x.grad[1] == zero_feature)
-    assert torch.any(graph.x.grad[2] != zero_feature)
+    assert graph.tftx.grad is not None
+    assert torch.all(graph.tftx.grad[0] == zero_feature)
+    assert torch.all(graph.tftx.grad[1] == zero_feature)
+    assert torch.any(graph.tftx.grad[2] != zero_feature)
 
 
 def test_BranchingLayer_connectivity_static(static_objects: DTColl):
@@ -64,7 +64,7 @@ def test_BranchingLayer_connectivity_static(static_objects: DTColl):
     for ilevel in range(1, props["n_levels"]):
         graph = branching_layers[ilevel - 1](graph)
         conlist = graph.edge_index.T.cpu().numpy().tolist()
-        connections = {tuple(x) for x in conlist}
+        connections = {tuple(e) for e in conlist}
         # Static Check
         if ilevel == 1:
             # F|B
@@ -121,9 +121,9 @@ def test_BranchingLayer_connectivity_dyn(dyn_objects: DTColl):
         if ilevel > 0:
             graph = branching_layers[ilevel - 1](graph)
         # split once
-        # x shape testing
-        assert graph.x.shape[1] == n_features
-        assert graph.x.shape[0] == batch_size * sum(
+        # tftx shape testing
+        assert graph.tftx.shape[1] == n_features
+        assert graph.tftx.shape[0] == batch_size * sum(
             [n_branches ** i for i in range(ilevel + 1)]
         )
         # edge_index shape testing
@@ -135,12 +135,12 @@ def test_BranchingLayer_connectivity_dyn(dyn_objects: DTColl):
         )
 
         conlist = graph.edge_index.T.cpu().numpy().tolist()
-        connections = {tuple(x) for x in conlist}
+        connections = {tuple(e) for e in conlist}
         # No double connections
         assert len(connections) == len(conlist)
 
     conlist = graph.edge_index.T.cpu().numpy().tolist()
-    connections = {tuple(x) for x in conlist}
+    connections = {tuple(e) for e in conlist}
 
     def recurr_check_connection(node: Node, ancestors_idxs: List[np.ndarray]):
         new_ancestors_idxs = [node.idxs.cpu().numpy()] + ancestors_idxs
@@ -229,7 +229,7 @@ def test_reshape_features(n_parents, batch_size, n_branches, n_features):
 #             n_layers=4,
 #         ).to(device),
 #     )
-#     batch = Batch.from_data_list([Data(x=torch.tensor([[1.0, 1.0]]))])
+#     tbatch = Batch.from_data_list([Data(tftx=torch.tensor([[1.0, 1.0]]))])
 #     global_features = torch.tensor([[]])
 #     target = torch.tensor([[4.0, 7.0], [5.0, 1.0], [2.0, 2.5], [3.0, 3.5]])
 #     loss_fn = torch.nn.MSELoss()
@@ -237,13 +237,13 @@ def test_reshape_features(n_parents, batch_size, n_branches, n_features):
 #     # check the branching layer
 #     for _ in range(10000):
 #         optimizer.zero_grad()
-#         b1 = branching_layer(batch)
+#         b1 = branching_layer(tbatch)
 #         b2 = branching_layer(b1)
-#         loss = loss_fn(b2.x[3:, :], target)
+#         loss = loss_fn(b2.tftx[3:, :], target)
 #         loss.backward()
 #         optimizer.step()
 #         if _ % 1000 == 0:
 #             print(loss)
-#         if torch.allclose(target, b2.x[3:, :], rtol=1e-4, atol=1e-4):
+#         if torch.allclose(target, b2.tftx[3:, :], rtol=1e-4, atol=1e-4):
 #             return
 #     raise Exception

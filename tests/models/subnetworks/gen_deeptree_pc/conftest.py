@@ -35,7 +35,7 @@ def object_gen(props: Dict[str, int]) -> DTColl:
     branches = [n_branches for _ in range(n_levels - 1)]
 
     graph = Data(
-        x=torch.randn(
+        tftx=torch.randn(
             batch_size,
             n_features,
             dtype=torch.float,
@@ -46,7 +46,7 @@ def object_gen(props: Dict[str, int]) -> DTColl:
         children=[],
         edge_index=torch.empty(2, 0, dtype=torch.long, device=device),
         edge_attr=torch.empty(0, 1, dtype=torch.float, device=device),
-        batch=torch.arange(batch_size, dtype=torch.long, device=device),
+        tbatch=torch.arange(batch_size, dtype=torch.long, device=device),
         global_features=torch.randn(
             batch_size,
             n_global,

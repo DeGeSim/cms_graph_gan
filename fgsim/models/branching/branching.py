@@ -56,7 +56,7 @@ class BranchingLayer(nn.Module):
         parents = self.tree.tree_lists[self.level]
         n_parents = len(parents)
 
-        parents_ftxs = graph.x[graph.idxs_by_level[self.level]]
+        parents_ftxs = graph.tftx[graph.idxs_by_level[self.level]]
         device = parents_ftxs.device
 
         # Compute the new feature vectors:
@@ -106,17 +106,17 @@ class BranchingLayer(nn.Module):
         )
         level_idx = torch.arange(
             len(children_ftxs), dtype=torch.long, device=device
-        ) + len(graph.x)
+        ) + len(graph.tftx)
 
         new_graph = TreeGenType(
-            x=torch.vstack([graph.x, children_ftxs]),
+            tftx=torch.vstack([graph.tftx, children_ftxs]),
             idxs_by_level=graph.idxs_by_level + [level_idx],
             children=graph.children + [children],
             edge_index=torch.hstack(self.tree.edge_index_p_level[: self.level + 2]),
             edge_attr=torch.vstack(self.tree.edge_attrs_p_level[: self.level + 2]),
             global_features=graph.global_features,
-            batch=torch.arange(batch_size, dtype=torch.long, device=device).repeat(
-                (len(graph.x) + len(children_ftxs)) // batch_size
+            tbatch=torch.arange(batch_size, dtype=torch.long, device=device).repeat(
+                (len(graph.tftx) + len(children_ftxs)) // batch_size
             ),
         )
         return new_graph

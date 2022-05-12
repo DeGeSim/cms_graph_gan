@@ -52,12 +52,12 @@ def ancestor_conv(default_pars):
 def graph():
     # Create a graph with 1 event, 2 levels, 2 branches
     return Data(
-        x=torch.tensor(
+        tftx=torch.tensor(
             [[1], [2], [5]], dtype=torch.float, device=device, requires_grad=True
         ),
         edge_index=torch.tensor([[0, 0], [1, 2]], dtype=torch.long, device=device),
         edge_attr=torch.tensor([[1], [1]], dtype=torch.long, device=device),
-        batch=torch.tensor([0, 0, 0], dtype=torch.long, device=device),
+        tbatch=torch.tensor([0, 0, 0], dtype=torch.long, device=device),
     )
 
 
@@ -73,16 +73,16 @@ def test_ancestorconv_single_event(ancestor_conv, graph):
     ).reshape(batch_size, n_global)
 
     res = ancestor_conv(
-        x=graph.x,
+        tftx=graph.tftx,
         edge_index=graph.edge_index,
         edge_attr=graph.edge_attr,
-        batch=graph.batch,
+        tbatch=graph.tbatch,
         global_features=global_features,
     )
-    m1 = torch.hstack([graph.x[0], global_features[0], torch.tensor(1)])
+    m1 = torch.hstack([graph.tftx[0], global_features[0], torch.tensor(1)])
     messages = torch.stack([torch.zeros_like(m1), m1, m1])
 
-    res_expect = torch.hstack([graph.x, global_features[graph.batch], messages])
+    res_expect = torch.hstack([graph.tftx, global_features[graph.tbatch], messages])
 
     assert torch.allclose(res, res_expect)
 
@@ -96,7 +96,7 @@ def test_ancestorconv_double_event(ancestor_conv):
     batch_size = 2
 
     graph = Data(
-        x=torch.tensor(
+        tftx=torch.tensor(
             [[1], [1.5], [2], [2.5], [5], [5.5]],
             dtype=torch.float,
             device=device,
@@ -108,21 +108,21 @@ def test_ancestorconv_double_event(ancestor_conv):
         edge_attr=torch.tensor(
             [[1], [1], [1], [1]], dtype=torch.long, device=device
         ),
-        batch=torch.tensor([0, 1, 0, 1, 0, 1], dtype=torch.long, device=device),
+        tbatch=torch.tensor([0, 1, 0, 1, 0, 1], dtype=torch.long, device=device),
     )
     global_features = torch.tensor(
         [[0.3, 0.3], [0.1, 0.1]], dtype=torch.float, device=device
     ).reshape(batch_size, n_global)
 
     res = ancestor_conv(
-        x=graph.x,
+        tftx=graph.tftx,
         edge_index=graph.edge_index,
         edge_attr=graph.edge_attr,
-        batch=graph.batch,
+        tbatch=graph.tbatch,
         global_features=global_features,
     )
-    m0 = torch.hstack([graph.x[0], global_features[0], torch.tensor(1)])
-    m1 = torch.hstack([graph.x[1], global_features[1], torch.tensor(1)])
+    m0 = torch.hstack([graph.tftx[0], global_features[0], torch.tensor(1)])
+    m1 = torch.hstack([graph.tftx[1], global_features[1], torch.tensor(1)])
     messages = torch.stack(
         [
             torch.zeros_like(m0),  # for Node 0
@@ -134,7 +134,7 @@ def test_ancestorconv_double_event(ancestor_conv):
         ]
     )
 
-    res_expect = torch.hstack([graph.x, global_features[graph.batch], messages])
+    res_expect = torch.hstack([graph.tftx, global_features[graph.tbatch], messages])
     assert torch.all(res == res_expect)
 
 
@@ -147,7 +147,7 @@ def test_ancestorconv_three_levels(ancestor_conv):
     batch_size = 1
 
     graph = Data(
-        x=torch.arange(
+        tftx=torch.arange(
             7, dtype=torch.float, device=device, requires_grad=True
         ).reshape(-1, 1),
         edge_index=torch.tensor(
@@ -156,22 +156,22 @@ def test_ancestorconv_three_levels(ancestor_conv):
             device=device,
         ),
         edge_attr=torch.ones(10, dtype=torch.long, device=device).reshape(-1, 1),
-        batch=torch.zeros(7, dtype=torch.long, device=device),
+        tbatch=torch.zeros(7, dtype=torch.long, device=device),
     )
     global_features = torch.tensor(
         [[0.3, 0.2]], dtype=torch.float, device=device
     ).reshape(batch_size, n_global)
 
     res = ancestor_conv(
-        x=graph.x,
+        tftx=graph.tftx,
         edge_index=graph.edge_index,
         edge_attr=graph.edge_attr,
-        batch=graph.batch,
+        tbatch=graph.tbatch,
         global_features=global_features,
     )
-    m0 = torch.hstack([graph.x[0], global_features[0], torch.tensor(1)])
-    m1 = torch.hstack([graph.x[1], global_features[0], torch.tensor(1)])
-    m2 = torch.hstack([graph.x[2], global_features[0], torch.tensor(1)])
+    m0 = torch.hstack([graph.tftx[0], global_features[0], torch.tensor(1)])
+    m1 = torch.hstack([graph.tftx[1], global_features[0], torch.tensor(1)])
+    m2 = torch.hstack([graph.tftx[2], global_features[0], torch.tensor(1)])
     messages = torch.stack(
         [
             torch.zeros_like(m0),  # for Node 0
@@ -184,7 +184,7 @@ def test_ancestorconv_three_levels(ancestor_conv):
         ]
     )
 
-    res_expect = torch.hstack([graph.x, global_features[graph.batch], messages])
+    res_expect = torch.hstack([graph.tftx, global_features[graph.tbatch], messages])
     assert torch.all(res == res_expect)
 
 
@@ -197,7 +197,7 @@ def test_ancestorconv_all_modes():
     batch_size = 1
 
     graph = Data(
-        x=torch.arange(
+        tftx=torch.arange(
             7, dtype=torch.float, device=device, requires_grad=True
         ).reshape(-1, 1),
         edge_index=torch.tensor(
@@ -206,7 +206,7 @@ def test_ancestorconv_all_modes():
             device=device,
         ),
         edge_attr=torch.ones(10, dtype=torch.long, device=device).reshape(-1, 1),
-        batch=torch.zeros(7, dtype=torch.long, device=device),
+        tbatch=torch.zeros(7, dtype=torch.long, device=device),
     )
     global_features = torch.tensor(
         [[0.3, 0.2]], dtype=torch.float, device=device
@@ -239,9 +239,9 @@ def test_ancestorconv_all_modes():
                                 upd_nn_include_global=upd_nn_include_global,
                             )
                             kwargs = {
-                                "x": graph.x,
+                                "tftx": graph.tftx,
                                 "edge_index": graph.edge_index,
-                                "batch": graph.batch,
+                                "tbatch": graph.tbatch,
                             }
                             kwargs["edge_attr"] = graph.edge_attr
                             kwargs["global_features"] = global_features
@@ -286,19 +286,19 @@ def test_ancestorconv_all_modes():
 #             n_layers=4,
 #         ).to(device),
 #     )
-#     batch = Batch.from_data_list([Data(x=torch.tensor([[1.0, 1.0]]))])
+#     tbatch = Batch.from_data_list([Data(tftx=torch.tensor([[1.0, 1.0]]))])
 #     global_features = torch.tensor([[]])
 #     target = torch.tensor([[4.0, 7.0], [5.0, 1.0], [2.0, 2.5], [3.0, 3.5]])
 #     loss_fn = torch.nn.MSELoss()
 #     optimizer = torch.optim.Adam(anc_conv.parameters())
 #     for _ in range(10000):
 #         optimizer.zero_grad()
-#         b1 = branching_layer(batch, global_features)
+#         b1 = branching_layer(tbatch, global_features)
 #         b2 = branching_layer(b1, global_features)
 #         res = anc_conv(
-#             x=b2.x,
+#             tftx=b2.tftx,
 #             edge_index=b2.edge_index,
-#             batch=b2.event,
+#             tbatch=b2.event,
 #             global_features=global_features,
 #         )
 #         loss = loss_fn(res[3:, :], target)

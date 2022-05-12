@@ -15,7 +15,7 @@ class GraphTreeWrapper:
         self,
         data: Union[Data, Batch],
     ):
-        assert hasattr(data, "x")
+        assert hasattr(data, "tftx")
         assert hasattr(data, "batch")
         if not hasattr(data, "children"):
             data.children = []
@@ -26,13 +26,13 @@ class GraphTreeWrapper:
                 )
             ]
         self.data: Data = data
-        self.x_by_level = X_BY_LEVEL(self.data)
+        self.tftx_by_level = TFTX_BY_LEVEL(self.data)
         self.batch_by_level = BATCH_BY_LEVEL(self.data)
 
     # assign all the stuff the the data member
     def __setattr__(self, __name, __value):
         # avoid overwriting the existing members
-        if __name in ["data", "x_by_level", "batch_by_level", "pc"]:
+        if __name in ["data", "tftx_by_level", "batch_by_level", "pc"]:
             #  should be assigned on init
             if __name in self.__dict__ or __name == "pc":
                 raise AttributeError(f"Cannot assign {__name} to the Wrapper")
@@ -44,13 +44,13 @@ class GraphTreeWrapper:
     # wrap getattr to the data member
     def __getattr__(self, __name):
         if __name == "pc":
-            return self.x_by_level[-1]
+            return self.tftx_by_level[-1]
         elif __name == "batch_by_level":
             return self.batch_by_level
         elif __name == "data":
             return self.data
-        elif __name == "x_by_level":
-            return self.x_by_level
+        elif __name == "tftx_by_level":
+            return self.tftx_by_level
         else:
             return getattr(self.data, __name)
 
@@ -58,13 +58,13 @@ class GraphTreeWrapper:
         return self.data.__getitem__(*args, **kwargs)
 
 
-# It's a wrapper around the `data.x` array that allows you to index it by level
-class X_BY_LEVEL:
+# It's a wrapper around the `data.tftx` array that allows you to index it by level
+class TFTX_BY_LEVEL:
     def __init__(self, data: Data) -> None:
         self.data = data
 
     def __getitem__(self, slice):
-        return self.data.x[self.data.idxs_by_level[slice]]
+        return self.data.tftx[self.data.idxs_by_level[slice]]
 
 
 # It's a wrapper around a Data object that allows you to index into the Data object by level
@@ -73,21 +73,21 @@ class BATCH_BY_LEVEL:
         self.data = data
 
     def __getitem__(self, slice):
-        return self.data.batch[self.data.idxs_by_level[slice]]
+        return self.data.tbatch[self.data.idxs_by_level[slice]]
 
 
 # > This class is used to store the type of tree generation
 class TreeGenType(Data):
     def __init__(
         self,
-        x: torch.Tensor,
+        tftx: torch.Tensor,
         edge_index: torch.Tensor = torch.empty(
             2, 0, dtype=torch.long, device=device
         ),
         edge_attr: torch.Tensor = torch.empty(
             0, 1, dtype=torch.float, device=device
         ),
-        batch: torch.Tensor = torch.arange(
+        tbatch: torch.Tensor = torch.arange(
             conf.loader.batch_size, dtype=torch.long, device=device
         ),
         global_features: torch.Tensor = torch.empty(
@@ -97,33 +97,44 @@ class TreeGenType(Data):
         idxs_by_level: Optional[List[torch.Tensor]] = None,
     ):
         super().__init__(
-            x=x,
+            tftx=tftx,
             edge_index=edge_index,
             edge_attr=edge_attr,
             children=children,
             idxs_by_level=idxs_by_level,
-            batch=batch,
+            tbatch=tbatch,
             global_features=global_features,
         )
 
-    def to_pcs_batch(self) -> Batch:
-        graph_tree = GraphTreeWrapper(self)
-        return batch_from_pcs_list(
-            graph_tree.x_by_level[-1],
+
+def graph_tree_to_graph(
+    batch: Union[Batch, TreeGenType, GraphTreeWrapper], n_nn: int = 0
+) -> Batch:
+    """
+    It takes a batch of graphs and returns a batch of graphs
+
+    Args:
+      batch (Union[Batch, TreeGenType, GraphTreeWrapper]):
+      a batch of graphs, either a Batch object,
+      a TreeGenType object, or a GraphTreeWrapper object.
+      n_nn (int): number of nearest neighbors to use for the graph.
+      If 0, no graph is used. Defaults to 0
+
+    Returns:
+      A batch object with the edge_index attribute set
+      to the k-nearest neighbors of the nodes in the graph.
+    """
+    if isinstance(batch, GraphTreeWrapper):
+        batch = batch_from_pcs_list(
+            batch.tftx_by_level[-1],
+            batch.batch_by_level[-1],
+        )
+    elif hasattr(batch, "idxs_by_level"):
+        graph_tree = GraphTreeWrapper(batch)
+        batch = batch_from_pcs_list(
+            graph_tree.tftx_by_level[-1],
             graph_tree.batch_by_level[-1],
         )
-
-
-def graph_tree_to_graph(batch: Union[Batch, TreeGenType], n_nn: int = 0) -> Batch:
-    if isinstance(batch, TreeGenType):
-        batch = batch.to_pcs_batch()
-    else:
-        if hasattr(batch, "idxs_by_level"):
-            graph_tree = GraphTreeWrapper(batch)
-            batch = batch_from_pcs_list(
-                graph_tree.x_by_level[-1],
-                graph_tree.batch_by_level[-1],
-            )
     if n_nn > 1:
         batch.edge_index = knn_graph(x=batch.x, k=n_nn, batch=batch.batch)
     return batch

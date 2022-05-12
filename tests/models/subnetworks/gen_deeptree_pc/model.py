@@ -15,13 +15,13 @@ def test_GlobalFeedBackNN_ancestor_conv(static_objects: DTColl):
         if ilevel > 0:
             graph = branching_layers[ilevel - 1](graph)
         # ### Global
-        graph.global_features = dyn_hlvs_layer(graph.x, graph.batch)
+        graph.global_features = dyn_hlvs_layer(graph.tftx, graph.tbatch)
         assert graph.global_features.shape[1] == n_global
-        graph.x = ancestor_conv_layer(
-            x=graph.x,
+        graph.tftx = ancestor_conv_layer(
+            tftx=graph.tftx,
             edge_index=graph.edge_index,
             edge_attr=graph.edge_attr,
-            batch=graph.batch,
+            tbatch=graph.tbatch,
             global_features=graph.global_features,
         )
 
@@ -43,11 +43,11 @@ def test_GlobalFeedBackNN_GINConv(static_objects: DTColl):
         if ilevel > 0:
             graph = branching_layers[ilevel - 1](graph)
         # ### Global
-        global_features = dyn_hlvs_layer(graph.x, graph.batch)
+        global_features = dyn_hlvs_layer(graph.tftx, graph.tbatch)
         assert global_features.shape[1] == n_global
 
-        graph.x = conv(
-            x=torch.hstack([graph.x, global_features[graph.batch]]),
+        graph.tftx = conv(
+            x=torch.hstack([graph.tftx, global_features[graph.tbatch]]),
             edge_index=graph.edge_index,
         )
 
@@ -70,20 +70,20 @@ def test_full_NN_compute_graph(static_objects: DTColl):
     n_levels = static_objects.props["n_levels"]
 
     tree_lists = branching_layers[0].tree.tree_lists
-    zero_feature = torch.zeros_like(graph.x[0])
-    x_old = graph.x
+    zero_feature = torch.zeros_like(graph.tftx[0])
+    x_old = graph.tftx
     for ilevel in range(n_levels):
         if ilevel > 0:
             graph = branching_layers[ilevel - 1](graph)
-            graph.x = ancestor_conv_layer(
-                x=graph.x,
+            graph.tftx = ancestor_conv_layer(
+                tftx=graph.tftx,
                 edge_index=graph.edge_index,
                 edge_attr=graph.edge_attr,
-                batch=graph.batch,
+                tbatch=graph.tbatch,
                 global_features=graph.global_features,
             )
             leaf = tree_lists[ilevel][0]
-            pc_leaf_point = graph.x[leaf.idxs[2]]
+            pc_leaf_point = graph.tftx[leaf.idxs[2]]
             sum(pc_leaf_point).backward(retain_graph=True)
 
             assert x_old.grad is not None
@@ -91,5 +91,5 @@ def test_full_NN_compute_graph(static_objects: DTColl):
             assert torch.all(x_old.grad[1] == zero_feature)
             assert torch.any(x_old.grad[2] != zero_feature)
 
-        global_features = dyn_hlvs_layer(graph.x, graph.batch)
+        global_features = dyn_hlvs_layer(graph.tftx, graph.tbatch)
         assert global_features.shape[1] == n_global
