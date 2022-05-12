@@ -112,7 +112,9 @@ def pcs_to_batch_reshape_list(pcs: torch.Tensor, batch_idxs: torch.Tensor) -> Ba
 batch_from_pcs_list = pcs_to_batch_sort_list
 
 # Compute stuff
-def batch_compute_hlvs(batch: Batch) -> Batch:
+def batch_compute_hlvs(batch) -> Batch:
+    if not isinstance(batch, Batch):
+        batch = batch_from_pcs_list(batch.x, batch.batch)
     event_list = [x for x in batch.to_data_list()]
     for event in event_list:
         event.hlvs = compute_hlvs(event)
