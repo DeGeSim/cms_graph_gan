@@ -71,6 +71,11 @@ else:
         conf["hash"] = gethash(hyperparameters)
         # Infer the parameters here
         OmegaConf.resolve(conf)
+        # remove the options:
+        for key in list(conf.keys()):
+            if key.endswith("_options"):
+                del conf[key]
+
     else:
         conf = OmegaConf.unsafe_merge(defaultconf, vars(args))
 
