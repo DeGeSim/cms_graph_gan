@@ -5,27 +5,23 @@ from omegaconf import OmegaConf
 from omegaconf.dictconfig import DictConfig
 from torch.utils.tensorboard.writer import SummaryWriter
 
-from fgsim.config import conf
 from fgsim.utils.oc_utils import dict_to_kv
 
 comet_conf = OmegaConf.load("fgsim/comet.yaml")
 api = comet_ml.API(comet_conf.api_key)
-project_name = (
-    conf.comet_project_name
-    if "comet_project_name" in conf
-    else comet_conf.project_name
-)
 
 
 def get_exps_with_hash(hash: str) -> List[comet_ml.APIExperiment]:
-    experiments = [
-        exp
-        for exp in api.get(
-            workspace=comet_conf.workspace,
-            project_name=project_name,
-        )
-        if exp.get_parameters_summary("hash") != []
-    ]
+    experiments = []
+    for workspace in api.get_workspaces():
+        for project in api.get_projects(workspace):
+            for exp in api.get(
+                workspace=workspace,
+                project_name=project,
+            ):
+                if exp.get_parameters_summary("hash") != []:
+                    experiments.append(exp)
+            api.get_projects
     qres = [
         exp
         for exp in experiments
@@ -65,6 +61,8 @@ def experiment_from_hash(hash) -> comet_ml.ExistingExperiment:
 
 
 def get_experiment(state: DictConfig) -> comet_ml.ExistingExperiment:
+    from fgsim.config import conf
+
     experiment = experiment_from_hash(conf.hash)
 
     experiment.set_step(state["grad_step"])
@@ -73,10 +71,16 @@ def get_experiment(state: DictConfig) -> comet_ml.ExistingExperiment:
 
 
 def setup_experiment() -> None:
+    from fgsim.config import conf
+
     """Generates a new experiment."""
     if len(get_exps_with_hash(conf.hash)):
         raise Exception("Experiment exists")
-
+    project_name = (
+        conf.comet_project_name
+        if "comet_project_name" in conf
+        else comet_conf.project_name
+    )
     new_api_exp = api._create_experiment(
         workspace=comet_conf.workspace, project_name=project_name
     )
@@ -97,4 +101,6 @@ def setup_experiment() -> None:
 
 
 def get_writer():
+    from fgsim.config import conf
+
     return SummaryWriter(conf.path.tensorboard)

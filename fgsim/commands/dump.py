@@ -1,5 +1,6 @@
 import os
 import shutil
+from glob import glob
 from typing import List
 
 import comet_ml
@@ -9,13 +10,15 @@ from fgsim.utils.cli import args
 
 
 def dump_procedure():
-    if os.path.isfile(f"wd/{args.tag}/config.yaml"):
-        from fgsim.config import conf
-
-        if os.path.isdir(conf.path.run_path):
-            shutil.rmtree(conf.path.run_path)
-
     qres: List[comet_ml.APIExperiment] = get_exps_with_hash(args.hash)
-
     for exp in qres:
         exp.archive()
+    paths = glob(f"wd/*/{args.hash}")
+    if len(paths) == 1:
+        assert os.path.isdir(paths[0])
+        shutil.rmtree(paths[0])
+    elif len(paths) == 0:
+        print("No directory found!")
+    else:
+        print("No directory found!")
+        raise Exception
