@@ -16,42 +16,50 @@ class LossGen:
         self.factor = factor
         # sigmoid layer + Binary cross entropy
         self.criterion = torch.nn.BCEWithLogitsLoss()
-        self.real_label = torch.ones(
+        real_label = torch.ones(
             (conf.loader.batch_size,), dtype=torch.float, device=device
         )
-        self.fake_label = torch.zeros(
+        fake_label = torch.zeros(
             (conf.loader.batch_size,), dtype=torch.float, device=device
         )
-        self.y_true = (
-            torch.hstack([self.real_label, self.fake_label]).detach().cpu().numpy()
-        )
+        self.y_true = torch.hstack([real_label, fake_label]).detach().cpu().numpy()
 
     def __call__(self, holder: Holder, batch: Batch) -> Dict[str, float]:
         # Loss of the simulated samples
-        D_sim = holder.models.disc(batch).squeeze()
+        D_sim = holder.models.disc(batch)
+        if isinstance(D_sim, dict):
+            D_sim = torch.hstack(list(D_sim.values()))
         assert D_sim.dim() == 1
         # maximize log(D(x))
         # sample_disc_loss = -1 * torch.log(D_sim).mean() * self.factor
         # sample_disc_loss.backward()
 
-        sample_disc_loss = self.criterion(D_sim, self.real_label)
+        sample_disc_loss = self.criterion(D_sim, torch.ones_like(D_sim))
         sample_disc_loss.backward()
 
         # Loss of the generated samples
         # maximize log(1−D(G(z)))
-        D_gen = holder.models.disc(holder.gen_points).squeeze()
+        D_gen = holder.models.disc(holder.gen_points)
+        if isinstance(D_gen, dict):
+            D_gen = torch.hstack(list(D_gen.values()))
         assert D_gen.dim() == 1
         # gen_disc_loss = -1 * (
         #     torch.log(torch.ones_like(D_gen) - D_gen).mean() * self.factor
         # )
         # gen_disc_loss.backward()
 
-        gen_disc_loss = self.criterion(D_gen, self.fake_label)
+        gen_disc_loss = self.criterion(D_gen, torch.zeros_like(D_gen))
         gen_disc_loss.backward()
 
         if not conf.debug and holder.state.grad_step % 10 == 0:
+            sim_mean_disc = (
+                D_sim.reshape(-1, conf.loader.batch_size).mean(dim=0).detach().cpu()
+            )
+            gen_mean_disc = (
+                D_gen.reshape(-1, conf.loader.batch_size).mean(dim=0).detach().cpu()
+            )
             y_pred = (
-                torch.sigmoid(torch.hstack([D_sim, D_gen])).detach().cpu().numpy()
+                torch.sigmoid(torch.hstack([sim_mean_disc, gen_mean_disc])).numpy()
                 > 0.5
             )
             cm = confusion_matrix(self.y_true, y_pred, normalize="true").ravel()

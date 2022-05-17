@@ -26,14 +26,14 @@ class ModelClass(torch.nn.Module):
 
     def forward(self, batch: Data):
         batch = GraphTreeWrapper(batch)
-        disc_sum = 0
+        discs_out = {}
         for ilevel in range(self.tftx_by_level):
             level_graph = Data(
                 x=batch.tftx_by_level[ilevel], batch=batch.batch_by_level[ilevel]
             )
-            disc_sum += self.level_discs[ilevel](level_graph)
+            discs_out[f"level{ilevel}"] = self.level_discs[ilevel](level_graph)
             # if ilevel == self.tftx_by_level - 1:
             #     continue
             # disc_sum += self.branching_discs(x_level)
 
-        return disc_sum
+        return discs_out
