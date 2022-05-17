@@ -56,7 +56,6 @@ def cluster_graph_random_with_moons(graph, branches, which_moon):
     ]
     brachings_lists_joined = []
     for ilevel in range(len(branches) - 1):
-        print(ilevel)
         joined = np.hstack(
             (
                 brachings_lists[ilevel][0],
