@@ -4,7 +4,7 @@ import math
 from typing import Dict, Optional, Protocol, Union
 
 import torch
-from omegaconf.dictconfig import DictConfig
+from omegaconf import DictConfig, OmegaConf
 
 from fgsim.config import conf, device
 from fgsim.io.sel_seq import Batch
@@ -33,10 +33,13 @@ class SubNetworkLoss:
         for lossname, lossconf in pconf.items():
             assert lossname != "parts"
             params = lossconf if lossconf is not None else {}
+            if isinstance(params, DictConfig):
+                params = OmegaConf.to_container(params)
             if not hasattr(torch.nn, lossname):
-                loss = importlib.import_module(
+                loss_module = importlib.import_module(
                     f"fgsim.models.loss.{lossname}"
-                ).LossGen(**params)
+                )
+                loss = loss_module.LossGen(**params)
             else:
                 loss = getattr(torch.nn, lossname)().to(device)
             self.parts[lossname] = loss
