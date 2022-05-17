@@ -65,6 +65,7 @@ model_param_options:
     disc_prog:
       leveldisc: disc_graphgym
       levelparams: ${model_param_options[disc_graphgym]}
+    disc_fake: {}
 
 
 tree:
