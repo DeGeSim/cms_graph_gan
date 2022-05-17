@@ -4,10 +4,11 @@ import numpy as np
 import torch
 from torch_geometric.data import Data
 
+from fgsim.loaders.normal.seq import cluster_graph_random
 from fgsim.utils.balanced_cluster import constrained_kmeans
 
 
-def cluster_graph(
+def cluster_tree_kmeans(
     graph: Data, branches: List[int], which_moon: np.ndarray
 ) -> List[torch.Tensor]:
     pointcloud = graph.x
@@ -37,3 +38,31 @@ def cluster_graph(
         brachings_lists_joined.append(joined)
     brachings_lists_joined.append(np.array([0, 0]))
     return [torch.tensor(e).long() for e in brachings_lists_joined][::-1]
+
+
+def cluster_graph_random_with_moons(graph, branches, which_moon):
+    assert branches[0] == 2
+
+    moon_brachings_lists = [
+        cluster_graph_random(
+            Data(x=e),
+            branches[1:],
+        )
+        for e in (graph.x[which_moon == 0], graph.x[which_moon == 1])
+    ]
+    brachings_lists = [
+        [moon_brachings_lists[imoon][ibranch] for imoon in range(2)]
+        for ibranch in range(len(branches) - 1)
+    ]
+    brachings_lists_joined = []
+    for ilevel in range(len(branches) - 1):
+        print(ilevel)
+        joined = np.hstack(
+            (
+                brachings_lists[ilevel][0],
+                brachings_lists[ilevel][1] + max(brachings_lists[ilevel][0]) + 1,
+            )
+        )
+        brachings_lists_joined.append(joined)
+    brachings_lists_joined = [np.array([0, 0])] + brachings_lists_joined
+    return [torch.tensor(e).long() for e in brachings_lists_joined]

@@ -189,5 +189,6 @@ loader_options:
         n_features: 2
         max_points: 512
         cluster_tree: false
+        cluster_method: "random"
         chunksize: 1000
         batch_size: 500

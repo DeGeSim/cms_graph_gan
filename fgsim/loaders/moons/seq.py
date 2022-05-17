@@ -10,11 +10,12 @@ from torch_geometric.data import Batch, Data
 
 from fgsim.config import conf
 from fgsim.io.batch_tools import compute_hlvs
-from fgsim.loaders.normal.seq import cluster_graph_random
 from fgsim.loaders.normal.tree_builder import (
     add_batch_to_branching,
     reverse_construct_tree,
 )
+
+from .cluster import cluster_graph_random_with_moons, cluster_tree_kmeans
 
 # from .cluster import cluster_graph
 
@@ -62,7 +63,21 @@ def transform(_: None) -> Data:
     if postprocess_switch.value:
         graph.hlvs = compute_hlvs(graph)
     if conf.loader.cluster_tree:
-        branchings_list = cluster_graph_random(graph, branches)  #
+        if conf.loader.cluster_method == "random":
+            branchings_list = cluster_graph_random_with_moons(
+                graph, branches, which_moon=which_moon
+            )  #
+        elif conf.loader.cluster_method == "kmeans":
+            branchings_list = cluster_tree_kmeans(
+                graph, branches, which_moon=which_moon
+            )
+        else:
+            raise Exception
+        points = int(conf.loader.max_points)
+        for n_br, br_list in zip(branches[::-1], branchings_list[::-1]):
+            assert len(br_list) == points
+            assert torch.all(torch.unique(br_list) == torch.arange(points // n_br))
+            points = points // n_br
         graph = reverse_construct_tree(graph, branches, branchings_list)
     return graph
 
