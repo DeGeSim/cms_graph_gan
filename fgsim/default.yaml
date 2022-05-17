@@ -163,8 +163,8 @@ loader_options:
         batch_size: 50
         validation_set_size: 5000
         test_set_size: 5000
-        events_per_file: 100000
-        prefetch_batches: 5
+        events_per_file: 10000
+        prefetch_batches: 2
         num_workers_transform: 30
         num_workers_stack: 1
         num_workers_postprocess: 1
