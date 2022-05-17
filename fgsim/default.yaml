@@ -62,6 +62,7 @@ model_param_options:
         batch_size: ${loader[batch_size]}
         n_points: ${loader[max_points]}
         n_features: ${loader[n_features]}
+    disc_pointnet2: ${model_param_options[disc_pointnet]}
     disc_prog:
       leveldisc: disc_graphgym
       levelparams: ${model_param_options[disc_graphgym]}
