@@ -41,23 +41,23 @@ class PointNetCls(nn.Module):
             global_feat=True,
             feature_transform=feature_transform,
         )
-        # if binary then dim=1
-        if n_classes == 2:
+        if n_classes == 2:  # if binary then dim=1
             n_classes = 1
         self.n_classes = n_classes
-        self.fc1 = nn.Linear(1024, 512)
-        self.bn1 = nn.BatchNorm1d(512)
-        self.fc2 = nn.Linear(512, 256)
-        self.bn2 = nn.BatchNorm1d(256)
-        self.fc3 = nn.Linear(256, n_classes)
-        self.dropout = nn.Dropout(p=0.3)
-        self.relu = nn.ReLU()
+        self.ffn = nn.Sequential(
+            nn.Linear(1024, 512),
+            nn.BatchNorm1d(512),
+            nn.ReLU(),
+            nn.Linear(512, 256),
+            nn.Dropout(p=0.3),
+            nn.BatchNorm1d(256),
+            nn.ReLU(),
+            nn.Linear(256, n_classes),
+        )
 
     def forward(self, x):
         x, trans, trans_feat = self.feat(x)
-        x = F.relu(self.bn1(self.fc1(x)))
-        x = F.relu(self.bn2(self.dropout(self.fc2(x))))
-        x = self.fc3(x)
+        x = self.ffn(x)
         if self.n_classes == 1:
             return x.squeeze()
         else:
