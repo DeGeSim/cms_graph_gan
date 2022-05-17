@@ -62,6 +62,7 @@ def main():
         from fgsim.commands.dump import dump_procedure
 
         dump_procedure()
+        exit()
 
     # If it is called by the hash, manipulate then
     overwrite_path = (
