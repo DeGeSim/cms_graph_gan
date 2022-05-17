@@ -75,6 +75,7 @@ class Holder:
         self.gen_points: Batch = None
         self.gen_points_w_grad: Batch = None
         self._last_checkpoint_time = datetime.now()
+        self._training_start_time = datetime.now()
 
         # checking
         # import torcheck
@@ -136,9 +137,15 @@ class Holder:
 
     def checkpoint_after_time(self):
         now = datetime.now()
-        if (
+        time_since_last_checkpoint = (
             now - self._last_checkpoint_time
-        ).seconds // 60 > conf.training.checkpoint_minutes:
+        ).seconds // 60
+        time_since_training_start = (now - self._training_start_time).seconds // 60
+        interval = conf.training.checkpoint_minutes
+
+        if time_since_last_checkpoint > interval:
+            self.save_checkpoint()
+        elif time_since_training_start > 5 and time_since_training_start < interval:
             self.save_checkpoint()
 
     # Define the methods, that equip the with the generated batches
