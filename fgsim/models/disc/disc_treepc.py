@@ -31,7 +31,7 @@ class ModelClass(nn.Module):
 
     def forward(self, batch):
         n_features = batch.x.shape[1]
-        batch_size = max(batch.batch) + 1
+        batch_size = batch.batch[-1] + 1
 
         f = batch.x.reshape(batch_size, -1, n_features)
         # # check if the reshape worked as expected:
