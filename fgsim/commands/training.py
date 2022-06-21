@@ -3,9 +3,12 @@
 import time
 import traceback
 
+import torch
+from pytorch_lightning.lite import LightningLite
 from tqdm import tqdm
 
 from fgsim.config import conf, device
+from fgsim.io.pldata import PLDataFromQDL
 from fgsim.io.queued_dataset import QueuedDataLoader
 from fgsim.io.sel_seq import Batch
 from fgsim.ml.early_stopping import early_stopping
@@ -37,7 +40,42 @@ def training_step(
         holder.models.gen.zero_grad()
 
 
+# class EpochEndCallBack(pl.callbacks.Callback):
+#     def __init__(self) -> None:
+#         super().__init__()
+
+
+class Lite(LightningLite):
+    def run(self):
+        holder: Holder = Holder()
+        if early_stopping(holder.history):
+            exit()
+        # train_log: TrainLog = holder.train_log
+
+        optimizer = torch.optim.Adam(holder.models.parameters())
+        model, optimizer = self.setup(holder.models, optimizer)
+
+        loader: QueuedDataLoader = QueuedDataLoader()
+        pl_data = PLDataFromQDL(loader)
+
+        dataloader = self.setup_dataloaders(
+            pl_data.train_dataloader()
+        )  # Scale your dataloaders
+
+        model.train()
+        while True:
+            loader.queue_epoch(n_skip_events=holder.state.processed_events)
+            for batch in dataloader:
+                optimizer.zero_grad()
+                loss = model(batch)
+                self.backward(loss)  # instead of loss.backward()
+                optimizer.step()
+                holder.state.processed_events += conf.loader.batch_size
+
+
 def training_procedure() -> None:
+    # Lite().run()
+    # foo = PLDataFromQDL(loader)
     holder: Holder = Holder()
     if early_stopping(holder.history):
         exit()
