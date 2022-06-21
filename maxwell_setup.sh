@@ -36,7 +36,9 @@ pip install torch-scatter -f https://pytorch-geometric.com/whl/torch-${TORCH}+${
 pip install torch-sparse -f https://pytorch-geometric.com/whl/torch-${TORCH}+${CUDA}.html
 pip install torch-cluster -f https://pytorch-geometric.com/whl/torch-${TORCH}+${CUDA}.html
 pip install torch-spline-conv -f https://pytorch-geometric.com/whl/torch-${TORCH}+${CUDA}.html
-
+if [[ ${TORCH} == 1.10.1  ]]; then
+    pip install torchvision==0.11.2+${CUDA}
+fi
 # Provide the package as editable, so that we can do "from fgsim import ..."
 pip install -e .[dev]
 
