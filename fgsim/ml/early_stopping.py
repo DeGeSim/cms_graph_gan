@@ -22,19 +22,19 @@ def early_stopping(history: Dict) -> bool:
     if len(history["val_metrics"].keys()) == 0:
         return False
     # collect at least two values before evaluating the criteria
-    if len(history["stop_crit"]) < 2:
-        return False
+    # if len(history["stop_crit"]) < 2:
+    #     return False
     loss_arrs = []
     for k in conf.models.keys():  # iterate the models
         model_loss_dict = history["losses"][k]
-        loss_arrs.append(
-            sum(  # sum the losses for each module
-                [
-                    histdict_to_np(model_loss_dict[lname])
-                    for lname in model_loss_dict  # iterate the losses
-                ]
-            )
-        )
+        if len(model_loss_dict) == 0:
+            break
+        # elementwise add the loss history for each of the losses for a model
+        n_recorded_losses = len(model_loss_dict[list(model_loss_dict.keys())[0]])
+        lsum = np.zeros(n_recorded_losses)
+        # sum over the losses for the model
+        for lname in model_loss_dict:
+            lsum += histdict_to_np(model_loss_dict[lname])
 
     return all(
         [is_minimized(np.array(history["stop_crit"]))]
@@ -43,10 +43,13 @@ def early_stopping(history: Dict) -> bool:
 
 
 def histdict_to_np(histd):
+    # this is to take care of composite losses like CEDiscLoss
     if isinstance(histd, dict):
         return np.array(histd["sum"])
-    else:
+    elif isinstance(histd, list):
         return np.array(histd)
+    else:
+        raise RuntimeError
 
 
 def is_not_dropping(arr: np.ndarray):

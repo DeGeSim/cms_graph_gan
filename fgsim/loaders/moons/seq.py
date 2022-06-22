@@ -5,6 +5,7 @@ import numpy as np
 import queueflow as qf
 import torch
 from sklearn.datasets import make_moons
+from sklearn.preprocessing import StandardScaler
 from torch.multiprocessing import Queue, Value
 from torch_geometric.data import Batch, Data
 
@@ -52,13 +53,20 @@ def read_chunk(chunks: ChunkType) -> List[None]:
 
 branches = list(conf.tree.branches)
 
+scaler = StandardScaler()
+scaler.mean_ = np.array([0.506, 0.242])
+scaler.scale_ = np.array([0.873, 0.5])
+scaler.var_ = np.array([0.763, 0.25])
+
 
 def transform(_: None) -> Data:
-    x1, which_moon = make_moons(conf.loader.max_points)
+    x1, which_moon = make_moons(conf.loader.max_points)  # , noise = 0.01)
     mu = [0, 0]
     covar = [[0.01, 0], [0, 0.01]]
     jitter = np.random.multivariate_normal(mu, covar, conf.loader.max_points)
-    pointcloud = torch.tensor(x1 + jitter).float()
+    pointcloud = x1 + jitter
+    pointcloud = scaler.transform(pointcloud)
+    pointcloud = torch.tensor(pointcloud).float()
     graph = Data(x=pointcloud)
     if postprocess_switch.value:
         graph.hlvs = compute_hlvs(graph)

@@ -49,11 +49,15 @@ class SubNetworkLoss:
         return self.parts[lossname]
 
     def __call__(self, holder, batch: Batch):
+        # In this dict comprehension iterates the losses for the current module
+        # loss(holder, batch) returns either a float or
+        # a dict with the sublosses subloss -> float
+        # in the call loss(holder, batch), the .backward() call takes place
         lossesdict = {
             lossname: loss(holder, batch) for lossname, loss in self.parts.items()
         }
         losses_history = holder.history["losses"]
-        # write the loss to state so it can be logged later
+        # write the loss to the history so it can be logged later
         for lossname, loss in lossesdict.items():
             if isinstance(loss, float):
                 self.log_loss(losses_history, loss, lossname)
