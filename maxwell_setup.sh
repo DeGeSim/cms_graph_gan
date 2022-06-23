@@ -21,6 +21,9 @@ module load maxwell gcc/9.3 cuda/11.1
 export CUDA=cu111 TORCH=1.10.1
 VENV=venv${TORCH}+${CUDA}
 
+# compile multicore
+export MAKEFLAGS="-j20"
+
 
 # setup and load the virtual enviroment
 # Here the script assumes that python>=3.8 has been provided
@@ -39,10 +42,12 @@ pip install torch-spline-conv -f https://pytorch-geometric.com/whl/torch-${TORCH
 if [[ ${TORCH} == 1.10.1  ]]; then
     pip install torchvision==0.11.2+${CUDA}
 fi
+
 # Provide the package as editable, so that we can do "from fgsim import ..."
 pip install -e .[dev]
 
 # install queueflow
-git clone git@github.com:DeGeSim/queueflow.git ~/queueflow
-cd ~/queueflow
+[-d  ~/queueflow] || git clone git@github.com:DeGeSim/queueflow.git ~/queueflow
+pushd ~/queueflow
 pip install -e .
+popd

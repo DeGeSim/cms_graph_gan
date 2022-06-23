@@ -11,11 +11,14 @@ with open("docs/history.rst") as history_file:
 
 setup_requirements = ["setuptools"]
 install_requirements = [
-    "torch",
-    "torch-geometric",
-    "torch-sparse",
-    "torch-scatter",
-    "torch-spline-conv",
+    # "torch",
+    # "torch-geometric",
+    # "torch-sparse",
+    # "torch-scatter",
+    # "torch-spline-conv",
+    "networkx",
+    "jetnet",
+    "mplhep",
     "matplotlib",
     "seaborn",
     "omegaconf",
