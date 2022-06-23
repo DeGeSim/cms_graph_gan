@@ -106,8 +106,8 @@ loss_options:
         factor: 1.0
     mmd:
       factor: 1.0
-      kernel: "multiscale"
-      bandwidth: [0.01,0.05,0.1,0.2, 0.5, 0.9, 1.3, 3] #multiscale [0.2, 0.5, 0.9, 1.3] rbf [10, 15, 20, 50]
+      kernel: "rbf"
+      bandwidth:  [10, 15, 20, 50] #[0.01,0.05,0.1,0.2, 0.5, 0.9, 1.3, 3] #multiscale [0.2, 0.5, 0.9, 1.3] rbf [10, 15, 20, 50]
     mmdpc: ${loss_options[mmd]}
     outside_interval:
         factor: 1.0
