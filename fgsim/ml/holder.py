@@ -92,6 +92,8 @@ class Holder:
         if not (
             os.path.isfile(conf.path.state) and os.path.isfile(conf.path.checkpoint)
         ):
+            if conf.command != "train":
+                raise FileNotFoundError("Could not find checkpoint")
             logger.warning("Proceeding without loading checkpoint.")
             return
         self.state = OmegaConf.load(conf.path.state)
