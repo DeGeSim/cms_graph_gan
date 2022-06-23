@@ -29,8 +29,19 @@ def early_stopping(history: Dict) -> bool:
         model_loss_dict = history["losses"][k]
         if len(model_loss_dict) == 0:
             break
+        # first we need to find out how many times losses have been recorded for this model
+        for lname, lossd in model_loss_dict.items():
+            if isinstance(lossd, dict):
+                for _, sublossd in lossd.items():
+                    assert isinstance(sublossd, list)
+                    n_recorded_losses = len(sublossd)
+                    break
+            else:
+                assert isinstance(lossd, list)
+                n_recorded_losses = len(lossd)
+                break
+            break
         # elementwise add the loss history for each of the losses for a model
-        n_recorded_losses = len(model_loss_dict[list(model_loss_dict.keys())[0]])
         lsum = np.zeros(n_recorded_losses)
         # sum over the losses for the model
         for lname in model_loss_dict:
