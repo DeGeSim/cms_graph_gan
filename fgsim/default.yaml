@@ -137,6 +137,8 @@ validation:
             factor: 1.0
             wgrad: False
             foreach_hlv: True
+        aoc:
+            factor: 1.0
 testing:
     n_events: 2000
 

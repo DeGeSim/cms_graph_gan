@@ -1,9 +1,7 @@
 from typing import Dict
 
 import torch
-from sklearn.metrics import average_precision_score, confusion_matrix, roc_auc_score
 
-from fgsim.config import conf, device
 from fgsim.io.sel_seq import Batch
 from fgsim.ml.holder import Holder
 
@@ -16,13 +14,6 @@ class LossGen:
         self.factor = factor
         # sigmoid layer + Binary cross entropy
         self.criterion = torch.nn.BCEWithLogitsLoss()
-        real_label = torch.ones(
-            (conf.loader.batch_size,), dtype=torch.float, device=device
-        )
-        fake_label = torch.zeros(
-            (conf.loader.batch_size,), dtype=torch.float, device=device
-        )
-        self.y_true = torch.hstack([real_label, fake_label]).detach().cpu().numpy()
 
     def __call__(self, holder: Holder, batch: Batch) -> Dict[str, float]:
         # Loss of the simulated samples
@@ -50,38 +41,5 @@ class LossGen:
 
         gen_disc_loss = self.criterion(D_gen, torch.zeros_like(D_gen))
         gen_disc_loss.backward()
-
-        if not conf.debug and holder.state.grad_step % 10 == 0:
-            sim_mean_disc = (
-                D_sim.reshape(-1, conf.loader.batch_size).mean(dim=0).detach().cpu()
-            )
-            gen_mean_disc = (
-                D_gen.reshape(-1, conf.loader.batch_size).mean(dim=0).detach().cpu()
-            )
-            y_pred = (
-                torch.sigmoid(torch.hstack([sim_mean_disc, gen_mean_disc])).numpy()
-                > 0.5
-            )
-            cm = confusion_matrix(self.y_true, y_pred, normalize="true").ravel()
-            for lossname, loss in zip(
-                [
-                    "true negative",
-                    "false positive",
-                    "false negative",
-                    "true positive",
-                ],
-                cm,
-            ):
-                holder.train_log.log_loss(lossname, float(loss))
-
-            holder.train_log.log_loss(
-                "aoc", float(roc_auc_score(self.y_true, y_pred))
-            )
-            holder.train_log.log_loss(
-                "average_precision_score",
-                float(
-                    average_precision_score(self.y_true, y_pred),
-                ),
-            )
 
         return {"gen": float(gen_disc_loss), "sim": float(sample_disc_loss)}

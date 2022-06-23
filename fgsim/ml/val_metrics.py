@@ -13,7 +13,6 @@ from fgsim.monitoring.train_log import TrainLog
 
 class ValidationMetrics:
     def __init__(self, train_log: TrainLog) -> None:
-        self.name = "val_loss"
         self.train_log = train_log
         self.parts: Dict[str, Callable] = {}
         self._lastlosses: Dict[str, float] = {}
@@ -67,10 +66,6 @@ class ValidationMetrics:
                         if lstr not in self._lastlosses:
                             self._lastlosses[lstr] = 0
                         if lossval in [float("nan"), float("inf"), float("-inf")]:
-                            # raise ValueError(
-                            #     f"Loss {lossname} evaluates to NaN for variable"
-                            #     f" {var}: {lossval}."
-                            # )
                             pass
                         else:
                             self._lastlosses[lstr] += float(lossval)
@@ -91,19 +86,21 @@ class ValidationMetrics:
 
         # Log the validation loss
         if not conf.debug:
-            with self.train_log.experiment.validate():
-                for lossname, loss_history in val_metrics.items():
-                    self.train_log.log_loss(
-                        f"{self.name}.{lossname}", loss_history[-1]
-                    )
+            for lossname, loss_history in val_metrics.items():
+                self.train_log.log_loss(f"val.{lossname}", loss_history[-1])
 
         # compute the stop_metric
+        # collect all metrics for all validation runs in a 2d array
         loss_history = np.stack([val_metrics[metric] for metric in val_metrics])
+        # for a given metric and validation run,
+        # count the fraction of times that the value of this metric
+        # is smaller then the other runs
         ratio_better = np.apply_along_axis(
             lambda row: np.array([np.mean(row <= e) for e in row]), 1, loss_history
         ).mean(0)
         ratio_better = [float(val) for val in ratio_better]
         history["stop_crit"] = list(ratio_better)
+        # overwrite the recorded ratio_better for each
         if not conf.debug:
             for ivalstep in range(len(ratio_better)):
                 # with self.train_log.experiment.validate():

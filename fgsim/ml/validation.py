@@ -36,6 +36,6 @@ def validate(holder: Holder, loader: QueuedDataLoader) -> None:
                 "best_grad_step", holder.state["grad_step"]
             )
             holder.train_log.experiment.log_metric(
-                "best_grad_epoch", holder.state["epoch"]
+                "best_epoch", holder.state["epoch"]
             )
     logger.warning("Validation function done")
