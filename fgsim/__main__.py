@@ -50,13 +50,20 @@ def main():
     #     logger.info(f"Unloading {modulename}")
     #     del sys.modules[modulename]
     # logger.info("Unloading complete")
+    if args.command == "gethash":
+        if args.hash is not None:
+            raise Exception
+        from fgsim.commands.setup import gethash_procedure
+
+        gethash_procedure()
+        exit()
 
     if args.command == "setup":
         if args.hash is not None:
             raise Exception
         from fgsim.commands.setup import setup_procedure
 
-        print(setup_procedure())
+        setup_procedure()
         exit()
     if args.command == "dump":
         from fgsim.commands.dump import dump_procedure

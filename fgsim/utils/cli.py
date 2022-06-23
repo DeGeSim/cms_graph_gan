@@ -19,7 +19,16 @@ parser.add_argument(
     default=False,
     required=False,
 )
-commands = ["setup", "train", "test", "preprocess", "dump", "overwrite", "loadfile"]
+commands = [
+    "setup",
+    "gethash",
+    "train",
+    "test",
+    "preprocess",
+    "dump",
+    "overwrite",
+    "loadfile",
+]
 subparsers = parser.add_subparsers(help="Available Commands", dest="command")
 
 commandparsers = {command: subparsers.add_parser(command) for command in commands}

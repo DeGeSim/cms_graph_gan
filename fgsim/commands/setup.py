@@ -7,6 +7,10 @@ from omegaconf import OmegaConf
 from fgsim.config import conf
 
 
+def gethash_procedure() -> None:
+    print(conf.hash)
+
+
 def setup_procedure() -> str:
     srcpath = Path(conf.path.run_path) / "fgsim"
     # If the experiment has been setup, exit directly
