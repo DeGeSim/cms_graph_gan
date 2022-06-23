@@ -224,13 +224,11 @@ def test_metrics(test_info: TestInfo):
     # KS tests
     for var in hlvs_dict["best"].keys():
         res = kstest(hlvs_dict["sim"][var], hlvs_dict["best"][var])
-        with train_log.experiment.test():
-            train_log.experiment.log_metric(f"kstest-{var}", res.pvalue)
-    with train_log.experiment.test():
-        train_log.experiment.log_metrics(
-            metrics_dict,
-            step=step,
-        )
+        train_log.experiment.log_metric(f"test.kstest-{var}", res.pvalue)
+    train_log.experiment.log_metrics(
+        {f"test.{k}": v for k, v in metrics_dict.items()},
+        step=step,
+    )
 
 
 def test_plots(test_info: TestInfo):
@@ -261,11 +259,11 @@ def test_plots(test_info: TestInfo):
         outputpath = plot_path / filename
         figure.savefig(outputpath)
         figure.savefig(outputpath.with_suffix(".png"), dpi=150)
-        if best_or_last == "best":
-            with train_log.experiment.test():
-                train_log.experiment.log_figure(
-                    figure_name=filename, figure=figure, overwrite=True
-                )
+        train_log.experiment.log_figure(
+            figure_name=f"test.{best_or_last}.{filename}",
+            figure=figure,
+            overwrite=True,
+        )
         logger.info(plot_path / filename)
 
     # Scatter of a single event
@@ -295,22 +293,3 @@ def test_plots(test_info: TestInfo):
         ),
     )
     log_figure(figure, "xy_hist.pdf")
-    #
-    # figure = xyscatter(
-    #     sim=scatter_mean(
-    #         sim_batches_stacked.x, sim_batches_stacked.batch, dim=0
-    #     ).numpy(),
-    #     gen=scatter_mean(
-    #         gen_batches_stacked.x, gen_batches_stacked.batch, dim=0
-    #     ).numpy(),
-    #     title=f"Event means for ({conf.testing.n_events}) events",
-    # )
-    # log_figure(figure, "xy_event_means.pdf")
-    #
-    # from fgsim.plot.hlv_marginals import hlv_marginals
-    # for var in hlvs_dict["gen"]:
-    #     xsim = hlvs_dict["sim"][var]
-    #     xgen = hlvs_dict["gen"][var]
-    #     logger.info(f"Plotting  var {var}")
-    #     figure = hlv_marginals(var, xsim=xsim, xgen=xgen)
-    #     log_figure(figure, f"{var}.pdf")

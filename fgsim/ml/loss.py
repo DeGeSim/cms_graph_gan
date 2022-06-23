@@ -90,9 +90,9 @@ class SubNetworkLoss:
         sublossname: Optional[str] = None,
     ):
         lossstr = (
-            f"loss.{self.name}.{lossname}"
+            f"train.{self.name}.{lossname}"
             if sublossname is None
-            else f"loss.{self.name}.{lossname}.{sublossname}"
+            else f"train.{self.name}.{lossname}.{sublossname}"
         )
         # Check for invalid values
         if math.isnan(value) or math.isinf(value):
