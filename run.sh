@@ -10,6 +10,7 @@ fi
 
 shift
 
+source ramenv.sh
 # Let python resolve the cli arguments
 IFS=$'\n'
 readarray -t lines < <(python ./fgsim/utils/cli.py $@)
@@ -19,7 +20,7 @@ function elementf {
         ./run_in_env.sh $RESTCMD
     else
         if [[ "${TAG_OR_HASH_ARG}" == "--tag" ]]; then
-            export HASH=$( source venv1.10.1+cu111/bin/activate; python3 -m fgsim --tag ${TAG_OR_HASH} gethash 2>/dev/null )
+            export HASH=$( python3 -m fgsim --tag ${TAG_OR_HASH} gethash 2>/dev/null )
         else
             export HASH=${TAG_OR_HASH}
         fi
