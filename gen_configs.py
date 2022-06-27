@@ -21,8 +21,11 @@ base_config = ExperimentConfig(
     OmegaConf.create(
         {
             "models": {
-                "gen": {"losses_list": ["mmdpc", "outside_interval", "CEGenLoss"]},
-                "disc": {"name": "disc_treepc"},
+                "gen": {"losses_list": ["mmdpc", "outside_interval"]},
+                "disc": {
+                    "name": "disc_fake",
+                    "losses_list": [],
+                },
             }
         }
     ),
@@ -39,10 +42,10 @@ def add_option(option: Callable):
 
 
 # %%
-@add_option
-def option_disc(exp_config: ExperimentConfig) -> Dict[str, DictConfig]:
-    input_conf = exp_config.config
-    return {"disctpc": input_conf}
+# @add_option
+# def option_disc(exp_config: ExperimentConfig) -> Dict[str, DictConfig]:
+#     input_conf = exp_config.config
+#     return {"disctpc": input_conf}
 
 
 @add_option
@@ -51,7 +54,7 @@ def option_gen(exp_config: ExperimentConfig) -> Dict[str, DictConfig]:
     mod_conf = input_conf.copy()
     input_conf["models"]["gen"]["name"] = "gen_deeptree"
     mod_conf["models"]["gen"]["name"] = "gen_linear"
-    return {"gentd": input_conf, "genlin": mod_conf}
+    return {"genlin": mod_conf}  # "gentd": input_conf,
 
 
 # @add_option
@@ -63,24 +66,14 @@ def option_gen(exp_config: ExperimentConfig) -> Dict[str, DictConfig]:
 #     return {"rbf": input_conf, "multiscale": mod_conf}
 
 
-# @add_option
-# def option_bandwidth(exp_config: ExperimentConfig) -> Dict[str, DictConfig]:
-# input_conf = exp_config.config
-# mod_conf = input_conf.copy()
-# mod_conf2 = input_conf.copy()
-# if input_conf["loss_options"]["mmdpc"]["kernel"] == "rbf":
-#     input_conf["loss_options"] = {"mmdpc": {"bandwidth": [0.01, 0.1, 2, 10]}}
-#     mod_conf["loss_options"] = {"mmdpc": {"bandwidth": [10, 15, 20, 50]}}
-#     mod_conf2["loss_options"] = {"mmdpc": {"bandwidth": [20, 40, 80, 150]}}
-# elif input_conf["loss_options"]["mmdpc"]["kernel"] == "multiscale":
-#     input_conf["loss_options"] = {
-#         "mmdpc": {"bandwidth": [0.01, 0.05, 0.1, 1.3]}
-#     }
-#     mod_conf["loss_options"] = {"mmdpc": {"bandwidth": [0.2, 0.5, 0.9, 1.3]}}
-#     mod_conf2["loss_options"] = {"mmdpc": {"bandwidth": [1, 2, 5, 10]}}
-# else:
-#     raise RuntimeError
-# return {"bwfine": input_conf, "bwdefault": mod_conf, "bwcoarse": mod_conf2}
+@add_option
+def option_bandwidth(exp_config: ExperimentConfig) -> Dict[str, DictConfig]:
+    outdict = {}
+    for bw in [10, 15, 20, 50]:
+        mod_conf = exp_config.config.copy()
+        mod_conf["loss_options"] = {"mmdpc": {"bandwidth": [bw]}}
+        outdict[f"bw-{bw}"] = mod_conf
+    return outdict
 
 
 # %%
