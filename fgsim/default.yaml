@@ -207,3 +207,13 @@ loader_options:
         max_points: 512
         cluster_tree: false
         cluster_method: "random"
+    jetnet:
+        dataset_path: "data/jetnet"
+        max_points: 30
+        n_features: 3
+        cell_prop_keys: ["eta","phi", "pt"]
+        dataset_glob: "**/*.csv"
+        chunksize: 500
+        batch_size: 500
+        validation_set_size: 500
+        test_set_size: 500
