@@ -147,7 +147,6 @@ testing:
 path:
     dataset: "${loader.dataset_path}"
     # dataset: "data/hgcal_william"
-    dataset_glob: "**/*.root"
     dataset_processed: "${path.dataset}/pkl_${loader_name}_${loader_hash}"
     ds_lenghts: "${path.dataset_processed}/filelengths.yaml"
     validation: "${path.dataset_processed}/validation.pt"
@@ -171,6 +170,7 @@ loader_name: moons
 loader_options:
     default:
         rootprefix: "treeMaker/tree"
+        dataset_glob: "**/*.root"
         preprocess_training: True
         debug: False
         chunksize: 1000

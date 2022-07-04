@@ -18,7 +18,7 @@ from .seq import postprocess_switch, process_seq
 # Load files
 ds_path = Path(conf.path.dataset)
 assert ds_path.is_dir()
-files = sorted(ds_path.glob(conf.path.dataset_glob))
+files = sorted(ds_path.glob(conf.loader.dataset_glob))
 if len(files) < 1:
     raise RuntimeError("No datasets found")
 
