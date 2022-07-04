@@ -20,13 +20,14 @@ class ExperimentOption:
 base_config = ExperimentConfig(
     OmegaConf.create(
         {
+            "comet_project_name": "moons-without-disc",
             "models": {
                 "gen": {"losses_list": ["mmdpc", "outside_interval"]},
                 "disc": {
                     "name": "disc_fake",
                     "losses_list": [],
                 },
-            }
+            },
         }
     ),
     [],
@@ -57,22 +58,30 @@ def option_gen(exp_config: ExperimentConfig) -> Dict[str, DictConfig]:
     return {"genlin": mod_conf}  # "gentd": input_conf,
 
 
-# @add_option
-# def option_kernel(exp_config: ExperimentConfig) -> Dict[str, DictConfig]:
-#     input_conf = exp_config.config
-#     input_conf["loss_options"] = {"mmdpc": {"kernel": "rbf"}}
-#     mod_conf = input_conf.copy()
-#     mod_conf["loss_options"] = {"mmdpc": {"kernel": "multiscale"}}
-#     return {"rbf": input_conf, "multiscale": mod_conf}
+@add_option
+def option_kernel(exp_config: ExperimentConfig) -> Dict[str, DictConfig]:
+    input_conf = exp_config.config
+    input_conf["loss_options"] = {"mmdpc": {"kernel": "rbf"}}
+    mod_conf = input_conf.copy()
+    mod_conf["loss_options"] = {"mmdpc": {"kernel": "multiscale"}}
+    return {
+        "rbf": input_conf,
+    }  # "multiscale": mod_conf
 
 
 @add_option
 def option_bandwidth(exp_config: ExperimentConfig) -> Dict[str, DictConfig]:
     outdict = {}
-    for bw in [10, 15, 20, 50]:
-        mod_conf = exp_config.config.copy()
-        mod_conf["loss_options"] = {"mmdpc": {"bandwidth": [bw]}}
-        outdict[f"bw-{bw}"] = mod_conf
+    if exp_config.config["loss_options"]["mmdpc"]["kernel"] == "rbf":
+        for bw in [10, 15, 20, 50]:  # [30, 40, 70, 90]:
+            mod_conf = exp_config.config.copy()
+            mod_conf["loss_options"] = {"mmdpc": {"bandwidth": [bw]}}
+            outdict[f"bw-{bw}"] = mod_conf
+    else:
+        for bw in [0.01, 0.05, 0.1, 0.5, 0.8, 1.5, 3]:
+            mod_conf = exp_config.config.copy()
+            mod_conf["loss_options"] = {"mmdpc": {"bandwidth": [bw]}}
+            outdict[f"bw-{bw}"] = mod_conf
     return outdict
 
 

@@ -23,17 +23,13 @@ class LossGen:
         )
         sim_sample = batch.x.reshape(*shape)
         gen_sample = holder.gen_points_w_grad.x.reshape(*shape)
-        shape_for_mmd = (
-            conf.loader.batch_size,
-            conf.loader.max_points * conf.loader.n_features,
-        )
 
         losses: List[torch.Tensor] = []
         for ifeature in range(conf.loader.n_features):
             losses.append(
                 MMD(
-                    sort_by_feature(sim_sample, ifeature).reshape(*shape_for_mmd),
-                    sort_by_feature(gen_sample, ifeature).reshape(*shape_for_mmd),
+                    sort_by_feature(sim_sample, ifeature),
+                    sort_by_feature(gen_sample, ifeature),
                     bandwidth=self.bandwidth,
                     kernel=self.kernel,
                 )

@@ -42,18 +42,15 @@ def MMD(x, y, bandwidth, kernel):
         y: second sample, distribution Q
         kernel: kernel type such as "multiscale" or "rbf"
     """
-    xx, yy, zz = torch.mm(x, x.t()), torch.mm(y, y.t()), torch.mm(x, y.t())
-    rx = xx.diag().unsqueeze(0).expand_as(xx)
-    ry = yy.diag().unsqueeze(0).expand_as(yy)
 
-    dxx = rx.t() + rx - 2.0 * xx  # Used for A in (1)
-    dyy = ry.t() + ry - 2.0 * yy  # Used for B in (1)
-    dxy = rx.t() + ry - 2.0 * zz  # Used for C in (1)
+    dxx = torch.pow(torch.cdist(x, x), 2)
+    dyy = torch.pow(torch.cdist(y, y), 2)
+    dxy = torch.pow(torch.cdist(x, y), 2)
 
     XX, YY, XY = (
-        torch.zeros(xx.shape).to(device),
-        torch.zeros(xx.shape).to(device),
-        torch.zeros(xx.shape).to(device),
+        torch.zeros(dxx.shape).to(device),
+        torch.zeros(dxx.shape).to(device),
+        torch.zeros(dxx.shape).to(device),
     )
 
     for a in bandwidth:
