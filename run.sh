@@ -26,8 +26,8 @@ function elementf {
         fi
         if [[ $REMOTE == 'true' ]]; then
             sbatch \
-            --partition=allgpu,cms-desy \
-            --time=78:00:00 \
+            --partition=allgpu \
+            --time=24:00:00 \
             --nodes=1 \
             --constraint="P100|V100|A100" \
             --output=wd/slurm-$CMD-${HASH}-%j.out \
