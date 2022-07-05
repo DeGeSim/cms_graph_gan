@@ -46,6 +46,8 @@ def early_stopping(history: Dict) -> bool:
         # sum over the losses for the model
         for lname in model_loss_dict:
             lsum += histdict_to_np(model_loss_dict[lname])
+        # apped the summed loss array for the current model to the list
+        loss_arrs.append(lsum)
 
     return all(
         [is_minimized(np.array(history["stop_crit"]))]
