@@ -112,6 +112,5 @@ runs/
 **/*.pth
 **/*.torch
 fgsim/comet.yaml
-workspace.code-workspace
 v
 venv*
