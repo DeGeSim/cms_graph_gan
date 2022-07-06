@@ -112,5 +112,5 @@ runs/
 **/*.pth
 **/*.torch
 fgsim/comet.yaml
-v
 venv*
+todo.txt

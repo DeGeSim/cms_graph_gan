@@ -34,12 +34,12 @@
             {
                 "args": [
                     "--tag",
-                    "dcheck_pointnet",
+                    "gendt_disct_hgcal",
                     "--debug",
                     "train"
                 ],
                 "module": "fgsim",
-                "name": "tr dcheck_pointnet",
+                "name": "tr gendt_disct_hgcal",
                 "request": "launch",
                 "type": "python",
                 "cwd": "/home/mscham/fgsim",
@@ -48,12 +48,12 @@
             {
                 "args": [
                     "--tag",
-                    "dcheck_pointnet",
+                    "gendt_disct_hgcal",
                     "--debug",
                     "test"
                 ],
                 "module": "fgsim",
-                "name": "te dcheck_pointnet",
+                "name": "te gendt_disct_hgcal",
                 "request": "launch",
                 "type": "python",
                 "cwd": "/home/mscham/fgsim",
@@ -62,12 +62,12 @@
             {
                 "args": [
                     "--tag",
-                    "dcheck_pointnet",
+                    "gendt_disct_hgcal",
                     "--debug",
                     "preprocess"
                 ],
                 "module": "fgsim",
-                "name": "pp dcheck_pointnet",
+                "name": "pp gendt_disct_hgcal",
                 "request": "launch",
                 "type": "python",
                 "cwd": "/home/mscham/fgsim",
@@ -91,9 +91,9 @@
         "python.analysis.typeCheckingMode": "basic",
         // "python.analysis.extraPaths": [
         //     "${env:HOME}/queueflow",
-        //     "${env:HOME}/fgsim/venv1.10.1+cu111/lib/python3.8/site-packages"
+        //     "/dev/shm/mscham/venv1.10.1+cu111/lib/python3.8/site-packages"
         // ],
-        "python.defaultInterpreterPath": "~/fgsim/venv1.10.1+cu111/bin/python",
+        "python.defaultInterpreterPath": "/dev/shm/mscham/venv1.10.1+cu111/bin/python",
         "python.envFile": "~/fgsim/.env",
         "python.formatting.blackPath": "${env:HOME}/.local/bin/black",
         "python.formatting.provider": "black",
@@ -109,7 +109,7 @@
             "--disable=E0402,C0116,logging-fstring-interpolation"
         ],
         "python.linting.pylintEnabled": false,
-        "python.linting.pylintPath": "~/fgsim/venv1.10.1+cu111/bin/pylint",
+        "python.linting.pylintPath": "/dev/shm/mscham/venv1.10.1+cu111/bin/pylint",
         "python.pipenvPath": "${env:HOME}/.local/bin/pipenv",
         "python.testing.pytestEnabled": true,
         "python.testing.unittestEnabled": false,
