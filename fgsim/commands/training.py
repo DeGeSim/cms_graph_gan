@@ -7,7 +7,6 @@ from tqdm import tqdm
 
 from fgsim.config import conf, device
 from fgsim.io.queued_dataset import QueuedDataLoader
-from fgsim.io.sel_seq import Batch
 from fgsim.ml.early_stopping import early_stopping
 from fgsim.ml.holder import Holder
 from fgsim.ml.validation import validate
@@ -16,7 +15,7 @@ from fgsim.monitoring.train_log import TrainLog
 
 
 def training_step(
-    batch: Batch,
+    batch,
     holder: Holder,
 ) -> None:
     # set all optimizers to a 0 gradient

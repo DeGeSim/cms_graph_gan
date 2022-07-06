@@ -16,9 +16,31 @@ from .event import Batch, Event
 # Sharded switch for the postprocessing
 postprocess_switch = Value("i", 0)
 
+
 ChunkType = List[Tuple[Path, int, int]]
 # Collect the steps
 def process_seq():
+    return (
+        qf.ProcessStep(read_chunk, 2, name="read_chunk"),
+        qf.PoolStep(
+            transform,
+            nworkers=conf.loader.num_workers_transform,
+            name="transform",
+        ),
+        qf.RepackStep(conf.loader.batch_size),
+        qf.ProcessStep(aggregate_to_batch, 1, name="batch"),
+        # Needed for outputs to stay in order.
+        qf.ProcessStep(
+            magic_do_nothing,
+            1,
+            name="magic_do_nothing",
+        ),
+        Queue(conf.loader.prefetch_batches),
+    )
+
+
+# Collect the steps
+def process_unscaled_seq():
     return (
         qf.ProcessStep(read_chunk, 2, name="read_chunk"),
         qf.PoolStep(

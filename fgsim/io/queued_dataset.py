@@ -4,13 +4,13 @@ loaded depending on `conf.loader.name`.
 """
 
 from pathlib import Path
-from typing import List, Tuple
 
 import numpy as np
 import queueflow as qf
 import torch
 
 from fgsim.config import conf
+from fgsim.io.chunks import compute_chucks
 from fgsim.io.preprocessed_seq import preprocessed_seq
 from fgsim.io.sel_seq import (
     DataSetType,
@@ -24,8 +24,6 @@ from fgsim.monitoring.logger import logger
 chunksize = conf.loader.chunksize
 batch_size = conf.loader.batch_size
 
-ChunkType = List[Tuple[Path, int, int]]
-
 
 class QueuedDataLoader:
     """
@@ -35,7 +33,7 @@ must queue an epoch via `queue_epoch()` and iterate over the instance of the cla
     """
 
     def __init__(self):
-        chunk_coords = self._compute_chucks()
+        chunk_coords = compute_chucks(files, len_dict)
 
         np.random.shuffle(chunk_coords)
 
@@ -94,41 +92,6 @@ must queue an epoch via `queue_epoch()` and iterate over the instance of the cla
                 )
                 if len(self.preprocessed_files) == 0:
                     raise FileNotFoundError
-
-    def _compute_chucks(self) -> List[ChunkType]:
-        chunk_coords: List[ChunkType] = [[]]
-        ifile = 0
-        ielement = 0
-        current_chunck_elements = 0
-        while ifile < len(files):
-            elem_left_in_cur_file = len_dict[str(files[ifile])] - ielement
-            elem_to_add = chunksize - current_chunck_elements
-            if elem_left_in_cur_file > elem_to_add:
-                chunk_coords[-1].append(
-                    (files[ifile], ielement, ielement + elem_to_add)
-                )
-                ielement += elem_to_add
-                current_chunck_elements += elem_to_add
-            else:
-                chunk_coords[-1].append(
-                    (files[ifile], ielement, ielement + elem_left_in_cur_file)
-                )
-                ielement = 0
-                current_chunck_elements += elem_left_in_cur_file
-                ifile += 1
-            if current_chunck_elements == chunksize:
-                current_chunck_elements = 0
-                chunk_coords.append([])
-
-        # remove the last, uneven chunk
-        chunk_coords = list(
-            filter(
-                lambda chunk: sum([part[2] - part[1] for part in chunk])
-                == chunksize,
-                chunk_coords,
-            )
-        )
-        return chunk_coords
 
     @property
     def validation_batches(self) -> DataSetType:

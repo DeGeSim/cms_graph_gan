@@ -177,6 +177,7 @@ loader_options:
         batch_size: 500
         validation_set_size: 5000
         test_set_size: 5000
+        scaling_fit_size: 100
         events_per_file: 100000
         prefetch_batches: 2
         num_workers_transform: 30
@@ -191,7 +192,7 @@ loader_options:
             id: "simHit_detid"
             energy: "genPh_E"
             hit_energy: "simHit_E"
-        cell_prop_keys: ["E","x", "y", "z"]
+        cell_prop_keys: ["E","x", "y", "layerid"]
         n_features: 4
     pcgraph: ${loader_options[hgcal]}
     puregraph: ${loader_options[hgcal]}

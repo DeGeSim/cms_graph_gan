@@ -9,10 +9,14 @@ from tqdm import tqdm
 from fgsim.config import conf
 from fgsim.io.queued_dataset import QueuedDataLoader
 from fgsim.monitoring.logger import logger
+from fgsim.types import sel_seq
 
 
 def preprocess_procedure() -> None:
+    sel_seq.save_scaler()
+    sel_seq.comb_transf = sel_seq.load_scaler()
     data_loader = QueuedDataLoader()
+
     logger.warning(
         f"""\
 Processing validation batches, queuing {len(data_loader.validation_chunks)} chunks."""
