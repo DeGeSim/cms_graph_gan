@@ -43,6 +43,7 @@ def experiment_from_key(key) -> comet_ml.ExistingExperiment:
         log_env_gpu=True,
         log_env_cpu=True,
         log_env_host=True,
+        auto_output_logging=False,
     )
     return experiment
 
