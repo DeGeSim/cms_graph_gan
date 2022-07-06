@@ -13,8 +13,7 @@ from fgsim.types import sel_seq
 
 
 def preprocess_procedure() -> None:
-    sel_seq.save_scaler()
-    sel_seq.comb_transf = sel_seq.load_scaler()
+    sel_seq.scaler.save_scaler()
     data_loader = QueuedDataLoader()
 
     logger.warning(

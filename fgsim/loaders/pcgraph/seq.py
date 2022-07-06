@@ -14,7 +14,7 @@ from fgsim.config import conf
 from fgsim.geo.geo_lup import geo_lup
 from fgsim.io.batch_tools import compute_hlvs
 
-from .scaler import comb_transf
+from .scaler import scaler
 
 # Sharded switch for the postprocessing
 postprocess_switch = Value("i", 0)
@@ -81,7 +81,7 @@ def transform(hitlist: ak.highlevel.Record) -> Data:
     graph = Data(x=pointcloud)
     if postprocess_switch.value:
         graph.hlvs = compute_hlvs(graph)
-    graph.x = torch.from_numpy(comb_transf.transform(graph.x.numpy()))
+    graph.x = torch.from_numpy(scaler.transform(graph.x.numpy()))
     return graph
 
 
@@ -109,15 +109,21 @@ def hitlist_to_pc(event: ak.highlevel.Record) -> torch.Tensor:
         else:
             id_to_energy_dict[detid] = hit_energy
 
-    detids = np.array(list(id_to_energy_dict.keys()), dtype=np.uint)
+    # List of (id,E) pairs, sorted by energy
+    detids_by_energy = sorted(
+        id_to_energy_dict.items(), key=lambda x: x[1], reverse=True
+    )
+    assert len(detids_by_energy) >= conf.loader.max_points
+    # get detids with the the n highest energies
+    detids_selected = [e[0] for e in detids_by_energy[: conf.loader.max_points]]
 
     # Filter out the rows/detids that are not in the event
-    geo_lup_filtered = geo_lup.reindex(index=detids)
+    geo_lup_filtered = geo_lup.reindex(
+        index=np.array(detids_selected, dtype=np.uint)
+    )
 
     # compute static features
-    hit_energies = torch.tensor(
-        list(id_to_energy_dict.values()), dtype=torch.float32
-    )
+    hit_energies = torch.tensor(detids_selected, dtype=torch.float32)
     xyzpos = torch.tensor(
         geo_lup_filtered[conf.loader.cell_prop_keys[1:]].values, dtype=torch.float32
     )

@@ -14,7 +14,7 @@ def compute_chucks(files, len_dict) -> List[ChunkType]:
     ielement = 0
     current_chunck_elements = 0
     while ifile < len(files):
-        elem_left_in_cur_file = len_dict[str(files[ifile])] - ielement
+        elem_left_in_cur_file = len_dict[files[ifile]] - ielement
         elem_to_add = chunksize - current_chunck_elements
         if elem_left_in_cur_file > elem_to_add:
             chunk_coords[-1].append(

@@ -75,8 +75,8 @@ model_param_options:
 
 
 tree:
-    branches: [2, 4, 4, 16]
-    features: [64,64,32,16,2]
+    branches: [2, 4, 16]
+    features: [64,32,16,2]
 
 
 layer_options:
@@ -186,7 +186,7 @@ loader_options:
     hgcal:
         # cell_prop_keys: ["x", "y", "z", "celltype", "issilicon"]
         batch_size: 100
-        max_points: 4085
+        max_points: 128
         dataset_path: "data/hgcal_william"
         braches:
             id: "simHit_detid"
