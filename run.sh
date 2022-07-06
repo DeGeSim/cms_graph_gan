@@ -9,13 +9,20 @@ else
 fi
 
 shift
-
+cd ~/fgsim
+source bashFunctionCollection.sh
 source ramenv.sh
 # Let python resolve the cli arguments
+
+tmpfile=`mktemp`
+ARGS=(`echo $@ |tr " " "\n" `) # convert string to array
+python ./fgsim/utils/cli.py $@ > $tmpfile
 IFS=$'\n'
-readarray -t lines < <(python ./fgsim/utils/cli.py $@)
+readarray -t lines <$tmpfile
+rm $tmpfile
 
 function elementf {
+    RESTCMD=(`echo $RESTCMD |tr " " "\n" `) # convert string to array
     if [[ $CMD == setup ]]; then
         ./run_in_env.sh $RESTCMD
     else
@@ -31,17 +38,16 @@ function elementf {
             --nodes=1 \
             --constraint="P100|V100|A100" \
             --output=wd/slurm-$CMD-${HASH}-%j.out \
-            --job-name=${HASH} run_in_env.sh $RESTCMD
+            --job-name=${HASH} run.sh local $RESTCMD
         else
-            ./run_in_env.sh $RESTCMD &
+
+            logandrun python3 -m fgsim ${RESTCMD[@]} &
             export COMMANDPID=$!
             trap "echo 'run.sh got SIGTERM' && kill $COMMANDPID " SIGINT SIGTERM
             wait $COMMANDPID
         fi
     fi
 }
-
-
 
 #construct the correct job with it
 for line in ${lines[@]}; do
@@ -58,9 +64,5 @@ for line in ${lines[@]}; do
     fi
 done
 wait
-
-
-
-
 
 exit
