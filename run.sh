@@ -13,13 +13,14 @@ cd ~/fgsim
 source bashFunctionCollection.sh
 source ramenv.sh
 # Let python resolve the cli arguments
-
+set -x
 tmpfile=`mktemp`
 ARGS=(`echo $@ |tr " " "\n" `) # convert string to array
-python ./fgsim/utils/cli.py $@ > $tmpfile
+python ./fgsim/utils/cli.py ${ARGS[@]} > $tmpfile
 IFS=$'\n'
 readarray -t lines <$tmpfile
 rm $tmpfile
+
 
 function elementf {
     RESTCMD=(`echo $RESTCMD |tr " " "\n" `) # convert string to array
@@ -38,7 +39,7 @@ function elementf {
             --nodes=1 \
             --constraint="P100|V100|A100" \
             --output=wd/slurm-$CMD-${HASH}-%j.out \
-            --job-name=${HASH} run.sh local $RESTCMD
+            --job-name=${HASH} run.sh local ${RESTCMD[@]}
         else
 
             logandrun python3 -m fgsim ${RESTCMD[@]} &
