@@ -76,7 +76,7 @@ model_param_options:
 
 tree:
     branches: [2, 4, 16]
-    features: [64,32,16,2]
+    features: [64,32,16,4]
 
 
 layer_options:
