@@ -1,12 +1,4 @@
 {
-    "folders": [
-        {
-            "path": "."
-        },
-        {
-            "path": "/home/mscham/queueflow"
-        }
-    ],
     "extensions": {
         "recommendations": [
             "2gua.rainbow-brackets",
@@ -16,6 +8,14 @@
             "richie5um2.vscode-sort-json"
         ]
     },
+    "folders": [
+        {
+            "path": "."
+        },
+        {
+            "path": "/home/mscham/queueflow"
+        }
+    ],
     "launch": {
         "configurations": [
             // {
@@ -38,12 +38,12 @@
                     "--debug",
                     "train"
                 ],
+                "cwd": "/home/mscham/fgsim",
+                // "justMyCode": false,
                 "module": "fgsim",
                 "name": "tr gendt_disct_hgcal",
                 "request": "launch",
-                "type": "python",
-                "cwd": "/home/mscham/fgsim",
-                // "justMyCode": false,
+                "type": "python"
             },
             {
                 "args": [
@@ -52,12 +52,12 @@
                     "--debug",
                     "test"
                 ],
+                "cwd": "/home/mscham/fgsim",
+                // "justMyCode": false,
                 "module": "fgsim",
                 "name": "te gendt_disct_hgcal",
                 "request": "launch",
-                "type": "python",
-                "cwd": "/home/mscham/fgsim",
-                // "justMyCode": false,
+                "type": "python"
             },
             {
                 "args": [
@@ -66,28 +66,53 @@
                     "--debug",
                     "preprocess"
                 ],
+                "cwd": "/home/mscham/fgsim",
+                // "justMyCode": false,
                 "module": "fgsim",
                 "name": "pp gendt_disct_hgcal",
                 "request": "launch",
-                "type": "python",
-                "cwd": "/home/mscham/fgsim",
-                // "justMyCode": false,
-            },
+                "type": "python"
+            }
         ],
         "version": "0.2.0"
     },
     "settings": {
+        "[python]": {
+            "editor.codeActionsOnSave": {
+                "source.organizeImports": true
+            },
+            "editor.formatOnSave": true
+        },
         "debug.console.closeOnEnd": true,
         "debug.terminal.clearBeforeReusing": true,
+        "docwriter.style": "Google",
         "editor.formatOnSave": true,
-        "[python]": {
-            "editor.formatOnSave": true,
-            "editor.codeActionsOnSave": {
-                "source.organizeImports": true,
-            },
+        "files.exclude": {
+            "**/*.egg-info/**": true,
+            "**/.*/**": true,
+            "**/.DS_Store": true,
+            "**/.git": true,
+            "**/.hg": true,
+            "**/.svn": true,
+            "**/CVS": true,
+            "**/Thumbs.db": true,
+            "**/__*__/**": true,
+            "**/__pycache__": true,
+            "**/_build/**": true,
+            "**/node_modules/*/**": true,
+            "**/old/**": true,
+            "venv1.10.1+cu111/": true,
+            "wd/": true
+        },
+        "files.watcherExclude": {
+            "**/.git/objects/**": true,
+            "**/.git/subtree-cache/**": true,
+            "**/.hg/store/**": true,
+            "**/node_modules/*/**": true,
+            "venv1.10.1+cu111/": true,
+            "wd/": true
         },
         "jupyter.jupyterLaunchRetries": 1,
-        "jupyter.jupyterServerType": "local",
         "python.analysis.typeCheckingMode": "basic",
         // "python.analysis.extraPaths": [
         //     "${env:HOME}/queueflow",
@@ -101,6 +126,11 @@
         "python.linting.enabled": true,
         "python.linting.flake8Enabled": true,
         "python.linting.flake8Path": "${env:HOME}/.local/bin/pflake8",
+        "python.linting.ignorePatterns": [
+            "**/site-packages/**/*.py",
+            ".vscode/*.py",
+            "wd/**"
+        ],
         "python.linting.lintOnSave": true,
         "python.linting.mypyEnabled": true,
         "python.linting.mypyPath": "${env:HOME}/.local/bin/mypy",
@@ -112,32 +142,7 @@
         "python.linting.pylintPath": "/dev/shm/mscham/venv1.10.1+cu111/bin/pylint",
         "python.pipenvPath": "${env:HOME}/.local/bin/pipenv",
         "python.testing.pytestEnabled": true,
-        "python.testing.unittestEnabled": false,
-        "docwriter.style": "Google",
-        "python.linting.ignorePatterns": [
-            "**/site-packages/**/*.py",
-            ".vscode/*.py",
-            "wd/**"
-        ],
-        "files.exclude": {
-            "**/.git": true,
-            "**/.svn": true,
-            "**/.hg": true,
-            "**/CVS": true,
-            "**/.DS_Store": true,
-            "**/Thumbs.db": true,
-            "**/__pycache__": true,
-            "wd/": true,
-            "venv1.10.1+cu111/": true,
-        },
-        "files.watcherExclude": {
-            "**/.git/objects/**": true,
-            "**/.git/subtree-cache/**": true,
-            "**/node_modules/*/**": true,
-            "**/.hg/store/**": true,
-            "wd/": true,
-            "venv1.10.1+cu111/": true,
-        },
+        "python.testing.unittestEnabled": false
     },
     "tasks": {
         "tasks": [
