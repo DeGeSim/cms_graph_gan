@@ -9,6 +9,7 @@ from fgsim.config import conf, device
 from fgsim.io.queued_dataset import QueuedDataLoader
 from fgsim.ml.early_stopping import early_stopping
 from fgsim.ml.holder import Holder
+from fgsim.ml.smoothing import smooth_features
 from fgsim.ml.validation import validate
 from fgsim.monitoring.logger import logger
 from fgsim.monitoring.train_log import TrainLog
@@ -68,6 +69,8 @@ def training_procedure() -> None:
                     holder.state.epoch += 1
                     loader.queue_epoch(n_skip_events=holder.state.processed_events)
                     batch = next(loader.qfseq)
+                if conf.training.smooth_features:
+                    batch.x = smooth_features(batch.x)
                 batch = batch.to(device)
                 holder.state.time_io_done = time.time()
                 training_step(batch, holder)

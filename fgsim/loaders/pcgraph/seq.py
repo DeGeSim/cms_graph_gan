@@ -1,3 +1,4 @@
+from heapq import nlargest
 from pathlib import Path
 from typing import Dict, List, Tuple
 
@@ -109,13 +110,10 @@ def hitlist_to_pc(event: ak.highlevel.Record) -> torch.Tensor:
         else:
             id_to_energy_dict[detid] = hit_energy
 
-    # List of (id,E) pairs, sorted by energy
-    detids_by_energy = sorted(
-        id_to_energy_dict.items(), key=lambda x: x[1], reverse=True
-    )
-    assert len(detids_by_energy) >= conf.loader.max_points
     # get detids with the the n highest energies
-    detids_selected = [e[0] for e in detids_by_energy[: conf.loader.max_points]]
+    detids_selected = nlargest(
+        conf.loader.max_points, id_to_energy_dict, key=id_to_energy_dict.get
+    )
 
     # Filter out the rows/detids that are not in the event
     geo_lup_filtered = geo_lup.reindex(
@@ -123,7 +121,9 @@ def hitlist_to_pc(event: ak.highlevel.Record) -> torch.Tensor:
     )
 
     # compute static features
-    hit_energies = torch.tensor(detids_selected, dtype=torch.float32)
+    hit_energies = torch.tensor(
+        [id_to_energy_dict[e] for e in detids_selected], dtype=torch.float32
+    )
     xyzpos = torch.tensor(
         geo_lup_filtered[conf.loader.cell_prop_keys[1:]].values, dtype=torch.float32
     )

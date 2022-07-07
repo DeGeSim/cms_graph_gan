@@ -13,7 +13,7 @@ if "pytest" not in sys.modules:
     from fgsim.io import batch_tools
     from fgsim.io.loader import Loader
 
-    from .files import files, len_dict
+    from .files import files, len_dict, save_len_dict
     from .scaler import scaler
     from .seq import postprocess_switch, process_seq
 

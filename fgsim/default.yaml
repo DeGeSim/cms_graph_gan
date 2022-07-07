@@ -125,12 +125,14 @@ optim_options:
     FakeOptimizer: {}
 
 training:
-    events_processed_before_validation: 500000
+    events_processed_before_validation: 100000
     disc_steps_per_gen_step: 5
     early_stopping:
         validation_steps: 100
         improvement: 0.02
     checkpoint_minutes: 15
+    smooth_features: True
+    smoothing_vars: [0.0, 0.01, 0.002, 0.0004]
 validation:
     interval: "${div:${training.events_processed_before_validation},${loader.batch_size}}"
     stop_key: stop_key

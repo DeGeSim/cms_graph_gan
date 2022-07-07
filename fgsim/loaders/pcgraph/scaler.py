@@ -27,7 +27,7 @@ class Scaler:
 
         assert len_dict[files[0]] >= conf.loader.scaling_fit_size
         chk = read_chunk([(Path(files[0]), 0, conf.loader.scaling_fit_size)])
-        with Pool(15) as p:
+        with Pool(conf.loader.num_workers_transform) as p:
             event_list = p.map(transform_wo_scaling, chk)
         batch = aggregate_to_batch(event_list)
         pcs = batch.x.numpy()
@@ -41,7 +41,7 @@ class Scaler:
         E_transf = PowerTransformer(method="box-cox")
         x_transf = StandardScaler()
         y_transf = StandardScaler()
-        z_transf = MinMaxScaler()
+        z_transf = MinMaxScaler(feature_range=(-1, 1))
         self.comb_transf = make_column_transformer(
             (E_transf, [0]),
             (x_transf, [1]),
