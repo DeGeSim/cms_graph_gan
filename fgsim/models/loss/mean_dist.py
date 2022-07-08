@@ -17,8 +17,7 @@ from fgsim.ml.holder import Holder
 
 
 class LossGen:
-    def __init__(self, factor: float = 1.0):
-        self.factor: float = factor
+    def __init__(self):
         self.lossf = torch.nn.MSELoss()
 
     def __call__(self, holder: Holder, batch: Batch):
@@ -33,13 +32,11 @@ class LossGen:
         #     == list(gen_means.shape)
         #     == [conf.loader.batch_size, conf.loader.n_features]
         # )
-        # loss = self.factor * self.lossf(gen_means, sim_means)
+        # loss = self.lossf(gen_means, sim_means)
         mean_sim, mean_gen = (
             torch.mean(sample.x, dim=0) for sample in (batch, gen_batch)
         )
         cov_sim, cov_gen = (torch.cov(sample.x.T) for sample in (batch, gen_batch))
-        loss = self.factor * (
-            self.lossf(mean_sim, mean_gen) + self.lossf(cov_sim, cov_gen)
-        )
-        loss.backward(retain_graph=True)
-        return float(loss)
+        loss = self.lossf(mean_sim, mean_gen) + self.lossf(cov_sim, cov_gen)
+
+        return loss

@@ -20,12 +20,11 @@ from fgsim.models.subnetworks.pointnet import PointNetCls
 
 @dataclass
 class LossGen:
-    def __init__(self, factor: float = 1.0, dims: int = 1808):
+    def __init__(self, dims: int = 1808):
         """
         Params:
         -- dims        : Dimensionality of features returned by Inception
         """
-        self.factor: float = factor
         self.dims = dims
         self.model = PointNetCls(k=16)
         self.model.load_state_dict(torch.load("data/pc_pretrained.pth"))
@@ -37,7 +36,7 @@ class LossGen:
             holder.gen_points.pc,
             batch,
         )
-        return self.factor * loss
+        return loss
 
     def get_activations(self, pointclouds, verbose=False):
         """Calculates the activations of the pool_3 layer for all images.

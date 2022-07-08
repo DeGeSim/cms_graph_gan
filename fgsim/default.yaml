@@ -13,6 +13,7 @@ models:
         optim:
             name: Adam
             params: ${optim_options[Adam]}
+        retain_graph_on_backprop: True
     disc:
         name: disc_treepc
         params: ${model_param_options[${models.disc.name}]}
@@ -22,6 +23,7 @@ models:
         optim:
             name: Adam
             params: ${optim_options[Adam]}
+        retain_graph_on_backprop: False
 
 ffn:
     activation: ReLU
@@ -107,7 +109,7 @@ loss_options:
     mmd:
       factor: 1.0
       kernel: "rbf"
-      bandwidth:  [10, 15, 20, 50] #[0.01,0.05,0.1,0.2, 0.5, 0.9, 1.3, 3] #multiscale [0.2, 0.5, 0.9, 1.3] rbf [10, 15, 20, 50]
+      bandwidth:  [10, 15, 20, 50]
     mmdpc: ${loss_options[mmd]}
     outside_interval:
         factor: 1.0
@@ -138,11 +140,8 @@ validation:
     stop_key: stop_key
     metrics:
         hlv_w1:
-            factor: 1.0
-            wgrad: False
             foreach_hlv: True
-        aoc:
-            factor: 1.0
+        aoc: {}
 testing:
     n_events: 2000
 

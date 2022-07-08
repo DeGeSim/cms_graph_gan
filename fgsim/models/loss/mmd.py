@@ -8,8 +8,7 @@ from fgsim.ml.holder import Holder
 
 
 class LossGen:
-    def __init__(self, factor: float, kernel, bandwidth: List[float]) -> None:
-        self.factor = factor
+    def __init__(self, kernel, bandwidth: List[float]) -> None:
         self.kernel = kernel
         self.bandwidth = bandwidth
 
@@ -28,8 +27,7 @@ class LossGen:
             bandwidth=self.bandwidth,
             kernel=self.kernel,
         )
-        loss.backward(retain_graph=True)
-        return float(loss)
+        return loss
 
 
 def MMD(x, y, bandwidth, kernel):

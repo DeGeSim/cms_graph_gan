@@ -14,11 +14,9 @@ class LossGen:
     """Computes the gradient penalty as defined in "Improved Training of Wasserstein GANs
     (https://arxiv.org/abs/1704.00028)
     Args:
-        factor (float): coefficient of the gradient penalty as defined in the article
         gamma (float): regularization term of the gradient penalty
     """
 
-    factor: float = 1.0
     gamma: float = 1.0
 
     def __call__(self, holder: Holder, batch: Batch) -> torch.float:
@@ -48,9 +46,8 @@ class LossGen:
         l2s = torch.stack([g.norm(2) for g in grads])
 
         gradient_penalty = (((l2s - self.gamma) / self.gamma) ** 2).mean()
-        loss = self.factor * gradient_penalty
-        loss.backward()
-        return float(loss)
+        loss = gradient_penalty
+        return loss
 
 
 def interpol_pcs(pc1: torch.Tensor, pc2: torch.Tensor) -> torch.Tensor:

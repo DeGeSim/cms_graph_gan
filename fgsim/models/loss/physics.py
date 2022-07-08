@@ -5,8 +5,8 @@ from fgsim.ml.holder import Holder
 
 
 class LossGen:
-    def __init__(self, factor: float = 1.0):
-        self.factor: float = factor
+    def __init__(self):
+        pass
 
     def lossf(self, pc):
         energy = pc[..., 0]
@@ -32,6 +32,6 @@ class LossGen:
             real_loss = self.lossf(batch.x)
             if real_loss != 0:
                 raise RuntimeError
-        loss = self.factor * self.lossf(holder.gen_points_w_grad.x)
+        loss = self.lossf(holder.gen_points_w_grad.x)
         loss.backward(retain_graph=True)
         return float(loss)

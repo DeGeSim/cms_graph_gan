@@ -9,11 +9,7 @@ from fgsim.ml.holder import Holder
 class LossGen:
     def __init__(
         self,
-        factor: float = 1.0,
-        *args,
-        **kwargs,
     ):
-        self.factor: float = factor
         real_label = torch.ones(
             (conf.loader.batch_size,), dtype=torch.float, device=device
         )

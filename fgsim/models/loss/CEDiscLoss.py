@@ -1,5 +1,3 @@
-from typing import Dict
-
 import torch
 
 from fgsim.io.sel_seq import Batch
@@ -10,23 +8,20 @@ class LossGen:
     # Ex∼pdata​(x)​[log(D(x))]+Ez∼pz​(z)​[log(1−D(G(z)))]
     # min for Gen, max​ for Disc
 
-    def __init__(self, factor: float) -> None:
-        self.factor = factor
+    def __init__(self) -> None:
         # sigmoid layer + Binary cross entropy
         self.criterion = torch.nn.BCEWithLogitsLoss()
 
-    def __call__(self, holder: Holder, batch: Batch) -> Dict[str, float]:
+    def __call__(self, holder: Holder, batch: Batch) -> torch.Tensor:
         # Loss of the simulated samples
         D_sim = holder.models.disc(batch)
         if isinstance(D_sim, dict):
             D_sim = torch.hstack(list(D_sim.values()))
         assert D_sim.dim() == 1
         # maximize log(D(x))
-        # sample_disc_loss = -1 * torch.log(D_sim).mean() * self.factor
-        # sample_disc_loss.backward()
+        # sample_disc_loss = -1 * torch.log(D_sim).mean()
 
         sample_disc_loss = self.criterion(D_sim, torch.ones_like(D_sim))
-        sample_disc_loss.backward()
 
         # Loss of the generated samples
         # maximize log(1−D(G(z)))
@@ -35,11 +30,9 @@ class LossGen:
             D_gen = torch.hstack(list(D_gen.values()))
         assert D_gen.dim() == 1
         # gen_disc_loss = -1 * (
-        #     torch.log(torch.ones_like(D_gen) - D_gen).mean() * self.factor
+        #     torch.log(torch.ones_like(D_gen) - D_gen).mean()
         # )
-        # gen_disc_loss.backward()
 
         gen_disc_loss = self.criterion(D_gen, torch.zeros_like(D_gen))
-        gen_disc_loss.backward()
 
-        return {"gen": float(gen_disc_loss), "sim": float(sample_disc_loss)}
+        return gen_disc_loss + sample_disc_loss

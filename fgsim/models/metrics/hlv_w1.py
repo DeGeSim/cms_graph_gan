@@ -10,11 +10,7 @@ class LossGen:
     def __init__(
         self,
         foreach_hlv: bool,
-        factor: float = 1.0,
-        *args,
-        **kwargs,
     ):
-        self.factor: float = factor
         self.foreach_hlv: bool = foreach_hlv
 
     def lossf(self, a, b):
@@ -26,8 +22,6 @@ class LossGen:
     def __call__(self, holder: Holder, batch: Batch) -> Dict[str, float]:
         out_dict: Dict[str, float] = {}
         for var in holder.gen_points.hlvs:
-            out_dict[var] = self.factor * self.lossf(
-                batch.hlvs[var], holder.gen_points.hlvs[var]
-            )
+            out_dict[var] = self.lossf(batch.hlvs[var], holder.gen_points.hlvs[var])
 
         return out_dict

@@ -10,8 +10,7 @@ from .mmd import MMD
 
 
 class LossGen:
-    def __init__(self, factor: float, kernel, bandwidth: List[float]) -> None:
-        self.factor = factor
+    def __init__(self, kernel, bandwidth: List[float]) -> None:
         self.kernel = kernel
         self.bandwidth = bandwidth
 
@@ -34,9 +33,7 @@ class LossGen:
                     kernel=self.kernel,
                 )
             )
-        loss: torch.Tensor = self.factor * sum(losses)
-        loss.backward(retain_graph=True)
-        return float(loss)
+        return sum(losses)
 
 
 def sort_by_feature(batch: torch.Tensor, ifeature: int) -> torch.Tensor:

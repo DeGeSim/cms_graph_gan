@@ -5,8 +5,7 @@ from fgsim.ml.holder import Holder
 
 
 class LossGen:
-    def __init__(self, factor: float, low: float, high: float) -> None:
-        self.factor = factor
+    def __init__(self, low: float, high: float) -> None:
         self.low = low
         self.high = high
 
@@ -23,5 +22,4 @@ class LossGen:
         dists = torch.hstack([d_higher, d_lower])
 
         loss: torch.Tensor = torch.sum(torch.pow(dists, 2) + dists)
-        loss.backward(retain_graph=True)
-        return float(loss)
+        return loss

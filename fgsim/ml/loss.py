@@ -1,7 +1,7 @@
 """Dynamically import the losses"""
 import importlib
 import math
-from typing import Dict, Optional, Protocol, Union
+from typing import Dict, Optional, Protocol
 
 import torch
 from omegaconf import DictConfig, OmegaConf
@@ -10,11 +10,10 @@ from fgsim.config import conf, device
 from fgsim.io.sel_seq import Batch
 from fgsim.monitoring.logger import logger
 from fgsim.monitoring.train_log import TrainLog
-from fgsim.utils.check_for_nans import contains_nans
 
 
 class LossFunction(Protocol):
-    def __call__(self, holder, batch: Batch) -> Union[float, Dict[str, float]]:
+    def __call__(self, holder, batch: Batch) -> torch.Tensor:
         ...
 
 
@@ -35,6 +34,7 @@ class SubNetworkLoss:
             params = lossconf if lossconf is not None else {}
             if isinstance(params, DictConfig):
                 params = OmegaConf.to_container(params)
+            del params["factor"]
             if not hasattr(torch.nn, lossname):
                 loss_module = importlib.import_module(
                     f"fgsim.models.loss.{lossname}"
@@ -49,38 +49,22 @@ class SubNetworkLoss:
         return self.parts[lossname]
 
     def __call__(self, holder, batch: Batch):
-        # In this dict comprehension iterates the losses for the current module
-        # loss(holder, batch) returns either a float or
-        # a dict with the sublosses subloss -> float
-        # in the call loss(holder, batch), the .backward() call takes place
-        lossesdict = {
-            lossname: loss(holder, batch) for lossname, loss in self.parts.items()
+        lossesdict: Dict[str, torch.Tensor] = {
+            lossname: loss(holder, batch) * self.pconf[lossname]["factor"]
+            for lossname, loss in self.parts.items()
         }
+
+        partloss: torch.Tensor = sum(lossesdict.values())
+        if conf.models[self.name].retain_graph_on_backprop:
+            partloss.backward(retain_graph=True)
+        else:
+            partloss.backward()
+
         losses_history = holder.history["losses"]
         # write the loss to the history so it can be logged later
         for lossname, loss in lossesdict.items():
             if isinstance(loss, float):
                 self.log_loss(losses_history, loss, lossname)
-            else:
-                # For the case the loss return Dict[str,float]
-                assert isinstance(loss, dict)
-                # loss the sublosses
-                for sublossname, sublossvalue in loss.items():
-                    self.log_loss(
-                        losses_history, sublossvalue, lossname, sublossname
-                    )
-                sumloss = sum(loss.values())
-                self.log_loss(losses_history, sumloss, lossname, "sum")
-
-        # Some of the losses are in dicts, other are not so we need to upack them
-        summedloss = sum(
-            [
-                (lambda x: sum(list(x.values())) if isinstance(e, dict) else x)(e)
-                for e in lossesdict.values()
-            ]
-        )
-        assert not contains_nans(summedloss)[0]
-        return summedloss
 
     def log_loss(
         self,
