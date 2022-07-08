@@ -15,82 +15,99 @@ from fgsim.monitoring.logger import logger
 from fgsim.monitoring.train_log import TrainLog
 
 
-def training_step(
-    batch,
-    holder: Holder,
-) -> None:
-    # set all optimizers to a 0 gradient
-    holder.optims.zero_grad()
-    # generate a new batch with the generator
-    holder.reset_gen_points()
-    holder.losses.disc(holder, batch)
-    holder.optims.disc.step()
-    holder.optims.disc.zero_grad()
+class Trainer:
+    def __init__(self) -> None:
+        self.holder: Holder = Holder()
+        if early_stopping(self.holder.history):
+            exit()
+        self.train_log: TrainLog = self.holder.train_log
+        self.loader: QueuedDataLoader = QueuedDataLoader()
 
-    # generator
-    if holder.state.grad_step % conf.training.disc_steps_per_gen_step == 0:
-        # generate a new batch with the generator, but with
-        # points thought the generator this time
-        holder.reset_gen_points_w_grad()
-        holder.losses.gen(holder, batch)
-        holder.optims.gen.step()
-        holder.models.gen.zero_grad()
+        # Queue that batches
+        self.loader.queue_epoch(n_skip_events=self.holder.state.processed_events)
+
+        if not self.holder.checkpoint_loaded and not conf.debug:
+            self.holder.models.eval()
+            validate(self.holder, self.loader)
+            self.holder.save_checkpoint()
+
+    def training_loop(self):
+        while not early_stopping(self.holder.history):
+            # switch model in training mode
+            self.holder.models.train()
+            for _ in tqdm(
+                range(conf.validation.interval),
+                postfix=f"train {self.holder.state.grad_step}",
+            ):
+                self.holder.state.batch_start_time = time.time()
+                try:
+                    batch = next(self.loader.qfseq)
+                except StopIteration:
+                    self.post_epoch()
+                    batch = next(self.loader.qfseq)
+                batch = self.pre_training_step(batch)
+                self.training_step(batch)
+                self.post_training_step()
+            self.validation_step()
+        # Stopping
+        self.post_training()
+
+    def pre_training_step(self, batch):
+        if conf.training.smooth_features:
+            batch.x = smooth_features(batch.x)
+        batch = batch.to(device)
+        self.holder.state.time_io_done = time.time()
+        return batch
+
+    def training_step(self, batch) -> None:
+        # set all optimizers to a 0 gradient
+        self.holder.optims.zero_grad()
+        # generate a new batch with the generator
+        self.holder.reset_gen_points()
+        self.holder.losses.disc(self.holder, batch)
+        self.holder.optims.disc.step()
+        self.holder.optims.disc.zero_grad()
+
+        # generator
+        if self.holder.state.grad_step % conf.training.disc_steps_per_gen_step == 0:
+            # generate a new batch with the generator, but with
+            # points thought the generator this time
+            self.holder.reset_gen_points_w_grad()
+            self.holder.losses.gen(self.holder, batch)
+            self.holder.optims.gen.step()
+            self.holder.models.gen.zero_grad()
+
+    def post_training_step(self):
+        self.holder.state.time_training_done = time.time()
+        self.train_log.write_trainstep_logs()
+        self.holder.state.processed_events += conf.loader.batch_size
+        self.holder.state.grad_step += 1
+        self.holder.checkpoint_after_time()
+
+    def validation_step(self):
+        validate(self.holder, self.loader)
+
+    def post_epoch(self):
+        # If there is no next batch go to the next epoch
+        self.train_log.next_epoch()
+        self.loader.queue_epoch(n_skip_events=self.holder.state.processed_events)
+
+    def post_training(self):
+        self.holder.state.complete = True
+        self.train_log.end()
+        self.holder.save_checkpoint()
 
 
 def training_procedure() -> None:
-    holder: Holder = Holder()
-    if early_stopping(holder.history):
-        exit()
-    train_log: TrainLog = holder.train_log
-    loader: QueuedDataLoader = QueuedDataLoader()
-
-    # Queue that batches
-    loader.queue_epoch(n_skip_events=holder.state.processed_events)
-
+    trainer = Trainer()
     exitcode = 0
     try:
-        if not holder.checkpoint_loaded and not conf.debug:
-            holder.models.eval()
-            validate(holder, loader)
-            holder.save_checkpoint()
-        while not early_stopping(holder.history):
-            # switch model in training mode
-            holder.models.train()
-            for _ in tqdm(
-                range(conf.validation.interval),
-                postfix=f"training from {holder.state.grad_step}",
-            ):
-                holder.state.batch_start_time = time.time()
-                try:
-                    batch = next(loader.qfseq)
-                except StopIteration:
-                    # If there is no next batch go to the next epoch
-                    train_log.next_epoch()
-                    holder.state.epoch += 1
-                    loader.queue_epoch(n_skip_events=holder.state.processed_events)
-                    batch = next(loader.qfseq)
-                if conf.training.smooth_features:
-                    batch.x = smooth_features(batch.x)
-                batch = batch.to(device)
-                holder.state.time_io_done = time.time()
-                training_step(batch, holder)
-                holder.state.time_training_done = time.time()
-                train_log.write_trainstep_logs()
-                holder.state.processed_events += conf.loader.batch_size
-                holder.state.grad_step += 1
-                holder.checkpoint_after_time()
-            holder.models.eval()
-            validate(holder, loader)
-            train_log.writer.flush()
-        # Stopping
-        holder.state.complete = True
-        train_log.end()
-        holder.save_checkpoint()
+        trainer.training_loop()
     except Exception as error:
         logger.error("Error detected, stopping qfseq.")
         exitcode = 1
         logger.error(error)
         traceback.print_exc()
     finally:
-        loader.qfseq.stop()
+        trainer.loader.qfseq.stop()
         exit(exitcode)

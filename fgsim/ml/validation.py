@@ -39,3 +39,5 @@ def validate(holder: Holder, loader: QueuedDataLoader) -> None:
                 "best_epoch", holder.state["epoch"]
             )
     logger.warning("Validation function done")
+    if not conf.debug:
+        holder.train_log.writer.flush()

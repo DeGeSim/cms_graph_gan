@@ -88,6 +88,7 @@ class TrainLog:
             self.state["epoch"],
             step=self.state["grad_step"],
         )
+        self.state["epoch"] += 1
         logger.warning("New epoch!")
 
     def end(self) -> None:
