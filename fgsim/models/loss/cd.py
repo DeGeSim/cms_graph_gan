@@ -12,9 +12,11 @@ class LossGen:
 
         n_features = batch.x.shape[1]
         batch_size = int(batch.batch[-1] + 1)
-        loss = cd(
-            holder.gen_points_w_grad.x.reshape(batch_size, -1, n_features),
-            batch.x.reshape(batch_size, -1, n_features),
+        loss = sum(
+            cd(
+                holder.gen_points_w_grad.x.reshape(batch_size, -1, n_features),
+                batch.x.reshape(batch_size, -1, n_features),
+            )[1]
         )
 
         return loss
