@@ -169,7 +169,7 @@ path:
 
 
 loader: "${merge:${loader_options[default]},${loader_options[${loader_name}]}}"
-loader_name: moons
+loader_name: pcgraph
 
 loader_options:
     default:
@@ -183,7 +183,7 @@ loader_options:
         test_set_size: 5000
         scaling_fit_size: 100
         events_per_file: 100000
-        prefetch_batches: 2
+        prefetch_batches: 10
         num_workers_transform: 30
         num_workers_stack: 1
         num_workers_postprocess: 1
