@@ -38,7 +38,7 @@ def dcd(x, gt, alpha=1000, n_lambda=1, return_raw=False, non_reg=False):
     loss = (loss1 + loss2) / 2
 
     # res = [loss, cd_p, cd_t]
-    res = loss.sum()
+    res = loss.mean()
     if return_raw:
         res.extend([dist1, dist2, idx1, idx2])
 
