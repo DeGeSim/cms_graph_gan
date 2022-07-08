@@ -117,6 +117,8 @@ loss_options:
         low: -4.0
     dcd:
         factor: 1.0
+    cd:
+        factor: 1.0
 
 optim_options:
     Adam:
