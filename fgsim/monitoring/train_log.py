@@ -26,53 +26,18 @@ class TrainLog:
         self.experiment.set_model_graph(str(model))
 
     def write_trainstep_logs(self) -> None:
-        if conf.debug:
-            return
         traintime = self.state.time_training_done - self.state.batch_start_time
         iotime = self.state.time_io_done - self.state.batch_start_time
         utilisation = 1 - iotime / traintime
 
-        self.writer.add_scalar(
-            "batchtime",
-            traintime,
-            self.state["grad_step"],
-        )
-        self.experiment.log_metric(
-            "batchtime",
-            traintime,
-            step=self.state["grad_step"],
-            epoch=self.state["epoch"],
-        )
-        self.experiment.log_metric(
-            "utilisation",
-            utilisation,
-            step=self.state["grad_step"],
-            epoch=self.state["epoch"],
-        )
-        self.writer.add_scalar(
-            "utilisation",
-            utilisation,
-            self.state["grad_step"],
-        )
-        self.writer.add_scalar(
-            "processed_events",
-            self.state.processed_events,
-            self.state["grad_step"],
-        )
-        self.experiment.log_metric(
-            "processed_events",
-            self.state.processed_events,
-            step=self.state["grad_step"],
-            epoch=self.state["epoch"],
-        )
+        self.log_loss("other.batchtime", traintime)
+        self.log_loss("other.utilisation", utilisation)
+        self.log_loss("other.processed_events", self.state.processed_events)
 
-        #  self.experiment.log_histogram(
-        #      experiment, gradmap, epoch * steps_per_epoch, prefix="gradient"
-        #  )
-
-    def log_loss(self, lossname: str, loss: float) -> None:
+    def log_loss(self, lossname: str, loss) -> None:
         if conf.debug:
             return
+        loss = float(loss)
         self.writer.add_scalar(lossname, loss, self.state["grad_step"])
         self.experiment.log_metric(
             lossname,

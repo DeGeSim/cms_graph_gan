@@ -63,7 +63,7 @@ def main():
             raise Exception
         from fgsim.commands.setup import setup_procedure
 
-        setup_procedure()
+        print(setup_procedure())
         exit()
     if args.command == "dump":
         from fgsim.commands.dump import dump_procedure

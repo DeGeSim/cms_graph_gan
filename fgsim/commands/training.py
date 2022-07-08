@@ -78,11 +78,22 @@ class Trainer:
             self.holder.models.gen.zero_grad()
 
     def post_training_step(self):
-        self.holder.state.time_training_done = time.time()
-        self.train_log.write_trainstep_logs()
         self.holder.state.processed_events += conf.loader.batch_size
-        self.holder.state.grad_step += 1
+        self.holder.state.time_training_done = time.time()
+        if self.holder.state.grad_step % conf.training.log_interval == 0:
+            # aggregate the losses that have accumulated since the last time
+            # and logg them
+            ldict = {
+                lpart.name: lpart.metric_aggr.aggregate()
+                for lpart in self.holder.losses
+            }
+            for pname, ploosd in ldict.items():
+                for lname, lossval in ploosd.items():
+                    self.train_log.log_loss(f"train.{pname}.{lname}", lossval)
+            # Also log training speed
+            self.train_log.write_trainstep_logs()
         self.holder.checkpoint_after_time()
+        self.holder.state.grad_step += 1
 
     def validation_step(self):
         validate(self.holder, self.loader)

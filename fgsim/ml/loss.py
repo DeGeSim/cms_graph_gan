@@ -1,14 +1,13 @@
 """Dynamically import the losses"""
 import importlib
-import math
-from typing import Dict, Optional, Protocol
+from typing import Dict, Protocol
 
 import torch
 from omegaconf import DictConfig, OmegaConf
 
 from fgsim.config import conf, device
 from fgsim.io.sel_seq import Batch
-from fgsim.monitoring.logger import logger
+from fgsim.monitoring.metrics_aggr import MetricAggregator
 from fgsim.monitoring.train_log import TrainLog
 
 
@@ -28,6 +27,7 @@ class SubNetworkLoss:
         self.pconf = pconf
         self.train_log = train_log
         self.parts: Dict[str, LossFunction] = {}
+        self.metric_aggr = MetricAggregator(train_log.history["losses"][self.name])
 
         for lossname, lossconf in pconf.items():
             assert lossname != "parts"
@@ -49,55 +49,19 @@ class SubNetworkLoss:
         return self.parts[lossname]
 
     def __call__(self, holder, batch: Batch):
-        lossesdict: Dict[str, torch.Tensor] = {
+        losses_dict: Dict[str, torch.Tensor] = {
             lossname: loss(holder, batch) * self.pconf[lossname]["factor"]
             for lossname, loss in self.parts.items()
         }
 
-        partloss: torch.Tensor = sum(lossesdict.values())
+        partloss: torch.Tensor = sum(losses_dict.values())
         if conf.models[self.name].retain_graph_on_backprop:
             partloss.backward(retain_graph=True)
         else:
             partloss.backward()
-
-        losses_history = holder.history["losses"]
-        # write the loss to the history so it can be logged later
-        for lossname, loss in lossesdict.items():
-            if isinstance(loss, float):
-                self.log_loss(losses_history, loss, lossname)
-
-    def log_loss(
-        self,
-        losses_history: Dict,
-        value: float,
-        lossname: str,
-        sublossname: Optional[str] = None,
-    ):
-        lossstr = (
-            f"train.{self.name}.{lossname}"
-            if sublossname is None
-            else f"train.{self.name}.{lossname}.{sublossname}"
+        self.metric_aggr.append_dict(
+            {k: v.detach().cpu().numpy() for k, v in losses_dict.items()}
         )
-        # Check for invalid values
-        if math.isnan(value) or math.isinf(value):
-            logger.error(f"{lossstr} returned invalid value: {value}")
-            raise RuntimeError
-        # Log to comet.ml
-        self.train_log.log_loss(lossstr, value)
-        # Make sure the fields in the state are available
-        if sublossname is None:
-            if lossname not in losses_history[self.name]:
-                losses_history[self.name][lossname] = []
-        else:
-            if lossname not in losses_history[self.name]:
-                losses_history[self.name][lossname] = {}
-            if sublossname not in losses_history[self.name][lossname]:
-                losses_history[self.name][lossname][sublossname] = []
-        # Write values to the state
-        if sublossname is None:
-            losses_history[self.name][lossname].append(value)
-        else:
-            losses_history[self.name][lossname][sublossname].append(value)
 
 
 class LossesCol:
@@ -113,3 +77,6 @@ class LossesCol:
 
     def __getitem__(self, subnetworkname: str) -> SubNetworkLoss:
         return self.parts[subnetworkname]
+
+    def __iter__(self):
+        return iter(self.parts.values())

@@ -1,6 +1,6 @@
 """Dynamically import the losses"""
 import importlib
-from typing import Callable, Dict, Optional
+from typing import Callable, Dict, List, Optional
 
 import numpy as np
 import torch
@@ -8,6 +8,7 @@ from omegaconf import DictConfig
 
 from fgsim.config import conf
 from fgsim.io.sel_seq import Batch
+from fgsim.monitoring.metrics_aggr import MetricAggregator
 from fgsim.monitoring.train_log import TrainLog
 
 
@@ -15,81 +16,45 @@ class ValidationMetrics:
     def __init__(self, train_log: TrainLog) -> None:
         self.train_log = train_log
         self.parts: Dict[str, Callable] = {}
-        self._lastlosses: Dict[str, float] = {}
+        self._lastlosses: Dict[str, List[float]] = {}
+        self.metric_aggr = MetricAggregator(train_log.history["val_metrics"])
 
         for metric_name, metric_conf in conf.validation.metrics.items():
             assert metric_name != "parts"
             params = metric_conf if metric_conf is not None else DictConfig({})
-            loss = self.import_metric(metric_name, params)
+            loss = import_metric(metric_name, params)
 
             self.parts[metric_name] = loss
             setattr(self, metric_name, loss)
 
-    def import_metric(self, metric_name: str, params: DictConfig) -> Callable:
-        MetricClass: Optional = None
-        for import_path in [
-            f"torch.nn.{metric_name}",
-            f"fgsim.models.metrics.{metric_name}",
-        ]:
-            try:
-                model_module = importlib.import_module(import_path)
-                # Check if it is a class
-                if not isinstance(model_module, type):
-                    if not hasattr(model_module, "LossGen"):
-                        raise ModuleNotFoundError
-                    else:
-                        MetricClass = model_module.LossGen
-                else:
-                    MetricClass = model_module
-
-                break
-            except ModuleNotFoundError:
-                MetricClass = None
-
-        if MetricClass is None:
-            raise ImportError
-
-        metric = MetricClass(**params)
-
-        return metric
-
     def __call__(self, holder, batch: Batch) -> None:
         # During the validation, this function is called once per batch.
         # All losses are save in a dict for later evaluation log_lossses
+        mval = {}
         with torch.no_grad():
-            for lossname, loss in self.parts.items():
-                if hasattr(loss, "foreach_hlv") and loss.foreach_hlv:
+            for metric_name, metric in self.parts.items():
+                if hasattr(metric, "foreach_hlv") and metric.foreach_hlv:
                     # If the loss is processed for each hlv
                     # the return type is Dict[str,float]
-                    for var, lossval in loss(holder, batch).items():
-                        lstr = f"{lossname}_{var}"
-                        if lstr not in self._lastlosses:
-                            self._lastlosses[lstr] = 0
-                        if lossval in [float("nan"), float("inf"), float("-inf")]:
-                            pass
-                        else:
-                            self._lastlosses[lstr] += float(lossval)
+                    for var, lossval in metric(holder, batch).items():
+                        mval[f"{metric_name}_{var}"] = float(lossval)
                 else:
-                    if lossname not in self._lastlosses:
-                        self._lastlosses[lossname] = 0
-                    self._lastlosses[lossname] += float(loss(holder, batch))
+                    mval[metric_name] = float(metric(holder, batch))
+        self.metric_aggr.append_dict(mval)
 
-    def log_losses(self, history) -> None:
-        val_metrics = history["val_metrics"]
-        for lossname, loss in self._lastlosses.items():
-            # Update the state
-            if lossname not in val_metrics:
-                val_metrics[lossname] = []
-            val_metrics[lossname].append(loss)
-            # Reset to 0
-            self._lastlosses[lossname] = 0
+    def log_metrics(self) -> None:
+        # Call metric_aggr to aggregate the collected matrics over the
+        # validation batches. This will also update history["val_metrics"]
+        up_metrics_d = self.metric_aggr.aggregate()
 
-        # Log the validation loss
-        if not conf.debug:
-            for lossname, loss_history in val_metrics.items():
-                self.train_log.log_loss(f"val.{lossname}", loss_history[-1])
+        for metric_name, metric_val in up_metrics_d.items():
+            # Log the validation loss
+            if not conf.debug:
+                self.train_log.log_loss(f"val.{metric_name}", metric_val)
 
         # compute the stop_metric
+        history = self.train_log.history
+        val_metrics = history["val_metrics"]
         # collect all metrics for all validation runs in a 2d array
         loss_history = np.stack([val_metrics[metric] for metric in val_metrics])
         # for a given metric and validation run,
@@ -112,3 +77,32 @@ class ValidationMetrics:
 
     def __getitem__(self, lossname: str) -> Callable:
         return self.parts[lossname]
+
+
+def import_metric(metric_name: str, params: DictConfig) -> Callable:
+    MetricClass: Optional = None
+    for import_path in [
+        f"torch.nn.{metric_name}",
+        f"fgsim.models.metrics.{metric_name}",
+    ]:
+        try:
+            model_module = importlib.import_module(import_path)
+            # Check if it is a class
+            if not isinstance(model_module, type):
+                if not hasattr(model_module, "LossGen"):
+                    raise ModuleNotFoundError
+                else:
+                    MetricClass = model_module.LossGen
+            else:
+                MetricClass = model_module
+
+            break
+        except ModuleNotFoundError:
+            MetricClass = None
+
+    if MetricClass is None:
+        raise ImportError
+
+    metric = MetricClass(**params)
+
+    return metric
