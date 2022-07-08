@@ -69,7 +69,6 @@ class TrainLog:
         #  self.experiment.log_histogram(
         #      experiment, gradmap, epoch * steps_per_epoch, prefix="gradient"
         #  )
-        self.writer.flush()
 
     def log_loss(self, lossname: str, loss: float) -> None:
         if conf.debug:

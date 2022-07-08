@@ -81,6 +81,7 @@ def training_procedure() -> None:
                 holder.checkpoint_after_time()
             holder.models.eval()
             validate(holder, loader)
+            train_log.writer.flush()
         # Stopping
         holder.state.complete = True
         train_log.end()

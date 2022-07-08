@@ -1,19 +1,16 @@
 import os
 import shutil
 from glob import glob
-from typing import List
 
-import comet_ml
-
-from fgsim.monitoring.monitor import get_exps_with_hash
+from fgsim.monitoring.monitor import api_experiment_from_hash, exp_orga
 from fgsim.utils.cli import args
 
 
 def dump_procedure():
-    qres: List[comet_ml.APIExperiment] = get_exps_with_hash(args.hash)
-    for exp in qres:
-        exp.archive()
+    api_experiment_from_hash(args.hash).archive()
     paths = glob(f"wd/*/{args.hash}")
+    del exp_orga.d[args.hash]
+    exp_orga.save()
     if len(paths) == 1:
         assert os.path.isdir(paths[0])
         shutil.rmtree(paths[0])

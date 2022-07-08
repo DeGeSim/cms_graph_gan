@@ -1,6 +1,5 @@
-from typing import List
-
 import comet_ml
+import yaml
 from omegaconf import OmegaConf
 from omegaconf.dictconfig import DictConfig
 from torch.utils.tensorboard.writer import SummaryWriter
@@ -11,28 +10,40 @@ comet_conf = OmegaConf.load("fgsim/comet.yaml")
 api = comet_ml.API(comet_conf.api_key)
 
 
-def get_exps_with_hash(hash: str) -> List[comet_ml.APIExperiment]:
-    experiments = []
-    for workspace in api.get_workspaces():
+class ExperimentOrganizer:
+    def __init__(self) -> None:
+        self.fn = "wd/hash2exp.yaml"
+        with open(self.fn, "r") as f:
+            self.d = yaml.load(f, Loader=yaml.SafeLoader)
+
+    def __getitem__(self, h: str) -> str:
+        return self.d[h]
+
+    def save(self):
+        with open(self.fn, "w") as f:
+            yaml.dump(self.d, f, Dumper=yaml.SafeDumper)
+
+    def recreate(self):
+        workspace = comet_conf.workspace
+        experiments = []
         for project in api.get_projects(workspace):
-            for exp in api.get(
-                workspace=workspace,
-                project_name=project,
-            ):
-                if exp.get_parameters_summary("hash") != []:
-                    experiments.append(exp)
-            api.get_projects
-    qres = [
-        exp
-        for exp in experiments
-        if exp.get_parameters_summary("hash")["valueCurrent"] == hash
-    ]
-    return qres
+            experiments = experiments + api.get(workspace, project)
+        self.d = {}
+        for exp in experiments:
+            self.d[exp.name] = exp.id
+        self.save()
 
 
-def experiment_from_key(key) -> comet_ml.ExistingExperiment:
-    experiment = comet_ml.ExistingExperiment(
-        previous_experiment=key,
+exp_orga = ExperimentOrganizer()
+
+
+def api_experiment_from_hash(hash) -> comet_ml.APIExperiment:
+    return api.get_experiment_by_key(exp_orga[hash])
+
+
+def experiment_from_hash(hash) -> comet_ml.ExistingExperiment:
+    return comet_ml.ExistingExperiment(
+        previous_experiment=exp_orga[hash],
         **comet_conf,
         log_code=True,
         log_graph=True,
@@ -45,20 +56,6 @@ def experiment_from_key(key) -> comet_ml.ExistingExperiment:
         log_env_host=True,
         auto_output_logging=False,
     )
-    return experiment
-
-
-def experiment_from_hash(hash) -> comet_ml.ExistingExperiment:
-    qres = get_exps_with_hash(hash)
-    if len(qres) == 0:
-        raise ValueError("Experiment does not exist in comet.ml")
-    elif len(qres) > 1:
-        raise ValueError("Experiment exist multiple times in comet.ml")
-
-    exp_key = qres[0].id
-
-    experiment = experiment_from_key(exp_key)
-    return experiment
 
 
 def get_experiment(state: DictConfig) -> comet_ml.ExistingExperiment:
@@ -75,7 +72,7 @@ def setup_experiment() -> None:
     from fgsim.config import conf
 
     """Generates a new experiment."""
-    if len(get_exps_with_hash(conf.hash)):
+    if conf.hash in exp_orga.d:
         raise Exception("Experiment exists")
     project_name = (
         conf.comet_project_name
@@ -93,12 +90,10 @@ def setup_experiment() -> None:
     hyperparameters_keyval_list["hash"] = conf["hash"]
     hyperparameters_keyval_list["loader_hash"] = conf["loader_hash"]
     new_api_exp.log_parameters(hyperparameters_keyval_list)
+    new_api_exp.log_other("name", conf["hash"])
     new_api_exp.add_tags(list(set(conf.tag.split("_"))))
-
-    # exp_key = new_api_exp.id
-
-    # experiment = experiment_from_key(exp_key)
-    # experiment.log_code(Path(conf.path.run_path) / "fgsim")
+    exp_orga.d[conf["hash"]] = new_api_exp.id
+    exp_orga.save()
 
 
 def get_writer():
