@@ -4,8 +4,8 @@ from fgsim.models.metrics.dcd import dcd
 
 
 class LossGen:
-    def __init__(self) -> None:
-        pass
+    def __init__(self, alpha) -> None:
+        self.alpha = alpha
 
     def __call__(self, holder: Holder, batch: Batch):
         # Loss of the generated samples
@@ -15,6 +15,7 @@ class LossGen:
         loss = dcd(
             holder.gen_points_w_grad.x.reshape(batch_size, -1, n_features),
             batch.x.reshape(batch_size, -1, n_features),
+            alpha=self.alpha,
         )
 
         return loss
