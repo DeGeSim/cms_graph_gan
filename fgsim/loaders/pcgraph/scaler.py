@@ -33,10 +33,11 @@ class Scaler:
             event_list = p.map(transform_wo_scaling, chk)
 
         if isinstance(event_list[0], Data):
-            batch = Batch.from_data_list(event_list).reshape(
-                -1, conf.loader.n_features
+            pcs = (
+                Batch.from_data_list(event_list)
+                .x.reshape(-1, conf.loader.n_features)
+                .numpy()
             )
-            pcs = batch.x.numpy()
         elif isinstance(event_list[0], torch.Tensor):
             pcs = (
                 torch.stack(event_list).reshape(-1, conf.loader.n_features).numpy()

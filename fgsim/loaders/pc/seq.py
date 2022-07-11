@@ -11,8 +11,7 @@ from torch.multiprocessing import Queue, Value
 
 from fgsim.config import conf
 from fgsim.geo.geo_lup import geo_lup
-
-from .scaler import scaler
+from fgsim.loaders.pcgraph.scaler import scaler
 
 # from fgsim.io.batch_tools import compute_hlvs
 
