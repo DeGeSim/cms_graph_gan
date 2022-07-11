@@ -32,7 +32,7 @@ def read_file(file: Path) -> DataSetType:
 # Collect the steps
 def preprocessed_seq():
     return (
-        qf.ProcessStep(read_file, 2, name="read_chunk"),
+        qf.ProcessStep(read_file, 4, name="read_chunk"),
         qf.pack.UnpackStep(),
         Queue(conf.loader.prefetch_batches),
     )
