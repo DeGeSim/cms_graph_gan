@@ -50,6 +50,10 @@ for line in ${lines[@]}; do
     # split the lines into an array
     IFS=' ' read -r -a linesplit <<< $line
     export CMD=${linesplit[0]}
+    # These commands should always be local
+    if [[ $CMD == 'setup' || $CMD == 'overwrite' || $CMD == 'dump' ]]; then
+        REMOTE=false
+    fi
     export TAG_OR_HASH=${linesplit[1]}
     export TAG_OR_HASH_ARG=${linesplit[2]}
     export RESTCMD=${linesplit[@]:2}

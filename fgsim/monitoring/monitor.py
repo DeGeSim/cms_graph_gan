@@ -1,3 +1,5 @@
+from typing import List
+
 import comet_ml
 import yaml
 from omegaconf import OmegaConf
@@ -37,8 +39,18 @@ class ExperimentOrganizer:
 exp_orga = ExperimentOrganizer()
 
 
-def api_experiment_from_hash(hash) -> comet_ml.APIExperiment:
+def api_experiment_from_hash(hash: str) -> comet_ml.APIExperiment:
     return api.get_experiment_by_key(exp_orga[hash])
+
+
+def search_experiement_by_name(exp_hash: str) -> List[comet_ml.APIExperiment]:
+    workspace = comet_conf.workspace
+    exps_whash = []
+    for project in api.get(workspace):
+        for exp in api.get(workspace, project):
+            if exp.name == exp_hash:
+                exps_whash.append(exp)
+    return exps_whash
 
 
 def experiment_from_hash(hash) -> comet_ml.ExistingExperiment:
