@@ -14,7 +14,7 @@ def smooth_features(x):
             np.random.multivariate_normal(
                 [0.0, 0.0, 0.0, 0.0],
                 np.diag(conf.training.smoothing_vars),
-                conf.loader.max_points * conf.loader.batch_size,
+                size=x.shape[:-1],
             )
         ).float()
     )
