@@ -14,10 +14,6 @@ class Event:
     graph: Graph
     hlvs: Dict[str, torch.Tensor] = field(default_factory=dict)
 
-    # def __post_init__(self):
-    #     if self.graph.edge_index is None and not hasattr(self.graph, "num_graphs"):
-    #         self.graph = Graph(x=aggr_and_sort_points(self.pc))
-
     @property
     def pc(self):
         return self.graph.x

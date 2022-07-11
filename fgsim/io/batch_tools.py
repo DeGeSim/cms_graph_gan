@@ -1,5 +1,5 @@
 from collections import defaultdict
-from typing import Dict, List, Tuple
+from typing import Dict, List, Tuple, Union
 
 import torch
 import torch_scatter
@@ -122,15 +122,19 @@ def batch_compute_hlvs(batch) -> Batch:
     return batch
 
 
-def compute_hlvs(graph: Data) -> Dict[str, torch.Tensor]:
+def compute_hlvs(batch: Union[torch.Tensor, Data]) -> Dict[str, torch.Tensor]:
+    if isinstance(batch, Data):
+        X = batch.x
+    else:
+        X = batch.reshape(-1, batch.shape[-1])
     hlvs: Dict[str, torch.Tensor] = {}
 
     if "E" in conf.loader.cell_prop_keys:
         E_idx = conf.loader.cell_prop_keys.index("E")
-        e_weight = graph.x[:, E_idx] / torch.sum(graph.x[:, E_idx])
+        e_weight = X[:, E_idx] / torch.sum(X[:, E_idx])
 
     for irow, key in enumerate(conf.loader.cell_prop_keys):
-        vec = graph.x[:, irow]
+        vec = X[:, irow]
         hlvs[key + "_mean"] = torch.mean(vec)
         hlvs[key + "_std"] = torch.std(vec)
         if "E" in conf.loader.cell_prop_keys:
