@@ -6,9 +6,8 @@ from torch_geometric.data import Batch as GraphBatch
 from torch_geometric.data import Data as Graph
 
 from fgsim.config import conf
+from fgsim.io.batch_tools import aggr_and_sort_points
 from fgsim.monitoring.logger import logger
-
-from .aggr_and_sort_points import aggr_and_sort_points
 
 
 @dataclass

@@ -1,9 +1,11 @@
 from pathlib import Path
 
 import joblib
+import torch
 from sklearn.compose import make_column_transformer
 from sklearn.preprocessing import MinMaxScaler, PowerTransformer, StandardScaler
 from torch.multiprocessing import Pool
+from torch_geometric.data import Batch, Data
 
 from fgsim.config import conf
 
@@ -23,14 +25,24 @@ class Scaler:
     def save_scaler(
         self,
     ):
-        from .seq import aggregate_to_batch, read_chunk, transform_wo_scaling
+        from .seq import read_chunk, transform_wo_scaling
 
         assert len_dict[files[0]] >= conf.loader.scaling_fit_size
         chk = read_chunk([(Path(files[0]), 0, conf.loader.scaling_fit_size)])
         with Pool(conf.loader.num_workers_transform) as p:
             event_list = p.map(transform_wo_scaling, chk)
-        batch = aggregate_to_batch(event_list)
-        pcs = batch.x.numpy()
+
+        if isinstance(event_list[0], Data):
+            batch = Batch.from_data_list(event_list).reshape(
+                -1, conf.loader.n_features
+            )
+            pcs = batch.x.numpy()
+        elif isinstance(event_list[0], torch.Tensor):
+            pcs = (
+                torch.stack(event_list).reshape(-1, conf.loader.n_features).numpy()
+            )
+        else:
+            raise Exception
         # E, x, y, z = pcs.T
         # import matplotlib.pyplot as plt
         # for k,v in zip(["E","x","y","z"],comb_transf.transform(pcs).T):

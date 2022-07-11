@@ -82,7 +82,7 @@ def transform(hitlist: ak.highlevel.Record) -> Data:
     graph = Data(x=pointcloud)
     if postprocess_switch.value:
         graph.hlvs = compute_hlvs(graph)
-    graph.x = torch.from_numpy(scaler.transform(graph.x.numpy()))
+    graph.x = torch.from_numpy(scaler.transform(graph.x.numpy())).float()
     return graph
 
 

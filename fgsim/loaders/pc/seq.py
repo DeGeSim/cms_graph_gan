@@ -1,3 +1,4 @@
+from heapq import nlargest
 from pathlib import Path
 from typing import Dict, List, Tuple
 
@@ -11,36 +12,20 @@ from torch.multiprocessing import Queue, Value
 from fgsim.config import conf
 from fgsim.geo.geo_lup import geo_lup
 
-from .event import Batch, Event
+from .scaler import scaler
+
+# from fgsim.io.batch_tools import compute_hlvs
+
 
 # Sharded switch for the postprocessing
 postprocess_switch = Value("i", 0)
 
 
 ChunkType = List[Tuple[Path, int, int]]
-# Collect the steps
+
+
+# Regular sequence of processing train/test/validation
 def process_seq():
-    return (
-        qf.ProcessStep(read_chunk, 2, name="read_chunk"),
-        qf.PoolStep(
-            transform,
-            nworkers=conf.loader.num_workers_transform,
-            name="transform",
-        ),
-        qf.RepackStep(conf.loader.batch_size),
-        qf.ProcessStep(aggregate_to_batch, 1, name="batch"),
-        # Needed for outputs to stay in order.
-        qf.ProcessStep(
-            magic_do_nothing,
-            1,
-            name="magic_do_nothing",
-        ),
-        Queue(conf.loader.prefetch_batches),
-    )
-
-
-# Collect the steps
-def process_unscaled_seq():
     return (
         qf.ProcessStep(read_chunk, 2, name="read_chunk"),
         qf.PoolStep(
@@ -83,21 +68,23 @@ def read_chunk(chunks: ChunkType) -> ak.highlevel.Array:
     return output
 
 
-def aggregate_to_batch(list_of_graphs: List[Event]) -> Batch:
-    batch = Batch.from_event_list(*list_of_graphs)
+def aggregate_to_batch(list_of_events: List[torch.Tensor]) -> torch.Tensor:
+    batch = torch.stack(list_of_events)
     return batch
 
 
-def magic_do_nothing(batch: Batch) -> Batch:
+def magic_do_nothing(batch):
     return batch
 
 
-def transform(hitlist: ak.highlevel.Record) -> Event:
+def transform(hitlist: ak.highlevel.Record) -> torch.Tensor:
     pointcloud = hitlist_to_pc(hitlist)
-    event = Event(pointcloud)
-    if postprocess_switch.value:
-        event.compute_hlvs()
-    return event
+    return torch.from_numpy(scaler.transform(pointcloud)).float()
+
+
+def transform_wo_scaling(hitlist: ak.highlevel.Record) -> torch.Tensor:
+    pointcloud = hitlist_to_pc(hitlist)
+    return pointcloud
 
 
 def hitlist_to_pc(event: ak.highlevel.Record) -> torch.Tensor:
@@ -116,14 +103,19 @@ def hitlist_to_pc(event: ak.highlevel.Record) -> torch.Tensor:
         else:
             id_to_energy_dict[detid] = hit_energy
 
-    detids = np.array(list(id_to_energy_dict.keys()), dtype=np.uint)
+    # get detids with the the n highest energies
+    detids_selected = nlargest(
+        conf.loader.max_points, id_to_energy_dict, key=id_to_energy_dict.get
+    )
 
     # Filter out the rows/detids that are not in the event
-    geo_lup_filtered = geo_lup.reindex(index=detids)
+    geo_lup_filtered = geo_lup.reindex(
+        index=np.array(detids_selected, dtype=np.uint)
+    )
 
     # compute static features
     hit_energies = torch.tensor(
-        list(id_to_energy_dict.values()), dtype=torch.float32
+        [id_to_energy_dict[e] for e in detids_selected], dtype=torch.float32
     )
     xyzpos = torch.tensor(
         geo_lup_filtered[conf.loader.cell_prop_keys[1:]].values, dtype=torch.float32
@@ -137,14 +129,7 @@ def hitlist_to_pc(event: ak.highlevel.Record) -> torch.Tensor:
             "Event hast more points then the padding: "
             f"{conf.loader.max_points} < {pc.shape[0]}"
         )
-    pc = torch.nn.functional.pad(
-        pc,
-        (0, 0, 0, conf.loader.max_points - pc.shape[0]),
-        mode="constant",
-        value=0,
-    )
+    # Negative energies?
     if torch.any(pc[:, 0] < 0):
         raise Exception
-    assert pc.shape[0] == conf.loader.max_points
-    assert pc.shape[1] == conf.loader.n_features
     return pc

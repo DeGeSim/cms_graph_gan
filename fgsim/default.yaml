@@ -200,6 +200,7 @@ loader_options:
         cell_prop_keys: ["E","x", "y", "layerid"]
         n_features: 4
     pcgraph: ${loader_options[hgcal]}
+    pc: ${loader_options[hgcal]}
     puregraph: ${loader_options[hgcal]}
     normal:
         dataset_path: "data/normal"
