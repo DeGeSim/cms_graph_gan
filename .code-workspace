@@ -102,7 +102,8 @@
             "**/node_modules/*/**": true,
             "**/old/**": true,
             "venv1.10.1+cu111/": true,
-            "wd/": true
+            "wd/": true,
+            "data/": true,
         },
         "files.watcherExclude": {
             "**/.git/objects/**": true,
@@ -110,7 +111,9 @@
             "**/.hg/store/**": true,
             "**/node_modules/*/**": true,
             "venv1.10.1+cu111/": true,
-            "wd/": true
+            "wd/": true,
+            "data/": true,
+            "logandrun/": true,
         },
         "jupyter.jupyterLaunchRetries": 1,
         "python.analysis.typeCheckingMode": "basic",
