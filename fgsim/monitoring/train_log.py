@@ -13,10 +13,10 @@ class TrainLog:
     """Initialized with the `holder`, provides the logging with cometml/tensorboard."""
 
     def __init__(self, state, history):
-        if conf.debug and conf.command != "test":
-            return
         self.state: DictConfig = state
         self.history: Dict = history
+        if conf.debug and conf.command != "test":
+            return
         self.writer: SummaryWriter = get_writer()
         self.experiment: BaseExperiment = get_experiment(self.state)
 
