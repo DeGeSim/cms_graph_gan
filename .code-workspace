@@ -34,42 +34,42 @@
             {
                 "args": [
                     "--tag",
-                    "gendt_disct_hgcal",
+                    "jetnet",
                     "--debug",
                     "train"
                 ],
                 "cwd": "/home/mscham/fgsim",
                 // "justMyCode": false,
                 "module": "fgsim",
-                "name": "tr gendt_disct_hgcal",
+                "name": "tr jetnet",
                 "request": "launch",
                 "type": "python"
             },
             {
                 "args": [
                     "--tag",
-                    "gendt_disct_hgcal",
+                    "jetnet",
                     "--debug",
                     "test"
                 ],
                 "cwd": "/home/mscham/fgsim",
                 // "justMyCode": false,
                 "module": "fgsim",
-                "name": "te gendt_disct_hgcal",
+                "name": "te jetnet",
                 "request": "launch",
                 "type": "python"
             },
             {
                 "args": [
                     "--tag",
-                    "gendt_disct_hgcal",
+                    "jetnet",
                     "--debug",
                     "preprocess"
                 ],
                 "cwd": "/home/mscham/fgsim",
                 // "justMyCode": false,
                 "module": "fgsim",
-                "name": "pp gendt_disct_hgcal",
+                "name": "pp jetnet",
                 "request": "launch",
                 "type": "python"
             }
