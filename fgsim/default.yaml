@@ -137,7 +137,7 @@ training:
         improvement: 0.02
     checkpoint_minutes: 15
     smooth_features: True
-    smoothing_vars: [0.0, 0.01, 0.002, 0.0004]
+    smoothing_vars: [0.0, 0.01, 0.002, 0.0001]
     log_interval: 100
 validation:
     interval: "${div:${training.events_processed_before_validation},${loader.batch_size}}"
