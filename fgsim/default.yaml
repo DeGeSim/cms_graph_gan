@@ -9,7 +9,7 @@ models:
         params: ${model_param_options[${models.gen.name}]}
         losses: "${optionlist:${loss_options},${models.gen.losses_list}}"
         # losses_list: [WGenLoss]
-        losses_list: [CEGenLoss,outside_interval,mmdpc]
+        losses_list: [CEGenLoss,outside_interval,dcd]
         optim:
             name: Adam
             params: ${optim_options[Adam]}
@@ -136,7 +136,7 @@ training:
         validation_steps: 100
         improvement: 0.02
     checkpoint_minutes: 15
-    smooth_features: True
+    smooth_features: False
     smoothing_vars: [0.0, 0.01, 0.002, 0.0001]
     log_interval: 100
 validation:
