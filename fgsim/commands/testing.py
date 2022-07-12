@@ -53,7 +53,7 @@ def test_procedure() -> None:
 
     test_data: TestDataset = get_testing_datasets(holder)
 
-    for best_or_last in ["last", "best"]:
+    for best_or_last in ["last"]:
         plot_path = Path(f"{conf.path.run_path}/plots_{best_or_last}/")
         plot_path.mkdir(exist_ok=True)
 
@@ -205,10 +205,10 @@ def test_metrics(test_info: TestInfo):
     # and then compare the distributions with w1
 
     covars_sim = torch.vstack(
-        [torch.cov(batch.x.T).reshape(1, 4) for batch in sim_batches]
+        [torch.cov(batch.x[:, :2].T).reshape(1, 4) for batch in sim_batches]
     ).numpy()
     covars_gen = torch.vstack(
-        [torch.cov(batch.x.T).reshape(1, 4) for batch in gen_batches]
+        [torch.cov(batch.x[:, :2].T).reshape(1, 4) for batch in gen_batches]
     ).numpy()
 
     metrics_dict = {
@@ -257,7 +257,7 @@ def test_plots(test_info: TestInfo):
 
     def log_figure(figure, filename):
         outputpath = plot_path / filename
-        figure.savefig(outputpath)
+        # figure.savefig(outputpath)
         figure.savefig(outputpath.with_suffix(".png"), dpi=150)
         train_log.experiment.log_figure(
             figure_name=f"test.{best_or_last}.{filename}",
@@ -267,29 +267,41 @@ def test_plots(test_info: TestInfo):
         logger.info(plot_path / filename)
 
     # Scatter of a single event
-    figure = xyscatter(
-        sim=sim_batches[0][0].x.numpy(),
-        gen=gen_batches[0][0].x.numpy(),
-        title=f"Scatter a single event ({conf.loader.max_points} points)",
-    )
-    log_figure(figure, "xyscatter_single.pdf")
+    from itertools import combinations
 
-    figure = xyscatter_faint(
-        sim=sim_batches[0].x.numpy(),
-        gen=gen_batches[0].x.numpy(),
-        title=(
-            f"Scatter points ({conf.loader.max_points}) in batch"
-            f" ({conf.loader.batch_size})"
-        ),
-    )
-    log_figure(figure, "xyscatter_batch.pdf")
+    for v1, v2 in combinations(list(range(conf.loader.n_features)), 2):
+        v1name = conf.loader.cell_prop_keys[v1]
+        v2name = conf.loader.cell_prop_keys[v2]
+        cmbname = f"{v1name}_vs_{v2name}"
+        figure = xyscatter(
+            sim=sim_batches[0][0].x[:, [v1, v2]].numpy(),
+            gen=gen_batches[0][0].x[:, [v1, v2]].numpy(),
+            title=f"Scatter a single event ({conf.loader.max_points} points)",
+            v1name=v1name,
+            v2name=v2name,
+        )
+        log_figure(figure, f"xyscatter_single_{cmbname}.pdf")
 
-    figure = xy_hist(
-        sim=sim_batches_stacked.x.numpy(),
-        gen=gen_batches_stacked.x.numpy(),
-        title=(
-            f"2D Histogram for {conf.loader.max_points} points in"
-            f" {conf.testing.n_events} events"
-        ),
-    )
-    log_figure(figure, "xy_hist.pdf")
+        figure = xyscatter_faint(
+            sim=sim_batches[0].x[:, [v1, v2]].numpy(),
+            gen=gen_batches[0].x[:, [v1, v2]].numpy(),
+            title=(
+                f"Scatter points ({conf.loader.max_points}) in batch"
+                f" ({conf.loader.batch_size})"
+            ),
+            v1name=v1name,
+            v2name=v2name,
+        )
+        log_figure(figure, f"xyscatter_batch_{cmbname}.pdf")
+
+        figure = xy_hist(
+            sim=sim_batches_stacked.x[:, [v1, v2]].numpy(),
+            gen=gen_batches_stacked.x[:, [v1, v2]].numpy(),
+            title=(
+                f"2D Histogram for {conf.loader.max_points} points in"
+                f" {conf.testing.n_events} events"
+            ),
+            v1name=v1name,
+            v2name=v2name,
+        )
+        log_figure(figure, f"xy_hist_{cmbname}.pdf")

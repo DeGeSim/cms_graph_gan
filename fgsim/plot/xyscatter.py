@@ -26,16 +26,12 @@ def gausstr(sim: np.ndarray, gen: np.ndarray):
     return [f"GAN μ{mean_gen}\nσ{cov_gen}", f"MC μ{mean_sim}\nσ{cov_sim}"]
 
 
-def simranges(sim: np.ndarray):
-    xrange = (min(sim[:, 0]), max(sim[:, 0]))
-    yrange = (min(sim[:, 1]), max(sim[:, 1]))
-    return xrange, yrange
-
-
 def xyscatter(
     sim: Union[np.ndarray, torch.Tensor],
     gen: Union[np.ndarray, torch.Tensor],
     title: str,
+    v1name: str,
+    v2name: str,
 ) -> plt.Figure:
     sim = to_np(sim)
     gen = to_np(gen)
@@ -44,15 +40,15 @@ def xyscatter(
 
     sim_df = pd.DataFrame(
         {
-            "x": sim[:, 0],
-            "y": sim[:, 1],
+            v1name: sim[:, 0],
+            v2name: sim[:, 1],
             "cls": f"MC",
         }
     )
     gen_df = pd.DataFrame(
         {
-            "x": gen[:, 0],
-            "y": gen[:, 1],
+            v1name: gen[:, 0],
+            v2name: gen[:, 1],
             "cls": f"GAN",
         }
     )
@@ -62,8 +58,8 @@ def xyscatter(
     plt.clf()
     g: sns.JointGrid = sns.jointplot(
         data=df,
-        x="x",
-        y="y",
+        x=v1name,
+        y=v2name,
         hue="cls",
         legend=False,
         xlim=xrange,
@@ -81,7 +77,13 @@ def xyscatter(
     return g.figure
 
 
-def xyscatter_faint(sim: np.array, gen: np.array, title: str) -> plt.Figure:
+def xyscatter_faint(
+    sim: np.array,
+    gen: np.array,
+    title: str,
+    v1name: str,
+    v2name: str,
+) -> plt.Figure:
     if len(sim) > 5000:
         sampleidxs = np.random.choice(sim.shape[0], size=5000, replace=False)
         sim = sim[sampleidxs]
@@ -91,15 +93,15 @@ def xyscatter_faint(sim: np.array, gen: np.array, title: str) -> plt.Figure:
 
     sim_df = pd.DataFrame(
         {
-            "x": sim[:, 0],
-            "y": sim[:, 1],
+            v1name: sim[:, 0],
+            v2name: sim[:, 1],
             "cls": f"MC",
         }
     )
     gen_df = pd.DataFrame(
         {
-            "x": gen[:, 0],
-            "y": gen[:, 1],
+            v1name: gen[:, 0],
+            v2name: gen[:, 1],
             "cls": f"GAN",
         }
     )
@@ -109,10 +111,10 @@ def xyscatter_faint(sim: np.array, gen: np.array, title: str) -> plt.Figure:
     plt.clf()
     g: sns.JointGrid = sns.jointplot(
         data=df,
-        x="x",
-        y="y",
+        x=v1name,
+        y=v2name,
         hue="cls",
-        alpha=0.3,
+        alpha=0.15,
         legend=False,
         xlim=xrange,
         ylim=yrange,
@@ -130,15 +132,59 @@ def xyscatter_faint(sim: np.array, gen: np.array, title: str) -> plt.Figure:
     return g.figure
 
 
-def xy_hist(sim: np.array, gen: np.array, title: str) -> plt.Figure:
+def xy_hist(
+    sim: np.array,
+    gen: np.array,
+    title: str,
+    v1name: str,
+    v2name: str,
+) -> plt.Figure:
     plt.cla()
     plt.clf()
 
     sns.set()
     fig, axes = plt.subplots(1, 2, sharex=True, sharey=True)
-    _, xedges, yedges, _ = axes[0].hist2d(sim[:, 0], sim[:, 1], bins=[100, 100])
+    _, xedges, yedges, _ = axes[0].hist2d(
+        sim[:, 0],
+        sim[:, 1],
+        bins=[
+            binbourders_wo_outliers(sim[:, 0]),
+            binbourders_wo_outliers(sim[:, 1]),
+        ],
+    )
+
+    axes[1].hist2d(
+        gen[:, 0],
+        gen[:, 1],
+        bins=[xedges, yedges],
+    )
     axes[0].set_title("MC")
-    axes[1].hist2d(gen[:, 0], gen[:, 1], bins=[xedges, yedges])
     axes[1].set_title("GAN")
+    axes[0].set(xlabel=v1name, ylabel=v2name)
+    axes[1].set(xlabel=v1name, ylabel=v2name)
+
     fig.suptitle(title)
     return fig
+
+
+def simranges(sim: np.ndarray):
+    xrange = bounds_wo_outliers(sim[:, 0])
+    yrange = bounds_wo_outliers(sim[:, 1])
+    return xrange, yrange
+
+
+def binbourders_wo_outliers(points) -> np.ndarray:
+    return np.linspace(*bounds_wo_outliers(points), num=100, endpoint=True)
+
+
+def bounds_wo_outliers(points: np.ndarray) -> tuple:
+    thresh = 3.0
+    median = np.median(points, axis=0)
+    med_abs_lfluk = np.sqrt(np.median((points[points < median] - median) ** 2))
+    med_abs_ufluk = np.sqrt(np.median((points[points > median] - median) ** 2))
+    upper = median + med_abs_ufluk * thresh
+    lower = median - med_abs_lfluk * thresh
+    # print(lower,np.min(points), upper,np.max(points))
+    upper = np.min([upper, np.max(points)])
+    lower = np.max([lower, np.min(points)])
+    return lower, upper
