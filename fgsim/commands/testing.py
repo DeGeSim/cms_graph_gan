@@ -5,11 +5,12 @@ and compare the generated events to the simulated events.
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, List
+from typing import Dict, List, Optional
 
+import jetnet
 import numpy as np
 import torch
-from scipy.stats import kstest, wasserstein_distance
+from scipy.stats import wasserstein_distance
 from torch_geometric.data import Batch
 from torch_scatter import scatter_mean
 from tqdm import tqdm
@@ -17,7 +18,7 @@ from tqdm import tqdm
 from fgsim.config import conf
 from fgsim.io.batch_tools import batch_from_pcs_list
 from fgsim.io.queued_dataset import QueuedDataLoader
-from fgsim.io.sel_seq import batch_tools
+from fgsim.loaders.jetnet.scaler import scaler
 from fgsim.ml.holder import Holder
 from fgsim.models.branching.graph_tree import graph_tree_to_graph
 from fgsim.monitoring.logger import logger
@@ -30,7 +31,7 @@ class TestInfo:
     train_log: TrainLog
     sim_batches: List
     gen_batches: List
-    hlvs_dict: Dict[str, Dict[str, np.ndarray]]
+    hlvs_dict: Optional[Dict[str, Dict[str, np.ndarray]]]
     plot_path: Path
     step: int
     best_or_last: str
@@ -41,7 +42,7 @@ class TestDataset:
     sim_batches: List
     gen_batches_best: List
     gen_batches_last: List
-    hlvs_dict: Dict[str, Dict[str, np.ndarray]]
+    hlvs_dict: Optional[Dict[str, Dict[str, np.ndarray]]]
     grad_step: int
     loader_hash: str
     hash: str
@@ -75,11 +76,8 @@ def test_procedure() -> None:
             best_or_last=best_or_last,
         )
 
-        #  = compute_hlvs_dict(sim_batches, gen_batches)
-
+        test_metrics(test_info)
         test_plots(test_info)
-        if best_or_last == "best":
-            test_metrics(test_info)
 
     exit(0)
 
@@ -127,31 +125,21 @@ def get_testing_datasets(holder: Holder) -> TestDataset:
                     gen_batches.append(gen_batch)
 
             logger.info("Processs HLVs")
-            # from concurrent.futures import ProcessPoolExecutor
-
-            # with ProcessPoolExecutor(max_workers=10) as p:
-            #     ds_dict[best_or_last] = list(
-            #         p.map(batch_tools.batch_compute_hlvs, gen_batches)
-            #     )
-            # from multiprocessing import Pool
-
-            # with Pool(10) as p:
-            #     ds_dict[best_or_last] = p.map(
-            #         batch_tools.batch_compute_hlvs, gen_batches
-            #     )
-            ds_dict[best_or_last] = [
-                batch_tools.batch_compute_hlvs(batch)
-                for batch in tqdm(gen_batches, desc="Compute HLVs gen_batches")
-            ]
-        hlvs_dict: Dict[str, Dict[str, np.ndarray]] = {
-            name: compute_hlvs_dict(ds) for name, ds in ds_dict.items()
-        }
+            ds_dict[best_or_last] = gen_batches
+            # from fgsim.io.batch_tools import batch_compute_hlvs
+            # ds_dict[best_or_last] = [
+            #     batch_compute_hlvs(batch)
+            #     for batch in tqdm(gen_batches, desc="Compute HLVs gen_batches")
+            # ]
+        # hlvs_dict: Dict[str, Dict[str, np.ndarray]] = {
+        #     name: compute_hlvs_dict(ds) for name, ds in ds_dict.items()
+        # }
         test_data = TestDataset(
             sim_batches=ds_dict["sim"],
             gen_batches_best=ds_dict["best"],
             gen_batches_last=ds_dict["last"],
             grad_step=holder.state.grad_step,
-            hlvs_dict=hlvs_dict,
+            hlvs_dict=None,
             loader_hash=conf.loader_hash,
             hash=conf.hash,
         )
@@ -192,42 +180,25 @@ def test_metrics(test_info: TestInfo):
     train_log = test_info.train_log
     sim_batches = test_info.sim_batches
     gen_batches = test_info.gen_batches
-    hlvs_dict = test_info.hlvs_dict
-    step = test_info.step
-    sim = sim_batches[0].x.numpy()
-    gen = gen_batches[0].x.numpy()
 
-    sim_means = scatter_mean(sim_batches[0].x, sim_batches[0].batch, dim=0).numpy()
-    gen_means = scatter_mean(gen_batches[0].x, gen_batches[0].batch, dim=0).numpy()
+    metrics_dict: Dict[str, float] = {}
 
-    # compute a covar matrix for each batch
-    # take the sqrt of the elements to scale to the scale of the variable
-    # and then compare the distributions with w1
+    # for k, v in w_metrics(sim_batches, gen_batches).items():
+    #     metrics_dict[k] = v
+    for k, v in jetnet_metrics(sim_batches, gen_batches).items():
+        metrics_dict[k] = v
 
-    covars_sim = torch.vstack(
-        [torch.cov(batch.x[:, :2].T).reshape(1, 4) for batch in sim_batches]
-    ).numpy()
-    covars_gen = torch.vstack(
-        [torch.cov(batch.x[:, :2].T).reshape(1, 4) for batch in gen_batches]
-    ).numpy()
-
-    metrics_dict = {
-        "w1_x": wasserstein_distance(sim[:, 0], gen[:, 0]),
-        "w1_y": wasserstein_distance(sim[:, 1], gen[:, 1]),
-        "w1_x_means": wasserstein_distance(sim_means[:, 0], gen_means[:, 0]),
-        "w1_y_means": wasserstein_distance(sim_means[:, 1], gen_means[:, 1]),
-        "w1_cov_xx": wasserstein_distance(covars_sim[:, 0], covars_gen[:, 0]),
-        "w1_cov_xy": wasserstein_distance(covars_sim[:, 1], covars_gen[:, 1]),
-        "w1_cov_yx": wasserstein_distance(covars_sim[:, 2], covars_gen[:, 2]),
-        "w1_cov_yy": wasserstein_distance(covars_sim[:, 3], covars_gen[:, 3]),
-    }
     # KS tests
-    for var in hlvs_dict["best"].keys():
-        res = kstest(hlvs_dict["sim"][var], hlvs_dict["best"][var])
-        train_log.experiment.log_metric(f"test.kstest-{var}", res.pvalue)
+    # from scipy.stats import kstest
+    # for var in hlvs_dict["best"].keys():
+    #     metrics_dict[f"kstest-{var}"] = kstest(
+    #         hlvs_dict["sim"][var], hlvs_dict["best"][var]
+    #     ).pvalue
+
+    metrics_dict = {f"test.{k}": v for k, v in metrics_dict.items()}
     train_log.experiment.log_metrics(
-        {f"test.{k}": v for k, v in metrics_dict.items()},
-        step=step,
+        metrics_dict,
+        step=test_info.step,
     )
 
 
@@ -305,3 +276,85 @@ def test_plots(test_info: TestInfo):
             v2name=v2name,
         )
         log_figure(figure, f"xy_hist_{cmbname}.pdf")
+
+
+def jetnet_metrics(sim_batches, gen_batches) -> Dict[str, float]:
+    sim = np.hstack(
+        [
+            scaler.inverse_transform(sim_batches[0].x.numpy()),
+            sim_batches[0].mask.reshape(-1, 1).float().numpy(),
+        ],
+    )
+    sim[~sim[:, -1].astype(dtype=bool), :3] = 0
+    sim = sim.reshape(conf.loader.batch_size, 30, 4)
+
+    gen = np.hstack(
+        [
+            scaler.inverse_transform(gen_batches[0].x.numpy()),
+            torch.ones(conf.loader.batch_size * 30, 1).float().numpy(),
+        ],
+    )
+    gen[~gen[:, -1].astype(dtype=bool), :3] = 0
+    gen = gen.reshape(conf.loader.batch_size, 30, 4)
+    metrics_dict = {}
+    metrics_dict["fpnd"] = jetnet.evaluation.fpnd(
+        jets=gen[..., :3], jet_type="t", batch_size=conf.loader.batch_size
+    )
+
+    metrics_dict["w1m"] = (
+        jetnet.evaluation.w1m(
+            jets1=sim[..., :3],
+            jets2=gen[..., :3],
+        )[0]
+        * 1e3
+    )
+
+    metrics_dict["w1p"] = (
+        jetnet.evaluation.w1p(
+            jets1=sim[..., :3],
+            jets2=gen[..., :3],
+            # mask1=sim[..., 3].squeeze(),
+            # mask2=gen[..., 3].squeeze(),
+        )[0]
+        * 1e3
+    )
+
+    metrics_dict["w1efp"] = (
+        jetnet.evaluation.w1efp(
+            jets1=sim[..., :3],
+            jets2=gen[..., :3],
+        )[0]
+        * 1e5
+    )
+    return metrics_dict
+
+
+def w_metrics(sim_batches, gen_batches) -> Dict[str, float]:
+    sim = sim_batches[0].x.numpy()
+    gen = gen_batches[0].x.numpy()
+
+    sim_means = scatter_mean(sim_batches[0].x, sim_batches[0].batch, dim=0).numpy()
+    gen_means = scatter_mean(gen_batches[0].x, gen_batches[0].batch, dim=0).numpy()
+
+    # compute a covar matrix for each batch
+    # take the sqrt of the elements to scale to the scale of the variable
+    # and then compare the distributions with w1
+
+    covars_sim = torch.vstack(
+        [torch.cov(batch.x[:, :2].T).reshape(1, 4) for batch in sim_batches]
+    ).numpy()
+    covars_gen = torch.vstack(
+        [torch.cov(batch.x[:, :2].T).reshape(1, 4) for batch in gen_batches]
+    ).numpy()
+
+    metrics_dict = {
+        "w1_x": wasserstein_distance(sim[:, 0], gen[:, 0]),
+        "w1_y": wasserstein_distance(sim[:, 1], gen[:, 1]),
+        "w1_x_means": wasserstein_distance(sim_means[:, 0], gen_means[:, 0]),
+        "w1_y_means": wasserstein_distance(sim_means[:, 1], gen_means[:, 1]),
+        "w1_cov_xx": wasserstein_distance(covars_sim[:, 0], covars_gen[:, 0]),
+        "w1_cov_xy": wasserstein_distance(covars_sim[:, 1], covars_gen[:, 1]),
+        "w1_cov_yx": wasserstein_distance(covars_sim[:, 2], covars_gen[:, 2]),
+        "w1_cov_yy": wasserstein_distance(covars_sim[:, 3], covars_gen[:, 3]),
+    }
+    return metrics_dict
