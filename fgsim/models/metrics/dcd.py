@@ -3,7 +3,7 @@ import torch
 
 # https://github.com/wutong16/Density_aware_Chamfer_Distance/blob/main/utils_v2/model_utils.py
 # https://arxiv.org/abs/2111.12702v1
-def dcd(x, gt, alpha=1000, n_lambda=1, return_raw=False, non_reg=False):
+def dcd(x, gt, alpha=1, lpnorm=2.0, n_lambda=1, non_reg=False):
     x = x.float()
     gt = gt.float()
     batch_size, n_x, _ = x.shape
@@ -17,7 +17,7 @@ def dcd(x, gt, alpha=1000, n_lambda=1, return_raw=False, non_reg=False):
         frac_12 = n_x / n_gt
         frac_21 = n_gt / n_x
 
-    cd_p, cd_t, dist1, dist2, idx1, idx2 = cd(x, gt, return_raw=True)
+    dist1, dist2, idx1, idx2 = distChamfer(x, gt, lpnorm=lpnorm)
     # dist1 (batch_size, n_gt): a gt point finds its nearest neighbour x' in x;
     # idx1  (batch_size, n_gt): the idx of x' \in [0, n_x-1]
     # dist2 and idx2: vice versa
@@ -35,44 +35,36 @@ def dcd(x, gt, alpha=1000, n_lambda=1, return_raw=False, non_reg=False):
     weight2 = (weight2 + 1e-6) ** (-1) * frac_12
     loss2 = (1 - exp_dist2 * weight2).mean(dim=1)
 
-    loss = (loss1 + loss2) / 2
-
-    # res = [loss, cd_p, cd_t]
-    res = loss.mean()
-    if return_raw:
-        res.extend([dist1, dist2, idx1, idx2])
-
-    return res
+    return (loss1 + loss2) / 2
 
 
-def cd(
-    output, gt, calc_f1=False, return_raw=False, normalize=False, separate=False
-):
-    dist1, dist2, idx1, idx2 = distChamfer(gt, output)
-    cd_p = (torch.sqrt(dist1).mean(1) + torch.sqrt(dist2).mean(1)) / 2
-    cd_t = dist1.mean(1) + dist2.mean(1)
+def cd(output, gt, lpnorm=2.0):
+    dist1, dist2, _, _ = distChamfer(gt, output, lpnorm=lpnorm)
+    cd_p = (dist1.mean(1) + dist2.mean(1)) / 2
+    return cd_p
+    # cd_p = (torch.sqrt(dist1).mean(1) + torch.sqrt(dist2).mean(1)) / 2
+    # cd_t = dist1.mean(1) + dist2.mean(1)
 
-    if separate:
-        res = [
-            torch.cat(
-                [
-                    torch.sqrt(dist1).mean(1).unsqueeze(0),
-                    torch.sqrt(dist2).mean(1).unsqueeze(0),
-                ]
-            ),
-            torch.cat([dist1.mean(1).unsqueeze(0), dist2.mean(1).unsqueeze(0)]),
-        ]
-    else:
-        res = [cd_p, cd_t]
-    if calc_f1:
-        f1, _, _ = fscore(dist1, dist2)
-        res.append(f1)
-    if return_raw:
-        res.extend([dist1, dist2, idx1, idx2])
-    return res
+    # # , calc_f1=False, separate=False
+    # if separate:
+    #     res = [
+    #         torch.cat(
+    #             [
+    #                 torch.sqrt(dist1).mean(1).unsqueeze(0),
+    #                 torch.sqrt(dist2).mean(1).unsqueeze(0),
+    #             ]
+    #         ),
+    #         torch.cat([dist1.mean(1).unsqueeze(0), dist2.mean(1).unsqueeze(0)]),
+    #     ]
+    # else:
+    #     res = [cd_p, cd_t]
+    # if calc_f1:
+    #     f1, _, _ = fscore(dist1, dist2)
+    #     res.append(f1)
+    # return res
 
 
-def distChamfer(a, b):
+def distChamfer(a, b, lpnorm=2):
     """
     :param a: Pointclouds Batch x nul_points x dim
     :param b:  Pointclouds Batch x nul_points x dim
@@ -83,23 +75,12 @@ def distChamfer(a, b):
     -idx of closest point on a of points from b
     Works for pointcloud of any dimension
     """
-    x, y = a.double(), b.double()
-    bs, num_points_x, points_dim = x.size()
-    bs, num_points_y, points_dim = y.size()
-
-    xx = torch.pow(x, 2).sum(2)
-    yy = torch.pow(y, 2).sum(2)
-    zz = torch.bmm(x, y.transpose(2, 1))
-    rx = xx.unsqueeze(1).expand(
-        bs, num_points_y, num_points_x
-    )  # Diagonal elements xx
-    ry = yy.unsqueeze(1).expand(
-        bs, num_points_x, num_points_y
-    )  # Diagonal elements yy
-    P = rx.transpose(2, 1) + ry - 2 * zz
+    # original implementation equivalent to
+    # P = torch.pow(torch.cdist(a, b, p=lpnorm), lpnorm)
+    P = torch.cdist(a, b, p=lpnorm)
     return (
-        torch.min(P, 2)[0].float(),
-        torch.min(P, 1)[0].float(),
+        torch.min(P, 2)[0],
+        torch.min(P, 1)[0],
         torch.min(P, 2)[1].int(),
         torch.min(P, 1)[1].int(),
     )

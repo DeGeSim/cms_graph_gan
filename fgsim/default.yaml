@@ -118,8 +118,10 @@ loss_options:
     dcd:
         factor: 1.0
         alpha: 1000
+        lpnorm: 1
     cd:
         factor: 1.0
+        lpnorm: 1
 
 optim_options:
     Adam:
