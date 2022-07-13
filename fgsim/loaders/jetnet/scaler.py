@@ -2,10 +2,8 @@ from pathlib import Path
 
 import joblib
 import matplotlib.pyplot as plt
-from sklearn.compose import make_column_transformer
+import numpy as np
 from sklearn.preprocessing import PowerTransformer, StandardScaler
-from torch.multiprocessing import Pool
-from torch_geometric.data import Batch
 
 from fgsim.config import conf
 
@@ -18,9 +16,10 @@ class Scaler:
         if not self.scalerpath.is_file():
             if conf.command != "preprocess":
                 raise FileNotFoundError()
-            self.comb_transf = None
+            self.transfs = None
         else:
-            self.comb_transf = joblib.load(self.scalerpath)
+
+            self.transfs = joblib.load(self.scalerpath)
 
     def save_scaler(
         self,
@@ -29,26 +28,46 @@ class Scaler:
 
         assert len_dict[files[0]] >= conf.loader.scaling_fit_size
         chk = read_chunk([(Path(files[0]), 0, conf.loader.scaling_fit_size)])
-        with Pool(conf.loader.num_workers_transform) as p:
-            event_list = p.map(transform_wo_scaling, chk)
+        event_list = [transform_wo_scaling(e) for e in chk]
 
-        batch = Batch.from_data_list(event_list)
-        pcs = batch.x[batch.mask].numpy()
+        # The features need to be converted to numpy immediatly
+        # otherwise the queuflow afterwards doesnt work
+        pcs = np.vstack([e.x.clone().numpy() for e in event_list])
+        if hasattr(event_list[0], "mask"):
+            mask = np.hstack([e.mask.clone().numpy() for e in event_list])
+            pcs = pcs[mask]
 
         self.plot_scaling(pcs)
-
-        self.comb_transf = make_column_transformer(
-            (StandardScaler(), [0]),
-            (StandardScaler(), [1]),
-            (PowerTransformer(method="box-cox", standardize=True), [2]),
-        )
-        self.comb_transf.fit(pcs)
+        self.transfs = [
+            StandardScaler(),
+            StandardScaler(),
+            PowerTransformer(method="box-cox", standardize=True),
+        ]
+        for arr, transf in zip(pcs.T, self.transfs):
+            transf.fit(arr.reshape(-1, 1))
         self.plot_scaling(pcs, True)
 
-        joblib.dump(self.comb_transf, self.scalerpath)
+        joblib.dump(self.transfs, self.scalerpath)
 
-    def transform(self, *args, **kwargs):
-        return self.comb_transf.transform(*args, **kwargs)
+    def transform(self, pcs: np.ndarray):
+        assert len(pcs.shape) == 2
+        assert pcs.shape[1] == len(self.transfs)
+        return np.hstack(
+            [
+                transf.transform(arr.reshape(-1, 1))
+                for arr, transf in zip(pcs.T, self.transfs)
+            ]
+        )
+
+    def inverse_transform(self, pcs: np.ndarray):
+        assert len(pcs.shape) == 2
+        assert pcs.shape[1] == len(self.transfs)
+        return np.hstack(
+            [
+                transf.inverse_transform(arr.reshape(-1, 1))
+                for arr, transf in zip(pcs.T, self.transfs)
+            ]
+        )
 
     def plot_scaling(self, pcs, post=False):
         if post:
