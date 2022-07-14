@@ -1,26 +1,18 @@
-import collections.abc
 from pathlib import Path
-from typing import Callable, Dict, List, Optional
+from typing import Callable, Dict, List
 
 import yaml
 
 from fgsim.config import conf
 
+
 # Make sure the readpath takes a path and start and end of the chunk
-ReadPathFunction = Callable[
-    [Path, Optional[int], Optional[int]], collections.abc.Sized
-]
-
-
 # It loads a list of files, and then loads the lengths of those files
 class FileManager:
-    def __init__(self, readpath: ReadPathFunction) -> None:
-        self.readpath = readpath
+    def __init__(self, path_to_len: Callable[[Path], int]) -> None:
+        self._path_to_len = path_to_len
         self.files: List[Path] = self._get_file_list()
         self.file_len_dict: Dict[Path, int] = self._load_len_dict()
-
-    def _path_to_len(self, fn: Path) -> int:
-        return len(self.readpath(fn, None, None))
 
     def _get_file_list(self) -> List[Path]:
         ds_path = Path(conf.path.dataset)

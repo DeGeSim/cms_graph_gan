@@ -1,8 +1,8 @@
 from dataclasses import dataclass
-from typing import Type
+from typing import List, Type, Union
 
-from queueflow import Sequence
-from torch.multiprocessing import Value
+from queueflow import StepBase
+from torch.multiprocessing import Queue, Value
 
 from .file_manager import FileManager
 from .scaler_base import ScalerBase
@@ -12,6 +12,6 @@ from .scaler_base import ScalerBase
 class Loader:
     file_manager: FileManager
     scaler: ScalerBase
-    process_seq: Sequence
+    process_seq: List[Union[StepBase, Queue]]
     postprocess_switch: Value
     Batch: Type

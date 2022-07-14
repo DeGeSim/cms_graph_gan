@@ -9,7 +9,7 @@ import sys
 if "pytest" not in sys.modules:
     from torch_geometric.data import Batch
 
-    from fgsim.io import Loader, batch_tools
+    from fgsim.io import Loader
 
     from .objcol import file_manager, scaler
     from .seq import postprocess_switch, process_seq

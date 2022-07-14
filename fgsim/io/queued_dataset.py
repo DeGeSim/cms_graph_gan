@@ -91,7 +91,7 @@ must queue an epoch via `queue_epoch()` and iterate over the instance of the cla
                     sorted(Path(conf.path.training).glob(conf.path.training_glob))
                 )
                 if len(self.preprocessed_files) == 0:
-                    raise FileNotFoundError
+                    raise FileNotFoundError("Couldn't find preprocessed dataset.")
 
     @property
     def validation_batches(self) -> DataSetType:

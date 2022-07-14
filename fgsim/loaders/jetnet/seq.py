@@ -1,3 +1,5 @@
+from typing import List, Union
+
 import queueflow as qf
 import torch
 from torch.multiprocessing import Queue, Value
@@ -13,8 +15,8 @@ postprocess_switch = Value("i", 0)
 
 
 # Collect the steps
-def process_seq():
-    return (
+def process_seq() -> List[Union[qf.StepBase, Queue]]:
+    return [
         qf.ProcessStep(read_chunks, 4, name="read_chunk"),
         qf.PoolStep(
             transform,
@@ -30,7 +32,7 @@ def process_seq():
             name="magic_do_nothing",
         ),
         Queue(conf.loader.prefetch_batches),
-    )
+    ]
 
 
 # Methods used in the Sequence

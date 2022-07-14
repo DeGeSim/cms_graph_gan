@@ -9,6 +9,19 @@ from torch_geometric.data import Data
 from fgsim.io import FileManager, ScalerBase
 
 
+def path_to_len(fn: Path) -> int:
+    return len(
+        pd.read_csv(
+            fn,
+            sep=" ",
+            header=None,
+        )
+    )
+
+
+file_manager = FileManager(path_to_len)
+
+
 def readpath(
     fn: Path,
     start: Optional[int],
@@ -47,7 +60,6 @@ def contruct_graph_from_row(row) -> Data:
     return res
 
 
-file_manager = FileManager(readpath=readpath)
 scaler = ScalerBase(
     file_manager.files,
     file_manager.file_len_dict,
