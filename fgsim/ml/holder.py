@@ -11,7 +11,7 @@ from omegaconf import OmegaConf
 from omegaconf.dictconfig import DictConfig
 
 from fgsim.config import conf, device
-from fgsim.io.sel_seq import Batch
+from fgsim.io.sel_loader import Batch
 from fgsim.ml.loss import LossesCol
 from fgsim.ml.network import SubNetworkCollector
 from fgsim.ml.optim import OptimCol

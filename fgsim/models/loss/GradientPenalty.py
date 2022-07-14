@@ -5,7 +5,7 @@ from torch.autograd import grad
 from torch_geometric.data import Data
 
 from fgsim.config import device
-from fgsim.io.sel_seq import Batch
+from fgsim.io.sel_loader import Batch
 from fgsim.ml.holder import Holder
 
 

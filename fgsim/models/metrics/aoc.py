@@ -2,7 +2,7 @@ import torch
 from sklearn.metrics import roc_auc_score
 
 from fgsim.config import conf, device
-from fgsim.io.sel_seq import Batch
+from fgsim.io.sel_loader import Batch
 from fgsim.ml.holder import Holder
 
 

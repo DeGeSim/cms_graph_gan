@@ -3,7 +3,6 @@ Here steps for reading the root files and processing the hit list \
 to graphs are definded. `process_seq` is the function that \
 should be passed the qfseq.
 """
-import importlib
 from pathlib import Path
 from typing import List
 
@@ -13,19 +12,13 @@ from torch.multiprocessing import Queue
 
 from fgsim.config import conf
 
-# Import the specified processing sequence
-sel_seq = importlib.import_module(f"fgsim.loaders.{conf.loader_name}")
-
-Batch = sel_seq.loader.Batch
-DataSetType = List[Batch]
-
 # Load files
 dataset_path = Path(conf.path.training)
 dataset_path.mkdir(parents=True, exist_ok=True)
 
 # reading from the filesystem
-def read_file(file: Path) -> DataSetType:
-    batch_list: DataSetType = torch.load(file)
+def read_file(file: Path) -> List:
+    batch_list = torch.load(file)
     return batch_list
 
 

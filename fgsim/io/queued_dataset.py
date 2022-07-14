@@ -12,7 +12,7 @@ import torch
 from fgsim.config import conf
 from fgsim.io.chunks import compute_chucks
 from fgsim.io.preprocessed_seq import preprocessed_seq
-from fgsim.io.sel_seq import (
+from fgsim.io.sel_loader import (
     DataSetType,
     files,
     len_dict,

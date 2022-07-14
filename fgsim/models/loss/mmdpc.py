@@ -3,7 +3,7 @@ from typing import List
 import torch
 
 from fgsim.config import conf
-from fgsim.io.sel_seq import Batch
+from fgsim.io.sel_loader import Batch
 from fgsim.ml.holder import Holder
 
 from .mmd import MMD

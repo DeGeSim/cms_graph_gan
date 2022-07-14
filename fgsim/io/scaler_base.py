@@ -1,34 +1,40 @@
 from pathlib import Path
+from typing import Callable, Dict, List
 
 import joblib
 import matplotlib.pyplot as plt
 import numpy as np
-from sklearn.preprocessing import PowerTransformer, StandardScaler
 
 from fgsim.config import conf
 
-from .files import files, len_dict
 
-
-class Scaler:
-    def __init__(self) -> None:
+class ScalerBase:
+    def __init__(
+        self,
+        files: List[Path],
+        len_dict: Dict,
+        transfs,
+        read_chunk: Callable,
+        transform_wo_scaling: Callable,
+    ) -> None:
+        self.files = files
+        self.len_dict = len_dict
+        self.transfs = transfs
+        self.read_chunk = read_chunk
+        self.transform_wo_scaling = transform_wo_scaling
         self.scalerpath = Path(conf.path.dataset_processed) / "scaler.gz"
         if not self.scalerpath.is_file():
             if conf.command != "preprocess":
                 raise FileNotFoundError()
-            self.transfs = None
         else:
-
             self.transfs = joblib.load(self.scalerpath)
 
-    def save_scaler(
-        self,
-    ):
-        from .seq import read_chunk, transform_wo_scaling
-
-        assert len_dict[files[0]] >= conf.loader.scaling_fit_size
-        chk = read_chunk([(Path(files[0]), 0, conf.loader.scaling_fit_size)])
-        event_list = [transform_wo_scaling(e) for e in chk]
+    def save_scaler(self):
+        assert self.len_dict[self.files[0]] >= conf.loader.scaling_fit_size
+        chk = self.read_chunk(
+            [(Path(self.files[0]), 0, conf.loader.scaling_fit_size)]
+        )
+        event_list = [self.transform_wo_scaling(e) for e in chk]
 
         # The features need to be converted to numpy immediatly
         # otherwise the queuflow afterwards doesnt work
@@ -38,11 +44,6 @@ class Scaler:
             pcs = pcs[mask]
 
         self.plot_scaling(pcs)
-        self.transfs = [
-            StandardScaler(),
-            StandardScaler(),
-            PowerTransformer(method="box-cox", standardize=True),
-        ]
         for arr, transf in zip(pcs.T, self.transfs):
             transf.fit(arr.reshape(-1, 1))
         self.plot_scaling(pcs, True)
@@ -78,11 +79,8 @@ class Scaler:
             fig, ax = plt.subplots(figsize=(10, 7))
             ax.hist(v, bins=500)
             fig.savefig(
-                f"/home/mscham/fgsim/wd/{k}_post.png"
+                Path(f"~/fgsim/wd/{k}_post.png").expanduser()
                 if post
-                else f"/home/mscham/fgsim/wd/{k}_pre.png"
+                else Path(f"~/fgsim/wd/{k}_pre.png").expanduser()
             )
             plt.close(fig)
-
-
-scaler = Scaler()

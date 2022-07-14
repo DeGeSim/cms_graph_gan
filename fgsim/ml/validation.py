@@ -4,8 +4,8 @@ import torch
 from tqdm import tqdm
 
 from fgsim.config import conf, device
+from fgsim.io import batch_tools
 from fgsim.io.queued_dataset import QueuedDataLoader
-from fgsim.io.sel_seq import batch_tools
 from fgsim.ml.holder import Holder
 from fgsim.monitoring.logger import logger
 from fgsim.utils.check_for_nans import check_chain_for_nans

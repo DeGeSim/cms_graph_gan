@@ -1,7 +1,3 @@
-from pathlib import Path
-from typing import List, Tuple
-
-import pandas as pd
 import queueflow as qf
 import torch
 from torch.multiprocessing import Queue, Value
@@ -10,18 +6,16 @@ from torch_geometric.data import Batch, Data
 from fgsim.config import conf
 from fgsim.io.batch_tools import compute_hlvs
 
-from .scaler import scaler
+from .objcol import contruct_graph_from_row, read_chunks, scaler
 
 # Sharded switch for the postprocessing
 postprocess_switch = Value("i", 0)
-
-ChunkType = List[Tuple[Path, int, int]]
 
 
 # Collect the steps
 def process_seq():
     return (
-        qf.ProcessStep(read_chunk, 4, name="read_chunk"),
+        qf.ProcessStep(read_chunks, 4, name="read_chunk"),
         qf.PoolStep(
             transform,
             nworkers=conf.loader.num_workers_transform,
@@ -41,23 +35,6 @@ def process_seq():
 
 # Methods used in the Sequence
 # reading from the filesystem
-def read_chunk(chunks: ChunkType):
-    chunks_list = []
-    for chunk in chunks:
-        file_path, start, end = chunk
-        chunks_list.append(
-            pd.read_csv(
-                file_path,
-                skiprows=start,
-                nrows=(end - start),
-                sep=" ",
-                header=None,
-                # index_col=0,
-            )
-        )
-    res = pd.concat(chunks_list).values.reshape(-1, 30, 4)
-    # res = res[..., :3]
-    return torch.tensor(res).float()
 
 
 def transform(pc) -> Data:
@@ -70,13 +47,6 @@ def transform(pc) -> Data:
     return graph
 
 
-def transform_wo_scaling(pc) -> Data:
-    graph = contruct_graph_from_row(pc)
-    if postprocess_switch.value:
-        graph.hlvs = compute_hlvs(graph)
-    return graph
-
-
 def aggregate_to_batch(list_of_events) -> Batch:
     batch = Batch.from_data_list(list_of_events)
     return batch
@@ -84,9 +54,3 @@ def aggregate_to_batch(list_of_events) -> Batch:
 
 def magic_do_nothing(batch: Batch) -> Batch:
     return batch
-
-
-def contruct_graph_from_row(row) -> Data:
-    res = Data(x=row[:, :3], mask=row[:, :1].reshape(-1).bool())
-    res.x[~res.mask] = -5.0
-    return res

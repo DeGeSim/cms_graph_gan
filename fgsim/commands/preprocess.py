@@ -8,12 +8,13 @@ from tqdm import tqdm
 
 from fgsim.config import conf
 from fgsim.io.queued_dataset import QueuedDataLoader
+from fgsim.io.sel_loader import loader
 from fgsim.monitoring.logger import logger
-from fgsim.types import sel_seq
 
 
 def preprocess_procedure() -> None:
-    sel_seq.scaler.save_scaler()
+    loader.file_manager.save_len_dict()
+    loader.scaler.save_scaler()
     data_loader = QueuedDataLoader()
 
     logger.warning(

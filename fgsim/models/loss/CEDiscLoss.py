@@ -1,6 +1,6 @@
 import torch
 
-from fgsim.io.sel_seq import Batch
+from fgsim.io.sel_loader import Batch
 from fgsim.ml.holder import Holder
 
 
