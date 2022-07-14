@@ -134,6 +134,13 @@ def get_testing_datasets(holder: Holder) -> TestDataset:
         # hlvs_dict: Dict[str, Dict[str, np.ndarray]] = {
         #     name: compute_hlvs_dict(ds) for name, ds in ds_dict.items()
         # }
+        # scale all the samples
+        for k in ds_dict.keys():
+            for ibatch in tqdm(range(len(ds_dict[k])), desc=f"Scaling {k}"):
+                batch = ds_dict[k][ibatch]
+                batch.x = torch.from_numpy(
+                    scaler.inverse_transform(batch.x.numpy())
+                )
         test_data = TestDataset(
             sim_batches=ds_dict["sim"],
             gen_batches_best=ds_dict["best"],
@@ -281,7 +288,7 @@ def test_plots(test_info: TestInfo):
 def jetnet_metrics(sim_batches, gen_batches) -> Dict[str, float]:
     sim = np.hstack(
         [
-            scaler.inverse_transform(sim_batches[0].x.numpy()),
+            sim_batches[0].x.numpy(),
             sim_batches[0].mask.reshape(-1, 1).float().numpy(),
         ],
     )
@@ -290,7 +297,7 @@ def jetnet_metrics(sim_batches, gen_batches) -> Dict[str, float]:
 
     gen = np.hstack(
         [
-            scaler.inverse_transform(gen_batches[0].x.numpy()),
+            gen_batches[0].x.numpy(),
             torch.ones(conf.loader.batch_size * 30, 1).float().numpy(),
         ],
     )
