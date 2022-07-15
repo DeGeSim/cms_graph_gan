@@ -191,7 +191,6 @@ loader_options:
         num_workers_stack: 1
         num_workers_postprocess: 1
     hgcal:
-        # cell_prop_keys: ["x", "y", "z", "celltype", "issilicon"]
         batch_size: 100
         max_points: 128
         dataset_path: "data/hgcal_william"

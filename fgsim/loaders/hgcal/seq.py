@@ -12,7 +12,7 @@ from fgsim.config import conf
 from fgsim.io.batch_tools import compute_hlvs
 
 from .objcol import read_chunks, scaler
-from .transform import hitlist_to_pc
+from .transform import hitlist_to_graph, hitlist_to_pc
 
 # Sharded switch for the postprocessing
 postprocess_switch = Value("i", 0)
@@ -51,9 +51,16 @@ def magic_do_nothing(batch: Batch) -> Batch:
     return batch
 
 
+if conf.loader_name == "hgcal":
+    transform_hitlist = hitlist_to_graph
+elif conf.loader_name == "pcgraph":
+    transform_hitlist = hitlist_to_pc
+else:
+    raise Exception
+
+
 def transform(hitlist: ak.highlevel.Record) -> Data:
-    pointcloud = hitlist_to_pc(hitlist)
-    graph = Data(x=pointcloud)
+    graph = transform_hitlist(hitlist)
     if postprocess_switch.value:
         graph.hlvs = compute_hlvs(graph)
     graph.x = torch.from_numpy(scaler.transform(graph.x.numpy())).float()

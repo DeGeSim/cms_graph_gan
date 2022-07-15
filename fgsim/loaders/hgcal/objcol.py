@@ -4,12 +4,11 @@ from typing import List, Optional, Tuple
 import awkward as ak
 import uproot
 from sklearn.preprocessing import MinMaxScaler, PowerTransformer, StandardScaler
-from torch_geometric.data import Data
 
 from fgsim.config import conf
 from fgsim.io import FileManager, ScalerBase
 
-from .transform import hitlist_to_pc
+from .transform import hitlist_to_graph
 
 
 def readpath(
@@ -50,12 +49,6 @@ def path_to_len(fn: Path) -> int:
 file_manager = FileManager(path_to_len=path_to_len)
 
 
-def transform_wo_scaling(hitlist: ak.highlevel.Record) -> Data:
-    pointcloud = hitlist_to_pc(hitlist)
-    graph = Data(x=pointcloud)
-    return graph
-
-
 scaler = ScalerBase(
     file_manager.files,
     file_manager.file_len_dict,
@@ -66,5 +59,5 @@ scaler = ScalerBase(
         MinMaxScaler(feature_range=(-1, 1)),
     ],
     read_chunks,
-    transform_wo_scaling,
+    hitlist_to_graph,
 )

@@ -11,8 +11,9 @@ if "pytest" not in sys.modules:
     from torch_geometric.data import Batch
 
     from fgsim.io.loader import Loader
-    from fgsim.loaders.hgcal.objcol import file_manager, scaler
-    from fgsim.loaders.hgcal.seq import postprocess_switch, process_seq
+
+    from .objcol import file_manager, scaler
+    from .seq import postprocess_switch, process_seq
 
     loader = Loader(
         file_manager=file_manager,
