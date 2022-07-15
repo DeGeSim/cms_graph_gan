@@ -103,6 +103,7 @@
             "**/old/**": true,
             "venv1.10.1+cu111/": true,
             "wd/": true,
+            "wd/*": true,
             "data/": true,
         },
         "files.watcherExclude": {
@@ -112,6 +113,7 @@
             "**/node_modules/*/**": true,
             "venv1.10.1+cu111/": true,
             "wd/": true,
+            "wd/*": true,
             "data/": true,
             "logandrun/": true,
         },
