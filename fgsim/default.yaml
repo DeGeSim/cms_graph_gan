@@ -106,22 +106,28 @@ loss_options:
         factor: 1.0
     frechetpcdist:
         factor: 1.0
-    mmd:
-      factor: 1.0
-      kernel: "rbf"
-      bandwidth:  [10, 15, 20, 50]
-    mmdpc: ${loss_options[mmd]}
     outside_interval:
         factor: 1.0
         high: 4.0
         low: -4.0
+    mmd:
+      factor: 1.0
+      kernel: "rbf"
+      bandwidth:  [10, 15, 20, 50]
+    mmdpc:
+      factor: 1.0
+      kernel: "rbf"
+      bandwidth:  [10, 15, 20, 50]
+      batch_wise: False
     dcd:
         factor: 1.0
         alpha: 1000
-        lpnorm: 1
+        lpnorm: 2
+        batch_wise: False
     cd:
         factor: 1.0
-        lpnorm: 1
+        lpnorm: 2
+        batch_wise: False
 
 optim_options:
     Adam:

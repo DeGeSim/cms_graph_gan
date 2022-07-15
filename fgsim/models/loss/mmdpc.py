@@ -10,15 +10,18 @@ from .mmd import MMD
 
 
 class LossGen:
-    def __init__(self, kernel, bandwidth: List[float]) -> None:
+    def __init__(
+        self, kernel, bandwidth: List[float], batch_wise: bool = False
+    ) -> None:
         self.kernel = kernel
         self.bandwidth = bandwidth
+        self.batch_wise = batch_wise
 
     def __call__(self, holder: Holder, batch: Batch, *args, **kwargs):
+        n_features = batch.x.shape[1]
+        batch_size = int(batch.batch[-1] + 1)
         shape = (
-            conf.loader.batch_size,
-            conf.loader.max_points,
-            conf.loader.n_features,
+            (1, -1, n_features) if self.batch_wise else (batch_size, -1, n_features)
         )
         sim_sample = batch.x.reshape(*shape)
         gen_sample = holder.gen_points_w_grad.x.reshape(*shape)
