@@ -7,7 +7,7 @@ from torch_geometric.data import Data as GraphType
 from tqdm import tqdm
 
 from fgsim.config import conf
-from fgsim.io.queued_dataset import QueuedDataLoader
+from fgsim.io.queued_dataset import QueuedDataset
 from fgsim.io.sel_loader import loader
 from fgsim.monitoring.logger import logger
 
@@ -15,7 +15,7 @@ from fgsim.monitoring.logger import logger
 def preprocess_procedure() -> None:
     loader.file_manager.save_len_dict()
     loader.scaler.save_scaler()
-    data_loader = QueuedDataLoader()
+    data_loader = QueuedDataset()
 
     logger.warning(
         f"""\

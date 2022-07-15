@@ -17,7 +17,7 @@ from tqdm import tqdm
 
 from fgsim.config import conf
 from fgsim.io.batch_tools import batch_from_pcs_list
-from fgsim.io.queued_dataset import QueuedDataLoader
+from fgsim.io.queued_dataset import QueuedDataset
 from fgsim.io.sel_loader import scaler
 from fgsim.ml.holder import Holder
 from fgsim.models.branching.graph_tree import graph_tree_to_graph
@@ -98,7 +98,7 @@ def get_testing_datasets(holder: Holder) -> TestDataset:
     if reprocess:
         # reprocess
         # Make sure the batches are loaded
-        loader: QueuedDataLoader = QueuedDataLoader()
+        loader: QueuedDataset = QueuedDataset()
         # Sample at least 2k events
         # n_batches = int(conf.testing.n_events / conf.loader.batch_size)
         # assert n_batches <= len(loader.testing_batches)

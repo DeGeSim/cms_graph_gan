@@ -25,7 +25,7 @@ chunksize = conf.loader.chunksize
 batch_size = conf.loader.batch_size
 
 
-class QueuedDataLoader:
+class QueuedDataset:
     """
 `QueuedDataLoader` makes `validation_batches` \
 and `testing_batches` available as properties; to load training batches, one \

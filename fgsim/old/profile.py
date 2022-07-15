@@ -3,7 +3,7 @@ from omegaconf import OmegaConf
 from torch.profiler import ProfilerActivity, profile
 
 from fgsim.config import conf, device
-from fgsim.io.queued_dataset import QueuedDataLoader
+from fgsim.io.queued_dataset import QueuedDataset
 from fgsim.monitor import setup_writer
 from fgsim.utils.logger import logger
 
@@ -20,7 +20,7 @@ def profile_procedure() -> None:
     # Initialize the training
     # switch model in training mode
     model_holder.model.train()
-    model_holder.loader = QueuedDataLoader()
+    model_holder.loader = QueuedDataset()
     model_holder.optim.zero_grad()
 
     batch = model_holder.loader.validation_batches[0].to(device)
