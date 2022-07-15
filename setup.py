@@ -34,10 +34,25 @@ install_requirements = [
     "tensorboard",
     "tblib",
     "torcheck",
+    "jetnet",
+    "pytorch-lightning",
+    "scikit-learn",
 ]
 
 extras = {
-    "dev": ["jedi", "rope", "pylint", "ipython", "pytest"],
+    "dev": [
+        "jedi",
+        "rope",
+        "pylint",
+        "ipython",
+        "pytest",
+        "ipython",
+        "ipykernel",
+        "icecream",
+        "tables",
+        "torch-tb-profiler",
+        "tensorboard-plugin-profile",
+    ],
 }
 
 setup(

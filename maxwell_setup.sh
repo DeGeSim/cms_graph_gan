@@ -1,7 +1,10 @@
 #!/bin/bash
-deactivate
+set -e
+if [[ ! -z "$VIRTUAL_ENV" ]]; then
+    deactivate
+fi
 yes | module clear
-set -ex
+set -x
 
 # Install the utilities in isolated eviroments
 pip install -U pipx
@@ -27,8 +30,20 @@ export MAKEFLAGS="-j20"
 
 # setup and load the virtual enviroment
 # Here the script assumes that python>=3.8 has been provided
+RAMPATH="/dev/shm/$USER/"
+if [ ! -d $RAMPATH ]; then
+  mkdir -p $RAMPATH
+fi
+# go into the ram path
+pushd $RAMPATH
+# create the venv
 python -m venv $VENV
+# activate it
 source $VENV/bin/activate
+# proceed th installation the base directory
+# the pip packages will be installed into the $RAMPATH
+popd
+
 
 pip install --upgrade pip
 pip install wheel
@@ -51,3 +66,6 @@ pip install -e .[dev]
 pushd ~/queueflow
 pip install -e .
 popd
+
+# save the enviroment from ram to disk
+tar -c -f ~/beegfs/venvs/$VENV.tar --directory=$RAMPATH/$VENV .
