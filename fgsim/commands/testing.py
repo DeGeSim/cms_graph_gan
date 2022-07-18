@@ -7,7 +7,6 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, List, Optional
 
-import jetnet
 import numpy as np
 import torch
 from scipy.stats import wasserstein_distance
@@ -286,53 +285,19 @@ def test_plots(test_info: TestInfo):
 
 
 def jetnet_metrics(sim_batches, gen_batches) -> Dict[str, float]:
-    sim = np.hstack(
-        [
-            sim_batches[0].x.numpy(),
-            sim_batches[0].mask.reshape(-1, 1).float().numpy(),
-        ],
-    )
-    sim[~sim[:, -1].astype(dtype=bool), :3] = 0
-    sim = sim.reshape(conf.loader.batch_size, 30, 4)
+    from fgsim.models.metrics import fpnd, w1efp, w1m, w1p
 
-    gen = np.hstack(
-        [
-            gen_batches[0].x.numpy(),
-            torch.ones(conf.loader.batch_size * 30, 1).float().numpy(),
-        ],
-    )
-    gen[~gen[:, -1].astype(dtype=bool), :3] = 0
-    gen = gen.reshape(conf.loader.batch_size, 30, 4)
+    gen = gen_batches[0]
+    sim = sim_batches[0]
     metrics_dict = {}
-    metrics_dict["fpnd"] = jetnet.evaluation.fpnd(
-        jets=gen[..., :3], jet_type="t", batch_size=conf.loader.batch_size
-    )
 
-    metrics_dict["w1m"] = (
-        jetnet.evaluation.w1m(
-            jets1=sim[..., :3],
-            jets2=gen[..., :3],
-        )[0]
-        * 1e3
-    )
+    metrics_dict["fpnd"] = fpnd(gen)
 
-    metrics_dict["w1p"] = (
-        jetnet.evaluation.w1p(
-            jets1=sim[..., :3],
-            jets2=gen[..., :3],
-            # mask1=sim[..., 3].squeeze(),
-            # mask2=gen[..., 3].squeeze(),
-        )[0]
-        * 1e3
-    )
+    metrics_dict["w1m"] = w1m(gen_batch=gen, sim_batch=sim)
 
-    metrics_dict["w1efp"] = (
-        jetnet.evaluation.w1efp(
-            jets1=sim[..., :3],
-            jets2=gen[..., :3],
-        )[0]
-        * 1e5
-    )
+    metrics_dict["w1p"] = w1p(gen_batch=gen, sim_batch=sim)
+
+    metrics_dict["w1efp"] = w1efp(gen_batch=gen, sim_batch=sim)
     return metrics_dict
 
 

@@ -6,7 +6,7 @@ from fgsim.io.sel_loader import Batch
 from fgsim.ml.holder import Holder
 
 
-class LossGen:
+class Metric:
     def __init__(
         self,
         foreach_hlv: bool,

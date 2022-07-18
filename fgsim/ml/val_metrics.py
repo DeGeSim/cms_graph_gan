@@ -27,19 +27,31 @@ class ValidationMetrics:
             self.parts[metric_name] = loss
             setattr(self, metric_name, loss)
 
-    def __call__(self, holder, batch: Batch) -> None:
+    def __call__(
+        self,
+        gen_batch: Batch,
+        sim_batch: Batch,
+        d_gen: torch.Tensor,
+        d_sim: torch.Tensor,
+    ) -> None:
         # During the validation, this function is called once per batch.
         # All losses are save in a dict for later evaluation log_lossses
+        kwargs = {
+            "gen_batch": gen_batch,
+            "sim_batch": sim_batch,
+            "d_gen": d_gen,
+            "d_sim": d_sim,
+        }
         mval = {}
         with torch.no_grad():
             for metric_name, metric in self.parts.items():
                 if hasattr(metric, "foreach_hlv") and metric.foreach_hlv:
                     # If the loss is processed for each hlv
                     # the return type is Dict[str,float]
-                    for var, lossval in metric(holder, batch).items():
+                    for var, lossval in metric(**kwargs).items():
                         mval[f"{metric_name}_{var}"] = float(lossval)
                 else:
-                    mval[metric_name] = float(metric(holder, batch))
+                    mval[metric_name] = float(metric(**kwargs))
         self.metric_aggr.append_dict(mval)
 
     def log_metrics(self) -> None:
@@ -56,7 +68,9 @@ class ValidationMetrics:
         history = self.train_log.history
         val_metrics = history["val_metrics"]
         # collect all metrics for all validation runs in a 2d array
-        loss_history = np.stack([val_metrics[metric] for metric in val_metrics])
+        loss_history = np.stack(
+            [val_metrics[metric] for metric in conf.validation.use_for_stopping]
+        )
         # for a given metric and validation run,
         # count the fraction of times that the value of this metric
         # is smaller then the other runs
@@ -80,6 +94,12 @@ class ValidationMetrics:
 
 
 def import_metric(metric_name: str, params: DictConfig) -> Callable:
+    try:
+        metrics = importlib.import_module(f"fgsim.models.metrics")
+        fct = getattr(metrics, metric_name)
+        return fct
+    except AttributeError:
+        pass
     MetricClass: Optional = None
     for import_path in [
         f"torch.nn.{metric_name}",
@@ -89,10 +109,10 @@ def import_metric(metric_name: str, params: DictConfig) -> Callable:
             model_module = importlib.import_module(import_path)
             # Check if it is a class
             if not isinstance(model_module, type):
-                if not hasattr(model_module, "LossGen"):
+                if not hasattr(model_module, "Metric"):
                     raise ModuleNotFoundError
                 else:
-                    MetricClass = model_module.LossGen
+                    MetricClass = model_module.Metric
             else:
                 MetricClass = model_module
 

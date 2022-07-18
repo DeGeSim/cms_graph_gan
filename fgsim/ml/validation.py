@@ -4,7 +4,6 @@ import torch
 from tqdm import tqdm
 
 from fgsim.config import conf, device
-from fgsim.io import batch_tools
 from fgsim.io.queued_dataset import QueuedDataset
 from fgsim.ml.holder import Holder
 from fgsim.monitoring.logger import logger
@@ -17,12 +16,13 @@ def validate(holder: Holder, loader: QueuedDataset) -> None:
     # Make sure the batches are loaded
     _ = loader.validation_batches
     # Iterate over the validation sample
-    for batch in tqdm(loader.validation_batches, postfix="validating"):
+    for sim_batch in tqdm(loader.validation_batches, postfix="validating"):
         with torch.no_grad():
-            batch = batch.clone().to(device)
+            sim_batch = sim_batch.clone().to(device)
             holder.reset_gen_points()
-            holder.gen_points = batch_tools.batch_compute_hlvs(holder.gen_points)
-            holder.val_loss(holder, batch)
+            D_sim = holder.models.disc(sim_batch)
+            D_gen = holder.models.disc(holder.gen_points)
+            holder.val_loss(holder.gen_points, sim_batch, D_sim, D_gen)
     holder.val_loss.log_metrics()
 
     min_stop_crit = min(holder.history["stop_crit"])

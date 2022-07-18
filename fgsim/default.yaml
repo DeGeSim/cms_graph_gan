@@ -150,9 +150,11 @@ training:
 validation:
     interval: "${div:${training.events_processed_before_validation},${loader.batch_size}}"
     stop_key: stop_key
+    use_for_stopping: [fpnd]
     metrics:
-        hlv_w1:
-            foreach_hlv: True
+        # w1m: {}
+        w1p: {}
+        fpnd: {}
         aoc: {}
 testing:
     n_events: 2000
