@@ -10,15 +10,17 @@ import queueflow as qf
 import torch
 
 from fgsim.config import conf
+from fgsim.io import Loader
 from fgsim.io.chunks import compute_chucks
 from fgsim.io.preprocessed_seq import preprocessed_seq
-from fgsim.io.sel_loader import (
-    DataSetType,
-    files,
-    len_dict,
-    postprocess_switch,
-    process_seq,
-)
+
+# from fgsim.io.sel_loader import (
+#     DataSetType,
+#     files,
+#     len_dict,
+#     shared_postprocess_switch,
+#     process_seq,
+# )
 from fgsim.monitoring.logger import logger
 
 chunksize = conf.loader.chunksize
@@ -32,7 +34,14 @@ and `testing_batches` available as properties; to load training batches, one \
 must queue an epoch via `queue_epoch()` and iterate over the instance of the class.
     """
 
-    def __init__(self):
+    def __init__(self, loader: Loader):
+        files = loader.file_manager.files
+        len_dict = loader.file_manager.len_dict
+        # Get access to the postprocess switch for computing the validation dataset
+        self.shared_postprocess_switch = loader.shared_postprocess_switch
+        self.shared_batch_size = loader.shared_batch_size
+        process_seq = loader.process_seq
+
         chunk_coords = compute_chucks(files, len_dict)
 
         np.random.shuffle(chunk_coords)
@@ -67,9 +76,6 @@ must queue an epoch via `queue_epoch()` and iterate over the instance of the cla
             < len(self.training_chunks) / 2
         ), "Dataset to small"
 
-        # Get access to the postprocess switch for computing the validation dataset
-        self.postprocess_switch = postprocess_switch
-
         self.qfseq: qf.Sequence
         if conf.command != "preprocess" and conf.loader.preprocess_training:
             qf.init(False)
@@ -94,7 +100,7 @@ must queue an epoch via `queue_epoch()` and iterate over the instance of the cla
                     raise FileNotFoundError("Couldn't find preprocessed dataset.")
 
     @property
-    def validation_batches(self) -> DataSetType:
+    def validation_batches(self):
         if not hasattr(self, "_validation_batches"):
             logger.debug("Validation batches not loaded, loading from disk.")
             self._validation_batches = torch.load(
@@ -106,7 +112,7 @@ must queue an epoch via `queue_epoch()` and iterate over the instance of the cla
         return self._validation_batches
 
     @property
-    def testing_batches(self) -> DataSetType:
+    def testing_batches(self):
         if not hasattr(self, "_testing_batches"):
             logger.debug("Testing batches not loaded, loading from disk.")
             self._testing_batches = torch.load(

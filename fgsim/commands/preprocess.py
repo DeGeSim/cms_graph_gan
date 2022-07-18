@@ -15,33 +15,37 @@ from fgsim.monitoring.logger import logger
 def preprocess_procedure() -> None:
     loader.file_manager.save_len_dict()
     loader.scaler.save_scaler()
-    data_loader = QueuedDataset()
+    data_loader = QueuedDataset(loader)
 
     logger.warning(
         f"""\
 Processing validation batches, queuing {len(data_loader.validation_chunks)} chunks."""
     )
     # Turn the postprocessing off for the validation and testing
-    data_loader.postprocess_switch.value = 1
+    data_loader.shared_postprocess_switch.value = 1
+
     data_loader.qfseq.start()
+    data_loader.shared_batch_size.value = conf.loader.validation_set_size
     data_loader.qfseq.queue_iterable(data_loader.validation_chunks)
-    validation_batches = [batch for batch in tqdm(data_loader.qfseq)]
-    torch.save(validation_batches, conf.path.validation)
+    validation_batch = [e for e in data_loader.qfseq][0]
+    torch.save(validation_batch, conf.path.validation)
     logger.warning(f"Validation batches pickled to {conf.path.validation}.")
 
     logger.warning(
         f"""\
 Processing testing batches, queuing {len(data_loader.testing_chunks)} chunks."""
     )
+    data_loader.shared_batch_size.value = conf.loader.test_set_size
     data_loader.qfseq.queue_iterable(data_loader.testing_chunks)
-    testing_batches = [batch for batch in tqdm(data_loader.qfseq)]
-    torch.save(testing_batches, conf.path.test)
+    test_batch = [e for e in data_loader.qfseq][0]
+    torch.save(test_batch, conf.path.test)
     logger.warning(f"Testing batches pickled to {conf.path.test}.")
 
     # if conf.loader.preprocess_training:
     logger.warning("Processing training batches")
     # Turn the postprocessing off for the training
-    data_loader.postprocess_switch.value = 0
+    data_loader.shared_postprocess_switch.value = 0
+    data_loader.shared_batch_size.value = conf.loader.batch_size
     data_loader.queue_epoch()
     batch_list: List[GraphType] = []
     ifile = 0

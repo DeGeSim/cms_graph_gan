@@ -13,5 +13,6 @@ class Loader:
     file_manager: FileManager
     scaler: ScalerBase
     process_seq: List[Union[StepBase, Queue]]
-    postprocess_switch: Value
+    shared_postprocess_switch: Value
+    shared_batch_size: Value
     Batch: Type

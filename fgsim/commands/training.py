@@ -7,6 +7,7 @@ from tqdm import tqdm
 
 from fgsim.config import conf, device
 from fgsim.io.queued_dataset import QueuedDataset
+from fgsim.io.sel_loader import loader
 from fgsim.ml.early_stopping import early_stopping
 from fgsim.ml.holder import Holder
 from fgsim.ml.smoothing import smooth_features
@@ -21,11 +22,12 @@ class Trainer:
         if early_stopping(self.holder.history):
             exit()
         self.train_log: TrainLog = self.holder.train_log
-        self.loader: QueuedDataset = QueuedDataset()
+        self.loader: QueuedDataset = QueuedDataset(loader)
 
         # Queue that batches
         self.loader.queue_epoch(n_skip_events=self.holder.state.processed_events)
 
+        validate(self.holder, self.loader)
         if not self.holder.checkpoint_loaded and not conf.debug:
             self.holder.models.eval()
             validate(self.holder, self.loader)

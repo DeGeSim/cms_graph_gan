@@ -11,7 +11,8 @@ from fgsim.io.batch_tools import compute_hlvs
 from .objcol import contruct_graph_from_row, read_chunks, scaler
 
 # Sharded switch for the postprocessing
-postprocess_switch = Value("i", 0)
+shared_postprocess_switch = Value("i", 0)
+shared_batch_size = Value("i", int(conf.loader.batch_size))
 
 
 # Collect the steps
@@ -23,7 +24,7 @@ def process_seq() -> List[Union[qf.StepBase, Queue]]:
             nworkers=conf.loader.num_workers_transform,
             name="transform",
         ),
-        qf.RepackStep(conf.loader.batch_size),
+        qf.RepackStep(shared_batch_size),
         qf.ProcessStep(aggregate_to_batch, 1, name="batch"),
         # Needed for outputs to stay in order.
         qf.ProcessStep(
@@ -41,7 +42,7 @@ def process_seq() -> List[Union[qf.StepBase, Queue]]:
 
 def transform(pc) -> Data:
     graph = contruct_graph_from_row(pc)
-    if postprocess_switch.value:
+    if shared_postprocess_switch.value:
         graph.hlvs = compute_hlvs(graph)
     graph.x[graph.mask] = torch.from_numpy(
         scaler.transform(graph.x[graph.mask].numpy())

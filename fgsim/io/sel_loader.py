@@ -10,7 +10,7 @@ loader: Loader = importlib.import_module(f"fgsim.loaders.{conf.loader_name}").lo
 file_manager = loader.file_manager
 scaler = loader.scaler
 process_seq = loader.process_seq
-postprocess_switch = loader.postprocess_switch
+shared_postprocess_switch = loader.shared_postprocess_switch
 Batch: Type = loader.Batch
 
 DataSetType = List[Batch]
