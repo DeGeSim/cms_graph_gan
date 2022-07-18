@@ -6,7 +6,6 @@ from torch.multiprocessing import Queue, Value
 from torch_geometric.data import Batch, Data
 
 from fgsim.config import conf
-from fgsim.io.batch_tools import compute_hlvs
 
 from .objcol import contruct_graph_from_row, read_chunks, scaler
 
@@ -42,8 +41,6 @@ def process_seq() -> List[Union[qf.StepBase, Queue]]:
 
 def transform(pc) -> Data:
     graph = contruct_graph_from_row(pc)
-    if shared_postprocess_switch.value:
-        graph.hlvs = compute_hlvs(graph)
     graph.x[graph.mask] = torch.from_numpy(
         scaler.transform(graph.x[graph.mask].numpy())
     ).float()

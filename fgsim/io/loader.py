@@ -9,7 +9,7 @@ from .scaler_base import ScalerBase
 
 
 @dataclass
-class Loader:
+class LoaderInfo:
     file_manager: FileManager
     scaler: ScalerBase
     process_seq: List[Union[StepBase, Queue]]

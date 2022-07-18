@@ -15,20 +15,21 @@ from torch_scatter import scatter_mean
 from tqdm import tqdm
 
 from fgsim.config import conf
-from fgsim.io.batch_tools import batch_from_pcs_list
 from fgsim.io.queued_dataset import QueuedDataset
-from fgsim.io.sel_loader import scaler
+from fgsim.io.sel_loader import loader_info, scaler
 from fgsim.ml.holder import Holder
 from fgsim.monitoring.logger import logger
 from fgsim.monitoring.train_log import TrainLog
 from fgsim.plot.xyscatter import xy_hist, xyscatter, xyscatter_faint
 
+batch_size = conf.loader.batch_size
+
 
 @dataclass
 class TestInfo:
     train_log: TrainLog
-    sim_batches: List
-    gen_batches: List
+    sim_batch: Batch
+    gen_batch: Batch
     hlvs_dict: Optional[Dict[str, Dict[str, np.ndarray]]]
     plot_path: Path
     step: int
@@ -66,8 +67,8 @@ def test_procedure() -> None:
 
         test_info = TestInfo(
             train_log=train_log,
-            sim_batches=test_data.sim_batches,
-            gen_batches=gen_batches,
+            sim_batch=test_data.sim_batches,
+            gen_batch=gen_batches,
             hlvs_dict=test_data.hlvs_dict,
             plot_path=plot_path,
             step=step,
@@ -96,11 +97,11 @@ def get_testing_datasets(holder: Holder) -> TestDataset:
     if reprocess:
         # reprocess
         # Make sure the batches are loaded
-        loader: QueuedDataset = QueuedDataset()
+        qds: QueuedDataset = QueuedDataset(loader_info)
         # Sample at least 2k events
-        # n_batches = int(conf.testing.n_events / conf.loader.batch_size)
+        # n_batches = int(conf.testing.n_events / batch_size)
         # assert n_batches <= len(loader.testing_batches)
-        ds_dict = {"sim": loader.testing_batches}
+        ds_dict = {"sim": qds.testing_batch}
 
         for best_or_last in ["best", "last"]:
             # Check if we need to rerun the model
@@ -110,27 +111,16 @@ def get_testing_datasets(holder: Holder) -> TestDataset:
 
             holder.models.eval()
 
-            gen_batches = []
-            # generate a batch for each simulated one:
-            for _ in tqdm(
-                range(len(loader.testing_batches)),
-                desc=f"Generating Batches {best_or_last}",
-            ):
-                with torch.no_grad():
-                    holder.reset_gen_points()
-                    gen_batch = holder.gen_points.clone().cpu()
-                    gen_batches.append(gen_batch)
+            gen_graphs = []
+            for _ in tqdm(range(conf.loader.test_set_size // batch_size)):
+                holder.reset_gen_points()
+                for igraph in range(batch_size):
+                    gen_graphs.append(holder.gen_points.get_example(igraph))
+            gen_batch = Batch.from_data_list(gen_graphs)
 
             logger.info("Processs HLVs")
-            ds_dict[best_or_last] = gen_batches
-            # from fgsim.io.batch_tools import batch_compute_hlvs
-            # ds_dict[best_or_last] = [
-            #     batch_compute_hlvs(batch)
-            #     for batch in tqdm(gen_batches, desc="Compute HLVs gen_batches")
-            # ]
-        # hlvs_dict: Dict[str, Dict[str, np.ndarray]] = {
-        #     name: compute_hlvs_dict(ds) for name, ds in ds_dict.items()
-        # }
+            ds_dict[best_or_last] = gen_batch
+
         # scale all the samples
         for k in ds_dict.keys():
             for ibatch in tqdm(range(len(ds_dict[k])), desc=f"Scaling {k}"):
@@ -156,20 +146,20 @@ def get_testing_datasets(holder: Holder) -> TestDataset:
     return test_data
 
 
-def compute_hlvs_dict(batches) -> Dict[str, np.ndarray]:
-    hlvs_dict_torch: Dict[str, List[torch.Tensor]] = {}
-    for batch in batches:
-        for key in batch.hlvs:
-            if key not in hlvs_dict_torch:
-                hlvs_dict_torch[key] = []
-            hlvs_dict_torch[key].append(batch.hlvs[key])
+# def compute_hlvs_dict(batches) -> Dict[str, np.ndarray]:
+#     hlvs_dict_torch: Dict[str, List[torch.Tensor]] = {}
+#     for batch in batches:
+#         for key in batch.hlvs:
+#             if key not in hlvs_dict_torch:
+#                 hlvs_dict_torch[key] = []
+#             hlvs_dict_torch[key].append(batch.hlvs[key])
 
-    # Sample 2k events and plot the distribution
-    # convert to numpy
-    hlvs_dict: Dict[str, np.ndarray] = {
-        var: subsample(convert(hlvs_dict_torch[var])) for var in hlvs_dict_torch
-    }
-    return hlvs_dict
+#     # Sample 2k events and plot the distribution
+#     # convert to numpy
+#     hlvs_dict: Dict[str, np.ndarray] = {
+#         var: subsample(convert(hlvs_dict_torch[var])) for var in hlvs_dict_torch
+#     }
+#     return hlvs_dict
 
 
 def convert(tensorarr: List[torch.Tensor]) -> np.ndarray:
@@ -182,8 +172,8 @@ def subsample(arr: np.ndarray):
 
 def test_metrics(test_info: TestInfo):
     train_log = test_info.train_log
-    sim_batches = test_info.sim_batches
-    gen_batches = test_info.gen_batches
+    sim_batches = test_info.sim_batch
+    gen_batches = test_info.gen_batch
 
     metrics_dict: Dict[str, float] = {}
 
@@ -208,27 +198,13 @@ def test_metrics(test_info: TestInfo):
 
 def test_plots(test_info: TestInfo):
     train_log = test_info.train_log
-    sim_batches = test_info.sim_batches
-    gen_batches = test_info.gen_batches
-    # hlvs_dict = test_info.hlvs_dict
+    sim_batch = test_info.sim_batch
+    gen_batch = test_info.gen_batch
     plot_path = test_info.plot_path
     best_or_last = test_info.best_or_last
 
-    sim_batches_stacked_list = []
-    for sim_batch in sim_batches:
-        sim_batches_stacked_list.append(
-            batch_from_pcs_list(
-                sim_batch.x,
-                sim_batch.batch,
-            )
-        )
-
-    sim_batches_stacked = Batch.from_data_list(
-        [e for ee in sim_batches_stacked_list for e in ee.to_data_list()]
-    )
-    gen_batches_stacked = Batch.from_data_list(
-        [e for ee in gen_batches for e in ee.to_data_list()]
-    )
+    sim_batch_small = Batch.from_data_list(sim_batch[: conf.loader.batch_size])
+    gen_batch_small = Batch.from_data_list(gen_batch[: conf.loader.batch_size])
 
     def log_figure(figure, filename):
         outputpath = plot_path / filename
@@ -249,8 +225,8 @@ def test_plots(test_info: TestInfo):
         v2name = conf.loader.cell_prop_keys[v2]
         cmbname = f"{v1name}_vs_{v2name}"
         figure = xyscatter(
-            sim=sim_batches[0][0].x[:, [v1, v2]].numpy(),
-            gen=gen_batches[0][0].x[:, [v1, v2]].numpy(),
+            sim=sim_batch[0].x[:, [v1, v2]].numpy(),
+            gen=gen_batch[0].x[:, [v1, v2]].numpy(),
             title=f"Scatter a single event ({conf.loader.max_points} points)",
             v1name=v1name,
             v2name=v2name,
@@ -258,11 +234,10 @@ def test_plots(test_info: TestInfo):
         log_figure(figure, f"xyscatter_single_{cmbname}.pdf")
 
         figure = xyscatter_faint(
-            sim=sim_batches[0].x[:, [v1, v2]].numpy(),
-            gen=gen_batches[0].x[:, [v1, v2]].numpy(),
+            sim=sim_batch_small.x[:, [v1, v2]].numpy(),
+            gen=gen_batch_small.x[:, [v1, v2]].numpy(),
             title=(
-                f"Scatter points ({conf.loader.max_points}) in batch"
-                f" ({conf.loader.batch_size})"
+                f"Scatter points ({conf.loader.max_points}) in batch ({batch_size})"
             ),
             v1name=v1name,
             v2name=v2name,
@@ -270,8 +245,8 @@ def test_plots(test_info: TestInfo):
         log_figure(figure, f"xyscatter_batch_{cmbname}.pdf")
 
         figure = xy_hist(
-            sim=sim_batches_stacked.x[:, [v1, v2]].numpy(),
-            gen=gen_batches_stacked.x[:, [v1, v2]].numpy(),
+            sim=sim_batch.x[:, [v1, v2]].numpy(),
+            gen=gen_batch.x[:, [v1, v2]].numpy(),
             title=(
                 f"2D Histogram for {conf.loader.max_points} points in"
                 f" {conf.testing.n_events} events"
@@ -282,20 +257,15 @@ def test_plots(test_info: TestInfo):
         log_figure(figure, f"xy_hist_{cmbname}.pdf")
 
 
-def jetnet_metrics(sim_batches, gen_batches) -> Dict[str, float]:
+def jetnet_metrics(sim_batch, gen_batch) -> Dict[str, float]:
     from fgsim.models.metrics import fpnd, w1efp, w1m, w1p
 
-    gen = gen_batches[0]
-    sim = sim_batches[0]
     metrics_dict = {}
 
-    metrics_dict["fpnd"] = fpnd(gen)
-
-    metrics_dict["w1m"] = w1m(gen_batch=gen, sim_batch=sim)
-
-    metrics_dict["w1p"] = w1p(gen_batch=gen, sim_batch=sim)
-
-    metrics_dict["w1efp"] = w1efp(gen_batch=gen, sim_batch=sim)
+    metrics_dict["fpnd"] = fpnd(gen_batch)
+    metrics_dict["w1m"] = w1m(gen_batch=gen_batch, sim_batch=sim_batch)
+    metrics_dict["w1p"] = w1p(gen_batch=gen_batch, sim_batch=sim_batch)
+    metrics_dict["w1efp"] = w1efp(gen_batch=gen_batch, sim_batch=sim_batch)
     return metrics_dict
 
 

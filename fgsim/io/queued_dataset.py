@@ -10,7 +10,7 @@ import queueflow as qf
 import torch
 
 from fgsim.config import conf
-from fgsim.io import Loader
+from fgsim.io import LoaderInfo
 from fgsim.io.chunks import compute_chucks
 from fgsim.io.preprocessed_seq import preprocessed_seq
 
@@ -34,9 +34,9 @@ and `testing_batches` available as properties; to load training batches, one \
 must queue an epoch via `queue_epoch()` and iterate over the instance of the class.
     """
 
-    def __init__(self, loader: Loader):
+    def __init__(self, loader: LoaderInfo):
         files = loader.file_manager.files
-        len_dict = loader.file_manager.len_dict
+        len_dict = loader.file_manager.file_len_dict
         # Get access to the postprocess switch for computing the validation dataset
         self.shared_postprocess_switch = loader.shared_postprocess_switch
         self.shared_batch_size = loader.shared_batch_size
@@ -100,7 +100,7 @@ must queue an epoch via `queue_epoch()` and iterate over the instance of the cla
                     raise FileNotFoundError("Couldn't find preprocessed dataset.")
 
     @property
-    def validation_batches(self):
+    def validation_batch(self):
         if not hasattr(self, "_validation_batches"):
             logger.debug("Validation batches not loaded, loading from disk.")
             self._validation_batches = torch.load(
@@ -112,7 +112,7 @@ must queue an epoch via `queue_epoch()` and iterate over the instance of the cla
         return self._validation_batches
 
     @property
-    def testing_batches(self):
+    def testing_batch(self):
         if not hasattr(self, "_testing_batches"):
             logger.debug("Testing batches not loaded, loading from disk.")
             self._testing_batches = torch.load(

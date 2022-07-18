@@ -152,7 +152,8 @@ validation:
     stop_key: stop_key
     use_for_stopping: [fpnd]
     metrics:
-        # w1m: {}
+        # w1efp: {}
+        w1m: {}
         w1p: {}
         fpnd: {}
         aoc: {}

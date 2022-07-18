@@ -5,7 +5,7 @@ should be passed the qfseq.
 """
 import sys
 
-from fgsim.io.loader import Loader
+from fgsim.io.loader import LoaderInfo
 
 if "pytest" not in sys.modules:
     import os
@@ -43,7 +43,7 @@ if "pytest" not in sys.modules:
         with open(conf.path.ds_lenghts, "r") as f:
             len_dict = yaml.load(f, Loader=yaml.SafeLoader)
 
-    loader = Loader(
+    loader = LoaderInfo(
         process_seq=process_seq,
         Batch=Batch,
         files=files,

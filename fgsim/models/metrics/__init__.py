@@ -4,6 +4,7 @@ import jetnet
 import numpy as np
 import torch
 
+from fgsim.config import device
 from fgsim.io.sel_loader import Batch
 
 
@@ -42,8 +43,10 @@ def w1efp(
 ) -> Union[float, torch.Tensor, np.float32]:
     shape = _shape_from_batch(gen_batch)
     score = jetnet.evaluation.gen_metrics.w1efp(
-        jets1=gen_batch.x.reshape(*shape),
-        jets2=sim_batch.x.reshape(*shape),
+        jets1=gen_batch.x.reshape(*shape).cpu(),
+        jets2=sim_batch.x.reshape(*shape).cpu(),
+        num_batches=1,
+        efp_jobs=10,
     )[0]
     return score * 1e5
 
@@ -51,10 +54,9 @@ def w1efp(
 def fpnd(gen_batch: Batch, **kwargs) -> Union[float, torch.Tensor, np.float32]:
     shape = _shape_from_batch(gen_batch)
     score = jetnet.evaluation.gen_metrics.fpnd(
-        jets=gen_batch.x.reshape(
-            shape[0], shape[1], shape[2]
-        ),  # .detach().cpu().numpy(),
+        jets=gen_batch.x.reshape(shape[0], shape[1], shape[2]),
         jet_type="t",
         batch_size=int(shape[0]),
+        device="cpu",
     )
     return float(score) * 1e5

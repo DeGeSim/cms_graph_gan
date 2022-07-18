@@ -5,7 +5,7 @@ should be passed the qfseq.
 """
 import sys
 
-from fgsim.io.loader import Loader
+from fgsim.io.loader import LoaderInfo
 
 if "pytest" not in sys.modules:
     import os
@@ -24,7 +24,7 @@ if "pytest" not in sys.modules:
     files = [Path("/dev/null") for _ in range(20)]
     len_dict = defaultdict(lambda: conf.loader.events_per_file)
 
-    loader = Loader(
+    loader = LoaderInfo(
         process_seq=process_seq,
         Batch=Batch,
         files=files,

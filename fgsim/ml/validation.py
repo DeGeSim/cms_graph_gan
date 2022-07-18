@@ -1,7 +1,7 @@
 from copy import deepcopy
 
 import torch
-from tqdm import tqdm
+from torch_geometric.data import Batch
 
 from fgsim.config import conf, device
 from fgsim.io.queued_dataset import QueuedDataset
@@ -13,16 +13,19 @@ from fgsim.utils.check_for_nans import check_chain_for_nans
 def validate(holder: Holder, loader: QueuedDataset) -> None:
     holder.models.eval()
     check_chain_for_nans((holder.models,))
-    # Make sure the batches are loaded
-    _ = loader.validation_batches
-    # Iterate over the validation sample
-    for sim_batch in tqdm(loader.validation_batches, postfix="validating"):
-        with torch.no_grad():
-            sim_batch = sim_batch.clone().to(device)
+
+    with torch.no_grad():
+        sim_batch = loader.validation_batch.clone().to(device)
+        gen_graphs = []
+        for _ in range(conf.loader.validation_set_size // conf.loader.batch_size):
             holder.reset_gen_points()
-            D_sim = holder.models.disc(sim_batch)
-            D_gen = holder.models.disc(holder.gen_points)
-            holder.val_loss(holder.gen_points, sim_batch, D_sim, D_gen)
+            for igraph in range(conf.loader.batch_size):
+                gen_graphs.append(holder.gen_points.get_example(igraph))
+        gen_batch = Batch.from_data_list(gen_graphs)
+
+        D_sim = holder.models.disc(sim_batch)
+        D_gen = holder.models.disc(gen_batch)
+        holder.val_loss(gen_batch, sim_batch, D_sim, D_gen)
     holder.val_loss.log_metrics()
 
     min_stop_crit = min(holder.history["stop_crit"])

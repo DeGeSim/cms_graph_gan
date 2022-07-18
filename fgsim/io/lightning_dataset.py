@@ -24,13 +24,13 @@ class PLDataFromQDS(pl.LightningDataModule):
 
     def val_dataloader(self):
         return DataLoader(
-            PreloadedFromQDS(self.qds.validation_batches),
+            PreloadedFromQDS(self.qds.validation_batch),
             collate_fn=collate_wrapper,
         )
 
     def test_dataloader(self):
         return DataLoader(
-            PreloadedFromQDS(self.qds.testing_batches), collate_fn=collate_wrapper
+            PreloadedFromQDS(self.qds.testing_batch), collate_fn=collate_wrapper
         )
 
     def teardown(self, stage: Optional[str] = None) -> None:

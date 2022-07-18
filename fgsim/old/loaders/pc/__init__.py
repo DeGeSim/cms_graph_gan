@@ -11,13 +11,13 @@ if "pytest" not in sys.modules:
     import torch
 
     from fgsim.io import batch_tools
-    from fgsim.io.loader import Loader
+    from fgsim.io.loader import LoaderInfo
     from fgsim.loaders.pcgraph.files import files, len_dict, save_len_dict
     from fgsim.loaders.pcgraph.scaler import scaler
 
     from .seq import postprocess_switch, process_seq
 
-    loader = Loader(
+    loader = LoaderInfo(
         process_seq=process_seq,
         Batch=torch.Tensor,
         files=files,

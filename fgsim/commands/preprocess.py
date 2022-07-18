@@ -8,14 +8,14 @@ from tqdm import tqdm
 
 from fgsim.config import conf
 from fgsim.io.queued_dataset import QueuedDataset
-from fgsim.io.sel_loader import loader
+from fgsim.io.sel_loader import loader_info
 from fgsim.monitoring.logger import logger
 
 
 def preprocess_procedure() -> None:
-    loader.file_manager.save_len_dict()
-    loader.scaler.save_scaler()
-    data_loader = QueuedDataset(loader)
+    loader_info.file_manager.save_len_dict()
+    loader_info.scaler.save_scaler()
+    data_loader = QueuedDataset(loader_info)
 
     logger.warning(
         f"""\

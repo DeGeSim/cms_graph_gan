@@ -85,11 +85,7 @@ np.random.seed(conf.seed)
 random.seed(conf.seed)
 
 # Select the CPU/GPU
-if (
-    not conf.debug
-    and torch.cuda.is_available()
-    and conf["command"] in ["train", "test"]
-):
+if not conf.debug and torch.cuda.is_available() and conf["command"] == "train":
     device = torch.device("cuda:" + str(torch.cuda.device_count() - 1))
 else:
     device = torch.device("cpu")

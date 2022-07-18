@@ -9,7 +9,6 @@ from torch_geometric.data import Batch
 from torch_geometric.data import Data as Data
 
 from fgsim.config import conf
-from fgsim.io.batch_tools import compute_hlvs
 
 from .objcol import read_chunks, scaler
 from .transform import hitlist_to_graph, hitlist_to_pc
@@ -61,7 +60,5 @@ else:
 
 def transform(hitlist: ak.highlevel.Record) -> Data:
     graph = transform_hitlist(hitlist)
-    if shared_postprocess_switch.value:
-        graph.hlvs = compute_hlvs(graph)
     graph.x = torch.from_numpy(scaler.transform(graph.x.numpy())).float()
     return graph
