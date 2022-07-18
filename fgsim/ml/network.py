@@ -20,7 +20,9 @@ class SubNetworkCollector(torch.nn.Module):
             modelparams = (
                 submodelconf.params if submodelconf.params is not None else {}
             )
-            submodel = import_nn(name, submodelconf.name, modelparams)
+            submodel: torch.nn.Module = import_nn(
+                name, submodelconf.name, modelparams
+            )
 
             self.parts[name] = submodel
             setattr(self, name, submodel)
