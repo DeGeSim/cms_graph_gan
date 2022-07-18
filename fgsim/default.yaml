@@ -124,10 +124,12 @@ loss_options:
         alpha: 1000
         lpnorm: 2
         batch_wise: False
+        pow: 1
     cd:
         factor: 1.0
         lpnorm: 2
         batch_wise: False
+        pow: 1
 
 optim_options:
     Adam:
@@ -138,7 +140,7 @@ optim_options:
     FakeOptimizer: {}
 
 training:
-    events_processed_before_validation: 100000
+    events_processed_before_validation: 250000
     disc_steps_per_gen_step: 5
     early_stopping:
         validation_steps: 100

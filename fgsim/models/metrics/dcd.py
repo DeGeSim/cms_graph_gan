@@ -3,7 +3,7 @@ import torch
 
 # https://github.com/wutong16/Density_aware_Chamfer_Distance/blob/main/utils_v2/model_utils.py
 # https://arxiv.org/abs/2111.12702v1
-def dcd(x, gt, alpha=1, lpnorm=2.0, n_lambda=1, non_reg=False):
+def dcd(x, gt, alpha=1, lpnorm=2.0, pow=1.0, n_lambda=1, non_reg=False):
     x = x.float()
     gt = gt.float()
     batch_size, n_x, _ = x.shape
@@ -17,7 +17,7 @@ def dcd(x, gt, alpha=1, lpnorm=2.0, n_lambda=1, non_reg=False):
         frac_12 = n_x / n_gt
         frac_21 = n_gt / n_x
 
-    dist1, dist2, idx1, idx2 = distChamfer(x, gt, lpnorm=lpnorm)
+    dist1, dist2, idx1, idx2 = distChamfer(x, gt, lpnorm=lpnorm, pow=pow)
     # dist1 (batch_size, n_gt): a gt point finds its nearest neighbour x' in x;
     # idx1  (batch_size, n_gt): the idx of x' \in [0, n_x-1]
     # dist2 and idx2: vice versa
@@ -38,8 +38,8 @@ def dcd(x, gt, alpha=1, lpnorm=2.0, n_lambda=1, non_reg=False):
     return (loss1 + loss2) / 2
 
 
-def cd(output, gt, lpnorm=2.0):
-    dist1, dist2, _, _ = distChamfer(gt, output, lpnorm=lpnorm)
+def cd(output, gt, lpnorm=2.0, pow: float = 1.0):
+    dist1, dist2, _, _ = distChamfer(gt, output, lpnorm=lpnorm, pow=pow)
     cd_p = (dist1.mean(1) + dist2.mean(1)) / 2
     return cd_p
     # cd_p = (torch.sqrt(dist1).mean(1) + torch.sqrt(dist2).mean(1)) / 2
@@ -64,7 +64,7 @@ def cd(output, gt, lpnorm=2.0):
     # return res
 
 
-def distChamfer(a, b, lpnorm=2):
+def distChamfer(a, b, lpnorm=2.0, pow=1.0):
     """
     :param a: Pointclouds Batch x nul_points x dim
     :param b:  Pointclouds Batch x nul_points x dim
@@ -76,8 +76,7 @@ def distChamfer(a, b, lpnorm=2):
     Works for pointcloud of any dimension
     """
     # original implementation equivalent to
-    # P = torch.pow(torch.cdist(a, b, p=lpnorm), lpnorm)
-    P = torch.cdist(a, b, p=lpnorm)
+    P = torch.pow(torch.cdist(a, b, p=lpnorm), pow)
     return (
         torch.min(P, 2)[0],
         torch.min(P, 1)[0],

@@ -5,11 +5,12 @@ from fgsim.models.metrics.dcd import dcd
 
 class LossGen:
     def __init__(
-        self, alpha, lpnorm: float = 2.0, batch_wise: bool = False
+        self, alpha, lpnorm: float = 2.0, batch_wise: bool = False, pow: float = 1
     ) -> None:
         self.alpha = alpha
         self.lpnorm = lpnorm
         self.batch_wise = batch_wise
+        self.pow = pow
 
     def __call__(self, holder: Holder, batch: Batch):
         n_features = batch.x.shape[1]
@@ -22,6 +23,7 @@ class LossGen:
             batch.x.reshape(*shape),
             alpha=self.alpha,
             lpnorm=self.lpnorm,
+            pow=self.pow,
         ).mean()
 
         return loss
