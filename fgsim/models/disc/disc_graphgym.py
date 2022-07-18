@@ -9,7 +9,6 @@ from torch_geometric.nn import (
     global_add_pool,
 )
 
-from fgsim.models.branching.graph_tree import graph_tree_to_graph
 from fgsim.models.ffn import FFN
 
 
@@ -47,7 +46,6 @@ class ModelClass(torch.nn.Module):
         self.hlv_dnn = FFN(n_features * (len(self.convs) + 1), 1)
 
     def forward(self, batch: Data):
-        batch = graph_tree_to_graph(batch, self.n_nn)
         x, edge_index, batchidxs = batch.x, batch.edge_index, batch.batch
 
         x = self.pre_nn(x)

@@ -19,7 +19,6 @@ from fgsim.io.batch_tools import batch_from_pcs_list
 from fgsim.io.queued_dataset import QueuedDataset
 from fgsim.io.sel_loader import scaler
 from fgsim.ml.holder import Holder
-from fgsim.models.branching.graph_tree import graph_tree_to_graph
 from fgsim.monitoring.logger import logger
 from fgsim.monitoring.train_log import TrainLog
 from fgsim.plot.xyscatter import xy_hist, xyscatter, xyscatter_faint
@@ -119,7 +118,6 @@ def get_testing_datasets(holder: Holder) -> TestDataset:
             ):
                 with torch.no_grad():
                     holder.reset_gen_points()
-                    holder.gen_points = graph_tree_to_graph(holder.gen_points)
                     gen_batch = holder.gen_points.clone().cpu()
                     gen_batches.append(gen_batch)
 

@@ -3,11 +3,15 @@ from typing import Dict
 
 import torch
 import torch.nn as nn
-from torch_geometric.data import Data
+from torch_geometric.data import Batch
 
 from fgsim.config import conf, device
 from fgsim.models.branching.branching import BranchingLayer, Tree
-from fgsim.models.branching.graph_tree import GraphTreeWrapper, TreeGenType
+from fgsim.models.branching.graph_tree import (
+    GraphTreeWrapper,
+    TreeGenType,
+    graph_tree_to_batch,
+)
 from fgsim.models.ffn import FFN
 from fgsim.models.layer.ancestor_conv import AncestorConv
 from fgsim.models.pooling.dyn_hlvs import DynHLVsLayer
@@ -134,7 +138,7 @@ class ModelClass(nn.Module):
         else:
             raise Exception
 
-    def forward(self, random_vector: torch.Tensor) -> Data:
+    def forward(self, random_vector: torch.Tensor) -> Batch:
         batch_size = self.batch_size
         features = self.features
         branches = self.branches
@@ -161,4 +165,4 @@ class ModelClass(nn.Module):
         graph_tree.data.x = graph_tree.tftx_by_level[-1]
         graph_tree.data.batch = graph_tree.batch_by_level[-1]
 
-        return graph_tree.data
+        return graph_tree_to_batch(graph_tree)

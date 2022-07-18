@@ -3,7 +3,6 @@ from torch_geometric.data import Batch
 from torch_geometric.nn import GINConv, global_add_pool
 
 from fgsim.config import conf, device
-from fgsim.models.branching.graph_tree import graph_tree_to_graph
 from fgsim.models.ffn import FFN
 from fgsim.models.pooling.dyn_hlvs import DynHLVsLayer
 
@@ -25,7 +24,6 @@ class ModelClass(torch.nn.Module):
         )
 
     def forward(self, batch: Batch):
-        batch = graph_tree_to_graph(batch, self.n_nn)
         x, edge_index, batchidxs = batch.x, batch.edge_index, batch.batch
 
         for _ in range(self.n_prop):

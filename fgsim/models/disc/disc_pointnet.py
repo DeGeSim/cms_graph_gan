@@ -9,8 +9,6 @@ import torch.nn.parallel
 import torch.utils.data
 from torch.autograd import Variable
 
-from fgsim.models.branching.graph_tree import graph_tree_to_graph
-
 
 class ModelClass(nn.Module):
     def __init__(self, batch_size: int, n_points: int, n_features: int):
@@ -23,7 +21,6 @@ class ModelClass(nn.Module):
         )
 
     def forward(self, batch):
-        batch = graph_tree_to_graph(batch)
         x = batch.x[torch.argsort(batch.batch)].reshape(
             self.batch_size, self.n_points, self.n_features
         )

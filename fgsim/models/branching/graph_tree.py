@@ -107,9 +107,9 @@ class TreeGenType(Data):
         )
 
 
-def graph_tree_to_graph(
+def graph_tree_to_batch(
     batch: Union[Data, TreeGenType, GraphTreeWrapper], n_nn: int = 0
-) -> Data:
+) -> Batch:
     """
     It takes a batch of graphs and returns a batch of graphs
 
@@ -125,16 +125,16 @@ def graph_tree_to_graph(
       to the k-nearest neighbors of the nodes in the graph.
     """
     if isinstance(batch, GraphTreeWrapper):
-        batch = batch_from_pcs_list(
+        res = batch_from_pcs_list(
             batch.tftx_by_level[-1],
             batch.batch_by_level[-1],
         )
     elif hasattr(batch, "idxs_by_level"):
         graph_tree = GraphTreeWrapper(batch)
-        batch = batch_from_pcs_list(
+        res = batch_from_pcs_list(
             graph_tree.tftx_by_level[-1],
             graph_tree.batch_by_level[-1],
         )
     if n_nn > 1:
-        batch.edge_index = knn_graph(x=batch.x, k=n_nn, batch=batch.batch)
-    return batch
+        res.edge_index = knn_graph(x=res.x, k=n_nn, batch=res.batch)
+    return res
