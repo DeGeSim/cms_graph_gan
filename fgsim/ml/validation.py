@@ -23,9 +23,11 @@ def validate(holder: Holder, loader: QueuedDataset) -> None:
                 gen_graphs.append(holder.gen_points.get_example(igraph))
         gen_batch = Batch.from_data_list(gen_graphs)
 
-        D_sim = holder.models.disc(sim_batch)
-        D_gen = holder.models.disc(gen_batch)
-        holder.val_loss(gen_batch, sim_batch, D_sim, D_gen)
+        d_sim = holder.models.disc(sim_batch)
+        d_gen = holder.models.disc(gen_batch)
+        holder.val_loss(
+            gen_batch=gen_batch, sim_batch=sim_batch, d_gen=d_gen, d_sim=d_sim
+        )
     holder.val_loss.log_metrics()
 
     min_stop_crit = min(holder.history["stop_crit"])
