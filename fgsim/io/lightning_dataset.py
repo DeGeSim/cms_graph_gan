@@ -5,7 +5,7 @@ from torch.utils.data import DataLoader
 
 from fgsim.io.queued_dataset import QueuedDataset
 
-from .torch_dataset import PreloadedFromQDS, TrainingFromQDS
+from .torch_dataset import TrainingFromQDS
 
 
 class PLDataFromQDS(pl.LightningDataModule):
@@ -24,13 +24,20 @@ class PLDataFromQDS(pl.LightningDataModule):
 
     def val_dataloader(self):
         return DataLoader(
-            PreloadedFromQDS(self.qds.validation_batch),
-            collate_fn=collate_wrapper,
+            [self.qds.validation_batch],
+            collate_fn=None,
+            batch_size=None,
+            batch_sampler=None,
+            num_workers=0,
         )
 
     def test_dataloader(self):
         return DataLoader(
-            PreloadedFromQDS(self.qds.testing_batch), collate_fn=collate_wrapper
+            [self.qds.testing_batch],
+            collate_fn=None,
+            batch_size=None,
+            batch_sampler=None,
+            num_workers=0,
         )
 
     def teardown(self, stage: Optional[str] = None) -> None:

@@ -48,20 +48,21 @@ class SubNetworkLoss:
     def __getitem__(self, lossname: str) -> LossFunction:
         return self.parts[lossname]
 
-    def __call__(self, holder, batch: Batch):
+    def __call__(self, holder, batch: Batch) -> torch.Tensor:
         losses_dict: Dict[str, torch.Tensor] = {
             lossname: loss(holder, batch) * self.pconf[lossname]["factor"]
             for lossname, loss in self.parts.items()
         }
 
         partloss: torch.Tensor = sum(losses_dict.values())
-        if conf.models[self.name].retain_graph_on_backprop:
-            partloss.backward(retain_graph=True)
-        else:
-            partloss.backward()
+        # if conf.models[self.name].retain_graph_on_backprop:
+        #     partloss.backward(retain_graph=True)
+        # else:
+        #     partloss.backward()
         self.metric_aggr.append_dict(
             {k: v.detach().cpu().numpy() for k, v in losses_dict.items()}
         )
+        return partloss
 
 
 class LossesCol:
