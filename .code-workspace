@@ -13,7 +13,7 @@
             "path": "."
         },
         {
-            "path": "/home/mscham/queueflow"
+            "path": "/home/durgutse/queueflow"
         }
     ],
     "launch": {
@@ -28,48 +28,48 @@
             //     "name": "tr 7642a1b",
             //     "request": "launch",
             //     "type": "python",
-            //     "cwd": "/home/mscham/fgsim",
+            //     "cwd": "/home/durgutse/fgsim",
             //     // "justMyCode": false,
             // },
             {
                 "args": [
                     "--tag",
-                    "jetnet",
+                    "reg",
                     "--debug",
                     "train"
                 ],
-                "cwd": "/home/mscham/fgsim",
+                "cwd": "/home/durgutse/fgsim",
                 // "justMyCode": false,
                 "module": "fgsim",
-                "name": "tr jetnet",
+                "name": "tr reg",
                 "request": "launch",
                 "type": "python"
             },
             {
                 "args": [
                     "--tag",
-                    "jetnet",
+                    "reg",
                     "--debug",
                     "test"
                 ],
-                "cwd": "/home/mscham/fgsim",
+                "cwd": "/home/durgutse/fgsim",
                 // "justMyCode": false,
                 "module": "fgsim",
-                "name": "te jetnet",
+                "name": "te reg",
                 "request": "launch",
                 "type": "python"
             },
             {
                 "args": [
                     "--tag",
-                    "jetnet",
+                    "reg",
                     "--debug",
                     "preprocess"
                 ],
-                "cwd": "/home/mscham/fgsim",
+                "cwd": "/home/durgutse/fgsim",
                 // "justMyCode": false,
                 "module": "fgsim",
-                "name": "pp jetnet",
+                "name": "pp reg",
                 "request": "launch",
                 "type": "python"
             }
@@ -119,10 +119,6 @@
         },
         "jupyter.jupyterLaunchRetries": 1,
         "python.analysis.typeCheckingMode": "basic",
-        // "python.analysis.extraPaths": [
-        //     "${env:HOME}/queueflow",
-        //     "/dev/shm/mscham/venv1.10.1+cu111/lib/python3.8/site-packages"
-        // ],
         "python.defaultInterpreterPath": "/dev/shm/mscham/venv1.10.1+cu111/bin/python",
         "python.envFile": "~/fgsim/.env",
         "python.formatting.blackPath": "${env:HOME}/.local/bin/black",
