@@ -29,9 +29,7 @@ def init_logger():
         # stream_handler = RichHandler(highlighter=NullHighlighter())
         # stream_handler = logging.StreamHandler()
         stream_handler.setFormatter(format_plain)
-        stream_handler.setLevel(
-            logging.DEBUG if conf.loader.debug else conf.loglevel
-        )
+        stream_handler.setLevel(logging.DEBUG if conf.debug else conf.loglevel)
         logger.addHandler(stream_handler)
 
         if not conf.debug:
