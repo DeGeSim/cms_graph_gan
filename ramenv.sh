@@ -8,7 +8,7 @@ if [ ! -d $RAMPATH ]; then
   mkdir -p $RAMPATH
   tar -x -f ~/beegfs/venvs/fgsim.tar --directory ${RAMPATH}
 fi
-unalias ls || true
+alias ls || unalias ls
 source $RAMPATH/bin/activate
 
 # save ram env
