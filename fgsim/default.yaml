@@ -165,12 +165,11 @@ testing:
 
 path:
     dataset: "${loader.dataset_path}"
-    # dataset: "data/hgcal_william"
-    dataset_processed: "${path.dataset}/pkl_${loader_name}_${loader_hash}"
     ds_lenghts: "${path.dataset_processed}/filelengths.yaml"
+    dataset_processed: "${path.dataset}/pkl_${loader_name}_${loader_hash}"
+    training: "${path.dataset_processed}/training"
     validation: "${path.dataset_processed}/validation.pt"
     test: "${path.dataset_processed}/test.pt"
-    training: "${path.dataset_processed}/training"
     training_glob: "*.pt"
     geo_lup: "data/geo_hgcal/DetIdLUT.root"
     run_path: "wd/${tag}/${hash}"
@@ -191,13 +190,12 @@ loader_options:
         rootprefix: "treeMaker/tree"
         dataset_glob: "**/*.root"
         preprocess_training: True
-        debug: False
         chunksize: 1000
-        batch_size: 500
-        validation_set_size: 5000
+        batch_size: 100
+        validation_set_size: 1000
         test_set_size: 5000
         scaling_fit_size: 100
-        events_per_file: 100000
+        events_per_file: 10000
         prefetch_batches: 10
         num_workers_transform: 30
         num_workers_stack: 1
@@ -233,7 +231,3 @@ loader_options:
         n_features: 3
         cell_prop_keys: ["eta","phi", "pt"]
         dataset_glob: "**/*.csv"
-        chunksize: 100
-        batch_size: 100
-        validation_set_size: 1000
-        test_set_size: 5000

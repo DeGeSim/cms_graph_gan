@@ -29,7 +29,7 @@ batch_size = conf.loader.batch_size
 
 class QueuedDataset:
     """
-`QueuedDataLoader` makes `validation_batches` \
+`QueuedDataset` makes `validation_batches` \
 and `testing_batches` available as properties; to load training batches, one \
 must queue an epoch via `queue_epoch()` and iterate over the instance of the class.
     """
@@ -175,7 +175,7 @@ Skipping {n_skip_events} events => {n_skip_chunks} chunks and {n_skip_batches} b
             self.qfseq.queue_iterable(epoch_files)
             np.random.shuffle(self.preprocessed_files)
 
-            # No calculate the number of batches that we still have to skip
+            # Now calculate the number of batches that we still have to skip
             n_skip_batches = (
                 (n_skip_events // conf.loader.batch_size)  # n batches
             ) % self.n_test_batches  # modulo the batches in a file
