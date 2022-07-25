@@ -18,58 +18,60 @@
     ],
     "launch": {
         "configurations": [
-            // {
-            //     "args": [
-            //         "--hash",
-            //         "7642a1b",
-            //         "train"
-            //     ],
-            //     "module": "fgsim",
-            //     "name": "tr 7642a1b",
-            //     "request": "launch",
-            //     "type": "python",
-            //     "cwd": "/home/mscham/fgsim",
-            //     // "justMyCode": false,
-            // },
+            {
+                "args": [
+                    "--hash",
+                    // "afc152b",
+                    "e5d63e8",
+                    "--debug",
+                    "test"
+                ],
+                "module": "fgsim",
+                "name": "e5d63e8",
+                "request": "launch",
+                "type": "python",
+                "cwd": "/home/mscham/fgsim",
+                // "justMyCode": false,
+            },
             {
                 "args": [
                     "--tag",
-                    "jetnet",
+                    "jetnet_cd_l2_pow2_bw",
                     "--debug",
                     "train"
                 ],
                 "cwd": "/home/mscham/fgsim",
-                // "justMyCode": false,
+                "justMyCode": false,
                 "module": "fgsim",
-                "name": "tr jetnet",
+                "name": "tr jetnet_cd_l2_pow2_bw",
                 "request": "launch",
                 "type": "python"
             },
             {
                 "args": [
                     "--tag",
-                    "jetnet",
+                    "jetnet_cd_l2_pow2_bw",
                     "--debug",
                     "test"
                 ],
                 "cwd": "/home/mscham/fgsim",
                 // "justMyCode": false,
                 "module": "fgsim",
-                "name": "te jetnet",
+                "name": "te jetnet_cd_l2_pow2_bw",
                 "request": "launch",
                 "type": "python"
             },
             {
                 "args": [
                     "--tag",
-                    "jetnet",
+                    "jetnet_cd_l2_pow2_bw",
                     "--debug",
                     "preprocess"
                 ],
                 "cwd": "/home/mscham/fgsim",
                 // "justMyCode": false,
                 "module": "fgsim",
-                "name": "pp jetnet",
+                "name": "pp jetnet_cd_l2_pow2_bw",
                 "request": "launch",
                 "type": "python"
             }
@@ -119,18 +121,14 @@
         },
         "jupyter.jupyterLaunchRetries": 1,
         "python.analysis.typeCheckingMode": "basic",
-        // "python.analysis.extraPaths": [
-        //     "${env:HOME}/queueflow",
-        //     "/dev/shm/mscham/venv1.10.1+cu111/lib/python3.8/site-packages"
-        // ],
-        "python.defaultInterpreterPath": "/dev/shm/mscham/venv1.10.1+cu111/bin/python",
-        "python.envFile": "~/fgsim/.env",
-        "python.formatting.blackPath": "${env:HOME}/.local/bin/black",
+        "python.defaultInterpreterPath": "/dev/shm/mscham/fgsim/bin/python",
+        // "python.envFile": "~/fgsim/.env",
+        "python.formatting.blackPath": "/dev/shm/mscham/fgsim/bin/black",
         "python.formatting.provider": "black",
         "python.languageServer": "Pylance",
         "python.linting.enabled": true,
         "python.linting.flake8Enabled": true,
-        "python.linting.flake8Path": "${env:HOME}/.local/bin/pflake8",
+        "python.linting.flake8Path": "/dev/shm/mscham/fgsim/bin/pflake8",
         "python.linting.ignorePatterns": [
             "**/site-packages/**/*.py",
             ".vscode/*.py",
@@ -138,14 +136,14 @@
         ],
         "python.linting.lintOnSave": true,
         "python.linting.mypyEnabled": true,
-        "python.linting.mypyPath": "${env:HOME}/.local/bin/mypy",
+        "python.linting.mypyPath": "/dev/shm/mscham/fgsim/bin/mypy",
         "python.linting.pylintArgs": [
             "--generated-members=numpy.* ,torch.*",
             "--disable=E0402,C0116,logging-fstring-interpolation"
         ],
         "python.linting.pylintEnabled": false,
-        "python.linting.pylintPath": "/dev/shm/mscham/venv1.10.1+cu111/bin/pylint",
-        "python.pipenvPath": "${env:HOME}/.local/bin/pipenv",
+        "python.linting.pylintPath": "/dev/shm/mscham/fgsim/bin/pylint",
+        // "python.pipenvPath": "/dev/shm/mscham/fgsim/bin/pipenv",
         "python.testing.pytestEnabled": true,
         "python.testing.unittestEnabled": false
     },

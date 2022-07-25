@@ -1,9 +1,0 @@
-[submodule "fgsim/geo/xtensor"]
-	path = fgsim/old/geo/libs/xtensor
-	url = https://github.com/xtensor-stack/xtensor
-[submodule "fgsim/geo/libs/xtl"]
-	path = fgsim/old/geo/libs/xtl
-	url = https://github.com/xtensor-stack/xtl
-[submodule "fgsim/geo/libs/xtensor-python"]
-	path = fgsim/old/geo/libs/xtensor-python
-	url = https://github.com/xtensor-stack/xtensor-python

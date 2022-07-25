@@ -118,16 +118,13 @@ def get_testing_datasets(holder: Holder) -> TestDataset:
                     gen_graphs.append(holder.gen_points.get_example(igraph))
             gen_batch = Batch.from_data_list(gen_graphs)
 
-            logger.info("Processs HLVs")
             ds_dict[best_or_last] = gen_batch
 
         # scale all the samples
         for k in ds_dict.keys():
-            for ibatch in tqdm(range(len(ds_dict[k])), desc=f"Scaling {k}"):
-                batch = ds_dict[k][ibatch]
-                batch.x = torch.from_numpy(
-                    scaler.inverse_transform(batch.x.numpy())
-                )
+            ds_dict[k].x = torch.from_numpy(
+                scaler.inverse_transform(ds_dict[k].x.numpy())
+            )
         test_data = TestDataset(
             sim_batches=ds_dict["sim"],
             gen_batches_best=ds_dict["best"],

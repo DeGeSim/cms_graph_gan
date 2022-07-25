@@ -3,7 +3,7 @@ set -e
 if [[ ! -z "$VIRTUAL_ENV" ]]; then
     deactivate
 fi
-yes | module clear
+module purge
 set -x
 
 # Install the utilities in isolated eviroments
