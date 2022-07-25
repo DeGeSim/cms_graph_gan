@@ -23,7 +23,7 @@ from fgsim.io.preprocessed_seq import preprocessed_seq
 # )
 from fgsim.monitoring.logger import logger
 
-chunksize = conf.loader.chunksize
+chunk_size = conf.loader.chunk_size
 batch_size = conf.loader.batch_size
 
 
@@ -47,15 +47,15 @@ must queue an epoch via `queue_epoch()` and iterate over the instance of the cla
         np.random.shuffle(chunk_coords)
 
         # Make sure the chunks can be split evenly into batches:
-        assert chunksize % batch_size == 0
+        assert chunk_size % batch_size == 0
 
-        assert conf.loader.validation_set_size % chunksize == 0
+        assert conf.loader.validation_set_size % chunk_size == 0
         n_validation_batches = conf.loader.validation_set_size // batch_size
-        n_validation_chunks = conf.loader.validation_set_size // chunksize
+        n_validation_chunks = conf.loader.validation_set_size // chunk_size
 
-        assert conf.loader.test_set_size % chunksize == 0
+        assert conf.loader.test_set_size % chunk_size == 0
         self.n_test_batches = conf.loader.test_set_size // batch_size
-        n_testing_chunks = conf.loader.test_set_size // chunksize
+        n_testing_chunks = conf.loader.test_set_size // chunk_size
 
         logger.info(
             f"Using the first {n_validation_batches} batches for "
@@ -125,7 +125,7 @@ must queue an epoch via `queue_epoch()` and iterate over the instance of the cla
         if not self.qfseq.started:
             self.qfseq.start()
         n_skip_epochs = n_skip_events // (
-            conf.loader.chunksize * len(self.training_chunks)
+            conf.loader.chunk_size * len(self.training_chunks)
         )
 
         # Compute the batches on the fly
@@ -135,7 +135,7 @@ must queue an epoch via `queue_epoch()` and iterate over the instance of the cla
                 np.random.shuffle(self.training_chunks)
 
             # Cycle Epochs
-            n_skip_chunks = (n_skip_events // conf.loader.chunksize) % len(
+            n_skip_chunks = (n_skip_events // conf.loader.chunk_size) % len(
                 self.training_chunks
             )
             # Only queue to the chucks that are still left
@@ -147,7 +147,7 @@ must queue an epoch via `queue_epoch()` and iterate over the instance of the cla
             # because a chunk may be multiple batches and we need to skip
             # the ones that are alread processed
             n_skip_batches = (
-                n_skip_events % conf.loader.chunksize
+                n_skip_events % conf.loader.chunk_size
             ) // conf.loader.batch_size
 
             logger.info(

@@ -3,13 +3,13 @@
 import multiprocessing.pool as mpp
 
 
-def istarmap(self, func, iterable, chunksize=1):
+def istarmap(self, func, iterable, chunk_size=1):
     """starmap-version of imap"""
     self._check_running()
-    if chunksize < 1:
-        raise ValueError("Chunksize must be 1+, not {0:n}".format(chunksize))
+    if chunk_size < 1:
+        raise ValueError("chunk_size must be 1+, not {0:n}".format(chunk_size))
 
-    task_batches = mpp.Pool._get_tasks(func, iterable, chunksize)
+    task_batches = mpp.Pool._get_tasks(func, iterable, chunk_size)
     result = mpp.IMapIterator(self)
     self._taskqueue.put(
         (

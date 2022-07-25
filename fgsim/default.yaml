@@ -190,7 +190,7 @@ loader_options:
         rootprefix: "treeMaker/tree"
         dataset_glob: "**/*.root"
         preprocess_training: True
-        chunksize: 1000
+        chunk_size: 1000
         batch_size: 100
         validation_set_size: 1000
         test_set_size: 5000
