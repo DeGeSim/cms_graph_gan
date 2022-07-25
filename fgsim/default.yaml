@@ -1,5 +1,6 @@
 tag: default
-loglevel: 1
+loglevel: 20
+loglevel_qf: 30
 seed: 0
 comet_project_name: "jetnet"
 
