@@ -58,5 +58,6 @@ def fpnd(gen_batch: Batch, **kwargs) -> Union[float, torch.Tensor, np.float32]:
         jet_type="t",
         batch_size=int(shape[0]),
         device="cpu",
+        use_tqdm=False,
     )
-    return float(score) * 1e5
+    return float(score)
