@@ -20,9 +20,9 @@ class ModelClass(nn.Module):
         self.n_global = n_global
         self.batch_size = conf.loader.batch_size
         self.n_layers = n_layers
-        self.z_shape = conf.loader.batch_size, conf.loader.max_points, n_features
+        self.z_shape = conf.loader.batch_size, conf.loader.n_points, n_features
 
-        self.output_points = conf.loader.max_points
+        self.output_points = conf.loader.n_points
         logger.debug(f"Generator output will be {self.output_points}")
 
         # self.dyn_hlvs_layers = nn.ModuleList(

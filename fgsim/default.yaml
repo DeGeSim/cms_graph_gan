@@ -9,7 +9,6 @@ models:
         name: gen_deeptree
         params: ${model_param_options[${models.gen.name}]}
         losses: "${optionlist:${loss_options},${models.gen.losses_list}}"
-        # losses_list: [WGenLoss]
         losses_list: [CEGenLoss,outside_interval,dcd]
         optim:
             name: Adam
@@ -19,7 +18,6 @@ models:
         name: disc_treepc
         params: ${model_param_options[${models.disc.name}]}
         losses: "${optionlist:${loss_options},${models.disc.losses_list}}"
-        # losses_list: [WDiscLoss,GradientPenalty]
         losses_list: [CEDiscLoss]
         optim:
             name: Adam
@@ -50,7 +48,7 @@ model_param_options:
         n_global: 5
     gen_linear:
         random_size: 64
-        n_points: ${loader[max_points]}
+        n_points: ${loader[n_points]}
         n_features: ${loader[n_features]}
         batch_size: ${loader[batch_size]}
     gen_moons: {}
@@ -68,7 +66,7 @@ model_param_options:
         features: ${tree[features]} # [4, 64, 128, 256]
     disc_pointnet:
         batch_size: ${loader[batch_size]}
-        n_points: ${loader[max_points]}
+        n_points: ${loader[n_points]}
         n_features: ${loader[n_features]}
     disc_pointnet2: ${model_param_options[disc_pointnet]}
     disc_prog:
@@ -197,37 +195,27 @@ loader_options:
         scaling_fit_size: 100
         events_per_file: 10000
         prefetch_batches: 10
-        num_workers_transform: 30
-        num_workers_stack: 1
-        num_workers_postprocess: 1
+        n_workers_transform: 30
+        n_workers_stack: 1
+        n_workers_postprocess: 1
+        n_features: ${len:${loader.cell_prop_keys}}
     hgcal:
-        batch_size: 100
-        max_points: 128
+        n_points: 128
         dataset_path: "data/hgcal_william"
         braches:
             id: "simHit_detid"
             energy: "genPh_E"
             hit_energy: "simHit_E"
         cell_prop_keys: ["E","x", "y", "layer"]
-        n_features: 4
     pcgraph: ${loader_options[hgcal]}
-    pc: ${loader_options[hgcal]}
-    puregraph: ${loader_options[hgcal]}
-    normal:
-        dataset_path: "data/normal"
-        cell_prop_keys: ["x", "y"]
-        n_features: 2
-        max_points: 512
     moons:
         dataset_path: "data/moons"
         cell_prop_keys: ["x", "y"]
-        n_features: 2
-        max_points: 512
+        n_points: 512
         cluster_tree: false
         cluster_method: "random"
     jetnet:
         dataset_path: "data/jetnet"
-        max_points: 30
-        n_features: 3
+        n_points: 30
         cell_prop_keys: ["eta","phi", "pt"]
         dataset_glob: "**/*.csv"

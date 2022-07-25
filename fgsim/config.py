@@ -51,7 +51,7 @@ else:
         # dataset is safed to ensure the parameters dont change
         # Exclude the keys that do not affect the training
         exclude_keys = ["preprocess_training", "debug"] + [
-            x for x in conf["loader"] if "num_workers" in x
+            x for x in conf["loader"] if "n_workers" in x
         ]
 
         loader_params = removekeys(conf_without_paths["loader"], exclude_keys)

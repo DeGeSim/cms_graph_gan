@@ -64,6 +64,6 @@ your_data_loader = DataLoader(
     your_dataset,
     batch_size=conf.loader.batch_size,
     shuffle=False,
-    num_workers=30,
+    n_workers=30,
     prefetch_factor=10,
 )

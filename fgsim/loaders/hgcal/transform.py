@@ -37,7 +37,7 @@ def transform_hitlist(
     from heapq import nlargest
 
     detids = nlargest(
-        conf.loader.max_points, id_to_energy_dict, key=id_to_energy_dict.get
+        conf.loader.n_points, id_to_energy_dict, key=id_to_energy_dict.get
     )
     # ### energy cut
     # # cut the hits 81% energy 56% of the hits @ 57 GeV

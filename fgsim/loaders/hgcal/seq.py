@@ -26,7 +26,7 @@ def process_seq() -> List[Union[qf.StepBase, Queue]]:
         qf.ProcessStep(read_chunks, 2, name="read_chunk"),
         qf.PoolStep(
             transform,
-            nworkers=conf.loader.num_workers_transform,
+            nworkers=conf.loader.n_workers_transform,
             name="transform",
         ),
         qf.RepackStep(shared_batch_size),

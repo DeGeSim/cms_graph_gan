@@ -19,7 +19,7 @@ class PLDataFromQDS(pl.LightningDataModule):
             collate_fn=None,
             batch_size=None,
             batch_sampler=None,
-            num_workers=0,
+            n_workers=0,
         )
 
     def val_dataloader(self):

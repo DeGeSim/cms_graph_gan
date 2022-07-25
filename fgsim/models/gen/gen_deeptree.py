@@ -61,10 +61,10 @@ class ModelClass(nn.Module):
             # otherwise the branches ^ n_splits works
             self.output_points = prod(self.features)
         logger.debug(f"Generator output will be {self.output_points}")
-        if conf.loader.max_points > self.output_points:
+        if conf.loader.n_points > self.output_points:
             raise RuntimeError(
                 "Model cannot generate a sufficent number of points: "
-                f"{conf.loader.max_points} < {self.output_points}"
+                f"{conf.loader.n_points} < {self.output_points}"
             )
         conf.models.gen.output_points = self.output_points
 

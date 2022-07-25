@@ -22,3 +22,4 @@ def register_resolvers():
     OmegaConf.register_new_resolver("div", divide, replace=True)
     OmegaConf.register_new_resolver("optionlist", optionlist, replace=True)
     OmegaConf.register_new_resolver("merge", merge, replace=True)
+    OmegaConf.register_new_resolver("len", len, replace=True)

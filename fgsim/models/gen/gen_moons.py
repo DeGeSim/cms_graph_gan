@@ -14,7 +14,7 @@ class ModelClass(nn.Module):
         super().__init__()
         # self.z_shape = (
         #     conf.loader.batch_size,
-        #     conf.loader.max_points,
+        #     conf.loader.n_points,
         #     conf.loader.n_features,
         # )
         #
@@ -23,16 +23,14 @@ class ModelClass(nn.Module):
     # Random vector to pc
     def forward(self, random_vector: torch.Tensor) -> Batch:
         batch_size = conf.loader.batch_size
-        max_points = conf.loader.max_points
+        n_points = conf.loader.n_points
         mu = [0, 0]
 
-        x, _ = make_moons(max_points * batch_size)
+        x, _ = make_moons(n_points * batch_size)
         jitter = np.random.multivariate_normal(
-            mu, [[0.01, 0], [0, 0.01]], max_points * batch_size
+            mu, [[0.01, 0], [0, 0.01]], n_points * batch_size
         )
-        pc_moom = (
-            torch.tensor(x + jitter).float().reshape(batch_size, max_points, 2)
-        )
+        pc_moom = torch.tensor(x + jitter).float().reshape(batch_size, n_points, 2)
         moons = Batch.from_data_list([Data(x=e) for e in pc_moom]).to(
             random_vector.device
         )

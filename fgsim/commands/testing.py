@@ -224,7 +224,7 @@ def test_plots(test_info: TestInfo):
         figure = xyscatter(
             sim=sim_batch[0].x[:, [v1, v2]].numpy(),
             gen=gen_batch[0].x[:, [v1, v2]].numpy(),
-            title=f"Scatter a single event ({conf.loader.max_points} points)",
+            title=f"Scatter a single event ({conf.loader.n_points} points)",
             v1name=v1name,
             v2name=v2name,
         )
@@ -234,7 +234,7 @@ def test_plots(test_info: TestInfo):
             sim=sim_batch_small.x[:, [v1, v2]].numpy(),
             gen=gen_batch_small.x[:, [v1, v2]].numpy(),
             title=(
-                f"Scatter points ({conf.loader.max_points}) in batch ({batch_size})"
+                f"Scatter points ({conf.loader.n_points}) in batch ({batch_size})"
             ),
             v1name=v1name,
             v2name=v2name,
@@ -245,7 +245,7 @@ def test_plots(test_info: TestInfo):
             sim=sim_batch.x[:, [v1, v2]].numpy(),
             gen=gen_batch.x[:, [v1, v2]].numpy(),
             title=(
-                f"2D Histogram for {conf.loader.max_points} points in"
+                f"2D Histogram for {conf.loader.n_points} points in"
                 f" {conf.testing.n_events} events"
             ),
             v1name=v1name,

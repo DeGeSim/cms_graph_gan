@@ -12,7 +12,7 @@ class LossGen:
     def __call__(self, holder: Holder, *args, **kwargs):
         shape = (
             conf.loader.batch_size,
-            conf.loader.max_points * conf.loader.n_features,
+            conf.loader.n_points * conf.loader.n_features,
         )
         gen_sample = holder.gen_points_w_grad.x.reshape(*shape)
         higher = gen_sample[gen_sample > self.high]

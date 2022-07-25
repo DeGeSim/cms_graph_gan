@@ -15,7 +15,7 @@ class LossGen:
     def __call__(self, holder: Holder, batch: Batch, *args, **kwargs):
         shape = (
             conf.loader.batch_size,
-            conf.loader.max_points * conf.loader.n_features,
+            conf.loader.n_points * conf.loader.n_features,
         )
         sim_sample = batch.x.reshape(*shape)
         gen_sample = holder.gen_points_w_grad.x.reshape(*shape)
