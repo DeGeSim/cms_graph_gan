@@ -26,12 +26,12 @@
                     "--debug",
                     "test"
                 ],
+                "cwd": "/home/mscham/fgsim",
+                // "justMyCode": false,
                 "module": "fgsim",
                 "name": "e5d63e8",
                 "request": "launch",
-                "type": "python",
-                "cwd": "/home/mscham/fgsim",
-                // "justMyCode": false,
+                "type": "python"
             },
             {
                 "args": [
@@ -103,26 +103,26 @@
             "**/_build/**": true,
             "**/node_modules/*/**": true,
             "**/old/**": true,
+            "data/": true,
             "venv1.10.1+cu111/": true,
             "wd/": true,
-            "wd/*": true,
-            "data/": true,
+            "wd/*": true
         },
         "files.watcherExclude": {
             "**/.git/objects/**": true,
             "**/.git/subtree-cache/**": true,
             "**/.hg/store/**": true,
             "**/node_modules/*/**": true,
-            "venv1.10.1+cu111/": true,
-            "wd/": true,
-            "wd/*": true,
             "data/": true,
             "logandrun/": true,
+            "venv1.10.1+cu111/": true,
+            "wd/": true,
+            "wd/*": true
         },
         "jupyter.jupyterLaunchRetries": 1,
         "python.analysis.typeCheckingMode": "basic",
         "python.defaultInterpreterPath": "/dev/shm/mscham/fgsim/bin/python",
-        // "python.envFile": "~/fgsim/.env",
+        "python.envFile": "~/fgsim/.env",
         "python.formatting.blackPath": "/dev/shm/mscham/fgsim/bin/black",
         "python.formatting.provider": "black",
         "python.languageServer": "Pylance",
@@ -143,9 +143,12 @@
         ],
         "python.linting.pylintEnabled": false,
         "python.linting.pylintPath": "/dev/shm/mscham/fgsim/bin/pylint",
+        "python.terminal.activateEnvironment": false,
         // "python.pipenvPath": "/dev/shm/mscham/fgsim/bin/pipenv",
         "python.testing.pytestEnabled": true,
-        "python.testing.unittestEnabled": false
+        "python.testing.unittestEnabled": false,
+        "terminal.integrated.defaultProfile.linux": "bash",
+        "terminal.integrated.defaultLocation": "~/fgsim"
     },
     "tasks": {
         "tasks": [
