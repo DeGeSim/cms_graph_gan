@@ -124,6 +124,22 @@ model_param_options:
         mask_fnd_np: false
         input_node_size: 3
 
+mpgan_mask:
+    mask_feat: False
+    mask_feat_bin: False
+    mask_weights: False
+    mask_manual: False
+    mask_exp: False
+    mask_real_only: False
+    mask_learn: False
+    mask_learn_bin: True
+    mask_learn_sep: False
+    fmg: [64]
+    mask_disc_sep: False
+    mask_fnd_np: False
+    mask_c: True
+    mask_fne_np: False
+
 tree:
     branches: [2, 4, 16]
     features: [64,32,16,4]

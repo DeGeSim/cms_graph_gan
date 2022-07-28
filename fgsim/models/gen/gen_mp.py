@@ -47,6 +47,7 @@ class ModelClass(MPNet):
     # Edit start
     def forward(self, x: Tensor) -> Batch:
         x = super().forward(x)
+        x = x[..., : conf.loader.n_features]
         return Batch.from_data_list([Data(x=e) for e in x])
 
     # Edit end

@@ -3,7 +3,10 @@ from typing import Optional
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from omegaconf import OmegaConf
 from torch import Tensor
+
+from fgsim.config import conf
 
 from .spectral_normalization import SpectralNorm
 
@@ -457,7 +460,7 @@ class MPNet(nn.Module):
         linear_args: dict = {},
         mp_args: dict = {},
         mp_args_first_layer: dict = {},
-        mask_args: dict = {},
+        # mask_args: dict = {},
     ):
         super(MPNet, self).__init__()
         self.num_particles = num_particles
@@ -480,9 +483,10 @@ class MPNet(nn.Module):
             if key not in mp_args_first_layer:
                 mp_args_first_layer[key] = mp_args[key]
 
-        self.mask_args = mask_args
+        # Edit start
+        self.mask_args = OmegaConf.to_container(conf.mpgan_mask)
 
-        self._init_mask(**mask_args)
+        self._init_mask(**self.mask_args)
 
         self.mp_layers = nn.ModuleList()
 
@@ -537,7 +541,7 @@ class MPNet(nn.Module):
         """
         # Edit start
         if labels is None:
-            labels = torch.ones(x.shape[0], 1)
+            labels = torch.ones(x.shape[0], 1, device=x.device)
         # Edit end
 
         x = self._pre_mp(x, labels)

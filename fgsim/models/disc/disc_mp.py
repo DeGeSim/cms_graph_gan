@@ -58,15 +58,14 @@ class ModelClass(MPNet):
     # Edit start
     def forward(self, batch):
         x = batch.x
-        if hasattr(batch, "mask"):
-            x = torch.hstack((x, batch.mask.reshape(-1, 1)))
-        return super().forward(
-            x.reshape(
-                conf.loader.batch_size,
-                conf.loader.n_points,
-                conf.loader.n_features + 1,
-            )
-        )
+        n_points = conf.loader.n_points
+        batch_size = x.shape[0] // n_points
+        n_features = conf.loader.n_features
+        # add the ones mask
+        x = torch.hstack((x, torch.ones(batch_size * n_points, 1, device=x.device)))
+        x = x.reshape(batch_size, n_points, n_features + 1)
+        x = super().forward(x)
+        return x
 
     # Edit end
 
