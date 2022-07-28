@@ -61,22 +61,20 @@ class Trainer:
         return batch
 
     def training_step(self, batch) -> None:
-        # set all optimizers to a 0 gradient
-        self.holder.optims.zero_grad()
         # generate a new batch with the generator
+        self.holder.optims.disc.zero_grad(set_to_none=True)
         self.holder.reset_gen_points()
         self.holder.losses.disc(self.holder, batch)
         self.holder.optims.disc.step()
-        self.holder.optims.disc.zero_grad()
 
         # generator
         if self.holder.state.grad_step % conf.training.disc_steps_per_gen_step == 0:
             # generate a new batch with the generator, but with
             # points thought the generator this time
+            self.holder.models.gen.zero_grad(set_to_none=True)
             self.holder.reset_gen_points_w_grad()
             self.holder.losses.gen(self.holder, batch)
             self.holder.optims.gen.step()
-            self.holder.models.gen.zero_grad()
 
     def post_training_step(self):
         self.holder.state.processed_events += conf.loader.batch_size
