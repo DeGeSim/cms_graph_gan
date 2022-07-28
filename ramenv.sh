@@ -8,7 +8,7 @@ if [ ! -d $RAMPATH ]; then
   mkdir -p $RAMPATH
   tar -x -f ~/beegfs/conda/fgsim.tar --directory ${RAMPATH}
 fi
-if alias ls; then
+if alias ls &>/dev/null ; then
   unalias ls
 fi
 source $RAMPATH/bin/activate
