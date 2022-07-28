@@ -10,7 +10,7 @@ from torch_geometric.nn import (
 )
 
 from fgsim.config import conf, device
-from fgsim.models.ffn import FFN
+from fgsim.models.common import FFN
 
 
 class ModelClass(torch.nn.Module):

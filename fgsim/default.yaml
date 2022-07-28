@@ -73,7 +73,56 @@ model_param_options:
       leveldisc: disc_graphgym
       levelparams: ${model_param_options[disc_graphgym]}
     disc_fake: {}
-
+    disc_pointnetmix:
+        pointnetd_fc: [512]
+        node_feat_size: 3
+        leaky_relu_alpha: 0.2
+        pointnetd_pointfc: [
+            64,
+            128,
+            1024
+        ]
+    gen_mp:
+        num_particles: 30
+        hidden_node_size: 32
+        fe_layers: [
+            96,
+            160,
+            192
+        ]
+        fn_layers: [
+            256,
+            256
+        ]
+        fn1_layers: null # end common
+        mp_iters: 2
+        fe1_layers: null
+        final_activation: tanh
+        output_node_size: 3
+        input_node_size: 32 # 0 for gen_fc and gen_graphcnn
+        lfc: false
+        lfc_latent_size: 128
+    disc_mp:
+        num_particles: 30
+        hidden_node_size: 32
+        fe_layers: [
+            96,
+            160,
+            192
+        ]
+        fn_layers: [
+            256,
+            256
+        ]
+        fn1_layers: null # end common
+        mp_iters: 2
+        fe1_layers: null
+        final_activation: ""
+        dea: true
+        dea_sum: true
+        fnd: []
+        mask_fnd_np: false
+        input_node_size: 3
 
 tree:
     branches: [2, 4, 16]
@@ -91,6 +140,8 @@ loss_options:
     WGenLoss:
         factor: 1.0
     WDiscLoss:
+        factor: 1.0
+    MSELoss:
         factor: 1.0
     CEDiscLoss:
         factor: 1.0
@@ -136,6 +187,8 @@ optim_options:
         lr: 2.e-4
     SGD:
         lr: 2.e-4
+    RMSprop:
+        lr: 0.0001
     FakeOptimizer: {}
 
 training:

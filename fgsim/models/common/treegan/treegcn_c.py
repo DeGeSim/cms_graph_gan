@@ -3,7 +3,7 @@ import math
 import torch
 import torch.nn as nn
 
-from fgsim.models.ffn import FFN
+from fgsim.models.common import FFN
 
 
 class TreeGCN(nn.Module):

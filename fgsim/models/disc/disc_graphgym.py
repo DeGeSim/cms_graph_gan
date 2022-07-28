@@ -9,7 +9,7 @@ from torch_geometric.nn import (
     global_add_pool,
 )
 
-from fgsim.models.ffn import FFN
+from fgsim.models.common import FFN
 
 
 class ModelClass(torch.nn.Module):

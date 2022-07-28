@@ -4,7 +4,7 @@ import torch
 import torch.nn as nn
 import torch.nn.init as init
 
-from fgsim.models.ffn import FFN
+from fgsim.models.common import FFN
 
 
 class TreeGCN(nn.Module):

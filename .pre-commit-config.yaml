@@ -18,6 +18,7 @@ repos:
       - id: flake8
         entry: pflake8
         additional_dependencies: [pyproject-flake8]
+        args: ["--extend-ignore","E501"]
 -   repo: https://github.com/psf/black
     rev: 20.8b1
     hooks:

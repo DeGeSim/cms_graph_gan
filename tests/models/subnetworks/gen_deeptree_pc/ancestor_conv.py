@@ -2,7 +2,7 @@ import pytest
 import torch
 from torch_geometric.data import Data
 
-from fgsim.models.layer.ancestor_conv import AncestorConv
+from fgsim.models.common.deeptree import AncestorConv
 
 device = torch.device("cpu")
 

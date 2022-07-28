@@ -3,7 +3,7 @@ from math import prod
 import torch
 import torch.nn as nn
 
-from fgsim.models.ffn import FFN
+from fgsim.models.common import FFN
 
 from .graph_tree import TreeGenType
 from .tree import Tree

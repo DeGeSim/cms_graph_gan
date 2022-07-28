@@ -2,8 +2,6 @@
     "extensions": {
         "recommendations": [
             "2gua.rainbow-brackets",
-            "be5invis.toml",
-            "eamodio.gitlens",
             "ms-python.python",
             "richie5um2.vscode-sort-json"
         ]
@@ -36,42 +34,42 @@
             {
                 "args": [
                     "--tag",
-                    "jetnet_cd_l2_pow2_bw",
+                    "jetnet_gmp_dmp",
                     "--debug",
                     "train"
                 ],
                 "cwd": "/home/mscham/fgsim",
                 "justMyCode": false,
                 "module": "fgsim",
-                "name": "tr jetnet_cd_l2_pow2_bw",
+                "name": "tr jetnet_gmp_dmp",
                 "request": "launch",
                 "type": "python"
             },
             {
                 "args": [
                     "--tag",
-                    "jetnet_cd_l2_pow2_bw",
+                    "jetnet_gmp_dmp",
                     "--debug",
                     "test"
                 ],
                 "cwd": "/home/mscham/fgsim",
                 // "justMyCode": false,
                 "module": "fgsim",
-                "name": "te jetnet_cd_l2_pow2_bw",
+                "name": "te jetnet_gmp_dmp",
                 "request": "launch",
                 "type": "python"
             },
             {
                 "args": [
                     "--tag",
-                    "jetnet_cd_l2_pow2_bw",
+                    "jetnet_gmp_dmp",
                     "--debug",
                     "preprocess"
                 ],
                 "cwd": "/home/mscham/fgsim",
                 // "justMyCode": false,
                 "module": "fgsim",
-                "name": "pp jetnet_cd_l2_pow2_bw",
+                "name": "pp jetnet_gmp_dmp",
                 "request": "launch",
                 "type": "python"
             }
@@ -146,9 +144,16 @@
         "python.terminal.activateEnvironment": false,
         // "python.pipenvPath": "/dev/shm/mscham/fgsim/bin/pipenv",
         "python.testing.pytestEnabled": true,
+        "python.testing.pytestPath": "/dev/shm/mscham/fgsim/bin/pytest",
         "python.testing.unittestEnabled": false,
-        "terminal.integrated.defaultProfile.linux": "bash",
-        "terminal.integrated.defaultLocation": "~/fgsim"
+        "terminal.integrated.defaultProfile.linux": "zsh",
+        "terminal.integrated.cwd": "${env:HOME}/fgsim",
+        "terminal.integrated.profiles.linux": {
+            "zsh": {
+                "args": [],
+                "path": "${env:HOME}/.apps/CentOSLinux7/bin/zsh"
+            }
+        }
     },
     "tasks": {
         "tasks": [

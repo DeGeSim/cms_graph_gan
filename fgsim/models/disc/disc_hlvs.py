@@ -2,7 +2,7 @@ import torch
 from torch_geometric.nn import global_add_pool, global_mean_pool
 
 from fgsim.config import conf
-from fgsim.models.ffn import FFN
+from fgsim.models.common import FFN
 
 
 class ModelClass(torch.nn.Module):

@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 from torch_geometric.nn import global_add_pool
 
-from fgsim.models.ffn import FFN
+from .ffn import FFN
 
 
 class DynHLVsLayer(nn.Module):

@@ -35,12 +35,12 @@ class SubNetworkLoss:
             if isinstance(params, DictConfig):
                 params = OmegaConf.to_container(params)
             del params["factor"]
-            if not hasattr(torch.nn, lossname):
+            try:
                 loss_module = importlib.import_module(
                     f"fgsim.models.loss.{lossname}"
                 )
                 loss = loss_module.LossGen(**params)
-            else:
+            except ImportError:
                 loss = getattr(torch.nn, lossname)().to(device)
             self.parts[lossname] = loss
             setattr(self, lossname, loss)

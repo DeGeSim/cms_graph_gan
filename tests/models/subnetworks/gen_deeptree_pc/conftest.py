@@ -6,11 +6,8 @@ import pytest
 import torch
 from torch_geometric.data import Data
 
-from fgsim.models.branching.branching import BranchingLayer
-from fgsim.models.branching.tree import Tree
-from fgsim.models.ffn import FFN
-from fgsim.models.layer.ancestor_conv import AncestorConv
-from fgsim.models.pooling.dyn_hlvs import DynHLVsLayer
+from fgsim.models.common import FFN, DynHLVsLayer
+from fgsim.models.common.deeptree import AncestorConv, BranchingLayer, Tree
 
 device = torch.device("cpu")
 

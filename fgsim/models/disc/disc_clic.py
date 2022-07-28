@@ -3,8 +3,7 @@ from torch_geometric.data import Batch
 from torch_geometric.nn import GINConv, global_add_pool
 
 from fgsim.config import conf, device
-from fgsim.models.ffn import FFN
-from fgsim.models.pooling.dyn_hlvs import DynHLVsLayer
+from fgsim.models.common import FFN, DynHLVsLayer
 
 
 class ModelClass(torch.nn.Module):

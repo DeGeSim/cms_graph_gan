@@ -6,15 +6,15 @@ import torch.nn as nn
 from torch_geometric.data import Batch
 
 from fgsim.config import conf, device
-from fgsim.models.branching.branching import BranchingLayer, Tree
-from fgsim.models.branching.graph_tree import (
+from fgsim.models.common import FFN, DynHLVsLayer
+from fgsim.models.common.deeptree import (
+    AncestorConv,
+    BranchingLayer,
     GraphTreeWrapper,
+    Tree,
     TreeGenType,
     graph_tree_to_batch,
 )
-from fgsim.models.ffn import FFN
-from fgsim.models.layer.ancestor_conv import AncestorConv
-from fgsim.models.pooling.dyn_hlvs import DynHLVsLayer
 from fgsim.monitoring.logger import logger
 
 tree = Tree(

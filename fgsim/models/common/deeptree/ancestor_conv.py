@@ -4,7 +4,7 @@ import torch
 from torch_geometric.nn import MessagePassing
 from torch_geometric.utils import add_self_loops
 
-from fgsim.models.ffn import FFN
+from fgsim.models.common import FFN
 
 
 class AncestorConv(MessagePassing):

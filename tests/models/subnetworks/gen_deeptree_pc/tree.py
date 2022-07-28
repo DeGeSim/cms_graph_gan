@@ -1,7 +1,7 @@
 import pytest
 import torch
 
-from fgsim.models.branching.node import Node
+from fgsim.models.common.deeptree import Node
 
 
 # The tree is initialized with a root node, which has two children.
