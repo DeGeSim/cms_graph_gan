@@ -63,6 +63,7 @@ else:
                 "command",
                 "debug",
                 "loglevel",
+                "loglevel_qf",
                 "path",
             ]
             + [key for key in conf.keys() if key.endswith("_options")],

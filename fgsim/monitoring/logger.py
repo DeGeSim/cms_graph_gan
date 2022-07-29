@@ -24,7 +24,6 @@ def init_logger():
             datefmt="%y-%m-%d %H:%M",
         )
 
-        logger.setLevel(logging.DEBUG)
         stream_handler = RichHandler()
         # stream_handler = RichHandler(highlighter=NullHighlighter())
         # stream_handler = logging.StreamHandler()
@@ -39,7 +38,6 @@ def init_logger():
             logger.addHandler(file_handler)
 
         # qf logger
-        qf_logger.setLevel(logging.DEBUG)
         qf_stream_handler = RichHandler()
         # qf_stream_handler = RichHandler(highlighter=NullHighlighter())
         # qf_stream_handler = logging.StreamHandler()
