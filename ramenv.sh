@@ -11,7 +11,8 @@ fi
 if alias ls &>/dev/null ; then
   unalias ls
 fi
-source $RAMPATH/bin/activate
+# source $RAMPATH/bin/activate
+mamba activate $RAMPATH
 
 # save ram env
 # tar -c -f ~/beegfs/venvs/fgsim.tar --directory=${RAMPATH} .
