@@ -9,7 +9,7 @@ models:
         name: gen_deeptree
         params: ${model_param_options[${models.gen.name}]}
         losses: "${optionlist:${loss_options},${models.gen.losses_list}}"
-        losses_list: [CEGenLoss,outside_interval,dcd]
+        losses_list: [CEGenLoss,dcd]
         optim:
             name: Adam
             params: ${optim_options[Adam]}
@@ -141,8 +141,8 @@ mpgan_mask:
     mask_fne_np: False
 
 tree:
-    branches: [2, 4, 16]
-    features: [64,32,16,4]
+    branches: [2,3,5]
+    features: [64,32,16,3]
 
 
 layer_options:
@@ -187,10 +187,10 @@ loss_options:
       batch_wise: False
     dcd:
         factor: 1.0
-        alpha: 1000
+        alpha: 1
         lpnorm: 2
-        batch_wise: False
-        pow: 1
+        batch_wise: True
+        pow: 2
     cd:
         factor: 1.0
         lpnorm: 2
