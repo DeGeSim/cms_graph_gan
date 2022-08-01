@@ -26,8 +26,21 @@ class TrainLog:
         self.experiment.set_model_graph(str(model))
 
     def write_trainstep_logs(self) -> None:
-        traintime = self.state.time_training_done - self.state.batch_start_time
-        iotime = self.state.time_io_done - self.state.batch_start_time
+        if not all(
+            [
+                hasattr(self.state, time)
+                for time in [
+                    "time_train_step_end",
+                    "time_train_step_start",
+                    "time_io_end",
+                ]
+            ]
+        ):
+            return
+        traintime = (
+            self.state.time_train_step_end - self.state.time_train_step_start
+        )
+        iotime = self.state.time_io_end - self.state.time_train_step_start
         utilisation = 1 - iotime / traintime
 
         self.log_loss("other.batchtime", traintime)
@@ -54,7 +67,6 @@ class TrainLog:
             step=self.state["grad_step"],
         )
         self.state["epoch"] += 1
-        logger.warning("New epoch!")
 
     def end(self) -> None:
         if conf.debug:

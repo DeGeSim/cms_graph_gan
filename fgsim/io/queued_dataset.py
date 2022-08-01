@@ -76,6 +76,9 @@ must queue an epoch via `queue_epoch()` and iterate over the instance of the cla
             < len(self.training_chunks) / 2
         ), "Dataset to small"
 
+        self.n_training_events = conf.loader.chunk_size * len(self.training_chunks)
+        self.n_grad_steps_per_epoch = self.n_training_events // batch_size
+
         self.qfseq: qf.Sequence
         if conf.command != "preprocess" and conf.loader.preprocess_training:
             qf.init(False)
@@ -124,71 +127,53 @@ must queue an epoch via `queue_epoch()` and iterate over the instance of the cla
     def queue_epoch(self, n_skip_events=0) -> None:
         if not self.qfseq.started:
             self.qfseq.start()
-        n_skip_epochs = n_skip_events // (
-            conf.loader.chunk_size * len(self.training_chunks)
-        )
+
+        # Calculate the epoch skip
+        n_skip_epochs = n_skip_events // self.n_training_events
+        n_skip_events = n_skip_events % self.n_training_events
 
         # Compute the batches on the fly
         if not conf.loader.preprocess_training or conf.command == "preprocess":
             # Repeat the shuffeling to get the same list
             for _ in range(n_skip_epochs):
                 np.random.shuffle(self.training_chunks)
-
-            # Cycle Epochs
+            # Calculate the chunk skip
             n_skip_chunks = (n_skip_events // conf.loader.chunk_size) % len(
                 self.training_chunks
             )
+            n_skip_events = n_skip_events % conf.loader.chunk_size
+
+            if n_skip_chunks != 0:
+                logger.warning(f"Skipped {n_skip_chunks} chunks")
             # Only queue to the chucks that are still left
-            epoch_chunks = self.training_chunks[n_skip_chunks:]
-            self.qfseq.queue_iterable(epoch_chunks)
+            self.qfseq.queue_iterable(self.training_chunks[n_skip_chunks:])
             np.random.shuffle(self.training_chunks)
-
-            # No calculate the number of batches that we still have to skip,
-            # because a chunk may be multiple batches and we need to skip
-            # the ones that are alread processed
-            n_skip_batches = (
-                n_skip_events % conf.loader.chunk_size
-            ) // conf.loader.batch_size
-
-            logger.info(
-                f"""\
-Skipping {n_skip_events} events => {n_skip_chunks} chunks and {n_skip_batches} batches."""
-            )
-
-            for _ in range(n_skip_batches):
-                _ = next(self.qfseq)
 
         # Load the preprocessed batches
         else:
             # Repeat the shuffeling to get the same list
             for _ in range(n_skip_epochs):
                 np.random.shuffle(self.preprocessed_files)
-
-            # Calculate the number of files that have already been processed
-            # one file contains self.n_test_batches batches
-            n_skip_files = (
-                (n_skip_events // conf.loader.batch_size)  # n batches
-                // self.n_test_batches  # by the number of batches per file
-                % len(self.preprocessed_files)  # modulo the files per epoch
-            )
-            epoch_files = self.preprocessed_files[n_skip_files:]
-            self.qfseq.queue_iterable(epoch_files)
+            # # Calculate the preprocessed file skip
+            # n_skip_files = (
+            #     n_skip_events
+            #     // conf.loader.events_per_file  # by the number of batches per file
+            # )
+            # n_skip_events = n_skip_events % conf.loader.events_per_file
+            # if n_skip_files != 0:
+            #     logger.warning(f"Skipped {n_skip_files} pickled files")
+            # self.qfseq.queue_iterable(self.preprocessed_files[n_skip_files:])
+            self.qfseq.queue_iterable(self.preprocessed_files)
             np.random.shuffle(self.preprocessed_files)
 
-            # Now calculate the number of batches that we still have to skip
-            n_skip_batches = (
-                (n_skip_events // conf.loader.batch_size)  # n batches
-            ) % self.n_test_batches  # modulo the batches in a file
+        # Now calculate the number of batches that we still have to skip,
+        # because a chunk may be multiple batches and we need to skip
+        # the ones that are alread processed
+        n_skip_batches = n_skip_events // conf.loader.batch_size
 
-            logger.info(
-                f"""\
-    Skipping {n_skip_events} events => {n_skip_files} files and {n_skip_batches} batches."""
-            )
-
-            # Skip the correct number of batches.
-            for ibatch in range(n_skip_batches):
-                _ = next(self.qfseq)
-                logger.debug(f"Skipped batch({ibatch}).")
+        for ibatch in range(n_skip_batches):
+            _ = next(self.qfseq)
+            logger.debug(f"Skipped batch({ibatch}).")
 
     def __iter__(self) -> qf.Sequence:
         return iter(self.qfseq)

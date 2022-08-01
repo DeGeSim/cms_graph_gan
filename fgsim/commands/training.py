@@ -24,32 +24,35 @@ class Trainer:
         self.train_log: TrainLog = self.holder.train_log
         self.loader: QueuedDataset = QueuedDataset(loader_info)
 
-        # Queue that batches
-        self.loader.queue_epoch(n_skip_events=self.holder.state.processed_events)
-
         if not self.holder.checkpoint_loaded and not conf.debug:
-            self.holder.models.eval()
-            validate(self.holder, self.loader)
+            self.validation_step()
             self.holder.save_checkpoint()
 
     def training_loop(self):
         while not early_stopping(self.holder.history):
-            # switch model in training mode
-            self.holder.models.train()
-            for _ in tqdm(
-                range(conf.validation.interval),
-                postfix=f"train {self.holder.state.grad_step}",
+            self.pre_epoch()
+            istep_start = (
+                self.holder.state.processed_events
+                // conf.loader.batch_size
+                % self.loader.n_grad_steps_per_epoch
+            )
+            for istep, batch in tqdm(
+                zip(
+                    range(istep_start, self.loader.n_grad_steps_per_epoch + 1),
+                    self.loader.qfseq,
+                ),
+                initial=istep_start,
+                total=self.loader.n_grad_steps_per_epoch,
+                mininterval=5.0,
+                desc=f"Epoch {self.holder.state.epoch}",
             ):
-                self.holder.state.batch_start_time = time.time()
-                try:
-                    batch = next(self.loader.qfseq)
-                except StopIteration:
-                    self.post_epoch()
-                    batch = next(self.loader.qfseq)
                 batch = self.pre_training_step(batch)
                 self.training_step(batch)
                 self.post_training_step()
-            self.validation_step()
+                if istep + 1 % conf.validation.interval == 0:
+                    self.validation_step()
+            self.post_epoch()
+
         # Stopping
         self.post_training()
 
@@ -57,7 +60,7 @@ class Trainer:
         if conf.training.smooth_features:
             batch.x = smooth_features(batch.x)
         batch = batch.to(device)
-        self.holder.state.time_io_done = time.time()
+        self.holder.state.time_io_end = time.time()
         return batch
 
     def training_step(self, batch) -> None:
@@ -78,7 +81,7 @@ class Trainer:
 
     def post_training_step(self):
         self.holder.state.processed_events += conf.loader.batch_size
-        self.holder.state.time_training_done = time.time()
+        self.holder.state.time_train_step_end = time.time()
         if self.holder.state.grad_step % conf.training.log_interval == 0:
             # aggregate the losses that have accumulated since the last time
             # and logg them
@@ -93,14 +96,19 @@ class Trainer:
             self.train_log.write_trainstep_logs()
         self.holder.checkpoint_after_time()
         self.holder.state.grad_step += 1
+        self.holder.state.time_train_step_start = time.time()
 
     def validation_step(self):
+        self.holder.models.eval()
         validate(self.holder, self.loader)
+        self.holder.models.train()
+        self.holder.state.time_train_step_start = time.time()
+
+    def pre_epoch(self):
+        self.loader.queue_epoch(n_skip_events=self.holder.state.processed_events)
 
     def post_epoch(self):
-        # If there is no next batch go to the next epoch
         self.train_log.next_epoch()
-        self.loader.queue_epoch(n_skip_events=self.holder.state.processed_events)
 
     def post_training(self):
         self.holder.state.complete = True
