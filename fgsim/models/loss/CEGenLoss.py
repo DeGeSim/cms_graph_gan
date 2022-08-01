@@ -20,7 +20,7 @@ class LossGen:
     def __call__(self, holder: Holder, *args, **kwargs) -> torch.Tensor:
         # Loss of the generated samples
 
-        D_gen = holder.models.disc(holder.gen_points_w_grad)
+        D_gen = holder.models.disc(holder.gen_points_w_grad).squeeze()
         if isinstance(D_gen, dict):
             D_gen = torch.hstack(list(D_gen.values()))
         assert D_gen.dim() == 1

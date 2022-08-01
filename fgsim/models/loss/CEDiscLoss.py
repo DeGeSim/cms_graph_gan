@@ -14,7 +14,7 @@ class LossGen:
 
     def __call__(self, holder: Holder, batch: Batch) -> torch.Tensor:
         # Loss of the simulated samples
-        D_sim = holder.models.disc(batch)
+        D_sim = holder.models.disc(batch).squeeze()
         if isinstance(D_sim, dict):
             D_sim = torch.hstack(list(D_sim.values()))
         assert D_sim.dim() == 1
@@ -25,7 +25,7 @@ class LossGen:
 
         # Loss of the generated samples
         # maximize log(1−D(G(z)))
-        D_gen = holder.models.disc(holder.gen_points)
+        D_gen = holder.models.disc(holder.gen_points).squeeze()
         if isinstance(D_gen, dict):
             D_gen = torch.hstack(list(D_gen.values()))
         assert D_gen.dim() == 1

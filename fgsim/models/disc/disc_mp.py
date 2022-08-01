@@ -64,7 +64,7 @@ class ModelClass(MPNet):
         # add the ones mask
         x = torch.hstack((x, torch.ones(batch_size * n_points, 1, device=x.device)))
         x = x.reshape(batch_size, n_points, n_features + 1)
-        x = super().forward(x)
+        x = super().forward(x).squeeze()
         return x
 
     # Edit end
