@@ -11,7 +11,11 @@ fi
 if alias ls &>/dev/null ; then
   unalias ls
 fi
-# source $RAMPATH/bin/activate
+
+export CONDA_DIR=~/beegfs/conda/miniconda
+# Init conda and mamba by hand
+eval "$(${CONDA_DIR}/bin/conda shell.bash hook 2> /dev/null)"
+source ${CONDA_DIR}/etc/profile.d/mamba.sh
 mamba activate $RAMPATH
 
 # save ram env
