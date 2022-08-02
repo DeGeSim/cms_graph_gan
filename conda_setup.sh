@@ -2,10 +2,10 @@
 set -ex
 
 export CONDA_DIR=~/beegfs/conda/miniconda
-export RAMDIR=/dev/shm/$USER/fgsim
+export RAMDIR=/dev/shm/${USER}/fgsim
 export TARBALL_PATH=~/beegfs/conda/fgsim.tar
 export TARBALL_BASE_PATH=~/beegfs/conda/fgsim_base.tar
-mkdir -p /dev/shm/$USER
+mkdir -p /dev/shm/${USER}
 
 # remove modules
 if ! command -v module &> /dev/null
@@ -29,8 +29,10 @@ set +x
 eval "$(${CONDA_DIR}/bin/conda shell.bash hook 2> /dev/null)"
 source ${CONDA_DIR}/etc/profile.d/mamba.sh
 set -x
+# Add the user directory in ram to the list of env locations
+conda config --append envs_dirs /dev/shm/${USER}/
 # Create the env
-mamba create --yes --prefix /dev/shm/$USER/fgsim python=3.9
+mamba create --yes --prefix /dev/shm/${USER}/fgsim python=3.9
 
 # Init conda and mamba by hand
 set +x
