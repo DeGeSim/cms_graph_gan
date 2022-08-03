@@ -68,8 +68,8 @@ def histdict_to_np(histd):
 def is_not_dropping(arr: np.ndarray):
     valsteps = conf.training.early_stopping.validation_steps
     subarr = arr[-valsteps:]
-    subm = np.mean(subarr)
-    subarr = (subarr - subm) / subm
+    # subm = np.mean(subarr)
+    # subarr = np.(subarr - subm) / subm
     reg = LinearRegression()
     reg.fit(
         X=np.arange(len(subarr)).reshape(-1, 1),
