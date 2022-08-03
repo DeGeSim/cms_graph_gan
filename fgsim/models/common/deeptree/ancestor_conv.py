@@ -52,7 +52,6 @@ class AncestorConv(MessagePassing):
                 + (n_global if msg_nn_include_global else 0)
                 + (1 if msg_nn_include_edge_attr else 0),
                 in_features if self.upd_nn_bool else out_features,
-                n_layers=4,
             )
         else:
             assert not (msg_nn_include_edge_attr or msg_nn_include_global)
@@ -63,7 +62,6 @@ class AncestorConv(MessagePassing):
             self.update_nn = FFN(
                 2 * in_features + (n_global if upd_nn_include_global else 0),
                 out_features,
-                n_layers=4,
             )
         else:
             assert not upd_nn_include_global
@@ -183,3 +181,6 @@ class AncestorConv(MessagePassing):
         else:
             upd = aggr_out
         return upd
+
+    def __repr__(self):
+        return f"AncestorConv(msg_nn={self.msg_nn}\n, update_nn={self.update_nn}\n)"

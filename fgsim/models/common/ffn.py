@@ -1,5 +1,3 @@
-from math import ceil
-
 from torch import nn
 
 from fgsim.config import conf
@@ -10,27 +8,28 @@ class FFN(nn.Sequential):
         self,
         input_dim: int,
         output_dim: int,
-        n_layers: int = 4,
         activation_last_layer=nn.Identity(),
+        n_layers: int = conf.ffn.n_layers,
+        n_nodes_per_layer: int = conf.ffn.hidden_layer_size,
         normalize=True,
     ) -> None:
-        assert n_layers >= 4
+
         # +2 for input and output
         features = [
-            ceil(
-                (1 - ilayer / (n_layers)) * input_dim
-                + (ilayer / (n_layers) * output_dim)
-            )
-            for ilayer in range(n_layers + 1)
+            input_dim,
+            n_nodes_per_layer,
+            n_nodes_per_layer,
+            n_nodes_per_layer,
+            output_dim,
         ]
         layers = [
             nn.Linear(features[ilayer], features[ilayer + 1])
-            for ilayer in range(n_layers)
+            for ilayer in range(n_layers + 1)
         ]
         seq = []
         for ilayer, e in enumerate(layers):
             seq.append(e)
-            if ilayer != n_layers - 1:
+            if ilayer != n_layers:
                 seq.append(
                     getattr(nn, conf.ffn.activation)(**conf.ffn.activation_params)
                 )
@@ -39,12 +38,10 @@ class FFN(nn.Sequential):
             else:
                 seq.append(activation_last_layer)
         super(FFN, self).__init__(*seq)
-
         self.input_dim = input_dim
         self.output_dim = output_dim
         self.n_layers = n_layers
         self.activation_last_layer = activation_last_layer
-
         self.reset_parameters()
 
     def reset_parameters(self):

@@ -25,8 +25,11 @@ models:
         retain_graph_on_backprop: False
 
 ffn:
-    activation: ReLU
-    activation_params: {}
+    activation: LeakyReLU
+    hidden_layer_size: 128
+    n_layers: 3
+    activation_params:
+        negative_slope: 0.1
     init_weights_bias_const: 0.1
     init_weights: xavier_uniform_
 
