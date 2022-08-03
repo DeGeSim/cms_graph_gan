@@ -16,7 +16,7 @@ export CONDA_DIR=~/beegfs/conda/miniconda
 # Init conda and mamba by hand
 eval "$(${CONDA_DIR}/bin/conda shell.bash hook 2> /dev/null)"
 source ${CONDA_DIR}/etc/profile.d/mamba.sh
-mamba activate $RAMPATH
+mamba activate fgsim
 
 # save ram env
 # tar -c -f ~/fgsim/env.tar --directory=${RAMPATH} .
