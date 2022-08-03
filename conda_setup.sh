@@ -3,7 +3,7 @@ set -ex
 
 export CONDA_DIR=~/beegfs/conda/miniconda
 export RAMDIR=/dev/shm/${USER}/fgsim
-export TARBALL_PATH=~/beegfs/conda/fgsim.tar
+export TARBALL_PATH=~/fgsim/env.tar
 export TARBALL_BASE_PATH=~/beegfs/conda/fgsim_base.tar
 mkdir -p /dev/shm/${USER}
 

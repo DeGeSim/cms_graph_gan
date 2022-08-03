@@ -114,3 +114,4 @@ runs/
 fgsim/comet.yaml
 venv*
 todo.txt
+env.tar
