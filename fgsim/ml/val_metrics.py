@@ -19,7 +19,7 @@ class ValidationMetrics:
         self._lastlosses: Dict[str, List[float]] = {}
         self.metric_aggr = MetricAggregator(train_log.history["val_metrics"])
 
-        for metric_name, metric_conf in conf.validation.metrics.items():
+        for metric_name, metric_conf in conf.training.val.metrics.items():
             assert metric_name != "parts"
             params = metric_conf if metric_conf is not None else DictConfig({})
             loss = import_metric(metric_name, params)
@@ -69,7 +69,7 @@ class ValidationMetrics:
         val_metrics = history["val_metrics"]
         # collect all metrics for all validation runs in a 2d array
         loss_history = np.stack(
-            [val_metrics[metric] for metric in conf.validation.use_for_stopping]
+            [val_metrics[metric] for metric in conf.training.val.use_for_stopping]
         )
         # for a given metric and validation run,
         # count the fraction of times that the value of this metric
@@ -86,7 +86,7 @@ class ValidationMetrics:
                 self.train_log.experiment.log_metric(
                     name="ratio_better",
                     value=ratio_better[ivalstep],
-                    step=ivalstep * conf.validation.interval,
+                    step=ivalstep * conf.training.val.interval,
                 )
 
     def __getitem__(self, lossname: str) -> Callable:
