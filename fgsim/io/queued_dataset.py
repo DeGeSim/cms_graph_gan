@@ -71,9 +71,8 @@ must queue an epoch via `queue_epoch()` and iterate over the instance of the cla
         ]
 
         # Check that there is a reasonable amount of data
-        assert (
-            len(self.validation_chunks) + len(self.testing_chunks)
-            < len(self.training_chunks) / 2
+        assert len(self.validation_chunks) + len(self.testing_chunks) < len(
+            self.training_chunks
         ), "Dataset to small"
 
         self.n_training_events = conf.loader.chunk_size * len(self.training_chunks)

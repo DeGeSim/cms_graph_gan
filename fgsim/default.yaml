@@ -280,3 +280,7 @@ loader_options:
         n_points: 30
         cell_prop_keys: ["eta", "phi", "pt"]
         dataset_glob: "**/*.csv"
+        chunk_size: 5000
+        batch_size: 200
+        validation_set_size: 10000
+        test_set_size: 50000
