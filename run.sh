@@ -10,7 +10,7 @@ fi
 
 shift
 cd ~/fgsim
-source bashFunctionCollection.sh
+source fgsim/utils/bashFunctionCollection.sh
 source ramenv.sh
 # Let python resolve the cli arguments
 tmpfile=`mktemp`

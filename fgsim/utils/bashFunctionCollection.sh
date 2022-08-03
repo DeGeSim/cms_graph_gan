@@ -115,14 +115,17 @@ function shortenpath() (
 
 # colored output for viewing logs
 LESS=-R
+export EVENTFILE=$( pwd )/logandrun/event.log
+export EVENTFILE=/dev/null
+
 function loginfo {
-    echo -e "\e[46m[INFO]\e[0m" $( date +"%y-%m-%d %R" ): $@ | tee -a $( pwd )/logandrun/event.log
+    echo -e "\e[46m[INFO]\e[0m" $( date +"%y-%m-%d %R" ): $@ | tee -a ${EVENTFILE}
 }
 function logwarn {
-    echo -e "\e[45m[WARN]\e[0m" $( date +"%y-%m-%d %R" ): $@ | tee -a $( pwd )/logandrun/event.log
+    echo -e "\e[45m[WARN]\e[0m" $( date +"%y-%m-%d %R" ): $@ | tee -a ${EVENTFILE}
 }
 function logerrormsg {
-    echo -e "\e[41m[ERROR]\e[0m" $( date +"%y-%m-%d %R" ): $@ | tee -a $( pwd )/logandrun/event.log
+    echo -e "\e[41m[ERROR]\e[0m" $( date +"%y-%m-%d %R" ): $@ | tee -a ${EVENTFILE}
 }
 function logerror {
     logerrormsg $@
@@ -139,8 +142,9 @@ function _logandrun() {
     fi
     # set the name of the logfile based on the command
     logfile=$( pwd )/logandrun/$( capargs "$@" ).log
+    logfile=/dev/null
     # print the startmessage and log it
-    echo -e "\e[43m[RUN]\e[0m" $( date +"%y-%m-%d %R" ): $@ | tee -a $( pwd )/logandrun/event.log | tee $logfile
+    echo -e "\e[43m[RUN]\e[0m" $( date +"%y-%m-%d %R" ): $@ | tee -a ${EVENTFILE} | tee $logfile
     # evaluate the current date in seconds as the start date
     start=`date +%s`
     #######
@@ -161,10 +165,10 @@ function _logandrun() {
     # if the there was no error...
     if [[ $return_code == 0 ]]; then
         # print the message and log it
-        echo -e "\e[42m[COMPLETE]\e[0m" $( date +"%y-%m-%d %R" ): $@ "     \e[104m{$((end-start))s}\e[0m" | tee -a $( pwd )/logandrun/event.log | tee -a $logfile
+        echo -e "\e[42m[COMPLETE]\e[0m" $( date +"%y-%m-%d %R" ): $@ "     \e[104m{$((end-start))s}\e[0m" | tee -a ${EVENTFILE} | tee -a $logfile
     else
         # print a message with the return code
-        logerrormsg Error Code $return_code  $@ "     \e[104m{$((end-start))s}\e[0m"  | tee -a $( pwd )/logandrun/event.log | tee -a $logfile
+        logerrormsg Error Code $return_code  $@ "     \e[104m{$((end-start))s}\e[0m"  | tee -a ${EVENTFILE} | tee -a $logfile
     fi
     # check if the script has been running for more than 2400s = 40 min AND
     # there is a script to notify the user
