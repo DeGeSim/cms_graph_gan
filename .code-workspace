@@ -3,7 +3,8 @@
         "recommendations": [
             "2gua.rainbow-brackets",
             "ms-python.python",
-            "richie5um2.vscode-sort-json"
+            "richie5um2.vscode-sort-json",
+            "timonwong.shellcheck"
         ]
     },
     "folders": [
