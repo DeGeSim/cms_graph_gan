@@ -9,7 +9,7 @@ models:
         name: gen_deeptree
         params: ${model_param_options[${models.gen.name}]}
         losses: "${optionlist:${loss_options},${models.gen.losses_list}}"
-        losses_list: [CEGenLoss,dcd]
+        losses_list: [CEGenLoss, dcd]
         optim:
             name: Adam
             params: ${optim_options[Adam]}
@@ -29,7 +29,6 @@ ffn:
     activation_params: {}
     init_weights_bias_const: 0.1
     init_weights: xavier_uniform_
-
 
 model_param_options:
     gen_treepc:
@@ -70,30 +69,29 @@ model_param_options:
         n_features: ${loader[n_features]}
     disc_pointnet2: ${model_param_options[disc_pointnet]}
     disc_prog:
-      leveldisc: disc_graphgym
-      levelparams: ${model_param_options[disc_graphgym]}
+        leveldisc: disc_graphgym
+        levelparams: ${model_param_options[disc_graphgym]}
     disc_fake: {}
     disc_pointnetmix:
         pointnetd_fc: [512]
         node_feat_size: 3
         leaky_relu_alpha: 0.2
-        pointnetd_pointfc: [
-            64,
-            128,
-            1024
-        ]
+        pointnetd_pointfc: [64, 128, 1024]
+        num_hits: ${loader.n_points}
+        mask: false
+    disc_pcgan:
+        modus: latent
+        latent_dim: 128
+        z1_dim: 256
+        z2_dim: 10
+        d_dim: 256
+        pool: "max1"
+
     gen_mp:
         num_particles: 30
         hidden_node_size: 32
-        fe_layers: [
-            96,
-            160,
-            192
-        ]
-        fn_layers: [
-            256,
-            256
-        ]
+        fe_layers: [96, 160, 192]
+        fn_layers: [256, 256]
         fn1_layers: null # end common
         mp_iters: 2
         fe1_layers: null
@@ -105,15 +103,8 @@ model_param_options:
     disc_mp:
         num_particles: 30
         hidden_node_size: 32
-        fe_layers: [
-            96,
-            160,
-            192
-        ]
-        fn_layers: [
-            256,
-            256
-        ]
+        fe_layers: [96, 160, 192]
+        fn_layers: [256, 256]
         fn1_layers: null # end common
         mp_iters: 2
         fe1_layers: null
@@ -141,9 +132,8 @@ mpgan_mask:
     mask_fne_np: False
 
 tree:
-    branches: [2,3,5]
-    features: [64,32,16,3]
-
+    branches: [2, 3, 5]
+    features: [64, 32, 16, 3]
 
 layer_options:
     GINConv: {}
@@ -177,14 +167,14 @@ loss_options:
         high: 4.0
         low: -4.0
     mmd:
-      factor: 1.0
-      kernel: "rbf"
-      bandwidth:  [10, 15, 20, 50]
+        factor: 1.0
+        kernel: "rbf"
+        bandwidth: [10, 15, 20, 50]
     mmdpc:
-      factor: 1.0
-      kernel: "rbf"
-      bandwidth:  [10, 15, 20, 50]
-      batch_wise: False
+        factor: 1.0
+        kernel: "rbf"
+        bandwidth: [10, 15, 20, 50]
+        batch_wise: False
     dcd:
         factor: 1.0
         alpha: 1
@@ -248,7 +238,6 @@ path:
     state_old: "${path.run_path}/state_old.yaml"
     comet_exp_key: "${path.run_path}/comet_experiment_key"
 
-
 loader: "${merge:${loader_options[default]},${loader_options[${loader_name}]}}"
 loader_name: jetnet
 
@@ -275,7 +264,7 @@ loader_options:
             id: "simHit_detid"
             energy: "genPh_E"
             hit_energy: "simHit_E"
-        cell_prop_keys: ["E","x", "y", "layer"]
+        cell_prop_keys: ["E", "x", "y", "layer"]
     pcgraph: ${loader_options[hgcal]}
     moons:
         dataset_path: "data/moons"
@@ -286,5 +275,5 @@ loader_options:
     jetnet:
         dataset_path: "data/jetnet"
         n_points: 30
-        cell_prop_keys: ["eta","phi", "pt"]
+        cell_prop_keys: ["eta", "phi", "pt"]
         dataset_glob: "**/*.csv"

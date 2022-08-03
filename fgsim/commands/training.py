@@ -49,8 +49,7 @@ class Trainer:
                 batch = self.pre_training_step(batch)
                 self.training_step(batch)
                 self.post_training_step()
-                if istep + 1 % conf.validation.interval == 0:
-                    self.validation_step()
+            self.validation_step()
             self.post_epoch()
 
         # Stopping
