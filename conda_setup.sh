@@ -62,7 +62,7 @@ python -c 'import torch_scatter'
 mamba install --yes omegaconf typeguard tqdm uproot awkward tensorboard tblib pytorch-lightning scikit-learn multiprocessing-logging  icecream prettytable pretty_errors torchinfo seaborn
 mamba install --yes -c comet_ml comet_ml
 # dev tools
-mamba install --yes black isort flake8 mypy pytest pre-commit ipykernel
+mamba install --yes black isort flake8 mypy pytest pre-commit ipykernel jupyter notebook
 
 # jetnet requirements
 mamba install --yes coffea h5py wurlitzer
