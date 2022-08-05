@@ -54,10 +54,10 @@ def w1efp(
 def fpnd(gen_batch: Batch, **kwargs) -> Union[float, torch.Tensor, np.float32]:
     shape = _shape_from_batch(gen_batch)
     score = jetnet.evaluation.gen_metrics.fpnd(
-        jets=gen_batch.x.reshape(shape[0], shape[1], shape[2]),
+        jets=gen_batch.x.reshape(*shape),
         jet_type="t",
-        batch_size=int(shape[0]),
+        batch_size=min(200, shape[0]),
         device="cpu",
-        use_tqdm=False,
+        use_tqdm=shape[0] > 500,
     )
     return float(score)

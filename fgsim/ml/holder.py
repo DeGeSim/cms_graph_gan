@@ -67,9 +67,7 @@ class Holder:
         # with gpu_mem_monitor("optims"):
         #     self.optims.load_state_dict(self.optims.state_dict())
 
-        logger.warning(
-            f"Starting training with state {str(OmegaConf.to_yaml(self.state))}"
-        )
+        logger.warning(f"Starting with state {str(OmegaConf.to_yaml(self.state))}")
 
         # Keep the generated samples ready, to be accessed by the losses
         self.gen_points: Batch = None
