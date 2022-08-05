@@ -24,7 +24,7 @@ class PLDataFromQDS(pl.LightningDataModule):
 
     def val_dataloader(self):
         return DataLoader(
-            PreloadedFromQDS(self.qds.validation_batch),
+            PreloadedFromQDS(self.qds.validation_batches),
             collate_fn=collate_wrapper,
         )
 

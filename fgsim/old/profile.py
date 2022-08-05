@@ -23,7 +23,7 @@ def profile_procedure() -> None:
     model_holder.loader = QueuedDataset()
     model_holder.optim.zero_grad()
 
-    batch = model_holder.loader.validation_batch[0].to(device)
+    batch = model_holder.loader.validation_batches[0].to(device)
 
     model_holder.optim.zero_grad()
     logger.warning("Starting profiling.")

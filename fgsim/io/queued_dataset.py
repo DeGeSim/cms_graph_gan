@@ -9,7 +9,7 @@ import numpy as np
 import queueflow as qf
 import torch
 
-from fgsim.config import conf
+from fgsim.config import conf, device
 from fgsim.io import LoaderInfo
 from fgsim.io.chunks import compute_chucks
 from fgsim.io.preprocessed_seq import preprocessed_seq
@@ -49,7 +49,7 @@ must queue an epoch via `queue_epoch()` and iterate over the instance of the cla
         # Make sure the chunks can be split evenly into batches:
         assert chunk_size % batch_size == 0
 
-        assert conf.loader.validation_set_size % chunk_size == 0
+        assert conf.loader.validation_set_size % batch_size == 0
         n_validation_batches = conf.loader.validation_set_size // batch_size
         n_validation_chunks = conf.loader.validation_set_size // chunk_size
 
@@ -102,11 +102,11 @@ must queue an epoch via `queue_epoch()` and iterate over the instance of the cla
                     raise FileNotFoundError("Couldn't find preprocessed dataset.")
 
     @property
-    def validation_batch(self):
+    def validation_batches(self):
         if not hasattr(self, "_validation_batches"):
             logger.debug("Validation batches not loaded, loading from disk.")
             self._validation_batches = torch.load(
-                conf.path.validation, map_location=torch.device("cpu")
+                conf.path.validation, map_location=device
             )
             logger.debug(
                 f"Finished loading. Type is {type(self._validation_batches)}"
