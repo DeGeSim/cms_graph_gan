@@ -174,7 +174,7 @@ def simranges(sim: np.ndarray):
 
 
 def binbourders_wo_outliers(points) -> np.ndarray:
-    return np.linspace(*bounds_wo_outliers(points), num=100, endpoint=True)
+    return np.linspace(*bounds_wo_outliers(points), num=50, endpoint=True)
 
 
 def bounds_wo_outliers(points: np.ndarray) -> tuple:

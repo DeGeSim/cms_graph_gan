@@ -26,12 +26,13 @@ def jet_features(
 
         bins = binbourders_wo_outliers(sim_arr)
 
-        sim_hist = np.histogram(sim_arr, bins=bins, density=True)
-        gen_hist = np.histogram(gen_arr, bins=bins, density=True)
+        sim_hist, sim_bins = np.histogram(sim_arr, bins=bins)
+        gen_hist, _ = np.histogram(gen_arr, bins=bins)
         mplhep.histplot(
-            [sim_hist[0], gen_hist[0]],
-            bins=sim_hist[1],
+            [sim_hist, gen_hist],
+            bins=sim_bins,
             label=["MC", "GAN"],
+            yerr=[np.sqrt(sim_hist), np.sqrt(gen_hist)],
             ax=ax,
         )
 
@@ -42,10 +43,11 @@ def jet_features(
             ax.set_ylabel("Frequency")
         if ax is axes[-1]:
             ax.legend(["MC", "GAN"])
-        frac = gen_hist[0] / sim_hist[0]
+        frac = gen_hist / sim_hist
         axaux.plot(frac)
         axaux.set_ylim(0, 2)
         axaux.axhline(1, color="black")
     fig.suptitle("Jet features")
     plt.tight_layout()
+    plt.savefig("wd/test.png")
     return fig
