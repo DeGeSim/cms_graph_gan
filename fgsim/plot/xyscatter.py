@@ -78,8 +78,8 @@ def xyscatter(
 
 
 def xyscatter_faint(
-    sim: np.array,
-    gen: np.array,
+    sim: np.ndarray,
+    gen: np.ndarray,
     title: str,
     v1name: str,
     v2name: str,
@@ -133,8 +133,8 @@ def xyscatter_faint(
 
 
 def xy_hist(
-    sim: np.array,
-    gen: np.array,
+    sim: np.ndarray,
+    gen: np.ndarray,
     title: str,
     v1name: str,
     v2name: str,

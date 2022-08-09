@@ -20,7 +20,7 @@ from fgsim.io.sel_loader import loader_info, scaler
 from fgsim.ml.holder import Holder
 from fgsim.monitoring.logger import logger
 from fgsim.monitoring.train_log import TrainLog
-from fgsim.plot.xyscatter import xy_hist, xyscatter, xyscatter_faint
+from fgsim.plot.xyscatter import xy_hist, xyscatter_faint
 
 batch_size = conf.loader.batch_size
 
@@ -210,25 +210,25 @@ def test_plots(test_info: TestInfo):
         train_log.experiment.log_figure(
             figure_name=f"test.{best_or_last}.{filename}",
             figure=figure,
-            overwrite=True,
+            overwrite=False,
+            step=test_info.step,
         )
         logger.info(plot_path / filename)
 
-    # Scatter of a single event
     from itertools import combinations
 
     for v1, v2 in combinations(list(range(conf.loader.n_features)), 2):
         v1name = conf.loader.cell_prop_keys[v1]
         v2name = conf.loader.cell_prop_keys[v2]
         cmbname = f"{v1name}_vs_{v2name}"
-        figure = xyscatter(
-            sim=sim_batch[0].x[:, [v1, v2]].numpy(),
-            gen=gen_batch[0].x[:, [v1, v2]].numpy(),
-            title=f"Scatter a single event ({conf.loader.n_points} points)",
-            v1name=v1name,
-            v2name=v2name,
-        )
-        log_figure(figure, f"xyscatter_single_{cmbname}.pdf")
+        # figure = xyscatter(
+        #     sim=sim_batch[0].x[:, [v1, v2]].numpy(),
+        #     gen=gen_batch[0].x[:, [v1, v2]].numpy(),
+        #     title=f"Scatter a single event ({conf.loader.n_points} points)",
+        #     v1name=v1name,
+        #     v2name=v2name,
+        # )
+        # log_figure(figure, f"xyscatter_single_{cmbname}.pdf")
 
         figure = xyscatter_faint(
             sim=sim_batch_small.x[:, [v1, v2]].numpy(),
@@ -252,6 +252,20 @@ def test_plots(test_info: TestInfo):
             v2name=v2name,
         )
         log_figure(figure, f"xy_hist_{cmbname}.pdf")
+
+    from fgsim.plot.jetfeatures import jet_features
+
+    log_figure(
+        jet_features(
+            sim_batch.x.reshape(
+                -1, conf.loader.n_points, conf.loader.n_features
+            ).numpy(),
+            gen_batch.x.reshape(
+                -1, conf.loader.n_points, conf.loader.n_features
+            ).numpy(),
+        ),
+        "jetfeatures.pdf",
+    )
 
 
 def jetnet_metrics(sim_batch, gen_batch) -> Dict[str, float]:
