@@ -12,16 +12,20 @@ models:
         losses_list: [CEGenLoss, dcd]
         optim:
             name: Adam
-            params: ${optim_options[Adam]}
+            params:
+                weight_decay: 1.0e-4
+                lr: 1.0e-5
         retain_graph_on_backprop: True
     disc:
-        name: disc_treepc
+        name: disc_mp
         params: ${model_param_options[${models.disc.name}]}
         losses: "${optionlist:${loss_options},${models.disc.losses_list}}"
         losses_list: [CEDiscLoss]
         optim:
             name: Adam
-            params: ${optim_options[Adam]}
+            params:
+                weight_decay: 1.0e-4
+                lr: 2.0e-6
         retain_graph_on_backprop: False
 
 ffn:
