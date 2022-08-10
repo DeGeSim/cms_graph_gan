@@ -5,7 +5,7 @@ import torch.nn as nn
 
 from fgsim.models.common import FFN
 
-from .graph_tree import TreeGenType
+from .graph_tree import GraphTreeWrapper, TreeGenType
 from .tree import Tree
 
 
@@ -49,12 +49,13 @@ class BranchingLayer(nn.Module):
         )
 
     # Split each of the leafs in the the graph.tree into n_branches and connect them
-    def forward(self, graph: TreeGenType) -> TreeGenType:
+    def forward(self, graph: GraphTreeWrapper) -> GraphTreeWrapper:
         batch_size = self.batch_size
         n_branches = self.n_branches
         n_features = self.n_features
         parents = self.tree.tree_lists[self.level]
         n_parents = len(parents)
+        assert graph.cur_level == self.level
 
         parents_ftxs = graph.tftx[graph.idxs_by_level[self.level]]
         device = parents_ftxs.device
@@ -86,6 +87,7 @@ class BranchingLayer(nn.Module):
             n_branches * n_features,
         ]
 
+        # reshape the projected
         children_ftxs = reshape_features(
             proj_ftx,
             n_parents=n_parents,
@@ -108,12 +110,27 @@ class BranchingLayer(nn.Module):
             len(children_ftxs), dtype=torch.long, device=device
         ) + len(graph.tftx)
 
+        return GraphTreeWrapper(
+            TreeGenType(
+                tftx=torch.vstack([graph.tftx, children_ftxs]),
+                idxs_by_level=graph.idxs_by_level + [level_idx],
+                children=graph.children + [children],
+                cur_level=graph.cur_level + 1,
+                batch_size=batch_size,
+                global_features=graph.global_features,
+            )
+        )
+
         new_graph = TreeGenType(
             tftx=torch.vstack([graph.tftx, children_ftxs]),
             idxs_by_level=graph.idxs_by_level + [level_idx],
             children=graph.children + [children],
-            edge_index=torch.hstack(self.tree.edge_index_p_level[: self.level + 2]),
-            edge_attr=torch.vstack(self.tree.edge_attrs_p_level[: self.level + 2]),
+            edge_index=torch.hstack(
+                self.tree.ancestor_edge_index_p_level[: self.level + 2]
+            ),
+            edge_attr=torch.vstack(
+                self.tree.ancestor_edge_attrs_p_level[: self.level + 2]
+            ),
             global_features=graph.global_features,
             tbatch=torch.arange(batch_size, dtype=torch.long, device=device).repeat(
                 (len(graph.tftx) + len(children_ftxs)) // batch_size
@@ -134,8 +151,8 @@ class BranchingLayer(nn.Module):
 #       [n_levels-1]:
 #           get the children of the nodes
 #           in ilevel via x[idxs_by_level[ilevel+1]][children[ilevel]]
-#     edge_index=torch.hstack(self.tree.edge_index_p_level[: self.level + 2]),
-#     edge_attr=torch.vstack(self.tree.edge_attrs_p_level[: self.level + 2]),
+#     edge_index=torch.hstack(self.tree.ancestor_edge_index_p_level[: self.level + 2]),
+#     edge_attr=torch.vstack(self.tree.ancestor_edge_attrs_p_level[: self.level + 2]),
 #     global_features=global_features,
 # )
 

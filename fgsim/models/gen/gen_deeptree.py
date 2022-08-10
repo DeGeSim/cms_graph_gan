@@ -18,13 +18,6 @@ from fgsim.models.common.deeptree import (
 )
 from fgsim.monitoring.logger import logger
 
-tree = Tree(
-    batch_size=conf.loader.batch_size,
-    branches=OmegaConf.to_container(conf.tree.branches),
-    features=OmegaConf.to_container(conf.tree.features),
-    device=device,
-)
-
 
 class ModelClass(nn.Module):
     def __init__(
@@ -33,14 +26,12 @@ class ModelClass(nn.Module):
         conv_parem: Dict,
         branching_param: Dict,
         conv_name: str = "AncestorConv",
-        conv_during_branching: bool = True,
         all_points: bool = False,
         pp_conv: bool = False,
     ):
         super().__init__()
         self.n_global = n_global
         self.conv_name = conv_name
-        self.conv_during_branching = conv_during_branching
         self.all_points = all_points
         self.batch_size = conf.loader.batch_size
         self.pp_conv = pp_conv
@@ -69,7 +60,12 @@ class ModelClass(nn.Module):
             )
         conf.models.gen.output_points = self.output_points
 
-        self.tree = tree
+        self.tree = Tree(
+            batch_size=conf.loader.batch_size,
+            branches=OmegaConf.to_container(conf.tree.branches),
+            features=OmegaConf.to_container(conf.tree.features),
+            device=device,
+        )
 
         self.dyn_hlvs_layers = nn.ModuleList(
             [
@@ -115,29 +111,20 @@ class ModelClass(nn.Module):
                 raise ImportError
             return conv
 
-        self.conv_layers = nn.ModuleList(
+        self.ancestor_conv_layers = nn.ModuleList(
             [gen_conv_layer(level) for level in range(n_levels - 1)]
         )
-
-    def wrap_conv(self, graph: TreeGenType) -> Dict[str, torch.Tensor]:
-        if self.conv_name == "GINConv":
-            return {
-                "x": torch.hstack(
-                    [graph.tftx, graph.global_features[graph.tbatch]]
-                ),
-                "edge_index": graph.edge_index,
-            }
-
-        elif self.conv_name == "AncestorConv":
-            return {
-                "tftx": graph.tftx,
-                "edge_index": graph.edge_index,
-                "edge_attr": graph.edge_attr,
-                "tbatch": graph.tbatch,
-                "global_features": graph.global_features,
-            }
-        else:
-            raise Exception
+        self.child_conv_layers = nn.ModuleList(
+            [
+                AncestorConv(
+                    in_features=self.features[level + 1],
+                    out_features=self.features[level + 1],
+                    n_global=n_global,
+                    **conv_parem,
+                ).to(device)
+                for level in range(n_levels - 1)
+            ]
+        )
 
     def forward(self, random_vector: torch.Tensor) -> Batch:
         batch_size = self.batch_size
@@ -147,7 +134,10 @@ class ModelClass(nn.Module):
 
         # Init the graph object
         graph_tree = GraphTreeWrapper(
-            TreeGenType(tftx=random_vector.reshape(batch_size, features[0]))
+            TreeGenType(
+                tftx=random_vector.reshape(batch_size, features[0]),
+                batch_size=batch_size,
+            )
         )
 
         # Do the branching
@@ -157,13 +147,21 @@ class ModelClass(nn.Module):
                 graph_tree.tftx_by_level[ilevel][..., : features[-1]],
                 graph_tree.tbatch[graph_tree.idxs_by_level[ilevel]],
             )
-            graph_tree = GraphTreeWrapper(
-                self.branching_layers[ilevel](graph_tree.data)
+            graph_tree = self.branching_layers[ilevel](graph_tree)
+
+            graph_tree.tftx = self.ancestor_conv_layers[ilevel](
+                tftx=graph_tree.tftx,
+                edge_index=self.tree.ancestor_ei(ilevel),
+                edge_attr=self.tree.ancestor_ea(ilevel),
+                tbatch=graph_tree.tbatch,
+                global_features=graph_tree.global_features,
             )
-            if self.conv_during_branching:
-                graph_tree.tftx = self.conv_layers[ilevel](
-                    **(self.wrap_conv(graph_tree.data))
-                )
+            graph_tree.tftx = self.child_conv_layers[ilevel](
+                tftx=graph_tree.tftx,
+                edge_index=self.tree.children_ei(ilevel),
+                tbatch=graph_tree.tbatch,
+                global_features=graph_tree.global_features,
+            )
         graph_tree.data.x = graph_tree.tftx_by_level[-1]
         graph_tree.data.batch = graph_tree.batch_by_level[-1]
 

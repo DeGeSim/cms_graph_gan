@@ -9,6 +9,7 @@ def test_GlobalFeedBackNN_ancestor_conv(static_objects: DTColl):
     branching_layers = static_objects.branching_layers
     dyn_hlvs_layer = static_objects.dyn_hlvs_layer
     ancestor_conv_layer = static_objects.ancestor_conv_layer
+    tree = static_objects.tree
     n_global = static_objects.props["n_global"]
     n_levels = static_objects.props["n_levels"]
     for ilevel in range(n_levels):
@@ -19,8 +20,8 @@ def test_GlobalFeedBackNN_ancestor_conv(static_objects: DTColl):
         assert graph.global_features.shape[1] == n_global
         graph.tftx = ancestor_conv_layer(
             tftx=graph.tftx,
-            edge_index=graph.edge_index,
-            edge_attr=graph.edge_attr,
+            edge_index=tree.ancestor_ei(ilevel),
+            edge_attr=tree.ancestor_ea(ilevel),
             tbatch=graph.tbatch,
             global_features=graph.global_features,
         )
@@ -30,6 +31,7 @@ def test_GlobalFeedBackNN_GINConv(static_objects: DTColl):
     graph = static_objects.graph
     branching_layers = static_objects.branching_layers
     dyn_hlvs_layer = static_objects.dyn_hlvs_layer
+    tree = static_objects.tree
     n_global = static_objects.props["n_global"]
     n_levels = static_objects.props["n_levels"]
     n_features = static_objects.props["n_features"]
@@ -48,7 +50,7 @@ def test_GlobalFeedBackNN_GINConv(static_objects: DTColl):
 
         graph.tftx = conv(
             x=torch.hstack([graph.tftx, global_features[graph.tbatch]]),
-            edge_index=graph.edge_index,
+            edge_index=tree.ancestor_ei(ilevel),
         )
 
 
@@ -66,6 +68,7 @@ def test_full_NN_compute_graph(static_objects: DTColl):
     branching_layers = static_objects.branching_layers
     dyn_hlvs_layer = static_objects.dyn_hlvs_layer
     ancestor_conv_layer = static_objects.ancestor_conv_layer
+    tree = static_objects.tree
     n_global = static_objects.props["n_global"]
     n_levels = static_objects.props["n_levels"]
 
@@ -77,10 +80,9 @@ def test_full_NN_compute_graph(static_objects: DTColl):
             graph = branching_layers[ilevel - 1](graph)
             graph.tftx = ancestor_conv_layer(
                 tftx=graph.tftx,
-                edge_index=graph.edge_index,
-                edge_attr=graph.edge_attr,
+                edge_index=tree.ancestor_ei(ilevel),
+                edge_attr=tree.ancestor_ea(ilevel),
                 tbatch=graph.tbatch,
-                global_features=graph.global_features,
             )
             leaf = tree_lists[ilevel][0]
             pc_leaf_point = graph.tftx[leaf.idxs[2]]

@@ -4,10 +4,15 @@ from typing import Dict, List
 
 import pytest
 import torch
-from torch_geometric.data import Data
 
 from fgsim.models.common import FFN, DynHLVsLayer
-from fgsim.models.common.deeptree import AncestorConv, BranchingLayer, Tree
+from fgsim.models.common.deeptree import (
+    AncestorConv,
+    BranchingLayer,
+    GraphTreeWrapper,
+    Tree,
+    TreeGenType,
+)
 
 device = torch.device("cpu")
 
@@ -15,7 +20,8 @@ device = torch.device("cpu")
 @dataclass
 class DTColl:
     props: Dict[str, int]
-    graph: Data
+    graph: GraphTreeWrapper
+    tree: Tree
     branching_layers: List[BranchingLayer]
     dyn_hlvs_layer: DynHLVsLayer
     ancestor_conv_layer: AncestorConv
@@ -31,25 +37,17 @@ def object_gen(props: Dict[str, int]) -> DTColl:
     features = [n_features for _ in range(n_levels)]
     branches = [n_branches for _ in range(n_levels - 1)]
 
-    graph = Data(
-        tftx=torch.randn(
-            batch_size,
-            n_features,
-            dtype=torch.float,
-            device=device,
-            requires_grad=True,
-        ),
-        idxs_by_level=[torch.arange(batch_size, dtype=torch.long, device=device)],
-        children=[],
-        edge_index=torch.empty(2, 0, dtype=torch.long, device=device),
-        edge_attr=torch.empty(0, 1, dtype=torch.float, device=device),
-        tbatch=torch.arange(batch_size, dtype=torch.long, device=device),
-        global_features=torch.randn(
-            batch_size,
-            n_global,
-            dtype=torch.float,
-            device=device,
-        ),
+    graph = GraphTreeWrapper(
+        TreeGenType(
+            torch.randn(
+                batch_size,
+                n_features,
+                dtype=torch.float,
+                device=device,
+                requires_grad=True,
+            ),
+            batch_size=batch_size,
+        )
     )
 
     tree = Tree(
@@ -106,6 +104,7 @@ def object_gen(props: Dict[str, int]) -> DTColl:
     return DTColl(
         props=props,
         graph=graph,
+        tree=tree,
         branching_layers=branching_layers,
         dyn_hlvs_layer=dyn_hlvs_layer,
         ancestor_conv_layer=ancestor_conv_layer,

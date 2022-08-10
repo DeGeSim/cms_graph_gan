@@ -49,5 +49,4 @@ def jet_features(
         axaux.axhline(1, color="black")
     fig.suptitle("Jet features")
     plt.tight_layout()
-    plt.savefig("wd/test.png")
     return fig

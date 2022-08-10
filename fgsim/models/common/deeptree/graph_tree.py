@@ -4,7 +4,7 @@ import torch
 from torch_geometric.data import Batch, Data
 from torch_geometric.nn import knn_graph
 
-from fgsim.config import conf, device
+# from fgsim.config import conf, device
 from fgsim.io.batch_tools import batch_from_pcs_list
 
 
@@ -15,15 +15,15 @@ class GraphTreeWrapper:
         self,
         data: Union[Data, Batch],
     ):
-        assert hasattr(data, "tftx")
-        assert hasattr(data, "batch")
+        assert data.tftx is not None
+        assert data.tbatch is not None
+        device = data.tftx.device
+        batch_size = int(data.tbatch[-1]) + 1
         if not hasattr(data, "children"):
             data.children = []
         if not hasattr(data, "idxs_by_level"):
             data.idxs_by_level = [
-                torch.arange(
-                    conf.loader.batch_size, dtype=torch.long, device=device
-                )
+                torch.arange(batch_size, dtype=torch.long, device=device)
             ]
         self.data: Data = data
         self.tftx_by_level = TFTX_BY_LEVEL(self.data)
@@ -84,30 +84,30 @@ class TreeGenType(Data):
     def __init__(
         self,
         tftx: torch.Tensor,
-        edge_index: torch.Tensor = torch.empty(
-            2, 0, dtype=torch.long, device=device
-        ),
-        edge_attr: torch.Tensor = torch.empty(
-            0, 1, dtype=torch.float, device=device
-        ),
-        tbatch: torch.Tensor = torch.arange(
-            conf.loader.batch_size, dtype=torch.long, device=device
-        ),
-        global_features: torch.Tensor = torch.empty(
-            0, dtype=torch.float, device=device
-        ),
+        batch_size: int,
+        # edge_index: torch.Tensor = torch.empty(2, 0, dtype=torch.long),
+        # edge_attr: torch.Tensor = torch.empty(0, 1, dtype=torch.float),
+        global_features: torch.Tensor = torch.empty(0, dtype=torch.float),
         children: Optional[List[torch.Tensor]] = None,
         idxs_by_level: Optional[List[torch.Tensor]] = None,
+        cur_level: int = 0,
     ):
+        device = tftx.device
+
+        tbatch = torch.arange(batch_size, dtype=torch.long, device=device).repeat(
+            (len(tftx)) // batch_size
+        )
         super().__init__(
             tftx=tftx,
-            edge_index=edge_index,
-            edge_attr=edge_attr,
+            # edge_index=edge_index,
+            # edge_attr=edge_attr,
             children=children,
             idxs_by_level=idxs_by_level,
             tbatch=tbatch,
             global_features=global_features,
+            cur_level=cur_level,
         )
+        self = self.to(device)
 
 
 def graph_tree_to_batch(

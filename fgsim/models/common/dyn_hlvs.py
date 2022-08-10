@@ -18,4 +18,4 @@ class DynHLVsLayer(nn.Module):
         ftx_mtx = self.pre_nn(x)
         gsum = global_add_pool(ftx_mtx, batch)
         global_ftx = self.post_nn(gsum)
-        return global_ftx
+        return global_ftx.reshape(-1, self.n_global)
