@@ -27,12 +27,11 @@ class FFN(nn.Sequential):
             for ilayer in range(n_layers + 1)
         ]
         seq = []
+        activation = getattr(nn, conf.ffn.activation)(**conf.ffn.activation_params)
         for ilayer, e in enumerate(layers):
             seq.append(e)
             if ilayer != n_layers:
-                seq.append(
-                    getattr(nn, conf.ffn.activation)(**conf.ffn.activation_params)
-                )
+                seq.append(activation)
                 if normalize:
                     seq.append(nn.BatchNorm1d(features[ilayer + 1]))
             else:
@@ -42,7 +41,15 @@ class FFN(nn.Sequential):
         self.output_dim = output_dim
         self.n_layers = n_layers
         self.activation_last_layer = activation_last_layer
+        self.n_nodes_per_layer = n_nodes_per_layer
+        self.activation = activation
         self.reset_parameters()
+
+    def __repr__(self):
+        return (
+            f"FFN({self.input_dim}->{self.output_dim},n_layers={self.n_layers},hidden_nodes={self.n_nodes_per_layer},activation={self.activation},"
+            f" {self.activation_last_layer})"
+        )
 
     def reset_parameters(self):
         self.apply(self.init_weights)

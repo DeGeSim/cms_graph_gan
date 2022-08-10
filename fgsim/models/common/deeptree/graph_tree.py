@@ -29,6 +29,9 @@ class GraphTreeWrapper:
         self.tftx_by_level = TFTX_BY_LEVEL(self.data)
         self.batch_by_level = BATCH_BY_LEVEL(self.data)
 
+    def __repr__(self) -> str:
+        return f"GraphTreeWrapper({self.data})"
+
     # assign all the stuff the the data member
     def __setattr__(self, __name, __value):
         # avoid overwriting the existing members

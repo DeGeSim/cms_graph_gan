@@ -48,3 +48,6 @@ class Node:
         return hash(
             tuple([self.idxs, self.parent] + [e.idxs for e in self.children])
         )
+
+    def __repr__(self) -> str:
+        return f"Node({self.idxs[0]}->{self.idxs[-1]})"

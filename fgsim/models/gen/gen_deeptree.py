@@ -3,6 +3,7 @@ from typing import Dict
 
 import torch
 import torch.nn as nn
+from omegaconf import OmegaConf
 from torch_geometric.data import Batch
 
 from fgsim.config import conf, device
@@ -19,8 +20,8 @@ from fgsim.monitoring.logger import logger
 
 tree = Tree(
     batch_size=conf.loader.batch_size,
-    branches=conf.tree.branches,
-    features=conf.tree.features,
+    branches=OmegaConf.to_container(conf.tree.branches),
+    features=OmegaConf.to_container(conf.tree.features),
     device=device,
 )
 
@@ -151,6 +152,7 @@ class ModelClass(nn.Module):
 
         # Do the branching
         for ilevel in range(n_levels):
+            # Assign the global features
             graph_tree.global_features = self.dyn_hlvs_layers[ilevel](
                 graph_tree.tftx_by_level[ilevel][..., : features[-1]],
                 graph_tree.tbatch[graph_tree.idxs_by_level[ilevel]],

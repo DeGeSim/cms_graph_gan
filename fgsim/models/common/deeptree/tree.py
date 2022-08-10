@@ -1,4 +1,3 @@
-from dataclasses import dataclass
 from typing import List
 
 import torch
@@ -6,14 +5,19 @@ import torch
 from .node import Node
 
 
-@dataclass
 class Tree:
-    batch_size: int
-    branches: List[int]
-    features: List[int]
-    device: torch.device
+    def __init__(
+        self,
+        batch_size: int,
+        branches: List[int],
+        features: List[int],
+        device: torch.device,
+    ):
+        self.batch_size = batch_size
+        self.branches = branches
+        self.features = features
+        self.device = device
 
-    def __post_init__(self):
         assert len(self.features) - 1 == len(self.branches)
         branches = self.branches
         batch_size = self.batch_size
@@ -93,3 +97,34 @@ class Tree:
                     )
             self.edge_index_p_level.append(torch.hstack(new_edges))
             self.edge_attrs_p_level.append(torch.vstack(new_edge_attrs))
+
+    def __repr__(self) -> str:
+        outstr = ""
+        attr_list = [
+            "branches",
+            "features",
+            "tree_lists",
+            "edge_index_p_level",
+            "edge_attrs_p_level",
+        ]
+        for attr_name in attr_list:
+            attr = getattr(self, attr_name)
+            if attr_name == "tree_lists":
+                outstr += f"  {attr_name}("
+                for ilevel, treelevel in enumerate(attr):
+                    outstr += f"    level {ilevel}: {printtensor(treelevel)}),\n"
+                outstr += f"),\n"
+            else:
+                outstr += f"  {attr_name}({printtensor(attr)}),\n"
+        return f"Tree(\n{outstr})"
+
+
+def printtensor(obj):
+    if isinstance(obj, torch.Tensor):
+        return repr(obj.shape)
+    elif isinstance(obj, list):
+        return repr([printtensor(e) for e in obj])
+    elif isinstance(obj, dict):
+        return repr({k: printtensor(v) for k, v in obj.items()})
+    else:
+        return repr(obj)
