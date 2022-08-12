@@ -24,7 +24,7 @@ def w1m(
         jets1=gen_batch.x.reshape(*shape),
         jets2=sim_batch.x.reshape(*shape),
     )[0]
-    return score * 1e3
+    return min(score * 1e3, 1e8)
 
 
 def w1p(
@@ -35,7 +35,7 @@ def w1p(
         jets1=gen_batch.x.reshape(*shape),
         jets2=sim_batch.x.reshape(*shape),
     )[0]
-    return score * 1e3
+    return min(score * 1e3, 1e8)
 
 
 def w1efp(
@@ -48,16 +48,19 @@ def w1efp(
         num_batches=1,
         efp_jobs=10,
     )[0]
-    return score * 1e5
+    return min(score * 1e5, 1e8)
 
 
 def fpnd(gen_batch: Batch, **kwargs) -> Union[float, torch.Tensor, np.float32]:
     shape = _shape_from_batch(gen_batch)
-    score = jetnet.evaluation.gen_metrics.fpnd(
-        jets=gen_batch.x.reshape(*shape),
-        jet_type="t",
-        batch_size=min(200, shape[0]),
-        device="cpu",
-        use_tqdm=shape[0] > 500,
-    )
-    return float(score)
+    try:
+        score = jetnet.evaluation.gen_metrics.fpnd(
+            jets=gen_batch.x.reshape(*shape),
+            jet_type="t",
+            batch_size=min(200, shape[0]),
+            # device="cpu",
+            use_tqdm=False,
+        )
+        return float(score)
+    except ValueError:
+        return 1e8

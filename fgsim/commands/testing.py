@@ -84,8 +84,8 @@ def test_procedure() -> None:
 def get_testing_datasets(holder: Holder) -> TestDataset:
     ds_path = Path(conf.path.run_path) / f"testdata.pt"
     test_data: TestDataset
-    reprocess = not ds_path.is_file()
-    if not reprocess:
+
+    if ds_path.is_file():
         logger.info(f"Loading test dataset from {ds_path}")
         test_data = TestDataset(**torch.load(ds_path))
         reprocess = (
@@ -93,6 +93,8 @@ def get_testing_datasets(holder: Holder) -> TestDataset:
             or test_data.loader_hash != conf.loader_hash
             or test_data.hash != conf.hash
         )
+    else:
+        reprocess = True
 
     if reprocess:
         # reprocess
