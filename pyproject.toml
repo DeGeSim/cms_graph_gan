@@ -41,7 +41,7 @@ exclude = '''
   )
 )
 '''
-experimental-string-processing = true
+preview = true
 include = '.*\.pyi?$'
 line-length = 84
 target-version = ['py38']
