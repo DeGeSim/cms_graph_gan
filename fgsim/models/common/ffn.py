@@ -3,17 +3,17 @@ from torch import nn
 from fgsim.config import conf
 
 
-class FFN(nn.Sequential):
+class FFN(nn.Module):
     def __init__(
         self,
         input_dim: int,
         output_dim: int,
+        normalize: bool = conf.ffn.normalize,
         activation_last_layer=nn.Identity(),
         n_layers: int = conf.ffn.n_layers,
         n_nodes_per_layer: int = conf.ffn.hidden_layer_size,
-        normalize=True,
     ) -> None:
-
+        super().__init__()
         # +2 for input and output
         features = [
             input_dim,
@@ -33,10 +33,16 @@ class FFN(nn.Sequential):
             if ilayer != n_layers:
                 seq.append(activation)
                 if normalize:
-                    seq.append(nn.BatchNorm1d(features[ilayer + 1]))
+                    seq.append(
+                        nn.BatchNorm1d(
+                            features[ilayer + 1],
+                            affine=False,
+                            track_running_stats=False,
+                        )
+                    )
             else:
                 seq.append(activation_last_layer)
-        super(FFN, self).__init__(*seq)
+        self.seq = nn.Sequential(*seq)
         self.input_dim = input_dim
         self.output_dim = output_dim
         self.n_layers = n_layers
@@ -45,6 +51,9 @@ class FFN(nn.Sequential):
         self.activation = activation
         self.reset_parameters()
 
+    def forward(self, *args, **kwargs):
+        return self.seq(*args, **kwargs)
+
     def __repr__(self):
         return (
             f"FFN({self.input_dim}->{self.output_dim},n_layers={self.n_layers},hidden_nodes={self.n_nodes_per_layer},activation={self.activation},"
@@ -52,7 +61,7 @@ class FFN(nn.Sequential):
         )
 
     def reset_parameters(self):
-        self.apply(self.init_weights)
+        self.seq.apply(self.init_weights)
 
     def init_weights(self, m):
         if isinstance(m, nn.Linear):
