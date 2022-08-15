@@ -1,8 +1,9 @@
-import jetnet
 import matplotlib.pyplot as plt
 import mplhep
 import numpy as np
 import seaborn as sns
+
+from fgsim.config import conf
 
 from .xyscatter import binbourders_wo_outliers
 
@@ -11,8 +12,14 @@ def jet_features(
     sim: np.ndarray,
     gen: np.ndarray,
 ) -> plt.Figure:
-    sim_features = jetnet.utils.jet_features(sim)
-    gen_features = jetnet.utils.jet_features(gen)
+    # sim_features = jetnet.utils.jet_features(sim)
+    # gen_features = jetnet.utils.jet_features(gen)
+    sim_features = {
+        varname: arr for varname, arr in zip(conf.loader.cell_prop_keys, sim.T)
+    }
+    gen_features = {
+        varname: arr for varname, arr in zip(conf.loader.cell_prop_keys, gen.T)
+    }
     ft_names = list(sim_features.keys())
     plt.cla()
     plt.clf()
