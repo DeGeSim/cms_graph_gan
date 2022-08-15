@@ -1,3 +1,5 @@
+from typing import Optional
+
 from torch import nn
 
 from fgsim.config import conf
@@ -8,11 +10,19 @@ class FFN(nn.Module):
         self,
         input_dim: int,
         output_dim: int,
-        normalize: bool = conf.ffn.normalize,
-        activation_last_layer=nn.Identity(),
-        n_layers: int = conf.ffn.n_layers,
-        n_nodes_per_layer: int = conf.ffn.hidden_layer_size,
+        normalize: Optional[bool] = None,
+        activation_last_layer: Optional[nn.Module] = None,
+        n_layers: Optional[int] = None,
+        n_nodes_per_layer: Optional[int] = None,
     ) -> None:
+        if normalize is None:
+            normalize = conf.ffn.normalize
+        if activation_last_layer is None:
+            activation_last_layer = nn.Identity()
+        if n_layers is None:
+            n_layers = conf.ffn.n_layers
+        if n_nodes_per_layer is None:
+            n_nodes_per_layer = conf.ffn.hidden_layer_size
         super().__init__()
         # +2 for input and output
         features = [
