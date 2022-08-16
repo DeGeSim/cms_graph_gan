@@ -29,7 +29,10 @@ class Trainer:
             self.holder.save_checkpoint()
 
     def training_loop(self):
-        while not early_stopping(self.holder.history):
+        while (
+            not early_stopping(self.holder.history)
+            and self.holder.state.epoch < conf.training.max_epochs
+        ):
             self.pre_epoch()
             istep_start = (
                 self.holder.state.processed_events
