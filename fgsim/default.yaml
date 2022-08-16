@@ -43,13 +43,19 @@ model_param_options:
         support: 10
     gen_deeptree:
         n_global: 5
-        conv_name: AncestorConv
-        conv_parem: ${layer_options[${model_param_options.gen_deeptree.conv_name}]}
-        branching_param: ${layer_options[BranchingLayer]}
+        conv_parem:
+            add_self_loops: True
+            msg_nn_bool: True
+            upd_nn_bool: True
+            msg_nn_include_edge_attr: False
+            msg_nn_include_global: True
+            upd_nn_include_global: True
+            residual: True
+        branching_param:
+            residual: True
         child_param:
             n_mpl: 3
             n_hidden_nodes: 128
-        pp_conv: False
     gen_edgeconv:
         n_layers: 5
         n_features: 2
@@ -144,19 +150,14 @@ tree:
     branches: [2, 3, 5]
     features: [256, 64, 32, 3]
 
-layer_options:
-    GINConv: {}
-    AncestorConv:
-        residual: True
-    BranchingLayer:
-        residual: True
-
 loss_options:
     WGenLoss:
         factor: 1.0
     WDiscLoss:
         factor: 1.0
-    MSELoss:
+    MSEDiscLoss:
+        factor: 1.0
+    MSEGenLoss:
         factor: 1.0
     CEDiscLoss:
         factor: 1.0

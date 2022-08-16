@@ -27,17 +27,18 @@ class FFN(nn.Module):
             )
         super().__init__()
         # +2 for input and output
-        features = [
-            input_dim,
-            n_nodes_per_layer,
-            n_nodes_per_layer,
-            n_nodes_per_layer,
-            output_dim,
-        ]
+        features = (
+            [input_dim]
+            + [n_nodes_per_layer] * (n_layers - 1)
+            + [
+                output_dim,
+            ]
+        )
         layers = [
             nn.Linear(features[ilayer], features[ilayer + 1])
-            for ilayer in range(n_layers + 1)
+            for ilayer in range(n_layers)
         ]
+        assert len(layers) == n_layers
         seq = []
         activation = getattr(nn, conf.ffn.activation)(**conf.ffn.activation_params)
         for ilayer, e in enumerate(layers):
@@ -61,7 +62,8 @@ class FFN(nn.Module):
         self.activation_last_layer = activation_last_layer
         self.n_nodes_per_layer = n_nodes_per_layer
         self.activation = activation
-        self.reset_parameters()
+        if conf.ffn.init_weights != "kaiming_uniform_":
+            self.reset_parameters()
 
     def forward(self, *args, **kwargs):
         return self.seq(*args, **kwargs)
@@ -85,7 +87,7 @@ class FFN(nn.Module):
             }[conf.ffn.activation]
 
             # nn.init.kaiming_normal_(m.weight, mode="fan_in", nonlinearity="linear")
-            nn.init.xavier_uniform_(
+            getattr(nn.init, conf.ffn.init_weights)(
                 m.weight, gain=nn.init.calculate_gain(nonlinearity)
             )
             m.bias.data.fill_(conf.ffn.init_weights_bias_const)

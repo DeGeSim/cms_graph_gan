@@ -7,7 +7,7 @@ from omegaconf import OmegaConf
 from torch_geometric.data import Batch
 
 from fgsim.config import conf, device
-from fgsim.models.common import FFN, DynHLVsLayer
+from fgsim.models.common import DynHLVsLayer
 from fgsim.models.common.deeptree import (
     BranchingLayer,
     DeepConv,
@@ -27,16 +27,12 @@ class ModelClass(nn.Module):
         conv_parem: Dict,
         child_param: Dict,
         branching_param: Dict,
-        conv_name: str = "AncestorConv",
         all_points: bool = False,
-        pp_conv: bool = False,
     ):
         super().__init__()
         self.n_global = n_global
-        self.conv_name = conv_name
         self.all_points = all_points
         self.batch_size = conf.loader.batch_size
-        self.pp_conv = pp_conv
 
         self.features = conf.tree.features
         self.branches = conf.tree.branches
@@ -94,26 +90,16 @@ class ModelClass(nn.Module):
             ]
         )
 
-        def gen_conv_layer(level):
-            if self.conv_name == "GINConv":
-                from torch_geometric.nn.conv import GINConv
-
-                conv = GINConv(
-                    FFN(self.features[level] + n_global, self.features[level + 1])
-                )
-            elif self.conv_name == "AncestorConv":
-                conv = DeepConv(
+        self.ancestor_conv_layers = nn.ModuleList(
+            [
+                DeepConv(
                     in_features=self.features[level],
                     out_features=self.features[level + 1],
                     n_global=n_global,
                     **conv_parem,
                 )
-            else:
-                raise ImportError
-            return conv
-
-        self.ancestor_conv_layers = nn.ModuleList(
-            [gen_conv_layer(level) for level in range(n_levels - 1)]
+                for level in range(n_levels - 1)
+            ]
         )
         self.child_conv_layers = nn.ModuleList(
             [
@@ -153,8 +139,8 @@ class ModelClass(nn.Module):
                     graph_tree.tbatch[graph_tree.idxs_by_level[ilevel]],
                 )
             else:
-                graph_tree.global_features = torch.empty_like(
-                    graph_tree.tftx_by_level[ilevel]
+                graph_tree.global_features = torch.empty(
+                    batch_size, 0, dtype=torch.float, device=graph_tree.tftx.device
                 )
 
             graph_tree = self.branching_layers[ilevel](graph_tree)
