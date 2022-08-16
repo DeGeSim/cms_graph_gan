@@ -9,9 +9,10 @@ from torch_geometric.data import Batch
 from fgsim.config import conf, device
 from fgsim.models.common import FFN, DynHLVsLayer
 from fgsim.models.common.deeptree import (
-    AncestorConv,
     BranchingLayer,
+    DeepConv,
     GraphTreeWrapper,
+    MPLSeq,
     Tree,
     TreeGenType,
     graph_tree_to_batch,
@@ -24,6 +25,7 @@ class ModelClass(nn.Module):
         self,
         n_global: int,
         conv_parem: Dict,
+        child_param: Dict,
         branching_param: Dict,
         conv_name: str = "AncestorConv",
         all_points: bool = False,
@@ -67,17 +69,18 @@ class ModelClass(nn.Module):
             device=device,
         )
 
-        self.dyn_hlvs_layers = nn.ModuleList(
-            [
-                DynHLVsLayer(
-                    n_features=self.features[-1],
-                    n_global=n_global,
-                    device=device,
-                    batch_size=self.batch_size,
-                )
-                for _ in self.features
-            ]
-        )
+        if n_global > 0:
+            self.dyn_hlvs_layers = nn.ModuleList(
+                [
+                    DynHLVsLayer(
+                        n_features=self.features[-1],
+                        n_global=n_global,
+                        device=device,
+                        batch_size=self.batch_size,
+                    )
+                    for _ in self.features
+                ]
+            )
 
         self.branching_layers = nn.ModuleList(
             [
@@ -96,17 +99,15 @@ class ModelClass(nn.Module):
                 from torch_geometric.nn.conv import GINConv
 
                 conv = GINConv(
-                    FFN(
-                        self.features[level] + n_global, self.features[level + 1]
-                    ).to(device)
+                    FFN(self.features[level] + n_global, self.features[level + 1])
                 )
             elif self.conv_name == "AncestorConv":
-                conv = AncestorConv(
+                conv = DeepConv(
                     in_features=self.features[level],
                     out_features=self.features[level + 1],
                     n_global=n_global,
                     **conv_parem,
-                ).to(device)
+                )
             else:
                 raise ImportError
             return conv
@@ -116,13 +117,16 @@ class ModelClass(nn.Module):
         )
         self.child_conv_layers = nn.ModuleList(
             [
-                AncestorConv(
-                    in_features=self.features[level + 1],
-                    out_features=self.features[level + 1],
-                    n_global=n_global,
+                MPLSeq(
+                    in_features=self.features[level],
+                    out_features=self.features[level],
+                    n_mpl=child_param["n_mpl"],
+                    n_hidden_nodes=max(
+                        child_param["n_hidden_nodes"], self.features[level]
+                    ),
                     **conv_parem,
-                ).to(device)
-                for level in range(n_levels - 1)
+                )
+                for level in range(1, n_levels)
             ]
         )
 
@@ -143,10 +147,16 @@ class ModelClass(nn.Module):
         # Do the branching
         for ilevel in range(n_levels):
             # Assign the global features
-            graph_tree.global_features = self.dyn_hlvs_layers[ilevel](
-                graph_tree.tftx_by_level[ilevel][..., : features[-1]],
-                graph_tree.tbatch[graph_tree.idxs_by_level[ilevel]],
-            )
+            if self.n_global > 0:
+                graph_tree.global_features = self.dyn_hlvs_layers[ilevel](
+                    graph_tree.tftx_by_level[ilevel][..., : features[-1]],
+                    graph_tree.tbatch[graph_tree.idxs_by_level[ilevel]],
+                )
+            else:
+                graph_tree.global_features = torch.empty_like(
+                    graph_tree.tftx_by_level[ilevel]
+                )
+
             graph_tree = self.branching_layers[ilevel](graph_tree)
 
             graph_tree.tftx = self.ancestor_conv_layers[ilevel](

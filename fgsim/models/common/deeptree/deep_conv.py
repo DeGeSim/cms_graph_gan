@@ -7,7 +7,7 @@ from torch_geometric.utils import add_self_loops
 from fgsim.models.common import FFN
 
 
-class AncestorConv(MessagePassing):
+class DeepConv(MessagePassing):
     """
     1. The global features are concatenated with the node
        features and passed to the message generation layer.
@@ -27,7 +27,6 @@ class AncestorConv(MessagePassing):
         upd_nn_include_global: bool = True,
         residual: bool = True,
     ):
-
         super().__init__(aggr="add", flow="source_to_target")
         self.in_features = in_features
         self.out_features = out_features
@@ -143,7 +142,16 @@ class AncestorConv(MessagePassing):
                 size=(num_nodes, num_nodes),
             )
             if self.residual:
-                new_x = new_x + tftx[..., : self.out_features]
+                if self.out_features == self.in_features:
+                    new_x = new_x + tftx
+                elif self.out_features < self.in_features:
+                    # Downscale: propagate only part of tftx to new_x
+                    new_x = new_x + tftx[..., : self.out_features]
+                else:
+                    # Upscale: propagate tftx to a part of newx
+                    new_x[..., : self.in_features] = (
+                        new_x[..., : self.in_features] + tftx
+                    )
 
         # self loop
         return new_x

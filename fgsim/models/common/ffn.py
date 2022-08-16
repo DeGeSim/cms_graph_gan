@@ -22,7 +22,9 @@ class FFN(nn.Module):
         if n_layers is None:
             n_layers = conf.ffn.n_layers
         if n_nodes_per_layer is None:
-            n_nodes_per_layer = conf.ffn.hidden_layer_size
+            n_nodes_per_layer = max(
+                conf.ffn.hidden_layer_size, input_dim, output_dim
+            )
         super().__init__()
         # +2 for input and output
         features = [

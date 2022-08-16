@@ -7,8 +7,8 @@ import torch
 
 from fgsim.models.common import FFN, DynHLVsLayer
 from fgsim.models.common.deeptree import (
-    AncestorConv,
     BranchingLayer,
+    DeepConv,
     GraphTreeWrapper,
     Tree,
     TreeGenType,
@@ -24,7 +24,7 @@ class DTColl:
     tree: Tree
     branching_layers: List[BranchingLayer]
     dyn_hlvs_layer: DynHLVsLayer
-    ancestor_conv_layer: AncestorConv
+    ancestor_conv_layer: DeepConv
 
 
 def object_gen(props: Dict[str, int]) -> DTColl:
@@ -73,7 +73,7 @@ def object_gen(props: Dict[str, int]) -> DTColl:
         device=device,
     )
 
-    ancestor_conv_layer = AncestorConv(
+    ancestor_conv_layer = DeepConv(
         in_features=n_features,
         out_features=n_features,
         n_global=n_global,

@@ -2,7 +2,7 @@ import pytest
 import torch
 from torch_geometric.data import Data
 
-from fgsim.models.common.deeptree import AncestorConv
+from fgsim.models.common.deeptree import DeepConv
 
 device = torch.device("cpu")
 
@@ -35,7 +35,7 @@ def default_pars():
 @pytest.fixture
 def ancestor_conv(default_pars):
     do_nothing = IdentityLayer()
-    ancestor_conv = AncestorConv(
+    ancestor_conv = DeepConv(
         in_features=default_pars["n_features"],
         out_features=default_pars["n_features"],
         n_global=default_pars["n_global"],
@@ -227,7 +227,7 @@ def test_ancestorconv_all_modes():
                                 ):
                                     continue
 
-                            ancestor_conv = AncestorConv(
+                            ancestor_conv = DeepConv(
                                 in_features=n_features,
                                 out_features=n_features,
                                 n_global=n_global,

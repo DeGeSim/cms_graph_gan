@@ -110,6 +110,8 @@ def test_full_modelparts_grad():
     from fgsim.config import conf, conf_without_paths, device
     from fgsim.models.gen.gen_deeptree import GraphTreeWrapper, ModelClass, TreeGenType
 
+    # normalization needs to be set to false, otherwise Batchnorm
+    # will propagate some gradient betweeen the events
     conf.ffn.normalize = False
     model = ModelClass(**conf_without_paths.model_param_options.gen_deeptree).to(
         device
