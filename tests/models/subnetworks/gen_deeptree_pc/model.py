@@ -19,10 +19,10 @@ def test_GlobalFeedBackNN_ancestor_conv(static_objects: DTColl):
         graph.global_features = dyn_hlvs_layer(graph.tftx, graph.tbatch)
         assert graph.global_features.shape[1] == n_global
         graph.tftx = ancestor_conv_layer(
-            tftx=graph.tftx,
+            x=graph.tftx,
             edge_index=tree.ancestor_ei(ilevel),
             edge_attr=tree.ancestor_ea(ilevel),
-            tbatch=graph.tbatch,
+            batch=graph.tbatch,
             global_features=graph.global_features,
         )
 
@@ -79,10 +79,10 @@ def test_full_NN_compute_graph(static_objects: DTColl):
         if ilevel > 0:
             graph = branching_layers[ilevel - 1](graph)
             graph.tftx = ancestor_conv_layer(
-                tftx=graph.tftx,
+                x=graph.tftx,
                 edge_index=tree.ancestor_ei(ilevel),
                 edge_attr=tree.ancestor_ea(ilevel),
-                tbatch=graph.tbatch,
+                batch=graph.tbatch,
             )
             leaf = tree_lists[ilevel][0]
             pc_leaf_point = graph.tftx[leaf.idxs[2]]
@@ -108,7 +108,11 @@ def test_full_modelparts_grad():
       global_features (torch.Tensor): torch.Tensor
     """
     from fgsim.config import conf, conf_without_paths, device
-    from fgsim.models.gen.gen_deeptree import GraphTreeWrapper, ModelClass, TreeGenType
+    from fgsim.models.gen.gen_deeptree import (
+        GraphTreeWrapper,
+        ModelClass,
+        TreeGenType,
+    )
 
     # normalization needs to be set to false, otherwise Batchnorm
     # will propagate some gradient betweeen the events
@@ -155,19 +159,19 @@ def test_full_modelparts_grad():
         check_z()
 
         graph_tree.tftx = model.ancestor_conv_layers[ilevel](
-            tftx=graph_tree.tftx,
+            x=graph_tree.tftx,
             edge_index=model.tree.ancestor_ei(ilevel),
             edge_attr=model.tree.ancestor_ea(ilevel),
-            tbatch=graph_tree.tbatch,
+            batch=graph_tree.tbatch,
             global_features=graph_tree.global_features,
         )
         graph_tree.tftx[[graph_tree.tbatch == 1]].sum().backward(retain_graph=True)
         check_z()
 
         graph_tree.tftx = model.child_conv_layers[ilevel](
-            tftx=graph_tree.tftx,
+            x=graph_tree.tftx,
             edge_index=model.tree.children_ei(ilevel),
-            tbatch=graph_tree.tbatch,
+            batch=graph_tree.tbatch,
             global_features=graph_tree.global_features,
         )
         graph_tree.tftx[[graph_tree.tbatch == 1]].sum().backward(retain_graph=True)

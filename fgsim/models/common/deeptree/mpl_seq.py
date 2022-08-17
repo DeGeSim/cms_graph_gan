@@ -39,17 +39,17 @@ class MPLSeq(torch.nn.Module):
     def forward(
         self,
         *,
-        tftx: torch.Tensor,
+        x: torch.Tensor,
         edge_index: torch.Tensor,
-        tbatch: torch.Tensor,
+        batch: torch.Tensor,
         edge_attr: Optional[torch.Tensor] = None,
         global_features: Optional[torch.Tensor] = None,
     ) -> torch.Tensor:
         for conv in self.mpls:
-            tftx = conv(
-                tftx=tftx,
+            x = conv(
+                x=x,
                 edge_index=edge_index,
                 edge_attr=edge_attr,
-                tbatch=tbatch,
+                batch=batch,
             )
-        return tftx
+        return x

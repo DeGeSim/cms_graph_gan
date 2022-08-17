@@ -73,10 +73,10 @@ def test_ancestorconv_single_event(ancestor_conv, graph):
     ).reshape(batch_size, n_global)
 
     res = ancestor_conv(
-        tftx=graph.tftx,
+        x=graph.tftx,
         edge_index=graph.edge_index,
         edge_attr=graph.edge_attr,
-        tbatch=graph.tbatch,
+        batch=graph.tbatch,
         global_features=global_features,
     )
     m1 = torch.hstack([graph.tftx[0], global_features[0], torch.tensor(1)])
@@ -115,10 +115,10 @@ def test_ancestorconv_double_event(ancestor_conv):
     ).reshape(batch_size, n_global)
 
     res = ancestor_conv(
-        tftx=graph.tftx,
+        x=graph.tftx,
         edge_index=graph.edge_index,
         edge_attr=graph.edge_attr,
-        tbatch=graph.tbatch,
+        batch=graph.tbatch,
         global_features=global_features,
     )
     m0 = torch.hstack([graph.tftx[0], global_features[0], torch.tensor(1)])
@@ -163,10 +163,10 @@ def test_ancestorconv_three_levels(ancestor_conv):
     ).reshape(batch_size, n_global)
 
     res = ancestor_conv(
-        tftx=graph.tftx,
+        x=graph.tftx,
         edge_index=graph.edge_index,
         edge_attr=graph.edge_attr,
-        tbatch=graph.tbatch,
+        batch=graph.tbatch,
         global_features=global_features,
     )
     m0 = torch.hstack([graph.tftx[0], global_features[0], torch.tensor(1)])
@@ -239,9 +239,9 @@ def test_ancestorconv_all_modes():
                                 upd_nn_include_global=upd_nn_include_global,
                             )
                             kwargs = {
-                                "tftx": graph.tftx,
+                                "x": graph.tftx,
                                 "edge_index": graph.edge_index,
-                                "tbatch": graph.tbatch,
+                                "batch": graph.tbatch,
                             }
                             kwargs["edge_attr"] = graph.edge_attr
                             kwargs["global_features"] = global_features

@@ -226,13 +226,13 @@ def option_cconvlayer(exp_config: ExperimentConfig) -> Dict[str, DictConfig]:
 def option_cconvnodes(exp_config: ExperimentConfig) -> Dict[str, DictConfig]:
     res = defaultdict(exp_config.config.copy)
     # res["cconvnodes128"]["model_param_options"]["gen_deeptree"]["child_param"][
-    #     "n_mpl"
+    #     "n_hidden_nodes"
     # ] = 128
     res["cconvnodes512"]["model_param_options"]["gen_deeptree"]["child_param"][
-        "n_mpl"
+        "n_hidden_nodes"
     ] = 512
     res["cconvnodes1024"]["model_param_options"]["gen_deeptree"]["child_param"][
-        "n_mpl"
+        "n_hidden_nodes"
     ] = 1024
     return res
 

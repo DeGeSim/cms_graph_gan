@@ -135,8 +135,8 @@ class ModelClass(nn.Module):
             # Assign the global features
             if self.n_global > 0:
                 graph_tree.global_features = self.dyn_hlvs_layers[ilevel](
-                    graph_tree.tftx_by_level[ilevel][..., : features[-1]],
-                    graph_tree.tbatch[graph_tree.idxs_by_level[ilevel]],
+                    x=graph_tree.tftx_by_level[ilevel][..., : features[-1]],
+                    batch=graph_tree.tbatch[graph_tree.idxs_by_level[ilevel]],
                 )
             else:
                 graph_tree.global_features = torch.empty(
@@ -146,16 +146,16 @@ class ModelClass(nn.Module):
             graph_tree = self.branching_layers[ilevel](graph_tree)
 
             graph_tree.tftx = self.ancestor_conv_layers[ilevel](
-                tftx=graph_tree.tftx,
+                x=graph_tree.tftx,
                 edge_index=self.tree.ancestor_ei(ilevel),
                 edge_attr=self.tree.ancestor_ea(ilevel),
-                tbatch=graph_tree.tbatch,
+                batch=graph_tree.tbatch,
                 global_features=graph_tree.global_features,
             )
             graph_tree.tftx = self.child_conv_layers[ilevel](
-                tftx=graph_tree.tftx,
+                x=graph_tree.tftx,
                 edge_index=self.tree.children_ei(ilevel),
-                tbatch=graph_tree.tbatch,
+                batch=graph_tree.tbatch,
                 global_features=graph_tree.global_features,
             )
         graph_tree.data.x = graph_tree.tftx_by_level[-1]

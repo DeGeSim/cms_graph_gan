@@ -10,7 +10,8 @@ from fgsim.monitoring.monitor import get_experiment, get_writer
 
 
 class TrainLog:
-    """Initialized with the `holder`, provides the logging with cometml/tensorboard."""
+    """Initialized with the `holder`, provides the logging with cometml/tensorboard.
+    """
 
     def __init__(self, state, history):
         self.state: DictConfig = state
@@ -60,13 +61,13 @@ class TrainLog:
         )
 
     def next_epoch(self) -> None:
+        self.state["epoch"] += 1
         if conf.debug:
             return
         self.experiment.log_epoch_end(
             self.state["epoch"],
             step=self.state["grad_step"],
         )
-        self.state["epoch"] += 1
 
     def end(self) -> None:
         if conf.debug:

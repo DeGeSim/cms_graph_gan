@@ -68,17 +68,17 @@ class DeepConv(MessagePassing):
     def forward(
         self,
         *,
-        tftx: torch.Tensor,
+        x: torch.Tensor,
         edge_index: torch.Tensor,
-        tbatch: torch.Tensor,
+        batch: torch.Tensor,
         edge_attr: Optional[torch.Tensor] = None,
         global_features: Optional[torch.Tensor] = None,
     ) -> torch.Tensor:
-        num_nodes = tftx.shape[0]
+        num_nodes = x.shape[0]
 
         num_edges = edge_index.shape[1]
-        num_events = int(tbatch[-1]) + 1
-        device = tftx.device
+        num_events = int(batch[-1]) + 1
+        device = x.device
 
         if edge_attr is None:
             edge_attr = torch.empty(num_edges, 1, dtype=torch.float).to(device)
@@ -87,9 +87,9 @@ class DeepConv(MessagePassing):
                 num_events, self.n_global, dtype=torch.float
             ).to(device)
 
-        assert tftx.dim() == global_features.dim() == edge_attr.dim() == 2
-        assert tbatch.dim() == 1
-        assert tftx.shape[1] == self.in_features
+        assert x.dim() == global_features.dim() == edge_attr.dim() == 2
+        assert batch.dim() == 1
+        assert x.shape[1] == self.in_features
 
         assert global_features.shape[0] == num_events
         assert global_features.shape[1] == self.n_global
@@ -113,26 +113,26 @@ class DeepConv(MessagePassing):
                 )
 
         # Generate a global feature vector in shape of x
-        glo_ftx_mtx = global_features[tbatch, :]
+        glo_ftx_mtx = global_features[batch, :]
         # If the egde_attrs are included, we transforming the message
         if self.msg_nn_include_edge_attr:
             new_x = self.propagate(
                 edge_index=edge_index,
                 edge_attr=edge_attr,
-                x=tftx,
+                x=x,
                 glo_ftx_mtx=glo_ftx_mtx,
                 size=(num_nodes, num_nodes),
             )
             if self.residual:
-                new_x = new_x + tftx[..., : self.out_features]
+                new_x = new_x + x[..., : self.out_features]
         # If the egde attr are not included, we apply a transformation
         # before the message instead of transforming the message
         else:
             # Generate a global feature vector in shape of x
             if self.msg_nn_include_global:
-                xtransform = self.msg_nn(torch.hstack([tftx, glo_ftx_mtx]))
+                xtransform = self.msg_nn(torch.hstack([x, glo_ftx_mtx]))
             else:
-                xtransform = self.msg_nn(tftx)
+                xtransform = self.msg_nn(x)
 
             new_x = self.propagate(
                 edge_index=edge_index,
@@ -143,14 +143,14 @@ class DeepConv(MessagePassing):
             )
             if self.residual:
                 if self.out_features == self.in_features:
-                    new_x = new_x + tftx
+                    new_x = new_x + x
                 elif self.out_features < self.in_features:
                     # Downscale: propagate only part of tftx to new_x
-                    new_x = new_x + tftx[..., : self.out_features]
+                    new_x = new_x + x[..., : self.out_features]
                 else:
                     # Upscale: propagate tftx to a part of newx
                     new_x[..., : self.in_features] = (
-                        new_x[..., : self.in_features] + tftx
+                        new_x[..., : self.in_features] + x
                     )
 
         # self loop
