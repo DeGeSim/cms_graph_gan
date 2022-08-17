@@ -23,57 +23,56 @@
             {
                 "args": [
                     "--hash",
-                    // "afc152b",
-                    "e5d63e8",
+                    "dab7694",
                     "--debug",
                     "test"
                 ],
                 "cwd": "/home/mscham/fgsim",
                 // "justMyCode": false,
                 "module": "fgsim",
-                "name": "e5d63e8",
+                "name": "hash",
                 "request": "launch",
                 "type": "python"
             },
             {
                 "args": [
                     "--tag",
-                    "jetnet_gmp_dmp",
+                    "test",
                     "--debug",
                     "train"
                 ],
                 "cwd": "/home/mscham/fgsim",
                 "justMyCode": false,
                 "module": "fgsim",
-                "name": "tr jetnet_gmp_dmp",
+                "name": "tr tag",
                 "request": "launch",
                 "type": "python"
             },
             {
                 "args": [
                     "--tag",
-                    "jetnet_gmp_dmp",
+                    "test",
                     "--debug",
                     "test"
                 ],
                 "cwd": "/home/mscham/fgsim",
                 // "justMyCode": false,
                 "module": "fgsim",
-                "name": "te jetnet_gmp_dmp",
+                "name": "te tag",
                 "request": "launch",
                 "type": "python"
             },
             {
                 "args": [
                     "--tag",
-                    "jetnet_gmp_dmp",
+                    "test",
                     "--debug",
                     "preprocess"
                 ],
                 "cwd": "/home/mscham/fgsim",
                 // "justMyCode": false,
                 "module": "fgsim",
-                "name": "pp jetnet_gmp_dmp",
+                "name": "pp tag",
                 "request": "launch",
                 "type": "python"
             }
