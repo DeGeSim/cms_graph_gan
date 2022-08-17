@@ -12,6 +12,10 @@ repos:
     -   id: check-json
     -   id: check-yaml
     -   id: check-merge-conflict
+-   repo: https://github.com/PyCQA/isort
+    rev: 5.10.1
+    hooks:
+    -   id: isort
 -   repo: https://github.com/pycqa/flake8
     rev: 3.9.2
     hooks:
@@ -23,11 +27,6 @@ repos:
     rev: 22.6.0
     hooks:
       - id: black
--   repo: https://github.com/PyCQA/isort
-    rev: 5.10.1
-    hooks:
-    -   id: isort
-        args: ["--profile", "black", "--filter-files"]
 
 exclude:
     \..*
