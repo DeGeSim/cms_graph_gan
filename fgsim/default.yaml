@@ -34,7 +34,8 @@ ffn:
         negative_slope: 0.1
     init_weights_bias_const: 0.1
     init_weights: xavier_uniform_
-    normalize: True
+    batchnorm: True
+    dropout: True
 
 model_param_options:
     gen_treepc:

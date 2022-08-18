@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import List, Optional
 
 from torch import nn
 
@@ -10,15 +10,15 @@ class FFN(nn.Module):
         self,
         input_dim: int,
         output_dim: int,
-        normalize: Optional[bool] = None,
-        activation_last_layer: Optional[nn.Module] = None,
+        batchnorm: Optional[bool] = None,
+        dropout: Optional[bool] = None,
         n_layers: Optional[int] = None,
         n_nodes_per_layer: Optional[int] = None,
     ) -> None:
-        if normalize is None:
-            normalize = conf.ffn.normalize
-        if activation_last_layer is None:
-            activation_last_layer = nn.Identity()
+        if batchnorm is None:
+            batchnorm = conf.ffn.batchnorm
+        if dropout is None:
+            dropout = conf.ffn.dropout
         if n_layers is None:
             n_layers = conf.ffn.n_layers
         if n_nodes_per_layer is None:
@@ -27,39 +27,33 @@ class FFN(nn.Module):
             )
         super().__init__()
         # +2 for input and output
-        features = (
+        features: List[int] = (
             [input_dim]
             + [n_nodes_per_layer] * (n_layers - 1)
             + [
                 output_dim,
             ]
         )
-        layers = [
-            nn.Linear(features[ilayer], features[ilayer + 1])
-            for ilayer in range(n_layers)
-        ]
-        assert len(layers) == n_layers
-        seq = []
+        self.seq = nn.Sequential()
         activation = getattr(nn, conf.ffn.activation)(**conf.ffn.activation_params)
-        for ilayer, e in enumerate(layers):
-            seq.append(e)
+        for ilayer in range(n_layers):
+            self.seq.append(nn.Linear(features[ilayer], features[ilayer + 1]))
             if ilayer != n_layers:
-                seq.append(activation)
-                if normalize:
-                    seq.append(
+                self.seq.append(activation)
+                if dropout:
+                    self.seq.append(nn.Dropout(0.2))
+                if batchnorm:
+                    self.seq.append(
                         nn.BatchNorm1d(
                             features[ilayer + 1],
                             affine=False,
                             track_running_stats=False,
                         )
                     )
-            else:
-                seq.append(activation_last_layer)
-        self.seq = nn.Sequential(*seq)
+
         self.input_dim = input_dim
         self.output_dim = output_dim
         self.n_layers = n_layers
-        self.activation_last_layer = activation_last_layer
         self.n_nodes_per_layer = n_nodes_per_layer
         self.activation = activation
         if conf.ffn.init_weights != "kaiming_uniform_":
@@ -69,10 +63,7 @@ class FFN(nn.Module):
         return self.seq(*args, **kwargs)
 
     def __repr__(self):
-        return (
-            f"FFN({self.input_dim}->{self.output_dim},n_layers={self.n_layers},hidden_nodes={self.n_nodes_per_layer},activation={self.activation},"
-            f" {self.activation_last_layer})"
-        )
+        return f"FFN({self.input_dim}->{self.output_dim},n_layers={self.n_layers},hidden_nodes={self.n_nodes_per_layer},activation={self.activation})"
 
     def reset_parameters(self):
         self.seq.apply(self.init_weights)

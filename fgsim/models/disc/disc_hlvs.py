@@ -9,9 +9,7 @@ class ModelClass(torch.nn.Module):
     def __init__(self):
         super(ModelClass, self).__init__()
         n_features = conf.loader.n_features
-        self.hlv_dnn = FFN(
-            n_features * 2, 1, activation_last_layer=torch.nn.Identity()
-        )
+        self.hlv_dnn = FFN(n_features * 2, 1)
 
     def forward(self, batch):
         x = batch.x
