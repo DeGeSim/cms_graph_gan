@@ -210,13 +210,13 @@ optim_options:
 training:
     disc_steps_per_gen_step: 5
     early_stopping:
-        validation_steps: 100
-        improvement: 0.02
+        validation_steps: 30
+        improvement: 0.2
     checkpoint_minutes: 15
     smooth_features: False
     smoothing_vars: [0.0, 0.01, 0.002, 0.0001]
-    log_interval: 100
-    max_epochs: 400
+    log_interval: 500
+    max_epochs: 300
     val:
         interval: "${div:50000,${loader.batch_size}}"
         use_for_stopping: [fpnd]

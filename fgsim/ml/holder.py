@@ -135,7 +135,7 @@ class Holder:
         push_to_old(conf.path.state, conf.path.state_old)
         OmegaConf.save(config=self.state, f=conf.path.state)
         self._last_checkpoint_time = datetime.now()
-        logger.info(
+        logger.warning(
             f"{self._last_checkpoint_time.strftime('%d/%m/%Y, %H:%M:%S')}"
             f"Checkpoint saved to {conf.path.checkpoint}"
         )
@@ -157,7 +157,6 @@ class Holder:
 
     # Define the methods, that equip the with the generated batches
     def gen_noise(self, requires_grad=False) -> torch.Tensor:
-
         return torch.randn(
             *self.models.gen.z_shape, requires_grad=requires_grad
         ).to(device)
