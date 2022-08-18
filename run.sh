@@ -35,7 +35,7 @@ function elementf {
         --nodes=1 \
         --constraint="P100|V100|A100" \
         --output=wd/slurm-$CMD-${HASH}-%j.out \
-        --job-name=${HASH} run.sh local ${RESTCMD[@]}
+        --job-name=${CMD}.${HASH} run.sh local ${RESTCMD[@]}
     else
 
         logandrun python3 -m fgsim ${RESTCMD[@]} &
