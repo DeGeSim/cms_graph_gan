@@ -53,7 +53,7 @@ def test_procedure() -> None:
 
     test_data: TestDataset = get_testing_datasets(holder)
 
-    for best_or_last in ["last"]:
+    for best_or_last in ["last", "best"]:
         plot_path = Path(f"{conf.path.run_path}/plots_{best_or_last}/")
         plot_path.mkdir(exist_ok=True)
 
@@ -188,7 +188,9 @@ def test_metrics(test_info: TestInfo):
     #         hlvs_dict["sim"][var], hlvs_dict["best"][var]
     #     ).pvalue
 
-    metrics_dict = {f"test.{k}": v for k, v in metrics_dict.items()}
+    metrics_dict = {
+        f"test.{test_info.best_or_last}.{k}": v for k, v in metrics_dict.items()
+    }
     train_log.experiment.log_metrics(
         metrics_dict,
         step=test_info.step,

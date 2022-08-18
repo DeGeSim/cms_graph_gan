@@ -178,7 +178,7 @@ def binbourders_wo_outliers(points) -> np.ndarray:
 
 
 def bounds_wo_outliers(points: np.ndarray) -> tuple:
-    thresh = 3.0
+    thresh = 5.0
     median = np.median(points, axis=0)
     med_abs_lfluk = np.sqrt(np.median((points[points < median] - median) ** 2))
     med_abs_ufluk = np.sqrt(np.median((points[points > median] - median) ** 2))
