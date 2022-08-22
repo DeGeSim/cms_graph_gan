@@ -33,6 +33,7 @@ class TestInfo:
     hlvs_dict: Optional[Dict[str, Dict[str, np.ndarray]]]
     plot_path: Path
     step: int
+    epoch: int
     best_or_last: str
 
 
@@ -58,11 +59,13 @@ def test_procedure() -> None:
         plot_path.mkdir(exist_ok=True)
 
         if best_or_last == "best":
-            step = holder.state.best_grad_step
+            step = holder.state.best_step
+            epoch = holder.state.best_epoch
             gen_batches = test_data.gen_batches_best
 
         else:
             step = holder.state.grad_step
+            epoch = holder.state.epoch
             gen_batches = test_data.gen_batches_last
 
         test_info = TestInfo(
@@ -72,6 +75,7 @@ def test_procedure() -> None:
             hlvs_dict=test_data.hlvs_dict,
             plot_path=plot_path,
             step=step,
+            epoch=epoch,
             best_or_last=best_or_last,
         )
 
@@ -191,10 +195,7 @@ def test_metrics(test_info: TestInfo):
     metrics_dict = {
         f"test.{test_info.best_or_last}.{k}": v for k, v in metrics_dict.items()
     }
-    train_log.experiment.log_metrics(
-        metrics_dict,
-        step=test_info.step,
-    )
+    train_log.log_metrics(metrics_dict, step=test_info.step, epoch=test_info.epoch)
 
 
 def test_plots(test_info: TestInfo):
@@ -211,7 +212,7 @@ def test_plots(test_info: TestInfo):
         outputpath = plot_path / filename
         # figure.savefig(outputpath)
         figure.savefig(outputpath.with_suffix(".png"), dpi=150)
-        train_log.experiment.log_figure(
+        train_log.log_figure(
             figure_name=f"test.{best_or_last}.{filename}",
             figure=figure,
             overwrite=False,

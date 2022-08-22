@@ -48,22 +48,53 @@ class TrainLog:
         iotime = self.state.time_io_end - self.state.time_train_step_start
         utilisation = 1 - iotime / traintime
 
-        self.log_loss("other.batchtime", traintime)
-        self.log_loss("other.utilisation", utilisation)
-        self.log_loss("other.processed_events", self.state.processed_events)
+        self.log_metric("other.batchtime", traintime)
+        self.log_metric("other.utilisation", utilisation)
+        self.log_metric("other.processed_events", self.state.processed_events)
 
-    def log_loss(self, lossname: str, loss) -> None:
+    def log_metrics(self, metrics_dict, *args, **kwargs):
+        for k, v in metrics_dict.items():
+            self.log_metric(
+                name=k,
+                loss=v,
+            )
+
+    def log_metric(self, name: str, value=None, step=None, epoch=None) -> None:
         if conf.debug:
             return
-        loss = float(loss)
+        assert value is not None
+        if step is None:
+            step = self.state["grad_step"]
+        if epoch is None:
+            epoch = self.state["epoch"]
+        value = float(value)
         if self.use_tb:
-            self.writer.add_scalar(lossname, loss, self.state["grad_step"])
+            self.writer.add_scalar(name, value, step)
         if self.use_comet:
             self.experiment.log_metric(
-                lossname,
-                loss,
-                step=self.state["grad_step"],
-                epoch=self.state["epoch"],
+                name,
+                value,
+                step=step,
+                epoch=epoch,
+            )
+
+    def log_figure(
+        self,
+        figure_name,
+        figure,
+        overwrite=False,
+        step=None,
+    ):
+        if step is None:
+            step = self.state["grad_step"]
+        if self.use_tb:
+            self.writer.add_figure(tag=figure_name, figure=figure, global_step=step)
+        if self.use_comet:
+            self.experiment.log_figure(
+                figure_name=figure_name,
+                figure=figure,
+                overwrite=overwrite,
+                step=step,
             )
 
     def next_epoch(self) -> None:

@@ -62,7 +62,7 @@ class ValidationMetrics:
         for metric_name, metric_val in up_metrics_d.items():
             # Log the validation loss
             if not conf.debug:
-                self.train_log.log_loss(f"val.{metric_name}", metric_val)
+                self.train_log.log_metric(f"val.{metric_name}", metric_val)
 
         # compute the stop_metric
         history = self.train_log.history
@@ -82,8 +82,7 @@ class ValidationMetrics:
         # overwrite the recorded ratio_better for each
         if not conf.debug:
             for ivalstep in range(len(ratio_better)):
-                # with self.train_log.experiment.validate():
-                self.train_log.experiment.log_metric(
+                self.train_log.log_metric(
                     name="ratio_better",
                     value=ratio_better[ivalstep],
                     step=ivalstep * conf.training.val.interval,
