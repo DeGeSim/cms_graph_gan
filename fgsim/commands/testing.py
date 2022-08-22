@@ -193,7 +193,7 @@ def test_metrics(test_info: TestInfo):
     #     ).pvalue
 
     metrics_dict = {
-        f"test.{test_info.best_or_last}.{k}": v for k, v in metrics_dict.items()
+        f"test/{test_info.best_or_last}/{k}": v for k, v in metrics_dict.items()
     }
     train_log.log_metrics(metrics_dict, step=test_info.step, epoch=test_info.epoch)
 

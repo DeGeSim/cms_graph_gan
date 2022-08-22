@@ -40,9 +40,10 @@ def validate(holder: Holder, loader: QueuedDataset) -> None:
         holder.best_model_state = deepcopy(holder.models.state_dict())
 
         if not conf.debug:
-            holder.train_log.log_metric("min_stop_crit", min_stop_crit)
-            holder.train_log.log_metric("best_step", holder.state["grad_step"])
-            holder.train_log.log_metric("best_epoch", holder.state["epoch"])
-    if not conf.debug:
-        holder.train_log.writer.flush()
+            holder.train_log.log_metric("other/min_stop_crit", min_stop_crit)
+            holder.train_log.log_metric(
+                "other/best_step", holder.state["grad_step"]
+            )
+            holder.train_log.log_metric("other/best_epoch", holder.state["epoch"])
+
     logger.debug("Validation done.")

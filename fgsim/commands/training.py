@@ -95,7 +95,7 @@ class Trainer:
             }
             for pname, ploosd in ldict.items():
                 for lname, lossval in ploosd.items():
-                    self.train_log.log_metric(f"train.{pname}.{lname}", lossval)
+                    self.train_log.log_metric(f"train/{pname}/{lname}", lossval)
             # Also log training speed
             self.train_log.write_trainstep_logs()
         if not conf.ray:

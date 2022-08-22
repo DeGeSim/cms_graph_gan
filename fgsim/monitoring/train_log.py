@@ -48,9 +48,9 @@ class TrainLog:
         iotime = self.state.time_io_end - self.state.time_train_step_start
         utilisation = 1 - iotime / traintime
 
-        self.log_metric("other.batchtime", traintime)
-        self.log_metric("other.utilisation", utilisation)
-        self.log_metric("other.processed_events", self.state.processed_events)
+        self.log_metric("other/batchtime", traintime)
+        self.log_metric("other/utilisation", utilisation)
+        self.log_metric("other/processed_events", self.state.processed_events)
 
     def log_metrics(self, metrics_dict, *args, **kwargs):
         for k, v in metrics_dict.items():
