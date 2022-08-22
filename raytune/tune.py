@@ -5,11 +5,9 @@ from hyperpars import hyperpars
 from omegaconf import OmegaConf
 from ray import tune
 from ray.tune.schedulers import MedianStoppingRule
+from ray.tune.suggest.hyperopt import HyperOptSearch
 
 import fgsim.config
-
-# from ray.tune.suggest.bayesopt import BayesOptSearch
-# from ray.tune.suggest.hyperopt import HyperOptSearch
 
 
 class Trainable(tune.Trainable):
@@ -68,8 +66,7 @@ def trial_dirname_creator(trial):
     return trial
 
 
-# ray.init(local_mode=True)
-ray.init()
+ray.init("auto")
 analysis = tune.run(
     Trainable,
     config=hyperpars,
@@ -78,6 +75,8 @@ analysis = tune.run(
     scheduler=MedianStoppingRule(
         time_attr="training_iteration", grace_period=110.0
     ),
+    search_alg=HyperOptSearch(),
+    num_samples=-1,
     keep_checkpoints_num=2,
     checkpoint_score_attr="fpnd",
     checkpoint_freq=5,

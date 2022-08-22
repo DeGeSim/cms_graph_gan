@@ -184,6 +184,7 @@ class Holder:
             f"{self._last_checkpoint_time.strftime('%d/%m/%Y, %H:%M:%S')}"
             f"Checkpoint saved to {ray_tmp_checkpoint_path}"
         )
+        return ray_tmp_checkpoint_path
 
     def checkpoint_after_time(self):
         now = datetime.now()

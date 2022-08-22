@@ -2,7 +2,13 @@ from ray import tune
 
 hyperpars = {
     "models": {
-        "gen": {"additional_losses_list": [tune.choice(["cd", "dcd"])]},
+        "gen": {
+            "additional_losses_list": [tune.choice(["cd", "dcd"])],
+            "optim": {"params": {"lr": tune.loguniform(1e-7, 1e-3)}},
+        },
+        "disc": {
+            "optim": {"params": {"lr": tune.loguniform(1e-7, 1e-3)}},
+        },
     },
     "training": {"gan_mode": tune.choice(["CE", "W", "MSE"])},
     "model_param_options": {
