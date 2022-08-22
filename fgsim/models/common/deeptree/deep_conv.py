@@ -19,21 +19,21 @@ class DeepConv(MessagePassing):
         in_features: int,
         out_features: int,
         n_global: int,
-        add_self_loops: bool = True,
-        msg_nn_bool: bool = True,
-        upd_nn_bool: bool = True,
-        msg_nn_include_edge_attr: bool = False,
-        msg_nn_include_global: bool = True,
-        upd_nn_include_global: bool = True,
-        residual: bool = True,
+        add_self_loops: bool,
+        nns: str,
+        msg_nn_include_edge_attr: bool,
+        msg_nn_include_global: bool,
+        upd_nn_include_global: bool,
+        residual: bool,
     ):
         super().__init__(aggr="add", flow="source_to_target")
         self.in_features = in_features
         self.out_features = out_features
         self.n_global = n_global
         self.add_self_loops = add_self_loops
-        self.msg_nn_bool = msg_nn_bool
-        self.upd_nn_bool = upd_nn_bool
+        assert nns in ["msg", "upd", "both"]
+        self.msg_nn_bool = nns in ["msg", "both"]
+        self.upd_nn_bool = nns in ["upd", "both"]
         self.msg_nn_include_edge_attr = msg_nn_include_edge_attr
         self.residual = residual
 
@@ -45,7 +45,7 @@ class DeepConv(MessagePassing):
 
         # MSG NN
         self.msg_nn: Union[torch.nn.Module, torch.nn.Identity] = torch.nn.Identity()
-        if msg_nn_bool:
+        if self.msg_nn_bool:
             self.msg_nn = FFN(
                 in_features
                 + (n_global if msg_nn_include_global else 0)
@@ -53,17 +53,19 @@ class DeepConv(MessagePassing):
                 in_features if self.upd_nn_bool else out_features,
             )
         else:
-            assert not (msg_nn_include_edge_attr or msg_nn_include_global)
+            # assert not (msg_nn_include_edge_attr or msg_nn_include_global)
+            pass
 
         # UPD NN
         self.update_nn: Union[torch.Module, torch.nn.Identity] = torch.nn.Identity()
-        if upd_nn_bool:
+        if self.upd_nn_bool:
             self.update_nn = FFN(
                 2 * in_features + (n_global if upd_nn_include_global else 0),
                 out_features,
             )
         else:
-            assert not upd_nn_include_global
+            # assert not upd_nn_include_global
+            pass
 
     def forward(
         self,

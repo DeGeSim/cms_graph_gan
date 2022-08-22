@@ -5,6 +5,7 @@ depending on the config. Contains the code for checkpointing of model and optimz
 
 import os
 from datetime import datetime
+from pathlib import Path
 
 import torch
 from omegaconf import OmegaConf
@@ -59,8 +60,8 @@ class Holder:
 
         # try to load a check point
         self.checkpoint_loaded = False
-        if not conf.debug or conf.command == "test":
-            self.__load_checkpoint()
+        if (not conf.debug or conf.command == "test") and not conf.ray:
+            self.load_checkpoint()
 
         # # Hack to move the optim parameters to the correct device
         # # https://github.com/pytorch/pytorch/issues/8741
@@ -86,7 +87,7 @@ class Holder:
         #     # torcheck.add_module_inf_check(model, module_name=partname)
         #     # torcheck.add_module_nan_check(model, module_name=partname)
 
-    def __load_checkpoint(self):
+    def load_checkpoint(self):
         if not (
             os.path.isfile(conf.path.state) and os.path.isfile(conf.path.checkpoint)
         ):
@@ -115,11 +116,36 @@ class Holder:
             + f" grad_step {self.state['grad_step']}."
         )
 
+    def load_ray_checkpoint(self, ray_tmp_checkpoint_path: Path):
+        checkpoint_path = ray_tmp_checkpoint_path / "cp.pth"
+        state_path = ray_tmp_checkpoint_path / "state.pth"
+        self.state = OmegaConf.load(state_path)
+        # Once the state has been loaded from the checkpoint,
+        #  update the logger state
+        self.train_log.state = self.state
+        checkpoint = torch.load(checkpoint_path, map_location=device)
+
+        assert not contains_nans(checkpoint["models"])[0]
+        assert not contains_nans(checkpoint["best_model"])[0]
+
+        self.models.load_state_dict(checkpoint["models"])
+        self.optims.load_state_dict(checkpoint["optims"])
+        self.best_model_state = checkpoint["best_model"]
+        self.history = checkpoint["history"]
+        self.checkpoint_loaded = True
+
+        logger.warning(
+            f"Loaded model from checkpoint at epoch {self.state['epoch']}"
+            + f" grad_step {self.state['grad_step']} from {ray_tmp_checkpoint_path}"
+        )
+
     def select_best_model(self):
         self.models.load_state_dict(self.best_model_state)
         self.models = self.models.float().to(device)
 
-    def save_checkpoint(self):
+    def save_checkpoint(
+        self,
+    ):
         if conf.debug:
             return
         push_to_old(conf.path.checkpoint, conf.path.checkpoint_old)
@@ -138,6 +164,25 @@ class Holder:
         logger.warning(
             f"{self._last_checkpoint_time.strftime('%d/%m/%Y, %H:%M:%S')}"
             f"Checkpoint saved to {conf.path.checkpoint}"
+        )
+
+    def save_ray_checkpoint(self, ray_tmp_checkpoint_path: Path):
+        checkpoint_path = ray_tmp_checkpoint_path / "cp.pth"
+        state_path = ray_tmp_checkpoint_path / "state.pth"
+        torch.save(
+            {
+                "models": self.models.state_dict(),
+                "optims": self.optims.state_dict(),
+                "best_model": self.best_model_state,
+                "history": self.history,
+            },
+            checkpoint_path,
+        )
+        OmegaConf.save(config=self.state, f=state_path)
+        self._last_checkpoint_time = datetime.now()
+        logger.warning(
+            f"{self._last_checkpoint_time.strftime('%d/%m/%Y, %H:%M:%S')}"
+            f"Checkpoint saved to {ray_tmp_checkpoint_path}"
         )
 
     def checkpoint_after_time(self):

@@ -42,7 +42,7 @@
                     "train"
                 ],
                 "cwd": "/home/mscham/fgsim",
-                "justMyCode": false,
+                // "justMyCode": false,
                 "module": "fgsim",
                 "name": "tr tag",
                 "request": "launch",
@@ -75,7 +75,15 @@
                 "name": "pp tag",
                 "request": "launch",
                 "type": "python"
-            }
+            },
+            {
+                "cwd": "/home/mscham/fgsim",
+                "name": "ray",
+                "request": "launch",
+                "program": "raytune/tune.py",
+                "type": "python",
+                "justMyCode": false,
+            },
         ],
         "version": "0.2.0"
     },
@@ -152,11 +160,10 @@
         "python.testing.pytestPath": "/dev/shm/mscham/fgsim/bin/pytest",
         "python.testing.unittestEnabled": false,
         "terminal.integrated.defaultProfile.linux": "zsh",
-        "terminal.integrated.cwd": "${env:HOME}/fgsim",
+        "terminal.integrated.cwd": "/home/mscham/fgsim",
         "terminal.integrated.profiles.linux": {
             "zsh": {
-                "args": [],
-                "path": "${env:HOME}/.apps/CentOSLinux7/bin/zsh"
+                "path": "${env:HOME}/.apps/CentOSLinux7/bin/zsh",
             }
         }
     },

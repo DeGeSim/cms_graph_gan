@@ -35,7 +35,9 @@ class FFN(nn.Module):
             ]
         )
         self.seq = nn.Sequential()
-        activation = getattr(nn, conf.ffn.activation)(**conf.ffn.activation_params)
+        activation = getattr(nn, conf.ffn.activation)(
+            **conf.ffn.activation_params[conf.ffn.activation]
+        )
         for ilayer in range(n_layers):
             self.seq.append(nn.Linear(features[ilayer], features[ilayer + 1]))
             if ilayer != n_layers:

@@ -1,12 +1,14 @@
 from typing import Dict
 
-from comet_ml.experiment import BaseExperiment
 from omegaconf import DictConfig
 from torch.utils.tensorboard import SummaryWriter
 
 from fgsim.config import conf
 from fgsim.monitoring.logger import logger
-from fgsim.monitoring.monitor import get_experiment, get_writer
+from fgsim.monitoring.monitor import get_experiment
+
+if not conf.ray:
+    from comet_ml.experiment import BaseExperiment
 
 
 class TrainLog:
@@ -16,15 +18,17 @@ class TrainLog:
     def __init__(self, state, history):
         self.state: DictConfig = state
         self.history: Dict = history
-        if conf.debug and conf.command != "test":
-            return
-        self.writer: SummaryWriter = get_writer()
-        self.experiment: BaseExperiment = get_experiment(self.state)
+        self.use_tb = not conf.debug or conf.command != "test"
+        self.use_comet = not conf.ray and not conf.debug and conf.command != "test"
+        if self.use_tb:
+            self.writer: SummaryWriter = SummaryWriter(conf.path.tensorboard)
+
+        if self.use_comet:
+            self.experiment: BaseExperiment = get_experiment(self.state)
 
     def log_model_graph(self, model):
-        if conf.debug:
-            return
-        self.experiment.set_model_graph(str(model))
+        if self.use_comet:
+            self.experiment.set_model_graph(str(model))
 
     def write_trainstep_logs(self) -> None:
         if not all(
@@ -52,29 +56,30 @@ class TrainLog:
         if conf.debug:
             return
         loss = float(loss)
-        self.writer.add_scalar(lossname, loss, self.state["grad_step"])
-        self.experiment.log_metric(
-            lossname,
-            loss,
-            step=self.state["grad_step"],
-            epoch=self.state["epoch"],
-        )
+        if self.use_tb:
+            self.writer.add_scalar(lossname, loss, self.state["grad_step"])
+        if self.use_comet:
+            self.experiment.log_metric(
+                lossname,
+                loss,
+                step=self.state["grad_step"],
+                epoch=self.state["epoch"],
+            )
 
     def next_epoch(self) -> None:
         self.state["epoch"] += 1
-        if conf.debug:
-            return
-        self.experiment.log_epoch_end(
-            self.state["epoch"],
-            step=self.state["grad_step"],
-        )
+        if self.use_comet:
+            self.experiment.log_epoch_end(
+                self.state["epoch"],
+                step=self.state["grad_step"],
+            )
 
     def end(self) -> None:
-        if conf.debug:
-            return
-        self.writer.flush()
-        self.writer.close()
         logger.warning("Early Stopping criteria fulfilled")
-        if not conf.debug:
+
+        if self.use_tb:
+            self.writer.flush()
+            self.writer.close()
+        if self.use_comet:
             self.experiment.log_other("ended", True)
             self.experiment.end()

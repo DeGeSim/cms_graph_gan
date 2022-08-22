@@ -17,14 +17,14 @@ from fgsim.monitoring.train_log import TrainLog
 
 
 class Trainer:
-    def __init__(self) -> None:
-        self.holder: Holder = Holder()
+    def __init__(self, holder: Holder) -> None:
+        self.holder = holder
         if early_stopping(self.holder.history):
             exit()
         self.train_log: TrainLog = self.holder.train_log
         self.loader: QueuedDataset = QueuedDataset(loader_info)
 
-        if not self.holder.checkpoint_loaded and not conf.debug:
+        if not self.holder.checkpoint_loaded and not conf.debug and not conf.ray:
             self.validation_step()
             self.holder.save_checkpoint()
 
@@ -33,30 +33,32 @@ class Trainer:
             not early_stopping(self.holder.history)
             and self.holder.state.epoch < conf.training.max_epochs
         ):
-            self.pre_epoch()
-            istep_start = (
-                self.holder.state.processed_events
-                // conf.loader.batch_size
-                % self.loader.n_grad_steps_per_epoch
-            )
-            for istep, batch in tqdm(
-                zip(
-                    range(istep_start, self.loader.n_grad_steps_per_epoch + 1),
-                    self.loader.qfseq,
-                ),
-                initial=istep_start,
-                total=self.loader.n_grad_steps_per_epoch,
-                mininterval=5.0,
-                desc=f"Epoch {self.holder.state.epoch}",
-            ):
-                batch = self.pre_training_step(batch)
-                self.training_step(batch)
-                self.post_training_step()
-            self.validation_step()
-            self.post_epoch()
+            self.train_epoch()
 
-        # Stopping
         self.post_training()
+
+    def train_epoch(self):
+        self.pre_epoch()
+        istep_start = (
+            self.holder.state.processed_events
+            // conf.loader.batch_size
+            % self.loader.n_grad_steps_per_epoch
+        )
+        for istep, batch in tqdm(
+            zip(
+                range(istep_start, self.loader.n_grad_steps_per_epoch + 1),
+                self.loader.qfseq,
+            ),
+            initial=istep_start,
+            total=self.loader.n_grad_steps_per_epoch,
+            mininterval=5.0,
+            desc=f"Epoch {self.holder.state.epoch}",
+        ):
+            batch = self.pre_training_step(batch)
+            self.training_step(batch)
+            self.post_training_step()
+        self.validation_step()
+        self.post_epoch()
 
     def pre_training_step(self, batch):
         if conf.training.smooth_features:
@@ -96,7 +98,8 @@ class Trainer:
                     self.train_log.log_loss(f"train.{pname}.{lname}", lossval)
             # Also log training speed
             self.train_log.write_trainstep_logs()
-        self.holder.checkpoint_after_time()
+        if not conf.ray:
+            self.holder.checkpoint_after_time()
         self.holder.state.grad_step += 1
         self.holder.state.time_train_step_start = time.time()
 
@@ -115,11 +118,12 @@ class Trainer:
     def post_training(self):
         self.holder.state.complete = True
         self.train_log.end()
-        self.holder.save_checkpoint()
+        if not conf.ray:
+            self.holder.save_checkpoint()
 
 
 def training_procedure() -> None:
-    trainer = Trainer()
+    trainer = Trainer(Holder())
     exitcode = 0
     try:
         trainer.training_loop()

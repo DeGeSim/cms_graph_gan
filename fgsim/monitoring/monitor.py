@@ -1,20 +1,20 @@
+from pathlib import Path
 from typing import List
 
 import comet_ml
 import yaml
 from omegaconf import OmegaConf
 from omegaconf.dictconfig import DictConfig
-from torch.utils.tensorboard.writer import SummaryWriter
 
 from fgsim.utils.oc_utils import dict_to_kv
 
-comet_conf = OmegaConf.load("fgsim/comet.yaml")
+comet_conf = OmegaConf.load(Path("~/fgsim/fgsim/comet.yaml").expanduser())
 api = comet_ml.API(comet_conf.api_key)
 
 
 class ExperimentOrganizer:
     def __init__(self) -> None:
-        self.fn = "wd/hash2exp.yaml"
+        self.fn = Path("~/fgsim/wd/hash2exp.yaml").expanduser()
         with open(self.fn, "r") as f:
             self.d = yaml.load(f, Loader=yaml.SafeLoader)
 
@@ -85,6 +85,8 @@ def setup_experiment() -> None:
 
     """Generates a new experiment."""
     if conf.hash in exp_orga.d:
+        if conf.ray:
+            return
         raise Exception("Experiment exists")
     project_name = (
         conf.comet_project_name
@@ -106,9 +108,3 @@ def setup_experiment() -> None:
     new_api_exp.add_tags(list(set(conf.tag.split("_"))))
     exp_orga.d[conf["hash"]] = new_api_exp.id
     exp_orga.save()
-
-
-def get_writer():
-    from fgsim.config import conf
-
-    return SummaryWriter(conf.path.tensorboard)

@@ -7,8 +7,6 @@ from pathlib import Path
 import comet_ml  # noqa
 import pretty_errors  # noqa
 
-from fgsim.utils.cli import args
-
 # Add the project to the path, -> `import fgsim.x`
 sys.path.append(os.path.dirname(os.path.realpath(".")))
 
@@ -50,6 +48,8 @@ def main():
     #     logger.info(f"Unloading {modulename}")
     #     del sys.modules[modulename]
     # logger.info("Unloading complete")
+    from fgsim.utils.cli import args
+
     if args.command == "gethash":
         if args.hash is not None:
             raise Exception

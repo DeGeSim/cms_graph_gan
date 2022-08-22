@@ -3,13 +3,15 @@ loglevel: 20
 loglevel_qf: 30
 seed: 0
 comet_project_name: "jetnet"
+ray: False
 
 models:
     gen:
         name: gen_deeptree
         params: ${model_param_options[${models.gen.name}]}
         losses: "${optionlist:${loss_options},${models.gen.losses_list}}"
-        losses_list: [CEGenLoss, cd]
+        losses_list: ${listadd:${gan_mode_options[${training.gan_mode}][gen]},${models.gen.additional_losses_list}}
+        additional_losses_list: ["cd"]
         optim:
             name: Adam
             params:
@@ -19,19 +21,33 @@ models:
         name: disc_mp
         params: ${model_param_options[${models.disc.name}]}
         losses: "${optionlist:${loss_options},${models.disc.losses_list}}"
-        losses_list: [CEDiscLoss]
+        losses_list: ${gan_mode_options[${training.gan_mode}][disc]}
         optim:
             name: Adam
             params:
                 lr: 2.0e-6
         retain_graph_on_backprop: False
 
+gan_mode_options:
+    CE:
+        gen: [CEGenLoss]
+        disc: [CEDiscLoss]
+    W:
+        gen: [WGenLoss]
+        disc: [WDiscLoss, GradientPenalty]
+    MSE:
+        gen: [MSEGenLoss]
+        disc: [MSEDiscLoss]
+
 ffn:
     activation: LeakyReLU
     hidden_layer_size: 128
     n_layers: 3
     activation_params:
-        negative_slope: 0.1
+        LeakyReLU:
+            negative_slope: 0.1
+        ReLU: {}
+        SELU: {}
     init_weights_bias_const: 0.1
     init_weights: xavier_uniform_
     batchnorm: True
@@ -46,8 +62,7 @@ model_param_options:
         n_global: 5
         conv_parem:
             add_self_loops: True
-            msg_nn_bool: True
-            upd_nn_bool: True
+            nns: both
             msg_nn_include_edge_attr: False
             msg_nn_include_global: True
             upd_nn_include_global: True
@@ -209,6 +224,7 @@ optim_options:
     FakeOptimizer: {}
 
 training:
+    gan_mode: CE
     disc_steps_per_gen_step: 5
     early_stopping:
         validation_steps: 30
@@ -222,18 +238,17 @@ training:
         interval: "${div:50000,${loader.batch_size}}"
         use_for_stopping: [fpnd]
         metrics:
-            # w1efp: {}
             w1m: {}
             w1p: {}
             fpnd: {}
-            aoc: {}
+            # aoc: {}
 testing:
     n_events: 2000
 
 path:
     dataset: "${loader.dataset_path}"
-    ds_lenghts: "${path.dataset_processed}/filelengths.yaml"
     dataset_processed: "${path.dataset}/pkl_${loader_name}_${loader_hash}"
+    ds_lenghts: "${path.dataset_processed}/filelengths.yaml"
     training: "${path.dataset_processed}/training"
     validation: "${path.dataset_processed}/validation.pt"
     test: "${path.dataset_processed}/test.pt"
@@ -268,8 +283,8 @@ loader_options:
         n_workers_postprocess: 1
         n_features: ${len:${loader.cell_prop_keys}}
     hgcal:
+        dataset_path: "~/fgsim/data/hgcal_william"
         n_points: 128
-        dataset_path: "data/hgcal_william"
         braches:
             id: "simHit_detid"
             energy: "genPh_E"
@@ -277,13 +292,13 @@ loader_options:
         cell_prop_keys: ["E", "x", "y", "layer"]
     pcgraph: ${loader_options[hgcal]}
     moons:
-        dataset_path: "data/moons"
+        dataset_path: "~/fgsim/data/moons"
         cell_prop_keys: ["x", "y"]
         n_points: 512
         cluster_tree: false
         cluster_method: "random"
     jetnet:
-        dataset_path: "data/jetnet"
+        dataset_path: "~/fgsim/data/jetnet"
         n_points: 30
         cell_prop_keys: ["eta", "phi", "pt"]
         dataset_glob: "**/*.csv"

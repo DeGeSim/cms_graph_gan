@@ -81,8 +81,8 @@ def option_gantype(exp_config: ExperimentConfig) -> Dict[str, DictConfig]:
     res["MSE"]["models"]["gen"]["losses_list"] = ["MSEGenLoss", "cd"]
     res["MSE"]["models"]["disc"]["losses_list"] = ["MSEDiscLoss"]
 
-    res["benno"]["models"]["gen"]["losses_list"] = ["MSEGenLoss"]
-    res["benno"]["models"]["disc"]["losses_list"] = ["MSEDiscLoss"]
+    # res["benno"]["models"]["gen"]["losses_list"] = ["MSEGenLoss"]
+    # res["benno"]["models"]["disc"]["losses_list"] = ["MSEDiscLoss"]
     return res
 
 
