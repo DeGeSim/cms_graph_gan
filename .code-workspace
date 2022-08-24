@@ -23,7 +23,8 @@
             {
                 "args": [
                     "--hash",
-                    "dab7694",
+                    "4313afa",
+                    "--ray",
                     "--debug",
                     "test"
                 ],

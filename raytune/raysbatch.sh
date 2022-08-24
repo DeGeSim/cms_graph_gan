@@ -51,9 +51,7 @@ srun \
     -w "$node_1" \
     ray start --head --node-ip-address="$ip" --port=$port --redis-password="$redis_password" --block &
 
-for ((i = 1; i <= 30; i++)); do
-    node_i=${nodes_array[$i]}
-    echo "STARTING WORKER $i at $node_i"
+for ((i = 1; i <= 2; i++)); do
     sbatch << EOF
 #!/bin/bash
 #SBATCH --partition=allgpu,cms,cms-desy
@@ -66,11 +64,10 @@ for ((i = 1; i <= 30; i++)); do
 source ${HOME}/fgsim/ramenv.sh
 ray start --address "$ip_head" --redis-password="$redis_password" --block
 EOF
+done
+while [[ $(squeue -u ${USER} -n rayworker -t R | wc -l) -lt 2 ]] ; do
     sleep 1
 done
-while [[ $(squeue -u ${USER} -n rayworker -t R | wc -l) -lt 3 ]] ; do
-    sleep 1
-done
-
+sleep 10
 # ===== Call your code below =====
 python ~/fgsim/raytune/tune.py

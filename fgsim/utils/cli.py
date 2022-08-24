@@ -19,6 +19,13 @@ parser.add_argument(
     default=False,
     required=False,
 )
+parser.add_argument(
+    "--ray",
+    dest="ray",
+    action="store_true",
+    default=False,
+    required=False,
+)
 commands = [
     "setup",
     "gethash",

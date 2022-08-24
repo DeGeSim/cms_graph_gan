@@ -60,7 +60,7 @@ class Holder:
 
         # try to load a check point
         self.checkpoint_loaded = False
-        if (not conf.debug or conf.command == "test") and not conf.ray:
+        if conf.command == "test" or (not conf.debug and not conf.ray):
             self.load_checkpoint()
 
         # # Hack to move the optim parameters to the correct device
@@ -116,9 +116,9 @@ class Holder:
             + f" grad_step {self.state['grad_step']}."
         )
 
-    def load_ray_checkpoint(self, ray_tmp_checkpoint_path: Path):
-        checkpoint_path = ray_tmp_checkpoint_path / "cp.pth"
-        state_path = ray_tmp_checkpoint_path / "state.pth"
+    def load_ray_checkpoint(self, ray_tmp_checkpoint_path: str):
+        checkpoint_path = Path(ray_tmp_checkpoint_path) / "cp.pth"
+        state_path = Path(ray_tmp_checkpoint_path) / "state.pth"
         self.state = OmegaConf.load(state_path)
         # Once the state has been loaded from the checkpoint,
         #  update the logger state
@@ -140,6 +140,8 @@ class Holder:
         )
 
     def select_best_model(self):
+        if conf.ray and conf.command == "test":
+            return
         self.models.load_state_dict(self.best_model_state)
         self.models = self.models.float().to(device)
 
@@ -166,9 +168,9 @@ class Holder:
             f"Checkpoint saved to {conf.path.checkpoint}"
         )
 
-    def save_ray_checkpoint(self, ray_tmp_checkpoint_path: Path):
-        checkpoint_path = ray_tmp_checkpoint_path / "cp.pth"
-        state_path = ray_tmp_checkpoint_path / "state.pth"
+    def save_ray_checkpoint(self, ray_tmp_checkpoint_path: str):
+        checkpoint_path = Path(ray_tmp_checkpoint_path) / "cp.pth"
+        state_path = Path(ray_tmp_checkpoint_path) / "state.pth"
         torch.save(
             {
                 "models": self.models.state_dict(),

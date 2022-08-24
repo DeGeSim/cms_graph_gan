@@ -69,7 +69,11 @@ defaultconf = OmegaConf.load(Path("~/fgsim/fgsim/default.yaml").expanduser())
 conf: DictConfig
 if args.hash is not None:
     try:
-        fn = glob(f"wd/*/{args.hash}/full_config.yaml")[0]
+        if args.ray:
+            fn = glob(f"wd/ray/*/{args.hash}/full_config.yaml")[0]
+
+        else:
+            fn = glob(f"wd/*/{args.hash}/full_config.yaml")[0]
     except IndexError:
         raise IndexError("No experiement with hash {args.hash} is set up.")
     conf = OmegaConf.load(fn)

@@ -56,7 +56,7 @@ class TrainLog:
         for k, v in metrics_dict.items():
             self.log_metric(
                 name=k,
-                loss=v,
+                value=v,
             )
 
     def log_metric(self, name: str, value=None, step=None, epoch=None) -> None:

@@ -5,6 +5,7 @@ from hyperpars import hyperpars
 from omegaconf import OmegaConf
 from ray import tune
 from ray.tune.schedulers import MedianStoppingRule
+from ray.tune.stopper import ExperimentPlateauStopper
 from ray.tune.suggest.hyperopt import HyperOptSearch
 
 import fgsim.config
@@ -22,6 +23,7 @@ class Trainable(tune.Trainable):
         fgsim.config.conf, _ = fgsim.config.compute_conf(
             fgsim.config.defaultconf, self.exp_config
         )
+        OmegaConf.save(fgsim.config.conf, Path(self.logdir) / "full_config.yaml")
         fgsim.config.device = fgsim.config.get_device()
         from fgsim.monitoring.logger import init_logger
 
@@ -49,10 +51,10 @@ class Trainable(tune.Trainable):
         self.trainer.loader.qfseq.stop()
 
     def save_checkpoint(self, tmp_checkpoint_dir):
-        return self.holder.save_ray_checkpoint(Path(tmp_checkpoint_dir))
+        return self.holder.save_ray_checkpoint(tmp_checkpoint_dir)
 
     def load_checkpoint(self, checkpoint):
-        return self.holder.load_ray_checkpoint(Path(checkpoint))
+        return self.holder.load_ray_checkpoint(checkpoint)
 
 
 def trial_name_id(trial):
@@ -87,6 +89,7 @@ analysis = tune.run(
     raise_on_failed_trial=False,
     name="jetnet-deeptree",
     local_dir="~/fgsim/wd/ray/",
+    stop=ExperimentPlateauStopper(metric="fpnd"),
     trial_name_creator=trial_name_id,
     trial_dirname_creator=trial_name_id,
     resume="AUTO",
