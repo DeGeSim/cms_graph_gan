@@ -1,4 +1,5 @@
 from functools import partial
+from heapq import nlargest  # noqa: F401
 from typing import Dict
 
 import awkward as ak
@@ -34,11 +35,11 @@ def transform_hitlist(
     # ### No filter
     # detids = list(id_to_energy_dict.keys())
     # ### n highest energies
-    from heapq import nlargest
 
-    detids = nlargest(
-        conf.loader.n_points, id_to_energy_dict, key=id_to_energy_dict.get
-    )
+    # detids = nlargest(
+    #     conf.loader.n_points, id_to_energy_dict, key=id_to_energy_dict.get
+    # )
+    detids = list(id_to_energy_dict.keys())
     # ### energy cut
     # # cut the hits 81% energy 56% of the hits @ 57 GeV
     # energyfilter = hit_energies > 0.0048
