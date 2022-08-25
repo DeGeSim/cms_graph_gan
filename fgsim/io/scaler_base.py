@@ -79,8 +79,8 @@ class ScalerBase:
             fig, ax = plt.subplots(figsize=(10, 7))
             ax.hist(v, bins=500)
             fig.savefig(
-                Path(f"~/fgsim/wd/{k}_post.png").expanduser()
+                Path(conf.path.dataset_processed) / f"{k}_post.png"
                 if post
-                else Path(f"~/fgsim/wd/{k}_pre.png").expanduser()
+                else Path(conf.path.dataset_processed) / f"{k}_pre.png"
             )
             plt.close(fig)
