@@ -6,7 +6,7 @@ import torch.nn as nn
 from omegaconf import OmegaConf
 from torch_geometric.data import Batch
 
-from fgsim.config import conf, device
+from fgsim.config import conf
 from fgsim.models.common import DynHLVsLayer
 from fgsim.models.common.deeptree import (
     BranchingLayer,
@@ -62,7 +62,6 @@ class ModelClass(nn.Module):
             batch_size=conf.loader.batch_size,
             branches=OmegaConf.to_container(conf.tree.branches),
             features=OmegaConf.to_container(conf.tree.features),
-            device=device,
         )
 
         if n_global > 0:
@@ -71,7 +70,6 @@ class ModelClass(nn.Module):
                     DynHLVsLayer(
                         n_features=self.features[-1],
                         n_global=n_global,
-                        device=device,
                         batch_size=self.batch_size,
                     )
                     for _ in self.features
@@ -162,3 +160,8 @@ class ModelClass(nn.Module):
         graph_tree.data.batch = graph_tree.batch_by_level[-1]
 
         return graph_tree_to_batch(graph_tree)
+
+    def to(self, device):
+        super().to(device)
+        self.tree.to(device)
+        return self

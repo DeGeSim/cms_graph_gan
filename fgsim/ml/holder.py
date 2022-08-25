@@ -11,7 +11,7 @@ import torch
 from omegaconf import OmegaConf
 from omegaconf.dictconfig import DictConfig
 
-from fgsim.config import conf, device
+from fgsim.config import conf
 from fgsim.io.sel_loader import Batch
 from fgsim.ml.loss import LossesCol
 from fgsim.ml.network import SubNetworkCollector
@@ -29,7 +29,8 @@ class Holder:
     information about the current state of the training"""
 
     # Nameing convention snw = snw
-    def __init__(self) -> None:
+    def __init__(self, device="cpu") -> None:
+        self.device = device
         # Human readable, few values
         self.state: DictConfig = OmegaConf.create(
             {
@@ -46,7 +47,7 @@ class Holder:
         self.train_log = TrainLog(self.state, self.history)
 
         self.models: SubNetworkCollector = SubNetworkCollector(conf.models)
-        self.models = self.models.float().to(device)
+        self.models = self.models.float()
         # from torchinfo import summary
         # for _, model in self.models.parts.items():
         #     try:
@@ -86,6 +87,12 @@ class Holder:
         #     torcheck.add_module_changing_check(model, module_name=partname)
         #     # torcheck.add_module_inf_check(model, module_name=partname)
         #     # torcheck.add_module_nan_check(model, module_name=partname)
+        self.to(self.device)
+
+    def to(self, device):
+        self.device = device
+        self.models = self.models.to(device)
+        return self
 
     def load_checkpoint(self):
         if not (
@@ -99,7 +106,7 @@ class Holder:
         # Once the state has been loaded from the checkpoint,
         #  update the logger state
         self.train_log.state = self.state
-        checkpoint = torch.load(conf.path.checkpoint, map_location=device)
+        checkpoint = torch.load(conf.path.checkpoint, map_location=self.device)
 
         assert not contains_nans(checkpoint["models"])[0]
         assert not contains_nans(checkpoint["best_model"])[0]
@@ -123,7 +130,7 @@ class Holder:
         # Once the state has been loaded from the checkpoint,
         #  update the logger state
         self.train_log.state = self.state
-        checkpoint = torch.load(checkpoint_path, map_location=device)
+        checkpoint = torch.load(checkpoint_path, map_location=self.device)
 
         assert not contains_nans(checkpoint["models"])[0]
         assert not contains_nans(checkpoint["best_model"])[0]
@@ -143,7 +150,7 @@ class Holder:
         if conf.ray and conf.command == "test":
             return
         self.models.load_state_dict(self.best_model_state)
-        self.models = self.models.float().to(device)
+        self.models = self.models.float().to(self.device)
 
     def save_checkpoint(
         self,
@@ -207,7 +214,7 @@ class Holder:
     def gen_noise(self, requires_grad=False) -> torch.Tensor:
         return torch.randn(
             *self.models.gen.z_shape, requires_grad=requires_grad
-        ).to(device)
+        ).to(self.device)
 
     def reset_gen_points(self) -> None:
         with torch.no_grad():

@@ -14,7 +14,7 @@ from torch_geometric.data import Batch
 from torch_scatter import scatter_mean
 from tqdm import tqdm
 
-from fgsim.config import conf
+from fgsim.config import conf, device
 from fgsim.io.queued_dataset import QueuedDataset
 from fgsim.io.sel_loader import loader_info, scaler
 from fgsim.ml.holder import Holder
@@ -49,7 +49,7 @@ class TestDataset:
 
 
 def test_procedure() -> None:
-    holder: Holder = Holder()
+    holder: Holder = Holder(device)
     train_log: TrainLog = holder.train_log
 
     test_data: TestDataset = get_testing_datasets(holder)
@@ -99,6 +99,7 @@ def get_testing_datasets(holder: Holder) -> TestDataset:
         )
     else:
         reprocess = True
+    reprocess = True
 
     if reprocess:
         # reprocess

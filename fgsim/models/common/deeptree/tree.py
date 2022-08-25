@@ -12,35 +12,33 @@ class Tree:
         batch_size: int,
         branches: List[int],
         features: List[int],
-        device: torch.device,
     ):
         self.batch_size = batch_size
         self.branches = branches
         self.features = features
-        self.device = device
 
         assert len(self.features) - 1 == len(self.branches)
         n_levels = len(self.features)
         # initialize the root
         # shape : 2 x num_edges
         self.ancestor_edge_index_p_level: List[torch.Tensor] = [
-            torch.empty(2, 0, dtype=torch.long, device=device)
+            torch.empty(2, 0, dtype=torch.long)
         ]
         # shape : num_edges x 1
         self.ancestor_edge_attrs_p_level: List[torch.Tensor] = [
-            torch.empty(0, 1, dtype=torch.long, device=device)
+            torch.empty(0, 1, dtype=torch.long)
         ]
         # shape : 2 x num_edges
         self.children_edge_index_p_level: List[torch.Tensor] = [
-            torch.empty(2, 0, dtype=torch.long, device=device)
+            torch.empty(2, 0, dtype=torch.long)
         ]
 
         self.tree_lists: List[List[Node]] = [
-            [Node(torch.arange(self.batch_size, dtype=torch.long, device=device))]
+            [Node(torch.arange(self.batch_size, dtype=torch.long))]
         ]
 
         self.tbatch_by_level: List[torch.Tensor] = [
-            torch.arange(batch_size, dtype=torch.long, device=device).repeat(
+            torch.arange(batch_size, dtype=torch.long).repeat(
                 prod([branches[:ilevel]])
             )
             for ilevel in range(1, n_levels)
@@ -60,7 +58,6 @@ class Tree:
                 children_idxs = torch.arange(
                     next_x_index,
                     next_x_index + branches[level - 1] * batch_size,
-                    device=device,
                 ).long()
                 next_x_index = next_x_index + branches[level - 1] * batch_size
                 # ### Make the connections to parent in the node ###
@@ -87,7 +84,6 @@ class Tree:
                         torch.tensor(
                             degree,
                             dtype=torch.long,
-                            device=device,
                         )
                         .repeat(branches[level - 1] * batch_size)
                         .reshape(-1, 1)
@@ -97,6 +93,20 @@ class Tree:
                 torch.hstack(new_children_edges)
             )
             self.ancestor_edge_attrs_p_level.append(torch.vstack(new_edge_attrs))
+
+    def to(self, device):
+        for attr in [
+            "ancestor_edge_index_p_level",
+            "ancestor_edge_attrs_p_level",
+            "children_edge_index_p_level",
+            "tbatch_by_level",
+        ]:
+            attr_obj = getattr(self, attr)
+            setattr(self, attr, [e.to(device) for e in attr_obj])
+        for level in self.tree_lists:
+            for node in level:
+                node.idxs = node.idxs.to(device)
+        return self
 
     def _children_dense_ei_from_parent(self, parent: Node) -> torch.Tensor:
         children_idxs = torch.vstack([child.idxs for child in parent.children])

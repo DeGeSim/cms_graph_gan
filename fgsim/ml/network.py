@@ -40,6 +40,10 @@ class SubNetworkCollector(torch.nn.Module):
     def __getitem__(self, subnetworkname: str) -> torch.nn.Module:
         return self.parts[subnetworkname]
 
+    def to(self, *args, **kwargs):
+        self.parts = {k: v.to(*args, **kwargs) for k, v in self.parts.items()}
+        return self
+
 
 # Import the python file containing the models with dynamically
 def import_nn(

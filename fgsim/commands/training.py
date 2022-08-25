@@ -123,7 +123,7 @@ class Trainer:
 
 
 def training_procedure() -> None:
-    trainer = Trainer(Holder())
+    trainer = Trainer(Holder(device))
     exitcode = 0
     try:
         trainer.training_loop()

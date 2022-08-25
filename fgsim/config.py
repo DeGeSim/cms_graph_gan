@@ -97,7 +97,7 @@ random.seed(conf.seed)
 
 def get_device():
     # Select the CPU/GPU
-    if not conf.debug and torch.cuda.is_available() and conf["command"] == "train":
+    if torch.cuda.is_available():  # and not conf.debug
         device = torch.device("cuda:" + str(torch.cuda.device_count() - 1))
     else:
         device = torch.device("cpu")
