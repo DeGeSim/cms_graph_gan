@@ -11,11 +11,11 @@ models:
         params: ${model_param_options[${models.gen.name}]}
         losses: "${optionlist:${loss_options},${models.gen.losses_list}}"
         losses_list: ${listadd:${gan_mode_options[${training.gan_mode}][gen]},${models.gen.additional_losses_list}}
-        additional_losses_list: ["cd"]
+        additional_losses_list: ["dcd"]
         optim:
             name: Adam
             params:
-                lr: 1.0e-5
+                lr: 2.0e-4
         retain_graph_on_backprop: True
     disc:
         name: disc_mp
@@ -25,7 +25,7 @@ models:
         optim:
             name: Adam
             params:
-                lr: 2.0e-6
+                lr: 1.0e-4
         retain_graph_on_backprop: False
 
 gan_mode_options:
@@ -42,14 +42,14 @@ gan_mode_options:
 ffn:
     activation: LeakyReLU
     hidden_layer_size: 128
-    n_layers: 3
+    n_layers: 5
     activation_params:
         LeakyReLU:
             negative_slope: 0.1
         ReLU: {}
         SELU: {}
     init_weights_bias_const: 0.1
-    init_weights: xavier_uniform_
+    init_weights: kaiming_uniform_
     batchnorm: True
     dropout: True
 
@@ -59,19 +59,19 @@ model_param_options:
         degrees: [2, 2, 2, 2, 2, 64]
         support: 10
     gen_deeptree:
-        n_global: 5
+        n_global: 3
         conv_parem:
-            add_self_loops: True
-            nns: both
+            add_self_loops: False
+            nns: msg
             msg_nn_include_edge_attr: False
-            msg_nn_include_global: True
+            msg_nn_include_global: False
             upd_nn_include_global: True
             residual: True
         branching_param:
-            residual: True
+            residual: False
         child_param:
             n_mpl: 3
-            n_hidden_nodes: 128
+            n_hidden_nodes: 512
     gen_edgeconv:
         n_layers: 5
         n_features: 2
