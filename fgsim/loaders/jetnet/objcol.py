@@ -50,13 +50,11 @@ def read_chunks(chunks: List[Tuple[Path, int, int]]) -> torch.Tensor:
     for chunk in chunks:
         chunks_list.append(readpath(*chunk))
     res = pd.concat(chunks_list).values.reshape(-1, 30, 4)
-    # res = res[..., :3]
     return torch.tensor(res).float()
 
 
 def contruct_graph_from_row(row) -> Data:
-    res = Data(x=row[:, :3], mask=row[:, :1].reshape(-1).bool())
-    res.x[~res.mask] = -5.0
+    res = Data(x=row[:, :3][row[:, 3].bool()])
     return res
 
 

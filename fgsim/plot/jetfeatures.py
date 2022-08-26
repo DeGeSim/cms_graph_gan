@@ -1,34 +1,51 @@
+from typing import Dict
+
 import jetnet
 import matplotlib.pyplot as plt
 import mplhep
 import numpy as np
 import seaborn as sns
+from matplotlib.figure import Figure
 
 from fgsim.config import conf
+from fgsim.utils.jetnetutils import _to_stacked_mask
 
 from .xyscatter import binbourders_wo_outliers
 
 
 def jet_features(
-    sim: np.ndarray,
-    gen: np.ndarray,
-) -> plt.Figure:
-    sim_features_agr = jetnet.utils.jet_features(sim)
-    gen_features_agr = jetnet.utils.jet_features(gen)
+    sim,
+    gen,
+) -> Dict[str, Figure]:
+    sim_features_agr = jetnet.utils.jet_features(
+        _to_stacked_mask(sim).cpu().numpy()
+    )
+    gen_features_agr = jetnet.utils.jet_features(
+        _to_stacked_mask(gen).cpu().numpy()
+    )
 
     plt.cla()
     plt.clf()
     sns.set()
-    fig, axes = plt.subplots(
-        4,
-        3,
-        figsize=(18, 14),
-        gridspec_kw={"height_ratios": [2, 1, 2, 1]},
-    )
-    for (ax, axrat), ftn in zip(zip(*axes[:2]), ["pt", "eta", "mass"]):
+    feature_name_d = {
+        "mass": "$m_{rel}$",
+        "phi": "$Σ ϕ_{rel}$",
+        "pt": "$Σp_{T,rel}$",
+        "eta": "$Ση_{rel}$",
+    }
+    plots_d = {}
+
+    for ftn in ["pt", "eta", "mass"]:
+        fig, (ax, axrat) = plt.subplots(
+            2,
+            1,
+            figsize=(6, 8),
+            gridspec_kw={"height_ratios": [2, 1]},
+        )
         sim_arr = sim_features_agr[ftn]
         gen_arr = gen_features_agr[ftn]
 
+        # upper plot
         bins = binbourders_wo_outliers(sim_arr)
 
         sim_hist, sim_bins = np.histogram(sim_arr, bins=bins)
@@ -41,35 +58,40 @@ def jet_features(
             ax=ax,
         )
 
-        ax.set_title(
-            {
-                "mass": "$m_{rel}$",
-                "phi": "$Σ ϕ_{rel}$",
-                "pt": "$Σp_{T,rel}$",
-                "eta": "$Ση_{rel}$",
-            }[ftn]
-        )
-        if ax is axes[0][0]:
-            ax.set_ylabel("Frequency")
-        if ax is axes[0][-1]:
-            ax.legend(["MC", "GAN"])
+        ax.set_title(feature_name_d[ftn])
+
+        ax.set_ylabel("Frequency")
+        ax.legend(["MC", "GAN"])
+        # ratio plot
         frac = gen_hist / sim_hist
         axrat.plot(frac)
         axrat.set_ylim(0, 2)
         axrat.axhline(1, color="black")
         axrat.set_xticks([])
         axrat.set_xticklabels([])
+        plt.tight_layout()
+        plots_d[f"jetfeatures_{ftn}.pdf"] = fig
 
     sim_features = {
         varname: arr
-        for varname, arr in zip(conf.loader.cell_prop_keys, sim.reshape(-1, 3).T)
+        for varname, arr in zip(
+            conf.loader.cell_prop_keys, sim.x.reshape(-1, 3).T.cpu().numpy()
+        )
     }
     gen_features = {
         varname: arr
-        for varname, arr in zip(conf.loader.cell_prop_keys, gen.reshape(-1, 3).T)
+        for varname, arr in zip(
+            conf.loader.cell_prop_keys, gen.x.reshape(-1, 3).T.cpu().numpy()
+        )
     }
 
-    for (ax, axrat), ftn in zip(zip(*axes[2:4]), ["pt", "eta", "phi"]):
+    for ftn in ["pt", "eta", "phi"]:
+        fig, (ax, axrat) = plt.subplots(
+            2,
+            1,
+            figsize=(6, 8),
+            gridspec_kw={"height_ratios": [2, 1]},
+        )
         sim_arr = sim_features[ftn]
         gen_arr = gen_features[ftn]
 
@@ -85,9 +107,9 @@ def jet_features(
             ax=ax,
         )
 
-        if ax is axes[1][0]:
-            ax.set_ylabel("Frequency")
+        ax.set_ylabel("Frequency")
 
+        # ratioplot
         frac = gen_hist / sim_hist
         axrat.plot(frac)
         axrat.axhline(1, color="black")
@@ -101,7 +123,6 @@ def jet_features(
         axrat.set_ylim(0, 2)
         axrat.set_xticks([])
         axrat.set_xticklabels([])
+        plots_d[f"pfeatures_{ftn}.pdf"] = fig
 
-    fig.suptitle("Jet features")
-    plt.tight_layout()
-    return fig
+    return plots_d

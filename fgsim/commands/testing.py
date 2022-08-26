@@ -7,6 +7,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, List, Optional
 
+import matplotlib.pyplot as plt
 import numpy as np
 import torch
 from scipy.stats import wasserstein_distance
@@ -99,7 +100,6 @@ def get_testing_datasets(holder: Holder) -> TestDataset:
         )
     else:
         reprocess = True
-    reprocess = True
 
     if reprocess:
         # reprocess
@@ -129,9 +129,7 @@ def get_testing_datasets(holder: Holder) -> TestDataset:
 
         # scale all the samples
         for k in ds_dict.keys():
-            ds_dict[k].x = torch.from_numpy(
-                scaler.inverse_transform(ds_dict[k].x.numpy())
-            )
+            ds_dict[k].x = scaler.inverse_transform(ds_dict[k].x)
         test_data = TestDataset(
             sim_batches=ds_dict["sim"],
             gen_batches_best=ds_dict["best"],
@@ -214,12 +212,13 @@ def test_plots(test_info: TestInfo):
         # figure.savefig(outputpath)
         figure.savefig(outputpath.with_suffix(".png"), dpi=150)
         train_log.log_figure(
-            figure_name=f"test.{best_or_last}.{filename}",
+            figure_name=f"test/{best_or_last}/{filename}",
             figure=figure,
             overwrite=False,
             step=test_info.step,
         )
         logger.info(plot_path / filename)
+        plt.close(figure)
 
     from itertools import combinations
 
@@ -237,8 +236,8 @@ def test_plots(test_info: TestInfo):
         # log_figure(figure, f"xyscatter_single_{cmbname}.pdf")
 
         figure = xyscatter_faint(
-            sim=sim_batch_small.x[:, [v1, v2]].numpy(),
-            gen=gen_batch_small.x[:, [v1, v2]].numpy(),
+            sim=sim_batch_small.x[:, [v1, v2]].cpu().numpy(),
+            gen=gen_batch_small.x[:, [v1, v2]].cpu().numpy(),
             title=(
                 f"Scatter points ({conf.loader.n_points}) in batch ({batch_size})"
             ),
@@ -248,8 +247,8 @@ def test_plots(test_info: TestInfo):
         log_figure(figure, f"xyscatter_batch_{cmbname}.pdf")
 
         figure = xy_hist(
-            sim=sim_batch.x[:, [v1, v2]].numpy(),
-            gen=gen_batch.x[:, [v1, v2]].numpy(),
+            sim=sim_batch.x[:, [v1, v2]].cpu().numpy(),
+            gen=gen_batch.x[:, [v1, v2]].cpu().numpy(),
             title=(
                 f"2D Histogram for {conf.loader.n_points} points in"
                 f" {conf.testing.n_events} events"
@@ -261,22 +260,17 @@ def test_plots(test_info: TestInfo):
 
     from fgsim.plot.jetfeatures import jet_features
 
-    log_figure(
-        jet_features(
-            sim_batch.x.reshape(
-                -1, conf.loader.n_points, conf.loader.n_features
-            ).numpy(),
-            gen_batch.x.reshape(
-                -1, conf.loader.n_points, conf.loader.n_features
-            ).numpy(),
-        ),
-        "jetfeatures.pdf",
-    )
+    for title, fig in jet_features(
+        sim_batch,
+        gen_batch,
+    ).items():
+        log_figure(fig, title)
 
 
 def jetnet_metrics(sim_batch, gen_batch) -> Dict[str, float]:
     from fgsim.models.metrics import fpnd, w1efp, w1m, w1p
 
+    assert fpnd(sim_batch) < 10
     metrics_dict = {}
 
     metrics_dict["fpnd"] = fpnd(gen_batch)

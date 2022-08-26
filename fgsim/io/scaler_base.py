@@ -4,6 +4,7 @@ from typing import Callable, Dict, List
 import joblib
 import matplotlib.pyplot as plt
 import numpy as np
+import torch
 
 from fgsim.config import conf
 
@@ -60,15 +61,19 @@ class ScalerBase:
             ]
         )
 
-    def inverse_transform(self, pcs: np.ndarray):
-        assert len(pcs.shape) == 2
-        assert pcs.shape[1] == len(self.transfs)
-        return np.hstack(
+    def inverse_transform(self, pcs: torch.Tensor):
+        assert pcs.shape[-1] == len(self.transfs)
+        orgshape = pcs.shape
+        dev = pcs.device
+        pcs = np.array(pcs.to("cpu")).reshape(-1, len(self.transfs))
+
+        t_stacked = np.hstack(
             [
                 transf.inverse_transform(arr.reshape(-1, 1))
                 for arr, transf in zip(pcs.T, self.transfs)
             ]
         )
+        return torch.from_numpy(t_stacked.reshape(*orgshape)).float().to(dev)
 
     def plot_scaling(self, pcs, post=False):
         if post:

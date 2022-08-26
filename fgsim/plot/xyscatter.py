@@ -6,6 +6,8 @@ import pandas as pd
 import seaborn as sns
 import torch
 
+from fgsim.utils.torchtonp import wrap_torch_to_np
+
 np.set_printoptions(formatter={"float_kind": "{:.3g}".format})
 
 
@@ -18,6 +20,7 @@ def to_np(arr) -> np.ndarray:
         raise TypeError
 
 
+@wrap_torch_to_np
 def gausstr(sim: np.ndarray, gen: np.ndarray):
     mean_sim = np.around(np.mean(sim, axis=0), 2)
     cov_sim = str(np.around(np.cov(sim, rowvar=0), 2)).replace("\n", "")
@@ -77,6 +80,7 @@ def xyscatter(
     return g.figure
 
 
+@wrap_torch_to_np
 def xyscatter_faint(
     sim: np.ndarray,
     gen: np.ndarray,
@@ -132,6 +136,7 @@ def xyscatter_faint(
     return g.figure
 
 
+@wrap_torch_to_np
 def xy_hist(
     sim: np.ndarray,
     gen: np.ndarray,
@@ -167,16 +172,19 @@ def xy_hist(
     return fig
 
 
+@wrap_torch_to_np
 def simranges(sim: np.ndarray):
     xrange = bounds_wo_outliers(sim[:, 0])
     yrange = bounds_wo_outliers(sim[:, 1])
     return xrange, yrange
 
 
-def binbourders_wo_outliers(points) -> np.ndarray:
+@wrap_torch_to_np
+def binbourders_wo_outliers(points: np.ndarray) -> np.ndarray:
     return np.linspace(*bounds_wo_outliers(points), num=50, endpoint=True)
 
 
+@wrap_torch_to_np
 def bounds_wo_outliers(points: np.ndarray) -> tuple:
     thresh = 5.0
     median = np.median(points, axis=0)
