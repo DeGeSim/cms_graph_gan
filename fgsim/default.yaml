@@ -60,6 +60,8 @@ model_param_options:
         support: 10
     gen_deeptree:
         n_global: 3
+        final_layer_scaler: True
+        all_points: False
         conv_parem:
             add_self_loops: True
             nns: both

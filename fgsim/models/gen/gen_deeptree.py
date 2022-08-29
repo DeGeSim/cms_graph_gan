@@ -17,6 +17,7 @@ from fgsim.models.common.deeptree import (
     TreeGenType,
     graph_tree_to_batch,
 )
+from fgsim.models.common.deeptree.ftxscale import FtxScaleLayer
 from fgsim.monitoring.logger import logger
 
 
@@ -27,12 +28,14 @@ class ModelClass(nn.Module):
         conv_parem: Dict,
         child_param: Dict,
         branching_param: Dict,
-        all_points: bool = False,
+        all_points: bool,
+        final_layer_scaler: bool,
     ):
         super().__init__()
         self.n_global = n_global
         self.all_points = all_points
         self.batch_size = conf.loader.batch_size
+        self.final_layer_scaler = final_layer_scaler
 
         self.features = conf.tree.features
         self.branches = conf.tree.branches
@@ -113,6 +116,7 @@ class ModelClass(nn.Module):
                 for level in range(1, n_levels)
             ]
         )
+        self.ftx_scaling = FtxScaleLayer(self.features[-1])
 
     def forward(self, random_vector: torch.Tensor) -> Batch:
         batch_size = self.batch_size
@@ -158,6 +162,9 @@ class ModelClass(nn.Module):
             )
         graph_tree.data.x = graph_tree.tftx_by_level[-1]
         graph_tree.data.batch = graph_tree.batch_by_level[-1]
+
+        if self.final_layer_scaler:
+            graph_tree.data.x = self.ftx_scaling(graph_tree.data.x)
 
         return graph_tree_to_batch(graph_tree)
 
