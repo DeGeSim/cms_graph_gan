@@ -61,16 +61,16 @@ model_param_options:
     gen_deeptree:
         n_global: 3
         conv_parem:
-            add_self_loops: False
-            nns: msg
+            add_self_loops: True
+            nns: both
             msg_nn_include_edge_attr: False
             msg_nn_include_global: False
             upd_nn_include_global: True
             residual: True
         branching_param:
-            residual: False
+            residual: True
         child_param:
-            n_mpl: 3
+            n_mpl: 0
             n_hidden_nodes: 512
     gen_edgeconv:
         n_layers: 5
