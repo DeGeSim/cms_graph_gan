@@ -1,3 +1,5 @@
+from copy import deepcopy
+
 import torch
 from torch_geometric.data import Batch
 
@@ -44,5 +46,16 @@ def validate(holder: Holder, loader: QueuedDataset) -> None:
         best_last_val="val",
         step=holder.state.grad_step,
     )
+
+    # select the best model
+    min_stop_crit = min(holder.history["stop_crit"])
+    if min_stop_crit == holder.history["stop_crit"][-1]:
+        holder.state.best_step = holder.state["grad_step"]
+        holder.state.best_epoch = holder.state["epoch"]
+        holder.best_model_state = deepcopy(holder.models.state_dict())
+
+        holder.train_log.log_metric("other/min_stop_crit", min_stop_crit)
+        holder.train_log.log_metric("other/best_step", holder.state["grad_step"])
+        holder.train_log.log_metric("other/best_epoch", holder.state["epoch"])
 
     logger.debug("Validation done.")
