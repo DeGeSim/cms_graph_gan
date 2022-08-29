@@ -4,13 +4,14 @@ from typing import Dict
 import torch
 from omegaconf.dictconfig import DictConfig
 
+from fgsim.utils.optimto import optimizer_to
+
 
 class OptimCol:
     """Collect all optimizers for the different parts
     of the model to do eg. holder.model.zero_grad()."""
 
     def __init__(self, pconf: DictConfig, submodelpar_dict: Dict):
-
         self.pconf = pconf
         self.parts: Dict[str, torch.optim.Optimizer] = {}
 
@@ -52,6 +53,11 @@ class OptimCol:
 
     def __getitem__(self, subnetworkname: str) -> torch.optim.Optimizer:
         return self.parts[subnetworkname]
+
+    def to(self, device) -> None:
+        for optim in self.parts.values():
+            if not isinstance(optim, FakeOptimizer):
+                optimizer_to(optim, device)
 
 
 class FakeOptimizer(torch.optim.Optimizer):

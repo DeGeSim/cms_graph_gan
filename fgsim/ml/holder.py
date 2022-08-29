@@ -29,7 +29,7 @@ class Holder:
     information about the current state of the training"""
 
     # Nameing convention snw = snw
-    def __init__(self, device="cpu") -> None:
+    def __init__(self, device=torch.device("cpu")) -> None:
         self.device = device
         # Human readable, few values
         self.state: DictConfig = OmegaConf.create(
@@ -92,6 +92,8 @@ class Holder:
     def to(self, device):
         self.device = device
         self.models = self.models.to(device)
+        self.optims.to(device)
+
         return self
 
     def load_checkpoint(self):
