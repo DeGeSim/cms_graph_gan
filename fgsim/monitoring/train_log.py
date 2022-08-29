@@ -18,8 +18,8 @@ class TrainLog:
     def __init__(self, state, history):
         self.state: DictConfig = state
         self.history: Dict = history
-        self.use_tb = not conf.debug or conf.command != "test"
-        self.use_comet = (not conf.debug and not conf.ray) or conf.command != "test"
+        self.use_tb = not conf.debug or conf.command == "test"
+        self.use_comet = (not conf.debug and not conf.ray) or conf.command == "test"
         if self.use_tb:
             self.writer: SummaryWriter = SummaryWriter(conf.path.tensorboard)
 
