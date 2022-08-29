@@ -7,7 +7,6 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, List, Optional
 
-import matplotlib.pyplot as plt
 import numpy as np
 import torch
 from scipy.stats import wasserstein_distance
@@ -21,7 +20,7 @@ from fgsim.io.sel_loader import loader_info, scaler
 from fgsim.ml.holder import Holder
 from fgsim.monitoring.logger import logger
 from fgsim.monitoring.train_log import TrainLog
-from fgsim.plot.xyscatter import xy_hist, xyscatter_faint
+from fgsim.plot.jetnetplots import jetnetplots
 
 batch_size = conf.loader.batch_size
 
@@ -81,7 +80,15 @@ def test_procedure() -> None:
         )
 
         test_metrics(test_info)
-        test_plots(test_info)
+
+        jetnetplots(
+            train_log=test_info.train_log,
+            sim_batch=test_info.sim_batch,
+            gen_batch=test_info.gen_batch,
+            plot_path=test_info.plot_path,
+            best_last_val=test_info.best_or_last,
+            step=test_info.step,
+        )
 
     exit(0)
 
@@ -177,68 +184,6 @@ def test_metrics(test_info: TestInfo):
         f"test/{test_info.best_or_last}/{k}": v for k, v in metrics_dict.items()
     }
     train_log.log_metrics(metrics_dict, step=test_info.step, epoch=test_info.epoch)
-
-
-def test_plots(test_info: TestInfo):
-    train_log = test_info.train_log
-    sim_batch = test_info.sim_batch
-    gen_batch = test_info.gen_batch
-    plot_path = test_info.plot_path
-    best_or_last = test_info.best_or_last
-
-    sim_batch_small = Batch.from_data_list(sim_batch[: conf.loader.batch_size])
-    gen_batch_small = Batch.from_data_list(gen_batch[: conf.loader.batch_size])
-
-    def log_figure(figure, filename):
-        outputpath = plot_path / filename
-        # figure.savefig(outputpath)
-        figure.savefig(outputpath.with_suffix(".png"), dpi=150)
-        train_log.log_figure(
-            figure_name=f"test/{best_or_last}/{filename}",
-            figure=figure,
-            overwrite=False,
-            step=test_info.step,
-        )
-        logger.info(plot_path / filename)
-        plt.close(figure)
-
-    from itertools import combinations
-
-    for v1, v2 in combinations(list(range(conf.loader.n_features)), 2):
-        v1name = conf.loader.cell_prop_keys[v1]
-        v2name = conf.loader.cell_prop_keys[v2]
-        cmbname = f"{v1name}_vs_{v2name}"
-
-        figure = xyscatter_faint(
-            sim=sim_batch_small.x[:, [v1, v2]].cpu().numpy(),
-            gen=gen_batch_small.x[:, [v1, v2]].cpu().numpy(),
-            title=(
-                f"Scatter points ({conf.loader.n_points}) in batch ({batch_size})"
-            ),
-            v1name=v1name,
-            v2name=v2name,
-        )
-        log_figure(figure, f"xyscatter_batch_{cmbname}.pdf")
-
-        figure = xy_hist(
-            sim=sim_batch.x[:, [v1, v2]].cpu().numpy(),
-            gen=gen_batch.x[:, [v1, v2]].cpu().numpy(),
-            title=(
-                f"2D Histogram for {conf.loader.n_points} points in"
-                f" {conf.testing.n_events} events"
-            ),
-            v1name=v1name,
-            v2name=v2name,
-        )
-        log_figure(figure, f"xy_hist_{cmbname}.pdf")
-
-    from fgsim.plot.jetfeatures import jet_features
-
-    for title, fig in jet_features(
-        sim_batch,
-        gen_batch,
-    ).items():
-        log_figure(fig, title)
 
 
 def jetnet_metrics(sim_batch, gen_batch) -> Dict[str, float]:

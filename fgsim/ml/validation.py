@@ -5,6 +5,7 @@ from fgsim.config import conf
 from fgsim.io.queued_dataset import QueuedDataset
 from fgsim.ml.holder import Holder
 from fgsim.monitoring.logger import logger
+from fgsim.plot.jetnetplots import jetnetplots
 from fgsim.utils.check_for_nans import check_chain_for_nans
 
 
@@ -27,14 +28,21 @@ def validate(holder: Holder, loader: QueuedDataset) -> None:
         sim_batch = Batch.from_data_list(loader.validation_batches)
         gen_batch = Batch.from_data_list(gen_graphs)
 
-    # evaluate the validation losses
+    # evaluate the validation metrics
     with torch.no_grad():
         holder.val_loss(
             gen_batch=gen_batch, sim_batch=sim_batch, d_gen=d_gen, d_sim=d_sim
         )
     holder.val_loss.log_metrics()
 
-    # validation metrics
-
     # validation plots
+    jetnetplots(
+        train_log=holder.train_log,
+        sim_batch=sim_batch,
+        gen_batch=gen_batch,
+        plot_path=None,
+        best_last_val="val",
+        step=holder.state.grad_step,
+    )
+
     logger.debug("Validation done.")
