@@ -1,8 +1,8 @@
 import torch
 from torch import Tensor
 
-from fgsim.config import conf
 from fgsim.models.common.mpgan import LinearNet, MPNet
+from fgsim.utils.jetnetutils import _pp_for_jetnet_metric
 
 
 class ModelClass(MPNet):
@@ -57,13 +57,7 @@ class ModelClass(MPNet):
 
     # Edit start
     def forward(self, batch):
-        x = batch.x
-        n_points = conf.loader.n_points
-        batch_size = x.shape[0] // n_points
-        n_features = conf.loader.n_features
-        # add the ones mask
-        x = torch.hstack((x, torch.ones(batch_size * n_points, 1, device=x.device)))
-        x = x.reshape(batch_size, n_points, n_features + 1)
+        x = _pp_for_jetnet_metric(batch)
         x = super().forward(x).squeeze()
         return x
 
