@@ -148,22 +148,6 @@ def get_testing_datasets(holder: Holder) -> TestDataset:
     return test_data
 
 
-# def compute_hlvs_dict(batches) -> Dict[str, np.ndarray]:
-#     hlvs_dict_torch: Dict[str, List[torch.Tensor]] = {}
-#     for batch in batches:
-#         for key in batch.hlvs:
-#             if key not in hlvs_dict_torch:
-#                 hlvs_dict_torch[key] = []
-#             hlvs_dict_torch[key].append(batch.hlvs[key])
-
-#     # Sample 2k events and plot the distribution
-#     # convert to numpy
-#     hlvs_dict: Dict[str, np.ndarray] = {
-#         var: subsample(convert(hlvs_dict_torch[var])) for var in hlvs_dict_torch
-#     }
-#     return hlvs_dict
-
-
 def convert(tensorarr: List[torch.Tensor]) -> np.ndarray:
     return torch.cat(tensorarr).flatten().detach().cpu().numpy()
 
@@ -179,8 +163,6 @@ def test_metrics(test_info: TestInfo):
 
     metrics_dict: Dict[str, float] = {}
 
-    # for k, v in w_metrics(sim_batches, gen_batches).items():
-    #     metrics_dict[k] = v
     for k, v in jetnet_metrics(sim_batches, gen_batches).items():
         metrics_dict[k] = v
 
@@ -226,14 +208,6 @@ def test_plots(test_info: TestInfo):
         v1name = conf.loader.cell_prop_keys[v1]
         v2name = conf.loader.cell_prop_keys[v2]
         cmbname = f"{v1name}_vs_{v2name}"
-        # figure = xyscatter(
-        #     sim=sim_batch[0].x[:, [v1, v2]].numpy(),
-        #     gen=gen_batch[0].x[:, [v1, v2]].numpy(),
-        #     title=f"Scatter a single event ({conf.loader.n_points} points)",
-        #     v1name=v1name,
-        #     v2name=v2name,
-        # )
-        # log_figure(figure, f"xyscatter_single_{cmbname}.pdf")
 
         figure = xyscatter_faint(
             sim=sim_batch_small.x[:, [v1, v2]].cpu().numpy(),
