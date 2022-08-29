@@ -19,7 +19,7 @@ class TrainLog:
         self.state: DictConfig = state
         self.history: Dict = history
         self.use_tb = not conf.debug or conf.command == "test"
-        self.use_comet = (not conf.debug and not conf.ray) or conf.command == "test"
+        self.use_comet = (not conf.debug or conf.command == "test") and not conf.ray
         if self.use_tb:
             self.writer: SummaryWriter = SummaryWriter(conf.path.tensorboard)
 
