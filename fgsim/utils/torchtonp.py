@@ -2,8 +2,10 @@ from typing import Callable
 
 import numpy as np
 import torch
+from typeguard import typeguard_ignore
 
 
+@typeguard_ignore
 def convert_to_torch(e):
     if isinstance(e, np.ndarray):
         return torch.from_numpy(e)
@@ -11,6 +13,7 @@ def convert_to_torch(e):
         return e
 
 
+@typeguard_ignore
 def wrap_torch_to_np(fct: Callable):
     def inner(*args, **kwargs):
         convert = False
@@ -23,7 +26,7 @@ def wrap_torch_to_np(fct: Callable):
             if isinstance(kwargs[k], torch.Tensor):
                 kwargs[k] = kwargs[k].cpu().numpy()
                 convert = True
-        res = fct(*args, **kwargs)
+        res = typeguard_ignore(fct)(*args, **kwargs)
         if convert:
             if isinstance(res, tuple):
                 return tuple(convert_to_torch(e) for e in res)
