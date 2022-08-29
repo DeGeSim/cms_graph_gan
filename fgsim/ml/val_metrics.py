@@ -61,8 +61,7 @@ class ValidationMetrics:
 
         for metric_name, metric_val in up_metrics_d.items():
             # Log the validation loss
-            if not conf.debug:
-                self.train_log.log_metric(f"val/{metric_name}", metric_val)
+            self.train_log.log_metric(f"val/{metric_name}", metric_val)
 
         # compute the stop_metric
         history = self.train_log.history
@@ -80,13 +79,12 @@ class ValidationMetrics:
         ratio_better = [float(val) for val in ratio_better]
         history["stop_crit"] = list(ratio_better)
         # overwrite the recorded ratio_better for each
-        if not conf.debug:
-            for ivalstep in range(len(ratio_better)):
-                self.train_log.log_metric(
-                    name="val/ratio_better",
-                    value=ratio_better[ivalstep],
-                    step=ivalstep * conf.training.val.interval,
-                )
+        for ivalstep in range(len(ratio_better)):
+            self.train_log.log_metric(
+                name="val/ratio_better",
+                value=ratio_better[ivalstep],
+                step=ivalstep * conf.training.val.interval,
+            )
 
     def __getitem__(self, lossname: str) -> Callable:
         return self.parts[lossname]

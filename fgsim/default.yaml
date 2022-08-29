@@ -227,7 +227,7 @@ training:
     gan_mode: CE
     disc_steps_per_gen_step: 5
     early_stopping:
-        validation_steps: 30
+        validation_steps: 1
         improvement: 0.2
     checkpoint_minutes: 15
     smooth_features: False

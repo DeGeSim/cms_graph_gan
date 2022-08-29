@@ -1,5 +1,3 @@
-from copy import deepcopy
-
 import torch
 from torch_geometric.data import Batch
 
@@ -14,6 +12,7 @@ def validate(holder: Holder, loader: QueuedDataset) -> None:
     holder.models.eval()
     check_chain_for_nans((holder.models,))
 
+    # generate the batches
     with torch.no_grad():
         gen_graphs = []
         for _ in range(len(loader.validation_batches)):
@@ -28,22 +27,14 @@ def validate(holder: Holder, loader: QueuedDataset) -> None:
         sim_batch = Batch.from_data_list(loader.validation_batches)
         gen_batch = Batch.from_data_list(gen_graphs)
 
+    # evaluate the validation losses
+    with torch.no_grad():
         holder.val_loss(
             gen_batch=gen_batch, sim_batch=sim_batch, d_gen=d_gen, d_sim=d_sim
         )
     holder.val_loss.log_metrics()
 
-    min_stop_crit = min(holder.history["stop_crit"])
-    if min_stop_crit == holder.history["stop_crit"][-1]:
-        holder.state.best_step = holder.state["grad_step"]
-        holder.state.best_epoch = holder.state["epoch"]
-        holder.best_model_state = deepcopy(holder.models.state_dict())
+    # validation metrics
 
-        if not conf.debug:
-            holder.train_log.log_metric("other/min_stop_crit", min_stop_crit)
-            holder.train_log.log_metric(
-                "other/best_step", holder.state["grad_step"]
-            )
-            holder.train_log.log_metric("other/best_epoch", holder.state["epoch"])
-
+    # validation plots
     logger.debug("Validation done.")

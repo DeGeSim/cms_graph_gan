@@ -19,7 +19,7 @@ from fgsim.monitoring.train_log import TrainLog
 class Trainer:
     def __init__(self, holder: Holder) -> None:
         self.holder = holder
-        if early_stopping(self.holder.history):
+        if early_stopping(self.holder):
             exit()
         self.train_log: TrainLog = self.holder.train_log
         self.loader: QueuedDataset = QueuedDataset(loader_info)
@@ -29,11 +29,10 @@ class Trainer:
             self.holder.save_checkpoint()
 
     def training_loop(self):
-        while (
-            not early_stopping(self.holder.history)
-            and self.holder.state.epoch < conf.training.max_epochs
-        ):
+        while self.holder.state.epoch < conf.training.max_epochs:
             self.train_epoch()
+            if early_stopping(self.holder):
+                break
 
         self.post_training()
 
@@ -44,11 +43,8 @@ class Trainer:
             // conf.loader.batch_size
             % self.loader.n_grad_steps_per_epoch
         )
-        for istep, batch in tqdm(
-            zip(
-                range(istep_start, self.loader.n_grad_steps_per_epoch + 1),
-                self.loader.qfseq,
-            ),
+        for batch in tqdm(
+            self.loader.qfseq,
             initial=istep_start,
             total=self.loader.n_grad_steps_per_epoch,
             mininterval=5.0,

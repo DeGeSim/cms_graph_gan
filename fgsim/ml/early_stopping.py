@@ -1,4 +1,4 @@
-from typing import Dict
+from copy import deepcopy
 
 import numpy as np
 from sklearn.linear_model import LinearRegression
@@ -7,7 +7,22 @@ from fgsim.config import conf
 from fgsim.monitoring.logger import logger
 
 
-def early_stopping(history: Dict) -> bool:
+def early_stopping(holder) -> bool:
+    # early stopping criterion
+    min_stop_crit = min(holder.history["stop_crit"])
+    if min_stop_crit == holder.history["stop_crit"][-1]:
+        holder.state.best_step = holder.state["grad_step"]
+        holder.state.best_epoch = holder.state["epoch"]
+        holder.best_model_state = deepcopy(holder.models.state_dict())
+
+        if not conf.debug:
+            holder.train_log.log_metric("other/min_stop_crit", min_stop_crit)
+            holder.train_log.log_metric(
+                "other/best_step", holder.state["grad_step"]
+            )
+            holder.train_log.log_metric("other/best_epoch", holder.state["epoch"])
+
+    history = holder.history
     """
     If in the last `valsteps` the stopping metric have shown no
     improvement(=decay), return True, else False.
