@@ -51,7 +51,7 @@ srun \
     -w "$node_1" \
     ray start --head --node-ip-address="$ip" --port=$port --redis-password="$redis_password" --block &
 
-for ((i = 1; i <= 2; i++)); do
+for ((i = 1; i <= 35; i++)); do
     sbatch << EOF
 #!/bin/bash
 #SBATCH --partition=allgpu,cms,cms-desy

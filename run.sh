@@ -30,7 +30,7 @@ function elementf {
     fi
     if [[ $REMOTE == 'true' ]]; then
         sbatch \
-        --partition=allgpu \
+        --partition=allgpu,cms,cms-desy \
         --time=24:00:00 \
         --nodes=1 \
         --constraint="P100|V100|A100" \
