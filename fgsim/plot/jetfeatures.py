@@ -18,10 +18,10 @@ def jet_features(
     gen,
 ) -> Dict[str, Figure]:
     sim_features_agr = jetnet.utils.jet_features(
-        _to_stacked_mask(sim).cpu().numpy()
+        _to_stacked_mask(sim).cpu().numpy()[..., :3]
     )
     gen_features_agr = jetnet.utils.jet_features(
-        _to_stacked_mask(gen).cpu().numpy()
+        _to_stacked_mask(gen).cpu().numpy()[..., :3]
     )
 
     plt.cla()
