@@ -5,6 +5,7 @@ from torch_geometric.data import Batch
 
 from fgsim.config import conf
 from fgsim.io.queued_dataset import QueuedDataset
+from fgsim.io.sel_loader import scaler
 from fgsim.ml.holder import Holder
 from fgsim.monitoring.logger import logger
 from fgsim.plot.jetnetplots import jetnetplots
@@ -29,6 +30,10 @@ def validate(holder: Holder, loader: QueuedDataset) -> None:
 
         sim_batch = Batch.from_data_list(loader.validation_batches)
         gen_batch = Batch.from_data_list(gen_graphs)
+
+    # scale all the samples
+    for batch in sim_batch, gen_batch:
+        batch.x = scaler.inverse_transform(batch.x)
 
     # evaluate the validation metrics
     with torch.no_grad():
