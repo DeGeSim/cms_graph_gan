@@ -5,6 +5,7 @@ depending on the config. Contains the code for checkpointing of model and optimz
 
 import os
 from datetime import datetime
+from glob import glob
 from pathlib import Path
 
 import torch
@@ -61,8 +62,12 @@ class Holder:
 
         # try to load a check point
         self.checkpoint_loaded = False
-        if conf.command == "test" or (not conf.debug and not conf.ray):
+        if (conf.command == "test" or not conf.debug) and not conf.ray:
             self.load_checkpoint()
+        if conf.command == "test" and conf.ray:
+            self.load_ray_checkpoint(
+                sorted(glob(f"{conf.path.run_path}/checkpoint_*"))[-1]
+            )
 
         # # Hack to move the optim parameters to the correct device
         # # https://github.com/pytorch/pytorch/issues/8741

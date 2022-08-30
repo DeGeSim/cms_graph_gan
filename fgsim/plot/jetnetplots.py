@@ -19,7 +19,7 @@ class FigLogger:
 
     def __call__(self, figure, filename):
         if self.plot_path is not None:
-            figure.savefig(self.plot_path / filename.with_suffix(".png"), dpi=150)
+            figure.savefig((self.plot_path / filename).with_suffix(".png"), dpi=150)
         self.train_log.log_figure(
             figure_name=f"val/{filename}"
             if self.best_last_val == "val"

@@ -76,6 +76,7 @@ def main():
         args.hash is not None
         and args.command not in ["dump", "overwrite"]
         and not args.debug
+        and not args.ray
     )
     if overwrite_path:
         from fgsim.config import conf
