@@ -51,7 +51,7 @@ ffn:
     init_weights_bias_const: 0.1
     init_weights: xavier_uniform_
     batchnorm: True
-    dropout: True
+    dropout: False
 
 model_param_options:
     gen_treepc:
@@ -60,11 +60,11 @@ model_param_options:
         support: 10
     gen_deeptree:
         n_global: 3
-        final_layer_scaler: True
+        final_layer_scaler: False
         all_points: False
         conv_parem:
             add_self_loops: True
-            nns: both
+            nns: upd
             msg_nn_include_edge_attr: False
             msg_nn_include_global: False
             upd_nn_include_global: True
@@ -72,7 +72,7 @@ model_param_options:
         branching_param:
             residual: True
         child_param:
-            n_mpl: 0
+            n_mpl: 3
             n_hidden_nodes: 128
     gen_edgeconv:
         n_layers: 5
@@ -226,8 +226,8 @@ optim_options:
     FakeOptimizer: {}
 
 training:
-    gan_mode: CE
-    disc_steps_per_gen_step: 5
+    gan_mode: W
+    disc_steps_per_gen_step: 4
     early_stopping:
         validation_steps: 1
         improvement: 0.2

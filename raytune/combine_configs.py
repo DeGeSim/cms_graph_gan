@@ -1,3 +1,4 @@
+# %%
 from collections import Counter
 from pprint import pprint
 
@@ -5,7 +6,7 @@ import numpy as np
 from ray.tune import ExperimentAnalysis
 
 analysis = ExperimentAnalysis(
-    "~/fgsim/wd/ray/jetnet-deeptree", default_metric="fpnd", default_mode="min"
+    "~/fgsim/wd/ray/jetnet-deeptree2", default_metric="fpnd", default_mode="min"
 )
 df = analysis.results_df
 df = df[~df["w1m"].isnull()]
