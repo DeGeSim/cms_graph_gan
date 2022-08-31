@@ -5,15 +5,16 @@ import torch
 from fgsim.config import conf
 
 
-def smooth_features(x):
+def smooth_features(x, step):
     # for idx, name in enumerate(conf.loader.cell_prop_keys):
     #     plotdist(name, x[:, idx])
     x = (
         x
         + torch.from_numpy(
             np.random.multivariate_normal(
-                [0.0, 0.0, 0.0, 0.0],
-                np.diag(conf.training.smoothing_vars),
+                [0.0] * conf.loader.n_features,
+                np.diag(conf.training.smoothing.vars)
+                * np.exp(-1 * step * conf.training.smoothing.decay),
                 size=x.shape[:-1],
             )
         ).float()
@@ -24,7 +25,6 @@ def smooth_features(x):
 
 
 def plotdist(name, arr, presmooth=True):
-
     dists = (
         torch.cdist(arr[:5000].reshape(1, -1, 1), arr[:5000].reshape(1, -1, 1))
         .reshape(-1)

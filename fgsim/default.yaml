@@ -2,7 +2,7 @@ tag: default
 loglevel: 20
 loglevel_qf: 30
 seed: 0
-comet_project_name: "jetnet"
+comet_project_name: "hgcal"
 ray: False
 
 models:
@@ -232,8 +232,10 @@ training:
         validation_steps: 1
         improvement: 0.2
     checkpoint_minutes: 15
-    smooth_features: False
-    smoothing_vars: [0.0, 0.01, 0.002, 0.0001]
+    smoothing:
+        active: True
+        vars: [0.0, 0.01, 0.002, 0.00005]
+        decay: 1e-5
     log_interval: 500
     max_epochs: 300
     val:

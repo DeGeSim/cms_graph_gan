@@ -57,8 +57,8 @@ class Trainer:
         self.post_epoch()
 
     def pre_training_step(self, batch):
-        if conf.training.smooth_features:
-            batch.x = smooth_features(batch.x)
+        if conf.training.smoothing.active:
+            batch.x = smooth_features(batch.x, self.holder.state.grad_step)
         batch = batch.to(device)
         self.holder.state.time_io_end = time.time()
         return batch
