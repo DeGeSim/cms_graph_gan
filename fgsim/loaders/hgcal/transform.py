@@ -36,10 +36,10 @@ def transform_hitlist(
     # detids = list(id_to_energy_dict.keys())
     # ### n highest energies
 
-    # detids = nlargest(
-    #     conf.loader.n_points, id_to_energy_dict, key=id_to_energy_dict.get
-    # )
-    detids = list(id_to_energy_dict.keys())
+    detids = nlargest(
+        conf.loader.n_points, id_to_energy_dict, key=id_to_energy_dict.get
+    )
+    # detids = list(id_to_energy_dict.keys())
     # ### energy cut
     # # cut the hits 81% energy 56% of the hits @ 57 GeV
     # energyfilter = hit_energies > 0.0048
