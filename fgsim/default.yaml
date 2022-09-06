@@ -62,7 +62,7 @@ model_param_options:
         n_global: 3
         final_layer_scaler: False
         all_points: False
-        conv_parem:
+        conv_param:
             add_self_loops: True
             nns: upd
             msg_nn_include_edge_attr: False

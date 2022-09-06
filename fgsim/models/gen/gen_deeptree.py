@@ -25,7 +25,7 @@ class ModelClass(nn.Module):
     def __init__(
         self,
         n_global: int,
-        conv_parem: Dict,
+        conv_param: Dict,
         child_param: Dict,
         branching_param: Dict,
         all_points: bool,
@@ -97,7 +97,7 @@ class ModelClass(nn.Module):
                     in_features=self.features[level],
                     out_features=self.features[level + 1],
                     n_global=n_global,
-                    **conv_parem,
+                    **conv_param,
                 )
                 for level in range(n_levels - 1)
             ]
@@ -111,7 +111,7 @@ class ModelClass(nn.Module):
                     n_hidden_nodes=max(
                         child_param["n_hidden_nodes"], self.features[level]
                     ),
-                    **conv_parem,
+                    **conv_param,
                 )
                 for level in range(1, n_levels)
             ]

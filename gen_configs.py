@@ -29,7 +29,7 @@ models:
 model_param_options:
     gen_deeptree:
         n_global: 5
-        conv_parem:
+        conv_param:
             add_self_loops: True
             msg_nn_bool: True
             upd_nn_bool: True
@@ -124,14 +124,14 @@ def option_n_global(exp_config: ExperimentConfig) -> Dict[str, DictConfig]:
     return res
 
 
-# conv_parem
+# conv_param
 @add_option
 def option_selfloops(exp_config: ExperimentConfig) -> Dict[str, DictConfig]:
     res = defaultdict(exp_config.config.copy)
-    res["selfloops"]["model_param_options"]["gen_deeptree"]["conv_parem"][
+    res["selfloops"]["model_param_options"]["gen_deeptree"]["conv_param"][
         "add_self_loops"
     ] = True
-    # res["¬selfloops"]["model_param_options"]["gen_deeptree"]["conv_parem"][
+    # res["¬selfloops"]["model_param_options"]["gen_deeptree"]["conv_param"][
     #     "add_self_loops"
     # ] = False
     return res
@@ -140,10 +140,10 @@ def option_selfloops(exp_config: ExperimentConfig) -> Dict[str, DictConfig]:
 @add_option
 def option_msgnn(exp_config: ExperimentConfig) -> Dict[str, DictConfig]:
     res = defaultdict(exp_config.config.copy)
-    res["msgnn"]["model_param_options"]["gen_deeptree"]["conv_parem"][
+    res["msgnn"]["model_param_options"]["gen_deeptree"]["conv_param"][
         "msg_nn_bool"
     ] = True
-    # res["¬msgnn"]["model_param_options"]["gen_deeptree"]["conv_parem"][
+    # res["¬msgnn"]["model_param_options"]["gen_deeptree"]["conv_param"][
     #     "msg_nn_bool"
     # ] = False
     return res
@@ -152,10 +152,10 @@ def option_msgnn(exp_config: ExperimentConfig) -> Dict[str, DictConfig]:
 @add_option
 def option_updnn(exp_config: ExperimentConfig) -> Dict[str, DictConfig]:
     res = defaultdict(exp_config.config.copy)
-    res["updnn"]["model_param_options"]["gen_deeptree"]["conv_parem"][
+    res["updnn"]["model_param_options"]["gen_deeptree"]["conv_param"][
         "upd_nn_bool"
     ] = True
-    # res["¬updnn"]["model_param_options"]["gen_deeptree"]["conv_parem"][
+    # res["¬updnn"]["model_param_options"]["gen_deeptree"]["conv_param"][
     #     "upd_nn_bool"
     # ] = False
     return res
@@ -164,10 +164,10 @@ def option_updnn(exp_config: ExperimentConfig) -> Dict[str, DictConfig]:
 @add_option
 def option_msgea(exp_config: ExperimentConfig) -> Dict[str, DictConfig]:
     res = defaultdict(exp_config.config.copy)
-    # res["msgea"]["model_param_options"]["gen_deeptree"]["conv_parem"][
+    # res["msgea"]["model_param_options"]["gen_deeptree"]["conv_param"][
     #     "msg_nn_include_edge_attr"
     # ] = True
-    res["¬msgea"]["model_param_options"]["gen_deeptree"]["conv_parem"][
+    res["¬msgea"]["model_param_options"]["gen_deeptree"]["conv_param"][
         "msg_nn_include_edge_attr"
     ] = False
     return res
@@ -176,10 +176,10 @@ def option_msgea(exp_config: ExperimentConfig) -> Dict[str, DictConfig]:
 @add_option
 def option_msgg(exp_config: ExperimentConfig) -> Dict[str, DictConfig]:
     res = defaultdict(exp_config.config.copy)
-    res["msgg"]["model_param_options"]["gen_deeptree"]["conv_parem"][
+    res["msgg"]["model_param_options"]["gen_deeptree"]["conv_param"][
         "msg_nn_include_global"
     ] = True
-    # res["¬msgg"]["model_param_options"]["gen_deeptree"]["conv_parem"][
+    # res["¬msgg"]["model_param_options"]["gen_deeptree"]["conv_param"][
     #     "msg_nn_include_global"
     # ] = False
     return res
@@ -188,10 +188,10 @@ def option_msgg(exp_config: ExperimentConfig) -> Dict[str, DictConfig]:
 @add_option
 def option_updg(exp_config: ExperimentConfig) -> Dict[str, DictConfig]:
     res = defaultdict(exp_config.config.copy)
-    res["updg"]["model_param_options"]["gen_deeptree"]["conv_parem"][
+    res["updg"]["model_param_options"]["gen_deeptree"]["conv_param"][
         "upd_nn_include_global"
     ] = True
-    # res["¬updg"]["model_param_options"]["gen_deeptree"]["conv_parem"][
+    # res["¬updg"]["model_param_options"]["gen_deeptree"]["conv_param"][
     #     "upd_nn_include_global"
     # ] = False
     return res
@@ -200,10 +200,10 @@ def option_updg(exp_config: ExperimentConfig) -> Dict[str, DictConfig]:
 @add_option
 def option_deepconvres(exp_config: ExperimentConfig) -> Dict[str, DictConfig]:
     res = defaultdict(exp_config.config.copy)
-    res["convres"]["model_param_options"]["gen_deeptree"]["conv_parem"][
+    res["convres"]["model_param_options"]["gen_deeptree"]["conv_param"][
         "residual"
     ] = True
-    # res["¬convres"]["model_param_options"]["gen_deeptree"]["conv_parem"][
+    # res["¬convres"]["model_param_options"]["gen_deeptree"]["conv_param"][
     #     "residual"
     # ] = False
     return res

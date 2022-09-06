@@ -8,7 +8,7 @@ hyperpars = {
     "model_param_options": {
         "gen_deeptree": {
             "final_layer_scaler": tune.choice([True, False]),
-            "conv_parem": {
+            "conv_param": {
                 # "add_self_loops": tune.choice([True, False]),
                 "nns": tune.choice(["both", "upd", "msg"]),
                 # "residual": tune.choice([True, False]),
@@ -49,7 +49,7 @@ hyperpars = {
 #     "model_param_options": {
 #         "gen_deeptree": {
 #             "n_global": tune.randint(0, 10),
-#             "conv_parem": {
+#             "conv_param": {
 #                 "add_self_loops": tune.choice([True, False]),
 #                 "nns": tune.choice(["both", "upd", "msg"]),
 #                 "msg_nn_include_edge_attr": False,
