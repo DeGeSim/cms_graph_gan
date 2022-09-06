@@ -5,6 +5,16 @@ import torch
 from fgsim.config import conf
 
 
+def turnoff(step):
+    if conf.training.smoothing.decay == 0:
+        return 1
+    step *= conf.training.smoothing.decay
+    if step > np.pi:
+        return 0
+    else:
+        return (np.cos(step) + 1) / 2
+
+
 def smooth_features(x, step):
     # for idx, name in enumerate(conf.loader.cell_prop_keys):
     #     plotdist(name, x[:, idx])
@@ -13,8 +23,7 @@ def smooth_features(x, step):
         + torch.from_numpy(
             np.random.multivariate_normal(
                 [0.0] * conf.loader.n_features,
-                np.diag(conf.training.smoothing.vars)
-                * np.exp(-1 * step * conf.training.smoothing.decay),
+                np.diag(conf.training.smoothing.vars) * turnoff(step),
                 size=x.shape[:-1],
             )
         ).float()
