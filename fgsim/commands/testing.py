@@ -20,7 +20,7 @@ from fgsim.io.sel_loader import loader_info, scaler
 from fgsim.ml.holder import Holder
 from fgsim.monitoring.logger import logger
 from fgsim.monitoring.train_log import TrainLog
-from fgsim.plot.jetnetplots import jetnetplots
+from fgsim.plot.validation_plots import validation_plots
 
 batch_size = conf.loader.batch_size
 
@@ -81,7 +81,7 @@ def test_procedure() -> None:
 
         test_metrics(test_info)
 
-        jetnetplots(
+        validation_plots(
             train_log=test_info.train_log,
             sim_batch=test_info.sim_batch,
             gen_batch=test_info.gen_batch,

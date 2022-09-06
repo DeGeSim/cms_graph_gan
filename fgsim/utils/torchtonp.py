@@ -1,5 +1,3 @@
-from typing import Callable
-
 import numpy as np
 import torch
 from typeguard import typeguard_ignore
@@ -14,7 +12,7 @@ def convert_to_torch(e):
 
 
 @typeguard_ignore
-def wrap_torch_to_np(fct: Callable):
+def wrap_torch_to_np(fct):
     @typeguard_ignore
     def inner(*args, **kwargs):
         convert = False

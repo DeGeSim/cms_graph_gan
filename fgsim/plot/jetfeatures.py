@@ -8,7 +8,7 @@ import seaborn as sns
 from matplotlib.figure import Figure
 
 from fgsim.config import conf
-from fgsim.utils.jetnetutils import _to_stacked_mask
+from fgsim.utils.jetnetutils import to_stacked_mask
 
 from .xyscatter import binbourders_wo_outliers
 
@@ -18,10 +18,10 @@ def jet_features(
     gen,
 ) -> Dict[str, Figure]:
     sim_features_agr = jetnet.utils.jet_features(
-        _to_stacked_mask(sim).cpu().numpy()[..., :3]
+        to_stacked_mask(sim).cpu().numpy()[..., :3]
     )
     gen_features_agr = jetnet.utils.jet_features(
-        _to_stacked_mask(gen).cpu().numpy()[..., :3]
+        to_stacked_mask(gen).cpu().numpy()[..., :3]
     )
 
     plt.cla()

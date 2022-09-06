@@ -1,0 +1,30 @@
+from typing import Dict
+
+from scipy.stats import wasserstein_distance
+
+from fgsim.config import conf
+from fgsim.io.sel_loader import Batch
+
+
+class Metric:
+    def __init__(
+        self,
+    ):
+        pass
+
+    def lossf(self, a, b):
+        a = a.cpu().numpy()
+        b = b.cpu().numpy()
+
+        return wasserstein_distance(a, b)
+
+    def __call__(
+        self, gen_batch: Batch, sim_batch: Batch, *args, **kwargs
+    ) -> Dict[str, float]:
+        out_dict: Dict[str, float] = {}
+        for ivar, var in enumerate(conf.loader.cell_prop_keys):
+            out_dict[f"w1{var}"] = self.lossf(
+                sim_batch.x[..., ivar], gen_batch.x[..., ivar]
+            )
+
+        return out_dict

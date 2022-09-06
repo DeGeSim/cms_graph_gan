@@ -8,7 +8,7 @@ from fgsim.io.queued_dataset import QueuedDataset
 from fgsim.io.sel_loader import scaler
 from fgsim.ml.holder import Holder
 from fgsim.monitoring.logger import logger
-from fgsim.plot.jetnetplots import jetnetplots
+from fgsim.plot.validation_plots import validation_plots
 from fgsim.utils.check_for_nans import check_chain_for_nans
 
 
@@ -43,7 +43,7 @@ def validate(holder: Holder, loader: QueuedDataset) -> None:
     holder.val_loss.log_metrics()
 
     # validation plots
-    jetnetplots(
+    validation_plots(
         train_log=holder.train_log,
         sim_batch=sim_batch,
         gen_batch=gen_batch,

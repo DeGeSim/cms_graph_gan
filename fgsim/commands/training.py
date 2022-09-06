@@ -1,7 +1,6 @@
 """Contain the training procedure, access point from __main__"""
 
 import time
-import traceback
 
 from tqdm import tqdm
 
@@ -12,7 +11,6 @@ from fgsim.ml.early_stopping import early_stopping
 from fgsim.ml.holder import Holder
 from fgsim.ml.smoothing import smooth_features
 from fgsim.ml.validation import validate
-from fgsim.monitoring.logger import logger
 from fgsim.monitoring.train_log import TrainLog
 
 
@@ -53,7 +51,8 @@ class Trainer:
             batch = self.pre_training_step(batch)
             self.training_step(batch)
             self.post_training_step()
-        self.validation_step()
+            if self.holder.state.grad_step % conf.training.val.interval == 0:
+                self.validation_step()
         self.post_epoch()
 
     def pre_training_step(self, batch):
@@ -120,14 +119,14 @@ class Trainer:
 
 def training_procedure() -> None:
     trainer = Trainer(Holder(device))
-    exitcode = 0
-    try:
-        trainer.training_loop()
-    except Exception as error:
-        logger.error("Error detected, stopping qfseq.")
-        exitcode = 1
-        logger.error(error)
-        traceback.print_exc()
-    finally:
-        trainer.loader.qfseq.stop()
-        exit(exitcode)
+    # exitcode = 0
+    # try:
+    trainer.training_loop()
+    # except Exception as error:
+    #     logger.error("Error detected, stopping qfseq.")
+    #     exitcode = 1
+    #     logger.error(error)
+    #     traceback.print_exc()
+    # finally:
+    #     trainer.loader.qfseq.stop()
+    #     exit(exitcode)

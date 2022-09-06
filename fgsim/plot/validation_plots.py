@@ -7,6 +7,7 @@ from torch_geometric.data import Batch
 from fgsim.config import conf
 from fgsim.monitoring.logger import logger
 from fgsim.monitoring.train_log import TrainLog
+from fgsim.plot.marginals import ftx_marginals
 from fgsim.plot.xyscatter import xy_hist, xyscatter_faint
 
 
@@ -32,7 +33,7 @@ class FigLogger:
         plt.close(figure)
 
 
-def jetnetplots(
+def validation_plots(
     train_log: TrainLog,
     sim_batch: Batch,
     gen_batch: Batch,
@@ -77,9 +78,7 @@ def jetnetplots(
         )
         fig_logger(figure, f"xy_hist_{cmbname}.pdf")
 
-    from fgsim.plot.jetfeatures import jet_features
-
-    for title, fig in jet_features(
+    for title, fig in ftx_marginals(
         sim_batch,
         gen_batch,
     ).items():

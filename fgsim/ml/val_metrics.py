@@ -45,13 +45,14 @@ class ValidationMetrics:
         mval = {}
         with torch.no_grad():
             for metric_name, metric in self.parts.items():
-                if hasattr(metric, "foreach_hlv") and metric.foreach_hlv:
+                comp_metrics = metric(**kwargs)
+                if isinstance(comp_metrics, dict):
                     # If the loss is processed for each hlv
                     # the return type is Dict[str,float]
-                    for var, lossval in metric(**kwargs).items():
-                        mval[f"{metric_name}_{var}"] = float(lossval)
+                    for var, lossval in comp_metrics.items():
+                        mval[var] = float(lossval)
                 else:
-                    mval[metric_name] = float(metric(**kwargs))
+                    mval[metric_name] = comp_metrics
         self.metric_aggr.append_dict(mval)
 
     def log_metrics(self) -> None:

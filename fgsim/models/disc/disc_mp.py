@@ -2,7 +2,7 @@ import torch
 from torch import Tensor
 
 from fgsim.models.common.mpgan import LinearNet, MPNet
-from fgsim.utils.jetnetutils import _pp_for_jetnet_metric
+from fgsim.utils.jetnetutils import to_stacked_mask
 
 
 class ModelClass(MPNet):
@@ -57,7 +57,7 @@ class ModelClass(MPNet):
 
     # Edit start
     def forward(self, batch):
-        x = _pp_for_jetnet_metric(batch)
+        x = to_stacked_mask(batch)
         x = super().forward(x).squeeze()
         return x
 

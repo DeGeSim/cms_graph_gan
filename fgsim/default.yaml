@@ -121,7 +121,7 @@ model_param_options:
         pool: "max1"
 
     gen_mp:
-        num_particles: 30
+        num_particles: ${loader.n_points}
         hidden_node_size: 32
         fe_layers: [96, 160, 192]
         fn_layers: [256, 256]
@@ -129,14 +129,14 @@ model_param_options:
         mp_iters: 2
         fe1_layers: null
         final_activation: tanh
-        output_node_size: 3
+        output_node_size: ${loader.n_features}
         input_node_size: 32 # 0 for gen_fc and gen_graphcnn
         lfc: false
         lfc_latent_size: 128
     disc_mp:
-        num_particles: 30
+        num_particles: ${loader.n_points}
         hidden_node_size: 32
-        fe_layers: [96, 160, 192]
+        fe_layers: [25, 25, 25]
         fn_layers: [256, 256]
         fn1_layers: null # end common
         mp_iters: 2
@@ -146,7 +146,7 @@ model_param_options:
         dea_sum: true
         fnd: []
         mask_fnd_np: false
-        input_node_size: 3
+        input_node_size: ${loader.n_features}
 
 mpgan_mask:
     mask_feat: False
@@ -165,8 +165,8 @@ mpgan_mask:
     mask_fne_np: False
 
 tree:
-    branches: [2, 3, 5]
-    features: [256, 64, 32, 3]
+    branches: [2, 4, 16]
+    features: [256, 64, 32, "${loader.n_features}"]
 
 loss_options:
     WGenLoss:
@@ -229,7 +229,7 @@ training:
     gan_mode: W
     disc_steps_per_gen_step: 4
     early_stopping:
-        validation_steps: 1
+        validation_steps: 10
         improvement: 0.2
     checkpoint_minutes: 15
     smoothing:
@@ -240,12 +240,9 @@ training:
     max_epochs: 300
     val:
         interval: "${div:50000,${loader.batch_size}}"
-        use_for_stopping: [fpnd]
+        use_for_stopping: ["w1E", "w1x", "w1y", "w1layer"]
         metrics:
-            w1m: {}
-            w1p: {}
-            fpnd: {}
-            # aoc: {}
+            ft_w1: {}
 testing:
     n_events: 2000
 
@@ -289,6 +286,7 @@ loader_options:
     hgcal:
         dataset_path: "~/fgsim/data/hgcal_william"
         n_points: 128
+        batch_size: 50
         braches:
             id: "simHit_detid"
             energy: "genPh_E"
