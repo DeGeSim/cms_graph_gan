@@ -3,6 +3,7 @@ import numpy as np
 import torch
 
 from fgsim.config import conf
+from fgsim.plot.xyscatter import binbourders_wo_outliers
 
 
 def turnoff(step):
@@ -26,21 +27,24 @@ def smooth_features(x, step):
                 np.diag(conf.training.smoothing.vars) * turnoff(step),
                 size=x.shape[:-1],
             )
-        ).float()
+        )
+        .to(x.device)
+        .float()
     )
-    return x
     # for idx, name in enumerate(conf.loader.cell_prop_keys):
     #     plotdist(name, x[:, idx], presmooth=False)
+    return x
 
 
 def plotdist(name, arr, presmooth=True):
     dists = (
         torch.cdist(arr[:5000].reshape(1, -1, 1), arr[:5000].reshape(1, -1, 1))
         .reshape(-1)
+        .cpu()
         .numpy()
     )
     fig, ax = plt.subplots()
-    ax.hist(dists, bins=300)
+    ax.hist(dists, bins=binbourders_wo_outliers(dists), histtype="bar")
     fig.savefig(
         f"wd/{name}-dists.png" if presmooth else f"wd/{name}-dists_smoothed.png"
     )
