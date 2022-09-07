@@ -24,7 +24,7 @@ class Metric:
         out_dict: Dict[str, float] = {}
         for ivar, var in enumerate(conf.loader.cell_prop_keys):
             out_dict[f"w1{var}"] = self.lossf(
-                sim_batch.x[..., ivar], gen_batch.x[..., ivar]
+                sim_batch.x[:1000, ..., ivar], gen_batch.x[:1000, ..., ivar]
             )
 
         return out_dict
