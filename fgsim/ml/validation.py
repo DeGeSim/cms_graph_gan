@@ -7,6 +7,7 @@ from fgsim.config import conf
 from fgsim.io.queued_dataset import QueuedDataset
 from fgsim.io.sel_loader import scaler
 from fgsim.ml.holder import Holder
+from fgsim.ml.smoothing import smooth_features
 from fgsim.monitoring.logger import logger
 from fgsim.plot.validation_plots import validation_plots
 from fgsim.utils.check_for_nans import check_chain_for_nans
@@ -21,8 +22,7 @@ def validate(holder: Holder, loader: QueuedDataset) -> None:
         gen_graphs = []
         for _ in range(len(loader.validation_batches)):
             holder.reset_gen_points()
-            for igraph in range(conf.loader.batch_size):
-                gen_graphs.append(holder.gen_points.get_example(igraph))
+            gen_graphs.append(holder.gen_points.clone())
         d_sim = torch.hstack(
             [holder.models.disc(batch) for batch in loader.validation_batches]
         )
@@ -33,6 +33,8 @@ def validate(holder: Holder, loader: QueuedDataset) -> None:
 
     # scale all the samples
     for batch in sim_batch, gen_batch:
+        if conf.training.smoothing.active:
+            batch.x = smooth_features(batch.x, holder.state.grad_step)
         batch.x = scaler.inverse_transform(batch.x)
 
     # evaluate the validation metrics
