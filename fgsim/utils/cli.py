@@ -45,7 +45,7 @@ commandparsers["loadfile"].add_argument(
     help="python file to load",
 )
 # No args if run within pytest
-if "pytest" in sys.modules or "ray" in sys.modules:
+if any([x in sys.modules for x in ["IPython", "pytest", "ray"]]):
     argv = [
         # "/home/mscham/fgsim/fgsim/__main__.py",
         "--tag",
