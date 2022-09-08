@@ -27,6 +27,7 @@ def ratioplot(sim_arr, gen_arr, title) -> Figure:
     )
 
     ax.set_ylabel("Frequency")
+    ax.legend()
 
     # ratioplot
     with np.errstate(divide="ignore"):
