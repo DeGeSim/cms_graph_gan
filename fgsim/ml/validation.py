@@ -18,19 +18,24 @@ def validate(holder: Holder, loader: QueuedDataset) -> None:
     check_chain_for_nans((holder.models,))
 
     # generate the batches
-    with torch.no_grad():
-        gen_graphs = []
-        for _ in range(len(loader.validation_batches)):
-            holder.reset_gen_points()
-            gen_graphs.append(holder.gen_points.clone())
-        d_sim = torch.hstack(
-            [holder.models.disc(batch) for batch in loader.validation_batches]
-        )
-        d_gen = torch.hstack([holder.models.disc(batch) for batch in gen_graphs])
+    res_d_l = {
+        "sim_batch": [],
+        "gen_batch": [],
+        "d_sim": [],
+        "d_gen": [],
+    }
+    for val_batch in loader.validation_batches:
+        for k, val in holder.pass_batch_through_model(val_batch).items():
+            if k in ["sim_batch", "gen_batch"]:
+                for e in val.to_data_list():
+                    res_d_l[k].append(e)
+            else:
+                res_d_l[k].append(val)
+    d_sim = torch.hstack(res_d_l["d_sim"])
+    d_gen = torch.hstack(res_d_l["d_gen"])
 
-        sim_batch = Batch.from_data_list(loader.validation_batches)
-        gen_batch = Batch.from_data_list(gen_graphs)
-
+    sim_batch = Batch.from_data_list(res_d_l["sim_batch"])
+    gen_batch = Batch.from_data_list(res_d_l["gen_batch"])
     # scale all the samples
     for batch in sim_batch, gen_batch:
         if conf.training.smoothing.active:

@@ -4,6 +4,7 @@ depending on the config. Contains the code for checkpointing of model and optimz
 
 
 import os
+from contextlib import contextmanager
 from datetime import datetime
 from glob import glob
 from pathlib import Path
@@ -217,17 +218,39 @@ class Holder:
             self.saved_first_checkpoint = True
             self.save_checkpoint()
 
-    # Define the methods, that equip the with the generated batches
-    def gen_noise(self, requires_grad=False) -> torch.Tensor:
-        return torch.randn(
-            *self.models.gen.z_shape, requires_grad=requires_grad
-        ).to(self.device)
+    def pass_batch_through_model(
+        self, sim_batch, train_gen: bool = False, train_disc: bool = False
+    ):
+        assert not (train_gen and train_disc)
+        # generate the random vector
+        z = torch.randn(*self.models.gen.z_shape, requires_grad=True).to(
+            self.device
+        )
+        with with_grad(train_gen):
+            gen_batch = self.models.gen(z, sim_batch.y)
 
-    def reset_gen_points(self) -> None:
+        # In both cases the gradient needs to pass though d_gen
+        with with_grad(train_gen or train_disc):
+            d_gen = self.models.disc(gen_batch, sim_batch.y).squeeze()
+
+        self.res = {
+            "sim_batch": sim_batch,
+            "gen_batch": gen_batch,
+            "d_gen": d_gen,
+        }
+        # we dont need to compute d_sim if only the generator is trained
+        # but we need it for the validation
+        if train_disc or (train_disc == train_gen):
+            with with_grad(train_disc):
+                d_sim = self.models.disc(sim_batch, sim_batch.y).squeeze()
+            self.res["d_sim"] = d_sim
+        return self.res
+
+
+@contextmanager
+def with_grad(condition):
+    if not condition:
         with torch.no_grad():
-            z = self.gen_noise()
-            self.gen_points = self.models.gen(z)
-
-    def reset_gen_points_w_grad(self) -> None:
-        z = self.gen_noise(True)
-        self.gen_points_w_grad = self.models.gen(z)
+            yield
+    else:
+        yield

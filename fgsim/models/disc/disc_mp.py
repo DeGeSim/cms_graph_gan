@@ -56,9 +56,9 @@ class ModelClass(MPNet):
             )
 
     # Edit start
-    def forward(self, batch):
+    def forward(self, batch, condition):
         x = to_stacked_mask(batch)
-        x = super().forward(x).squeeze()
+        x = super().forward(x, labels=condition).squeeze()
         return x
 
     # Edit end

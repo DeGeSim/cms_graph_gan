@@ -1,18 +1,16 @@
 import torch
 
-from fgsim.io.sel_loader import Batch
-from fgsim.ml.holder import Holder
-
 
 class LossGen:
     def __init__(self) -> None:
         pass
 
-    def __call__(self, holder: Holder, batch: Batch) -> torch.Tensor:
-        # EM dist loss:
-        D_realm = holder.models.disc(batch).mean()
-        sample_disc_loss = -D_realm
-
-        D_fakem = holder.models.disc(holder.gen_points).mean()
-        gen_disc_loss = D_fakem
-        return gen_disc_loss + sample_disc_loss
+    def __call__(
+        self,
+        d_sim: torch.Tensor,
+        d_gen: torch.Tensor,
+        **kwargs,
+    ) -> torch.Tensor:
+        assert not kwargs["gen_batch"].x.requires_grad
+        assert d_sim.requires_grad and d_sim.requires_grad
+        return d_gen.mean() - d_sim.mean()

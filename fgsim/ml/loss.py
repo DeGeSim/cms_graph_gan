@@ -48,9 +48,9 @@ class SubNetworkLoss:
     def __getitem__(self, lossname: str) -> LossFunction:
         return self.parts[lossname]
 
-    def __call__(self, holder, batch: Batch):
+    def __call__(self, holder, **res):
         losses_dict: Dict[str, torch.Tensor] = {
-            lossname: loss(holder, batch) * self.pconf[lossname]["factor"]
+            lossname: loss(holder=holder, **res) * self.pconf[lossname]["factor"]
             for lossname, loss in self.parts.items()
         }
 

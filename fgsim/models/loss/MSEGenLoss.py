@@ -1,12 +1,15 @@
 import torch
 
-from fgsim.ml.holder import Holder
-
 
 class LossGen:
     def __init__(self) -> None:
         self.lossf = torch.nn.MSELoss()
 
-    def __call__(self, holder: Holder, *args, **kwargs) -> torch.Tensor:
-        D_gen = holder.models.disc(holder.gen_points)
-        return self.lossf(D_gen, torch.ones_like(D_gen))
+    def __call__(
+        self,
+        d_gen: torch.Tensor,
+        **kwargs,
+    ) -> torch.Tensor:
+        assert kwargs["gen_batch"].x.requires_grad
+        assert d_gen.requires_grad
+        return self.lossf(d_gen, torch.ones_like(d_gen))

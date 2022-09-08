@@ -19,17 +19,18 @@ class LossGen:
 
     gamma: float = 1.0
 
-    def __call__(self, holder: Holder, batch: Batch) -> torch.float:
-
+    def __call__(
+        self, holder: Holder, sim_batch: Batch, gen_batch: Batch, **kwargs
+    ) -> torch.float:
         interpol_events = [
-            Data(x=interpol_pcs(holder.gen_points[ievent].x, batch[ievent].x))
-            for ievent in range(batch.num_graphs)
+            Data(x=interpol_pcs(gen_batch[ievent].x, sim_batch[ievent].x))
+            for ievent in range(sim_batch.num_graphs)
         ]
 
         interpol_batch = Batch.from_data_list(interpol_events)
 
         # compute output of D for interpolated input
-        disc_interpolates = holder.models.disc(interpol_batch)
+        disc_interpolates = holder.models.disc(interpol_batch, sim_batch.y)
         # compute gradients w.r.t the interpolated outputs
         inputs = [e.x for e in interpol_events]
         grads = grad(
@@ -51,7 +52,6 @@ class LossGen:
 
 
 def interpol_pcs(pc1: torch.Tensor, pc2: torch.Tensor) -> torch.Tensor:
-
     # The point could very different sizes.
     # So we repeat the smaller one:
     if len(pc1) > len(pc2):

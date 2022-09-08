@@ -1,11 +1,16 @@
-from fgsim.ml.holder import Holder
+import torch
 
 
 class LossGen:
     def __init__(self) -> None:
         pass
 
-    def __call__(self, holder: Holder, *args, **kwargs):
-        G_fake = holder.models.disc(holder.gen_points_w_grad)
-        loss = G_fake.mean() * -1
+    def __call__(
+        self,
+        d_gen: torch.Tensor,
+        **kwargs,
+    ):
+        assert kwargs["gen_batch"].x.requires_grad
+        assert d_gen.requires_grad
+        loss = d_gen.mean() * -1
         return loss

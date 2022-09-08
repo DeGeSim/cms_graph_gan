@@ -22,7 +22,7 @@ class Trainer:
         self.train_log: TrainLog = self.holder.train_log
         self.loader: QueuedDataset = QueuedDataset(loader_info)
 
-        if not self.holder.checkpoint_loaded and not conf.debug and not conf.ray:
+        if not self.holder.checkpoint_loaded and not conf.ray:
             self.validation_step()
             self.holder.save_checkpoint()
 
@@ -64,18 +64,18 @@ class Trainer:
 
     def training_step(self, batch) -> None:
         # generate a new batch with the generator
-        self.holder.optims.disc.zero_grad(set_to_none=True)
-        self.holder.reset_gen_points()
-        self.holder.losses.disc(self.holder, batch)
+        self.holder.optims.zero_grad(set_to_none=True)
+        res = self.holder.pass_batch_through_model(batch, train_disc=True)
+        self.holder.losses.disc(self.holder, **res)
         self.holder.optims.disc.step()
 
         # generator
         if self.holder.state.grad_step % conf.training.disc_steps_per_gen_step == 0:
             # generate a new batch with the generator, but with
             # points thought the generator this time
-            self.holder.models.gen.zero_grad(set_to_none=True)
-            self.holder.reset_gen_points_w_grad()
-            self.holder.losses.gen(self.holder, batch)
+            self.holder.optims.zero_grad(set_to_none=True)
+            res = self.holder.pass_batch_through_model(batch, train_gen=True)
+            self.holder.losses.gen(self.holder, **res)
             self.holder.optims.gen.step()
 
     def post_training_step(self):

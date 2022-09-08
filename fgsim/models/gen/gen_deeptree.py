@@ -118,7 +118,9 @@ class ModelClass(nn.Module):
         )
         self.ftx_scaling = FtxScaleLayer(self.features[-1])
 
-    def forward(self, random_vector: torch.Tensor) -> Batch:
+    def forward(
+        self, random_vector: torch.Tensor, condition: torch.Tensor
+    ) -> Batch:
         batch_size = self.batch_size
         features = self.features
         branches = self.branches
@@ -131,6 +133,8 @@ class ModelClass(nn.Module):
                 batch_size=batch_size,
             )
         )
+        # overwrite the first features of the reandom vector with the condition
+        graph_tree.tftx_by_level[0][..., : condition.shape[-1]] = condition.detach()
 
         # Do the branching
         for ilevel in range(n_levels):

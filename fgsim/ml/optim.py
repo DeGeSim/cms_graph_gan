@@ -43,9 +43,9 @@ class OptimCol:
     def state_dict(self):
         return {name: optim.state_dict() for name, optim in self.parts.items()}
 
-    def zero_grad(self):
+    def zero_grad(self, *args, **kwargs):
         for optim in self.parts.values():
-            optim.zero_grad()
+            optim.zero_grad(*args, **kwargs)
 
     def step(self):
         for optim in self.parts.values():
