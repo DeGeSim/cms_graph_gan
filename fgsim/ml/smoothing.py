@@ -6,10 +6,10 @@ from fgsim.config import conf
 from fgsim.plot.xyscatter import binbourders_wo_outliers
 
 
-def turnoff(step):
-    if conf.training.smoothing.decay == 0:
+def turnoff(step, decay):
+    if decay == 0:
         return 1
-    step *= conf.training.smoothing.decay
+    step *= decay
     if step > np.pi:
         return 0
     else:
@@ -24,7 +24,8 @@ def smooth_features(x, step):
         + torch.from_numpy(
             np.random.multivariate_normal(
                 [0.0] * conf.loader.n_features,
-                np.diag(conf.training.smoothing.vars) * turnoff(step),
+                np.diag(conf.training.smoothing.vars)
+                * turnoff(step, conf.training.smoothing.decay),
                 size=x.shape[:-1],
             )
         )
