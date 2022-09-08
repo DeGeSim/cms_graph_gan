@@ -226,7 +226,7 @@ optim_options:
     FakeOptimizer: {}
 
 training:
-    gan_mode: W
+    gan_mode: CE
     disc_steps_per_gen_step: 4
     early_stopping:
         validation_steps: 10
@@ -243,6 +243,7 @@ training:
         use_for_stopping: ["w1E", "w1x", "w1y", "w1layer"]
         metrics:
             ft_w1: {}
+            aoc: {}
 testing:
     n_events: 2000
 
