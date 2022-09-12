@@ -181,7 +181,7 @@ def simranges(sim: np.ndarray):
 
 @wrap_torch_to_np
 def binbourders_wo_outliers(points: np.ndarray) -> np.ndarray:
-    return np.linspace(*bounds_wo_outliers(points), num=50, endpoint=True)
+    return np.linspace(*bounds_wo_outliers(points), num=100, endpoint=True)
 
 
 @wrap_torch_to_np

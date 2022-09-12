@@ -1,7 +1,7 @@
 from pathlib import Path
-from typing import List, Optional, Tuple
+from typing import List, Tuple
 
-import pandas as pd
+import h5py
 import torch
 from sklearn.preprocessing import PowerTransformer, StandardScaler
 from torch_geometric.data import Data
@@ -10,13 +10,9 @@ from fgsim.io import FileManager, ScalerBase
 
 
 def path_to_len(fn: Path) -> int:
-    return len(
-        pd.read_csv(
-            fn,
-            sep=" ",
-            header=None,
-        )
-    )
+    with h5py.File(fn, "r") as f:
+        res = f["particle_features"].shape[0]
+    return res
 
 
 file_manager = FileManager(path_to_len)
@@ -24,48 +20,48 @@ file_manager = FileManager(path_to_len)
 
 def readpath(
     fn: Path,
-    start: Optional[int],
-    end: Optional[int],
-) -> pd.DataFrame:
-    if start is end is None:
-        return pd.read_csv(
-            fn,
-            sep=" ",
-            header=None,
+    start: int,
+    end: int,
+) -> Tuple[torch.Tensor, torch.Tensor]:
+    with h5py.File(fn, "r") as f:
+        res = (
+            torch.tensor(f["jet_features"][start:end]),
+            torch.tensor(f["particle_features"][start:end]),
         )
-    elif isinstance(start, int) and isinstance(end, int):
-        return pd.read_csv(
-            fn,
-            skiprows=start,
-            nrows=(end - start),
-            sep=" ",
-            header=None,
-        )
-    else:
-        raise ValueError()
+    return res
 
 
-def read_chunks(chunks: List[Tuple[Path, int, int]]) -> torch.Tensor:
+def read_chunks(
+    chunks: List[Tuple[Path, int, int]]
+) -> List[Tuple[torch.Tensor, torch.Tensor]]:
     chunks_list = []
     for chunk in chunks:
         chunks_list.append(readpath(*chunk))
-    res = pd.concat(chunks_list).values.reshape(-1, 30, 4)
-    return torch.tensor(res).float()
+    res = (
+        torch.concat([e[0] for e in chunks_list]),
+        torch.concat([e[1] for e in chunks_list]),
+    )
+    return [(res[0][ievent], res[1][ievent]) for ievent in range(len(res[1]))]
 
 
-def contruct_graph_from_row(row) -> Data:
-    res = Data(x=row[:, :3][row[:, 3].bool()])
+def contruct_graph_from_row(chk: Tuple[torch.Tensor, torch.Tensor]) -> Data:
+    y, x = chk
+    res = Data(
+        x=x[..., :3].reshape(-1, 3),
+        mask=x[..., 3].reshape(-1).bool(),
+        y=y.reshape(1, -1),
+    )
     return res
 
 
 scaler = ScalerBase(
-    file_manager.files,
-    file_manager.file_len_dict,
-    [
+    files=file_manager.files,
+    len_dict=file_manager.file_len_dict,
+    transfs=[
         StandardScaler(),
         StandardScaler(),
         PowerTransformer(method="box-cox", standardize=True),
     ],
-    read_chunks,
-    contruct_graph_from_row,
+    read_chunk=read_chunks,
+    transform_wo_scaling=contruct_graph_from_row,
 )
