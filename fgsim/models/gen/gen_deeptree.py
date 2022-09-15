@@ -139,15 +139,18 @@ class ModelClass(nn.Module):
         # Do the branching
         for ilevel in range(n_levels):
             # Assign the global features
-            if self.n_global > 0:
-                graph_tree.global_features = self.dyn_hlvs_layers[ilevel](
-                    x=graph_tree.tftx_by_level[ilevel][..., : features[-1]],
-                    batch=graph_tree.tbatch[graph_tree.idxs_by_level[ilevel]],
-                )
-            else:
-                graph_tree.global_features = torch.empty(
-                    batch_size, 0, dtype=torch.float, device=graph_tree.tftx.device
-                )
+            # if self.n_global > 0:
+            #     graph_tree.global_features = self.dyn_hlvs_layers[ilevel](
+            #         x=graph_tree.tftx_by_level[ilevel][..., : features[-1]],
+            #         batch=graph_tree.tbatch[graph_tree.idxs_by_level[ilevel]],
+            #     )
+            graph_tree.global_features = (
+                condition.detach().reshape(-1, self.n_global).requires_grad_(True)
+            )
+            # else:
+            #     graph_tree.global_features = torch.empty(
+            #         batch_size, 0, dtype=torch.float, device=graph_tree.tftx.device
+            #     )
 
             graph_tree = self.branching_layers[ilevel](graph_tree)
 
