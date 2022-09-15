@@ -7,6 +7,9 @@ export TARBALL_PATH=~/fgsim/env.tar
 export TARBALL_BASE_PATH=~/beegfs/conda/fgsim_base.tar
 mkdir -p /dev/shm/${USER}
 
+conda config --set auto_activate_base false
+conda config --append channels conda-forge
+
 # remove modules
 if ! command -v module &> /dev/null
 then
