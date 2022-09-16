@@ -227,14 +227,14 @@ optim_options:
 
 training:
     gan_mode: CE
-    disc_steps_per_gen_step: 4
+    disc_steps_per_gen_step: 5
     early_stopping:
         validation_steps: 10
         improvement: 0.2
     checkpoint_minutes: 15
     smoothing:
         active: True
-        vars: [0.0, 0.01, 0.002, 0.00005]
+        stds: [0, 0.315, 0.18, .3] # [0, 0.315, 0.2, .15]
         decay: 1e-5
     log_interval: 500
     max_epochs: 300
@@ -266,7 +266,7 @@ path:
     comet_exp_key: "${path.run_path}/comet_experiment_key"
 
 loader: "${merge:${loader_options[default]},${loader_options[${loader_name}]}}"
-loader_name: jetnet
+loader_name: hgcal
 
 loader_options:
     default:
