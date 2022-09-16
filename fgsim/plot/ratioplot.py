@@ -1,3 +1,5 @@
+from typing import Optional
+
 import matplotlib.pyplot as plt
 import mplhep
 import numpy as np
@@ -6,7 +8,12 @@ from matplotlib.figure import Figure
 from .xyscatter import binbourders_wo_outliers
 
 
-def ratioplot(sim_arr, gen_arr, title) -> Figure:
+def ratioplot(
+    sim_arr: np.ndarray,
+    gen_arr: np.ndarray,
+    title: str,
+    step: Optional[int] = None,
+) -> Figure:
     fig, (ax, axrat) = plt.subplots(
         2,
         1,
@@ -37,5 +44,8 @@ def ratioplot(sim_arr, gen_arr, title) -> Figure:
     axrat.set_ylim(0, 2)
     axrat.set_xticks([])
     axrat.set_xticklabels([])
+
+    if step is not None:
+        title += f"\nStep {step}"
     fig.suptitle(title)
     return fig

@@ -63,6 +63,7 @@ def validation_plots(
                 ),
                 v1name=v1name,
                 v2name=v2name,
+                step=step,
             )
             fig_logger(figure, f"xyscatter_batch_{cmbname}.pdf")
 
@@ -75,11 +76,13 @@ def validation_plots(
             ),
             v1name=v1name,
             v2name=v2name,
+            step=step,
         )
         fig_logger(figure, f"xy_hist_{cmbname}.pdf")
 
     for title, fig in ftx_marginals(
         sim_batch,
         gen_batch,
+        step=step,
     ).items():
         fig_logger(fig, title)

@@ -1,4 +1,4 @@
-from typing import Union
+from typing import Optional, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -143,6 +143,7 @@ def xy_hist(
     title: str,
     v1name: str,
     v2name: str,
+    step: Optional[int] = None,
 ) -> plt.Figure:
     plt.cla()
     plt.clf()
@@ -168,6 +169,8 @@ def xy_hist(
     axes[0].set(xlabel=v1name, ylabel=v2name)
     axes[1].set(xlabel=v1name, ylabel=v2name)
 
+    if step is not None:
+        title += f"\nStep {step}"
     fig.suptitle(title)
     return fig
 
@@ -180,8 +183,8 @@ def simranges(sim: np.ndarray):
 
 
 @wrap_torch_to_np
-def binbourders_wo_outliers(points: np.ndarray) -> np.ndarray:
-    return np.linspace(*bounds_wo_outliers(points), num=100, endpoint=True)
+def binbourders_wo_outliers(points: np.ndarray, bins=100) -> np.ndarray:
+    return np.linspace(*bounds_wo_outliers(points), num=bins, endpoint=True)
 
 
 @wrap_torch_to_np

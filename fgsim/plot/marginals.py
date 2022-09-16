@@ -1,4 +1,4 @@
-from typing import Dict
+from typing import Dict, Optional
 
 from matplotlib.figure import Figure
 
@@ -10,6 +10,7 @@ from .ratioplot import ratioplot
 def ftx_marginals(
     sim,
     gen,
+    step: Optional[int] = None,
 ) -> Dict[str, Figure]:
     sim_features = {
         varname: arr
@@ -28,7 +29,10 @@ def ftx_marginals(
     plots_d: Dict[str, Figure] = {}
     for ftn in conf.loader.cell_prop_keys:
         plots_d[f"ftxmarginal_{ftn}.pdf"] = ratioplot(
-            sim_arr=sim_features[ftn], gen_arr=gen_features[ftn], title=ftn
+            sim_arr=sim_features[ftn],
+            gen_arr=gen_features[ftn],
+            title=ftn,
+            step=step,
         )
 
     return plots_d
