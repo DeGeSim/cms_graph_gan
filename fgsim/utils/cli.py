@@ -44,22 +44,27 @@ commandparsers["loadfile"].add_argument(
     "file_to_load",
     help="python file to load",
 )
-# No args if run within pytest
-if any([x in sys.modules for x in ["IPython", "pytest", "ray"]]):
-    argv = [
-        # "/home/mscham/fgsim/fgsim/__main__.py",
-        "--tag",
-        "default",
-        "train",
-    ]
-    args = parser.parse_args(argv)
 
-else:
-    args = parser.parse_args()
+
+def get_args():
+    # No args if run within pytest
+    # for ipython / jupyter : "IPython" remove for scalene
+    if any([x in sys.modules for x in ["pytest", "ray"]]):
+        argv = [
+            # "/home/mscham/fgsim/fgsim/__main__.py",
+            "--tag",
+            "default",
+            "train",
+        ]
+        args = parser.parse_args(argv)
+
+    else:
+        args = parser.parse_args()
+    return args
+
 
 if __name__ == "__main__":
-    import sys
-
+    args = get_args()
     if args.hash is None:
         for tag in args.tag.split(","):
             command = ""

@@ -7,10 +7,11 @@ from fgsim.monitoring.monitor import (
     exp_orga,
     search_experiement_by_name,
 )
-from fgsim.utils.cli import args
+from fgsim.utils.cli import get_args
 
 
 def dump_procedure():
+    args = get_args()
     if args.hash in exp_orga.d:
         # try to archive the experiment:
         try:

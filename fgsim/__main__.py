@@ -10,9 +10,9 @@ import pretty_errors  # noqa
 # Add the project to the path, -> `import fgsim.x`
 sys.path.append(os.path.dirname(os.path.realpath(".")))
 
-from typeguard.importhook import install_import_hook
+# from typeguard.importhook import install_import_hook
 
-install_import_hook("fgsim")
+# install_import_hook("fgsim")
 
 
 def main():
@@ -48,8 +48,9 @@ def main():
     #     logger.info(f"Unloading {modulename}")
     #     del sys.modules[modulename]
     # logger.info("Unloading complete")
-    from fgsim.utils.cli import args
+    from fgsim.utils.cli import get_args
 
+    args = get_args()
     if args.command == "gethash":
         if args.hash is not None:
             raise Exception

@@ -8,7 +8,7 @@ import torch
 from matplotlib import pyplot as plt
 from omegaconf import DictConfig, OmegaConf
 
-from fgsim.utils.cli import args
+from fgsim.utils.cli import get_args
 from fgsim.utils.oc_resolvers import register_resolvers
 from fgsim.utils.oc_utils import gethash, removekeys
 
@@ -67,6 +67,7 @@ defaultconf = OmegaConf.load(Path("~/fgsim/fgsim/default.yaml").expanduser())
 # witht the tag-specific settings and then
 # overwrite those with cli arguments.
 conf: DictConfig
+args = get_args()
 if args.hash is not None:
     try:
         if args.ray:
@@ -97,7 +98,7 @@ random.seed(conf.seed)
 
 def get_device():
     # Select the CPU/GPU
-    if torch.cuda.is_available() and not conf.debug:
+    if torch.cuda.is_available():
         device = torch.device("cuda:" + str(torch.cuda.device_count() - 1))
     else:
         device = torch.device("cpu")
