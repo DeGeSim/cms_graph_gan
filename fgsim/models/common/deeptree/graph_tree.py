@@ -60,6 +60,49 @@ class GraphTreeWrapper:
     def __getitem__(self, *args, **kwargs):
         return self.data.__getitem__(*args, **kwargs)
 
+    def to_batch(self, n_nn: int = 0) -> Batch:
+        """
+        It takes a batch of graphs and returns a batch of graphs
+
+        Args:
+        batch (Union[Batch, TreeGenType, GraphTreeWrapper]):
+        a batch of graphs, either a Batch object,
+        a TreeGenType object, or a GraphTreeWrapper object.
+        n_nn (int): number of nearest neighbors to use for the graph.
+        If 0, no graph is used. Defaults to 0
+
+        Returns:
+        A batch object with the edge_index attribute set
+        to the k-nearest neighbors of the nodes in the graph.
+        """
+        if not hasattr(self, "__presaved_batch"):
+            res = batch_from_pcs_list(
+                self.tftx_by_level[-1],
+                self.batch_by_level[-1],
+            )
+            self.__presaved_batch: Batch = res.clone().detach()
+            self.__presaved_batch.x = None
+            self.__presaved_batch_indexing: torch.Tensor = torch.argsort(
+                self.batch_by_level[-1]
+            )
+        else:
+            res = self.__presaved_batch.clone()
+            res.x = self.tftx_by_level[-1][self.__presaved_batch_indexing]
+        # if isinstance(batch, GraphTreeWrapper):
+        #     res = batch_from_pcs_list(
+        #         batch.tftx_by_level[-1],
+        #         batch.batch_by_level[-1],
+        #     )
+        # elif hasattr(batch, "idxs_by_level"):
+        #     graph_tree = GraphTreeWrapper(batch)
+        #     res = batch_from_pcs_list(
+        #         graph_tree.tftx_by_level[-1],
+        #         graph_tree.batch_by_level[-1],
+        #     )
+        if n_nn > 1:
+            res.edge_index = knn_graph(x=res.x, k=n_nn, batch=res.batch)
+        return res
+
 
 # It's a wrapper around the `data.tftx` array that allows you to index it by level
 class TFTX_BY_LEVEL:
@@ -85,6 +128,7 @@ class TreeGenType(Data):
         self,
         tftx: torch.Tensor,
         batch_size: int,
+        cond: Optional[torch.Tensor] = None,
         # edge_index: torch.Tensor = torch.empty(2, 0, dtype=torch.long),
         # edge_attr: torch.Tensor = torch.empty(0, 1, dtype=torch.float),
         global_features: torch.Tensor = torch.empty(0, dtype=torch.float),
@@ -101,6 +145,7 @@ class TreeGenType(Data):
             tftx=tftx,
             # edge_index=edge_index,
             # edge_attr=edge_attr,
+            cond=cond,
             children=children,
             idxs_by_level=idxs_by_level,
             tbatch=tbatch,
@@ -108,36 +153,3 @@ class TreeGenType(Data):
             cur_level=cur_level,
         )
         self = self.to(device)
-
-
-def graph_tree_to_batch(
-    batch: Union[Data, TreeGenType, GraphTreeWrapper], n_nn: int = 0
-) -> Batch:
-    """
-    It takes a batch of graphs and returns a batch of graphs
-
-    Args:
-      batch (Union[Batch, TreeGenType, GraphTreeWrapper]):
-      a batch of graphs, either a Batch object,
-      a TreeGenType object, or a GraphTreeWrapper object.
-      n_nn (int): number of nearest neighbors to use for the graph.
-      If 0, no graph is used. Defaults to 0
-
-    Returns:
-      A batch object with the edge_index attribute set
-      to the k-nearest neighbors of the nodes in the graph.
-    """
-    if isinstance(batch, GraphTreeWrapper):
-        res = batch_from_pcs_list(
-            batch.tftx_by_level[-1],
-            batch.batch_by_level[-1],
-        )
-    elif hasattr(batch, "idxs_by_level"):
-        graph_tree = GraphTreeWrapper(batch)
-        res = batch_from_pcs_list(
-            graph_tree.tftx_by_level[-1],
-            graph_tree.batch_by_level[-1],
-        )
-    if n_nn > 1:
-        res.edge_index = knn_graph(x=res.x, k=n_nn, batch=res.batch)
-    return res

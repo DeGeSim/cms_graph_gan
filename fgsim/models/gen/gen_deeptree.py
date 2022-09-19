@@ -15,7 +15,6 @@ from fgsim.models.common.deeptree import (
     MPLSeq,
     Tree,
     TreeGenType,
-    graph_tree_to_batch,
 )
 from fgsim.models.common.deeptree.ftxscale import FtxScaleLayer
 from fgsim.monitoring.logger import logger
@@ -25,6 +24,7 @@ class ModelClass(nn.Module):
     def __init__(
         self,
         n_global: int,
+        n_cond: int,
         conv_param: Dict,
         child_param: Dict,
         branching_param: Dict,
@@ -33,6 +33,7 @@ class ModelClass(nn.Module):
     ):
         super().__init__()
         self.n_global = n_global
+        self.n_cond = n_cond
         self.all_points = all_points
         self.batch_size = conf.loader.batch_size
         self.final_layer_scaler = final_layer_scaler
@@ -72,6 +73,7 @@ class ModelClass(nn.Module):
                 [
                     DynHLVsLayer(
                         n_features=self.features[-1],
+                        n_cond=self.n_cond,
                         n_global=n_global,
                         batch_size=self.batch_size,
                     )
@@ -85,6 +87,7 @@ class ModelClass(nn.Module):
                     tree=self.tree,
                     level=level,
                     n_global=n_global,
+                    n_cond=self.n_cond,
                     **branching_param,
                 )
                 for level in range(n_levels - 1)
@@ -97,6 +100,7 @@ class ModelClass(nn.Module):
                     in_features=self.features[level],
                     out_features=self.features[level + 1],
                     n_global=n_global,
+                    n_cond=self.n_cond,
                     **conv_param,
                 )
                 for level in range(n_levels - 1)
@@ -111,6 +115,8 @@ class ModelClass(nn.Module):
                     n_hidden_nodes=max(
                         child_param["n_hidden_nodes"], self.features[level]
                     ),
+                    n_global=n_global,
+                    n_cond=self.n_cond,
                     **conv_param,
                 )
                 for level in range(1, n_levels)
@@ -118,13 +124,10 @@ class ModelClass(nn.Module):
         )
         self.ftx_scaling = FtxScaleLayer(self.features[-1])
 
-    def forward(
-        self, random_vector: torch.Tensor, condition: torch.Tensor
-    ) -> Batch:
+    def forward(self, random_vector: torch.Tensor, cond: torch.Tensor) -> Batch:
         batch_size = self.batch_size
         features = self.features
-        branches = self.branches
-        n_levels = len(branches)
+        n_levels = len(self.features)
 
         # Init the graph object
         graph_tree = GraphTreeWrapper(
@@ -134,28 +137,33 @@ class ModelClass(nn.Module):
             )
         )
         # overwrite the first features of the reandom vector with the condition
-        graph_tree.tftx_by_level[0][..., : condition.shape[-1]] = condition.detach()
+        graph_tree.cond = (
+            cond.clone()
+            .detach()
+            .reshape(batch_size, self.n_cond)
+            .requires_grad_(True)
+        )
+        graph_tree.tftx_by_level[0][..., : cond.shape[-1]] = graph_tree.cond
 
         # Do the branching
-        for ilevel in range(n_levels):
+        for ilevel in range(n_levels - 1):
             # Assign the global features
-            # if self.n_global > 0:
-            #     graph_tree.global_features = self.dyn_hlvs_layers[ilevel](
-            #         x=graph_tree.tftx_by_level[ilevel][..., : features[-1]],
-            #         batch=graph_tree.tbatch[graph_tree.idxs_by_level[ilevel]],
-            #     )
-            graph_tree.global_features = (
-                condition.detach().reshape(-1, self.n_global).requires_grad_(True)
-            )
-            # else:
-            #     graph_tree.global_features = torch.empty(
-            #         batch_size, 0, dtype=torch.float, device=graph_tree.tftx.device
-            #     )
+            if self.n_global > 0:
+                graph_tree.global_features = self.dyn_hlvs_layers[ilevel](
+                    x=graph_tree.tftx_by_level[ilevel][..., : features[-1]],
+                    cond=graph_tree.cond,
+                    batch=graph_tree.tbatch[graph_tree.idxs_by_level[ilevel]],
+                )
+            else:
+                graph_tree.global_features = torch.empty(
+                    batch_size, 0, dtype=torch.float, device=graph_tree.tftx.device
+                )
 
             graph_tree = self.branching_layers[ilevel](graph_tree)
 
             graph_tree.tftx = self.ancestor_conv_layers[ilevel](
                 x=graph_tree.tftx,
+                cond=graph_tree.cond,
                 edge_index=self.tree.ancestor_ei(ilevel),
                 edge_attr=self.tree.ancestor_ea(ilevel),
                 batch=graph_tree.tbatch,
@@ -163,17 +171,17 @@ class ModelClass(nn.Module):
             )
             graph_tree.tftx = self.child_conv_layers[ilevel](
                 x=graph_tree.tftx,
+                cond=graph_tree.cond,
                 edge_index=self.tree.children_ei(ilevel),
                 batch=graph_tree.tbatch,
                 global_features=graph_tree.global_features,
             )
-        graph_tree.data.x = graph_tree.tftx_by_level[-1]
-        graph_tree.data.batch = graph_tree.batch_by_level[-1]
 
+        batch = graph_tree.to_batch()
         if self.final_layer_scaler:
-            graph_tree.data.x = self.ftx_scaling(graph_tree.data.x)
+            batch.x = self.ftx_scaling(batch.x)
 
-        return graph_tree_to_batch(graph_tree)
+        return batch
 
     def to(self, device):
         super().to(device)

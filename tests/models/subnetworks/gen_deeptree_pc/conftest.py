@@ -31,6 +31,7 @@ def object_gen(props: Dict[str, int]) -> DTColl:
     n_features = props["n_features"]
     n_branches = props["n_branches"]
     n_global = props["n_global"]
+    n_cond = props["n_cond"]
     batch_size = props["batch_size"]
     n_levels = props["n_levels"]
 
@@ -39,9 +40,16 @@ def object_gen(props: Dict[str, int]) -> DTColl:
 
     graph = GraphTreeWrapper(
         TreeGenType(
-            torch.randn(
+            tftx=torch.randn(
                 batch_size,
                 n_features,
+                dtype=torch.float,
+                device=device,
+                requires_grad=True,
+            ),
+            cond=torch.randn(
+                batch_size,
+                n_cond,
                 dtype=torch.float,
                 device=device,
                 requires_grad=True,
@@ -60,6 +68,7 @@ def object_gen(props: Dict[str, int]) -> DTColl:
             tree=tree,
             level=level,
             n_global=n_global,
+            n_cond=n_cond,
             residual=False,
         ).to(device)
         for level in range(n_levels - 1)
@@ -69,6 +78,7 @@ def object_gen(props: Dict[str, int]) -> DTColl:
         n_features=n_features,
         batch_size=batch_size,
         n_global=n_global,
+        n_cond=n_cond,
         device=device,
     )
 
@@ -81,6 +91,7 @@ def object_gen(props: Dict[str, int]) -> DTColl:
         in_features=n_features,
         out_features=n_features,
         n_global=n_global,
+        n_cond=n_cond,
         residual=False,
     )
 
@@ -126,20 +137,22 @@ def static_props():
         "n_features": 4,
         "n_branches": 2,
         "n_global": 6,
+        "n_cond": 1,
         "batch_size": 3,
         "n_levels": 4,
     }
     return props
 
 
-@pytest.fixture(params=product([2], [1, 2], [3], [2], [2, 4]))
+@pytest.fixture(params=product([1, 2], [2, 4]))
 def dyn_props(request):
-    n_features, n_branches, batch_size, n_global, n_levels = request.param
+    n_branches, n_levels = request.param
     props = {
-        "n_features": n_features,
+        "n_features": 2,
         "n_branches": n_branches,
-        "batch_size": batch_size,
-        "n_global": n_global,
+        "batch_size": 3,
+        "n_global": 2,
+        "n_cond": 1,
         "n_levels": n_levels,
     }
     return props

@@ -7,5 +7,7 @@ class ModelClass(torch.nn.Module):
         super(ModelClass, self).__init__()
         self.par = torch.nn.Parameter(torch.tensor([0.5]))
 
-    def forward(self, batch: Data):
-        return self.par * torch.ones(batch.batch[-1] + 1, device=batch.x.device)
+    def forward(self, gen_batch: Data, *args, **kwargs):
+        return self.par * torch.ones(
+            gen_batch.batch[-1] + 1, device=gen_batch.x.device
+        )

@@ -29,7 +29,6 @@ class MPLSeq(torch.nn.Module):
                 DeepConv(
                     in_features=features[n_ftx],
                     out_features=features[n_ftx + 1],
-                    n_global=0,
                     **ancestor_conv_args,
                 )
                 for n_ftx in range(len(features) - 1)
@@ -40,6 +39,7 @@ class MPLSeq(torch.nn.Module):
         self,
         *,
         x: torch.Tensor,
+        cond: torch.Tensor,
         edge_index: torch.Tensor,
         batch: torch.Tensor,
         edge_attr: Optional[torch.Tensor] = None,
@@ -48,8 +48,10 @@ class MPLSeq(torch.nn.Module):
         for conv in self.mpls:
             x = conv(
                 x=x,
+                cond=cond,
                 edge_index=edge_index,
                 edge_attr=edge_attr,
                 batch=batch,
+                global_features=global_features,
             )
         return x

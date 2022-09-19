@@ -18,6 +18,7 @@ class DeepConv(MessagePassing):
         self,
         in_features: int,
         out_features: int,
+        n_cond: int,
         n_global: int,
         add_self_loops: bool,
         nns: str,
@@ -30,6 +31,7 @@ class DeepConv(MessagePassing):
         self.in_features = in_features
         self.out_features = out_features
         self.n_global = n_global
+        self.n_cond = n_cond
         self.add_self_loops = add_self_loops
         assert nns in ["msg", "upd", "both"]
         self.msg_nn_bool = nns in ["msg", "both"]
@@ -60,7 +62,9 @@ class DeepConv(MessagePassing):
         self.update_nn: Union[torch.Module, torch.nn.Identity] = torch.nn.Identity()
         if self.upd_nn_bool:
             self.update_nn = FFN(
-                2 * in_features + (n_global if upd_nn_include_global else 0),
+                2 * in_features
+                + +n_cond
+                + (n_global if upd_nn_include_global else 0),
                 out_features,
             )
         else:
@@ -73,27 +77,36 @@ class DeepConv(MessagePassing):
         x: torch.Tensor,
         edge_index: torch.Tensor,
         batch: torch.Tensor,
+        cond: Optional[torch.Tensor] = None,
         edge_attr: Optional[torch.Tensor] = None,
         global_features: Optional[torch.Tensor] = None,
     ) -> torch.Tensor:
         num_nodes = x.shape[0]
 
         num_edges = edge_index.shape[1]
-        num_events = int(batch[-1]) + 1
+        batch_size = int(batch[-1]) + 1
         device = x.device
 
+        if self.n_cond > 0:
+            assert cond is not None
+            assert cond.shape == (batch_size, self.n_cond)
+        else:
+            cond = torch.empty(
+                batch_size, self.n_cond, dtype=torch.float, device=device
+            )
+
+        if self.n_global > 0:
+            assert global_features is not None
+            assert global_features.shape == (batch_size, self.n_global)
+
         if edge_attr is None:
-            edge_attr = torch.empty(num_edges, 1, dtype=torch.float).to(device)
-        if global_features is None:
-            global_features = torch.empty(
-                num_events, self.n_global, dtype=torch.float
-            ).to(device)
+            edge_attr = torch.empty(num_edges, 1, dtype=torch.float, device=device)
 
         assert x.dim() == global_features.dim() == edge_attr.dim() == 2
         assert batch.dim() == 1
         assert x.shape[1] == self.in_features
 
-        assert global_features.shape[0] == num_events
+        assert global_features.shape[0] == batch_size
         assert global_features.shape[1] == self.n_global
 
         assert edge_attr.shape[0] == num_edges
@@ -116,12 +129,14 @@ class DeepConv(MessagePassing):
 
         # Generate a global feature vector in shape of x
         glo_ftx_mtx = global_features[batch, :]
+        glo_cond = cond[batch, :]
         # If the egde_attrs are included, we transforming the message
         if self.msg_nn_include_edge_attr:
             new_x = self.propagate(
                 edge_index=edge_index,
                 edge_attr=edge_attr,
                 x=x,
+                cond=glo_cond,
                 glo_ftx_mtx=glo_ftx_mtx,
                 size=(num_nodes, num_nodes),
             )
@@ -139,6 +154,7 @@ class DeepConv(MessagePassing):
             new_x = self.propagate(
                 edge_index=edge_index,
                 edge_attr=edge_attr,  # required, pass as empty
+                cond=glo_cond,
                 x=xtransform,
                 glo_ftx_mtx=glo_ftx_mtx,  # required, pass as empty
                 size=(num_nodes, num_nodes),
@@ -181,13 +197,14 @@ class DeepConv(MessagePassing):
         self,
         aggr_out: torch.Tensor,
         x: torch.Tensor,
+        cond: torch.Tensor,
         glo_ftx_mtx: torch.Tensor,
     ) -> torch.Tensor:
         if self.upd_nn_bool:
             if self.upd_nn_include_global:
-                upd = self.update_nn(torch.hstack([x, glo_ftx_mtx, aggr_out]))
+                upd = self.update_nn(torch.hstack([x, cond, glo_ftx_mtx, aggr_out]))
             else:
-                upd = self.update_nn(torch.hstack([x, aggr_out]))
+                upd = self.update_nn(torch.hstack([x, cond, aggr_out]))
         else:
             upd = aggr_out
         return upd

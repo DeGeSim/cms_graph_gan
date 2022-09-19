@@ -6,16 +6,29 @@ from .ffn import FFN
 
 
 class DynHLVsLayer(nn.Module):
-    def __init__(self, n_features, n_global, batch_size: int, **kwargs):
+    def __init__(
+        self, n_features, n_global, batch_size: int, n_cond: int, **kwargs
+    ):
         super().__init__()
         self.n_features = n_features
         self.n_global = n_global
+        self.n_cond = n_cond
         self.batch_size = batch_size
-        self.pre_nn: nn.Module = FFN(self.n_features, self.n_features)
-        self.post_nn: nn.Module = FFN(self.n_features, self.n_global)
+        if self.n_cond == 0:
+            return
 
-    def forward(self, x: torch.Tensor, batch: torch.Tensor) -> torch.Tensor:
+        self.pre_nn: nn.Module = FFN(self.n_features, self.n_features)
+        self.post_nn: nn.Module = FFN(self.n_features + n_cond, self.n_global)
+
+    def forward(
+        self, x: torch.Tensor, cond: torch.Tensor, batch: torch.Tensor
+    ) -> torch.Tensor:
+        if self.n_cond == 0:
+            return torch.empty(
+                self.batch_size, self.n_global, dtype=torch.float
+            ).to(x.device)
+
         ftx_mtx = self.pre_nn(x)
         gsum = global_add_pool(ftx_mtx, batch)
-        global_ftx = self.post_nn(gsum)
-        return global_ftx.reshape(-1, self.n_global)
+        global_ftx = self.post_nn(torch.hstack((gsum, cond)))
+        return global_ftx.reshape(self.batch_size, self.n_global)

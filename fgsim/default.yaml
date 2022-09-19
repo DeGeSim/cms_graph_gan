@@ -60,6 +60,7 @@ model_param_options:
         support: 10
     gen_deeptree:
         n_global: 1
+        n_cond: ${len:${loader.y_features}}
         final_layer_scaler: False
         all_points: False
         conv_param:
@@ -293,6 +294,7 @@ loader_options:
             energy: "genPh_E"
             hit_energy: "simHit_E"
         cell_prop_keys: ["E", "x", "y", "layer"]
+        y_features: ["E"]
     pcgraph: ${loader_options[hgcal]}
     moons:
         dataset_path: "~/fgsim/data/moons"

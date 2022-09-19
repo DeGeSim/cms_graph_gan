@@ -32,6 +32,7 @@ class BranchingLayer(nn.Module):
         tree: Tree,
         n_global: int,
         level: int,
+        n_cond: int,
         residual: bool = True,
     ):
         super().__init__()
@@ -41,11 +42,12 @@ class BranchingLayer(nn.Module):
         self.batch_size = self.tree.batch_size
         self.n_features = self.tree.features[level]
         self.n_global = n_global
+        self.n_cond = n_cond
         self.level = level
         self.residual = residual
 
         self.proj_nn = FFN(
-            self.n_features + n_global, self.n_features * self.n_branches
+            self.n_features + n_global + n_cond, self.n_features * self.n_branches
         )
 
     # Split each of the leafs in the the graph.tree into n_branches and connect them
@@ -70,11 +72,14 @@ class BranchingLayer(nn.Module):
                 batch_size, self.n_global, dtype=torch.float, device=device
             )
         parent_global = graph.global_features[parents_idxs % batch_size, :]
+        cond_global = graph.cond[parents_idxs % batch_size, :]
         # With the idxs of the parent index the event vector
 
         # The proj_nn projects the (n_parents * n_event) x n_features to a
         # (n_parents * n_event) x (n_features*n_branches) matrix
-        proj_ftx = self.proj_nn(torch.hstack([parents_ftxs, parent_global]))
+        proj_ftx = self.proj_nn(
+            torch.hstack([parents_ftxs, cond_global, parent_global])
+        )
 
         # If residual, add the features of the parent to the
         if self.residual:
@@ -113,6 +118,7 @@ class BranchingLayer(nn.Module):
         return GraphTreeWrapper(
             TreeGenType(
                 tftx=torch.vstack([graph.tftx, children_ftxs]),
+                cond=graph.cond,
                 idxs_by_level=graph.idxs_by_level + [level_idx],
                 children=graph.children + [children],
                 cur_level=graph.cur_level + 1,
