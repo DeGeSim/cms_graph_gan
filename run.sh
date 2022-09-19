@@ -31,7 +31,7 @@ function elementf {
     if [[ $REMOTE == 'true' ]]; then
         sbatch \
         --partition=allgpu \
-        --time=24:00:00 \
+        --time=48:00:00 \
         --nodes=1 \
         --constraint="P100|V100|A100" \
         --output=wd/slurm-$CMD-${HASH}-%j.out \
