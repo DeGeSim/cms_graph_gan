@@ -107,7 +107,7 @@ def test_full_modelparts_grad():
       branching_layer (BranchingLayer): The branching layer to test.
       global_features (torch.Tensor): torch.Tensor
     """
-    from fgsim.config import conf, conf_without_paths, device
+    from fgsim.config import defaultconf, device
     from fgsim.models.gen.gen_deeptree import (
         GraphTreeWrapper,
         ModelClass,
@@ -116,10 +116,8 @@ def test_full_modelparts_grad():
 
     # normalization needs to be set to false, otherwise Batchnorm
     # will propagate some gradient betweeen the events
-    conf.ffn.normalize = False
-    model = ModelClass(**conf_without_paths.model_param_options.gen_deeptree).to(
-        device
-    )
+    defaultconf.ffn.normalize = False
+    model = ModelClass(**defaultconf.model_param_options.gen_deeptree).to(device)
 
     z = torch.randn(*model.z_shape, requires_grad=True, device=device)
 
@@ -195,14 +193,12 @@ def test_full_model_grad():
       branching_layer (BranchingLayer): The branching layer to test.
       global_features (torch.Tensor): torch.Tensor
     """
-    from fgsim.config import conf, conf_without_paths, device
+    from fgsim.config import defaultconf, device
     from fgsim.models.gen.gen_deeptree import ModelClass
 
-    conf.ffn.normalize = False
+    defaultconf.ffn.normalize = False
 
-    model = ModelClass(**conf_without_paths.model_param_options.gen_deeptree).to(
-        device
-    )
+    model = ModelClass(**defaultconf.model_param_options.gen_deeptree).to(device)
 
     z = torch.randn(*model.z_shape, requires_grad=True, device=device)
     batch = model(z)

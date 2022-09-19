@@ -39,8 +39,11 @@ def ancestor_conv(default_pars):
         in_features=default_pars["n_features"],
         out_features=default_pars["n_features"],
         n_global=default_pars["n_global"],
+        nns="both",
         add_self_loops=False,
         msg_nn_include_edge_attr=True,
+        msg_nn_include_global=True,
+        upd_nn_include_global=True,
         residual=False,
     )
     ancestor_conv.msg_nn = do_nothing
@@ -218,34 +221,42 @@ def test_ancestorconv_all_modes():
                 for msg_nn_include_edge_attr in [True, False]:
                     for msg_nn_include_global in [True, False]:
                         for upd_nn_include_global in [True, False]:
-                            if not upd_nn_bool and upd_nn_include_global:
-                                continue
-                            if not msg_nn_bool:
-                                if (
-                                    msg_nn_include_edge_attr
-                                    or msg_nn_include_global
-                                ):
+                            for residual in [True, False]:
+                                if not upd_nn_bool and upd_nn_include_global:
                                     continue
-
-                            ancestor_conv = DeepConv(
-                                in_features=n_features,
-                                out_features=n_features,
-                                n_global=n_global,
-                                add_self_loops=add_self_loops,
-                                msg_nn_bool=msg_nn_bool,
-                                upd_nn_bool=upd_nn_bool,
-                                msg_nn_include_edge_attr=msg_nn_include_edge_attr,
-                                msg_nn_include_global=msg_nn_include_global,
-                                upd_nn_include_global=upd_nn_include_global,
-                            )
-                            kwargs = {
-                                "x": graph.tftx,
-                                "edge_index": graph.edge_index,
-                                "batch": graph.tbatch,
-                            }
-                            kwargs["edge_attr"] = graph.edge_attr
-                            kwargs["global_features"] = global_features
-                            ancestor_conv(**kwargs)
+                                if not msg_nn_bool:
+                                    if (
+                                        msg_nn_include_edge_attr
+                                        or msg_nn_include_global
+                                    ):
+                                        continue
+                                if msg_nn_bool and upd_nn_bool:
+                                    nns = "both"
+                                elif msg_nn_bool:
+                                    nns = "msg"
+                                elif upd_nn_bool:
+                                    nns = "upd"
+                                else:
+                                    continue
+                                ancestor_conv = DeepConv(
+                                    in_features=n_features,
+                                    out_features=n_features,
+                                    n_global=n_global,
+                                    add_self_loops=add_self_loops,
+                                    nns=nns,
+                                    msg_nn_include_edge_attr=msg_nn_include_edge_attr,
+                                    msg_nn_include_global=msg_nn_include_global,
+                                    upd_nn_include_global=upd_nn_include_global,
+                                    residual=residual,
+                                )
+                                kwargs = {
+                                    "x": graph.tftx,
+                                    "edge_index": graph.edge_index,
+                                    "batch": graph.tbatch,
+                                }
+                                kwargs["edge_attr"] = graph.edge_attr
+                                kwargs["global_features"] = global_features
+                                ancestor_conv(**kwargs)
 
 
 # def test_ancester_conv_by_training():

@@ -54,7 +54,6 @@ def object_gen(props: Dict[str, int]) -> DTColl:
         branches=branches,
         features=features,
         batch_size=batch_size,
-        device=device,
     )
     branching_layers = [
         BranchingLayer(
@@ -74,6 +73,11 @@ def object_gen(props: Dict[str, int]) -> DTColl:
     )
 
     ancestor_conv_layer = DeepConv(
+        add_self_loops=True,
+        nns="both",
+        msg_nn_include_edge_attr=False,
+        msg_nn_include_global=True,
+        upd_nn_include_global=True,
         in_features=n_features,
         out_features=n_features,
         n_global=n_global,
@@ -85,7 +89,12 @@ def object_gen(props: Dict[str, int]) -> DTColl:
     # we need to disable batchnorm
     def overwrite_ffn_without_batchnorm(ow_nn):
         assert isinstance(ow_nn, FFN)
-        ow_nn = FFN(ow_nn.input_dim, ow_nn.output_dim, normalize=False)
+        ow_nn = FFN(
+            ow_nn.input_dim,
+            ow_nn.output_dim,
+            batchnorm=False,
+            dropout=False,
+        )
         return ow_nn
 
     for brl in branching_layers:
