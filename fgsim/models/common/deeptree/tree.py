@@ -18,7 +18,7 @@ class Tree:
         self.features = features
 
         assert len(self.features) - 1 == len(self.branches)
-        n_levels = len(self.features)
+        self.n_levels = len(self.features)
         # initialize the root
         # shape : 2 x num_edges
         self.ancestor_edge_index_p_level: List[torch.Tensor] = [
@@ -41,12 +41,12 @@ class Tree:
             torch.arange(batch_size, dtype=torch.long).repeat(
                 prod([branches[:ilevel]])
             )
-            for ilevel in range(1, n_levels)
+            for ilevel in range(1, self.n_levels)
         ]
         next_x_index = self.batch_size
 
         # Start with 1 because the root is initialized
-        for level in range(1, n_levels):
+        for level in range(1, self.n_levels):
             # Add a new tree layer
             self.tree_lists.append([])
             new_edges: List[torch.Tensor] = []
@@ -73,7 +73,7 @@ class Tree:
 
                 # ### Add the connections to the ancestors ###
                 for degree, ancestor in enumerate(
-                    [parent] + parent.get_ancestors(), start=1
+                    [parent], start=1  # + parent.get_ancestors()
                 ):
                     source_idxs = ancestor.idxs.repeat(branches[level - 1])
                     ancestor_edges = torch.vstack(
@@ -124,12 +124,18 @@ class Tree:
         )
 
     def ancestor_ei(self, ilevel):
+        if ilevel == 0 or ilevel > self.n_levels:
+            raise IndexError
         return torch.hstack(self.ancestor_edge_index_p_level[: ilevel + 1])
 
     def ancestor_ea(self, ilevel):
+        if ilevel == 0 or ilevel > self.n_levels:
+            raise IndexError
         return torch.vstack(self.ancestor_edge_attrs_p_level[: ilevel + 1])
 
     def children_ei(self, ilevel):
+        if ilevel == 0 or ilevel > self.n_levels:
+            raise IndexError
         return torch.hstack(self.children_edge_index_p_level[: ilevel + 1])
 
     def __repr__(self) -> str:
