@@ -11,7 +11,7 @@ models:
         params: ${model_param_options[${models.gen.name}]}
         losses: "${optionlist:${loss_options},${models.gen.losses_list}}"
         losses_list: ${listadd:${gan_mode_options[${training.gan_mode}][gen]},${models.gen.additional_losses_list}}
-        additional_losses_list: ["cd", "dcd"]
+        additional_losses_list: ["dcd"]
         optim:
             name: Adam
             params:
@@ -204,17 +204,17 @@ loss_options:
         factor: 1.0
         kernel: "rbf"
         bandwidth: [10, 15, 20, 50]
-        batch_wise: True
+        batch_wise: False
     dcd:
         factor: 1.0
         alpha: 1
         lpnorm: 1
-        batch_wise: True
+        batch_wise: False
         pow: 1
     cd:
         factor: 1.0
         lpnorm: 1
-        batch_wise: True
+        batch_wise: False
         pow: 1
 
 optim_options:
@@ -268,7 +268,7 @@ path:
     comet_exp_key: "${path.run_path}/comet_experiment_key"
 
 loader: "${merge:${loader_options[default]},${loader_options[${loader_name}]}}"
-loader_name: hgcal
+loader_name: pcgraph
 
 loader_options:
     default:
