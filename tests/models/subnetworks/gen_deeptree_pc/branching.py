@@ -82,7 +82,7 @@ def test_tree_ancestor_connectivity_static(static_objects: DTColl):
             # check the connections
             expected_connections = {(0, 3), (1, 4), (0, 6), (1, 7), (2, 5), (2, 8)}
             assert connections.issuperset(expected_connections)
-        if ilevel == 2:
+        elif ilevel == 2:
             expected_connections = {
                 (3, 9),
                 (3, 12),
@@ -98,6 +98,34 @@ def test_tree_ancestor_connectivity_static(static_objects: DTColl):
                 (8, 20),
             }
             assert connections.issuperset(expected_connections)
+        elif ilevel == 3:
+            expected_connections = {
+                (9, 21),
+                (9, 24),
+                (10, 22),
+                (10, 25),
+                (11, 23),
+                (11, 26),
+                (15, 33),
+                (15, 36),
+                (16, 34),
+                (16, 37),
+                (17, 35),
+                (17, 38),
+            }
+            assert connections.issuperset(expected_connections)
+        elif ilevel == 4:
+            expected_connections = {
+                (27, 57),
+                (27, 60),
+                (35, 71),
+                (35, 74),
+                (44, 89),
+                (44, 92),
+            }
+            assert connections.issuperset(expected_connections)
+        else:
+            raise Exception
         # No double connections
         assert len(connections) == len(conlist)
 
@@ -201,6 +229,8 @@ def test_BranchingLayer_shapes(dyn_objects: DTColl):
         assert graph.tftx.shape[0] == batch_size * sum(
             [n_branches**i for i in range(ilevel + 1)]
         )
+        if ilevel == 0:
+            continue
         # edge_index shape testing
         assert tree.ancestor_ei(ilevel).shape[0] == 2
         # Number of connections
