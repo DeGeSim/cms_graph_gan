@@ -68,18 +68,17 @@ class ModelClass(nn.Module):
             features=OmegaConf.to_container(conf.tree.features),
         )
 
-        if n_global > 0:
-            self.dyn_hlvs_layers = nn.ModuleList(
-                [
-                    DynHLVsLayer(
-                        n_features=self.features[-1],
-                        n_cond=self.n_cond,
-                        n_global=n_global,
-                        batch_size=self.batch_size,
-                    )
-                    for _ in self.features
-                ]
-            )
+        self.dyn_hlvs_layers = nn.ModuleList(
+            [
+                DynHLVsLayer(
+                    n_features=self.features[-1],
+                    n_cond=self.n_cond,
+                    n_global=n_global,
+                    batch_size=self.batch_size,
+                )
+                for _ in self.features
+            ]
+        )
 
         self.branching_layers = nn.ModuleList(
             [

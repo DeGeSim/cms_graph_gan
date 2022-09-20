@@ -25,8 +25,8 @@ class DynHLVsLayer(nn.Module):
     ) -> torch.Tensor:
         if self.n_cond == 0:
             return torch.empty(
-                self.batch_size, self.n_global, dtype=torch.float
-            ).to(x.device)
+                self.batch_size, self.n_global, dtype=torch.float, device=x.device
+            )
 
         ftx_mtx = self.pre_nn(x)
         gsum = global_add_pool(ftx_mtx, batch)
