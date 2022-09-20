@@ -45,7 +45,7 @@ class Trainer:
             self.loader.qfseq,
             initial=istep_start,
             total=self.loader.n_grad_steps_per_epoch,
-            mininterval=5.0,
+            miniters=20,
             desc=f"Epoch {self.holder.state.epoch}",
         ):
             batch = self.pre_training_step(batch)
