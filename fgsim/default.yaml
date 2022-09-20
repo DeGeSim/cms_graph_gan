@@ -84,6 +84,7 @@ model_param_options:
         n_points: ${loader[n_points]}
         n_features: ${loader[n_features]}
         batch_size: ${loader[batch_size]}
+    gen_fake: {}
     gen_moons: {}
     disc_clic:
         n_features: ${loader[n_features]}

@@ -61,16 +61,16 @@ class OptimCol:
 
 
 class FakeOptimizer(torch.optim.Optimizer):
-    def __init__(self) -> None:
+    def __init__(self, *args, **kwargs) -> None:
         pass
 
-    def zero_grad(self) -> None:
+    def zero_grad(self, *args, **kwargs) -> None:
         pass
 
-    def step(self) -> None:
+    def step(self, *args, **kwargs) -> None:
         pass
 
-    def state_dict(self):
+    def state_dict(self, *args, **kwargs):
         return {}
 
     def load_state_dict(self, *args, **kwargs) -> None:
