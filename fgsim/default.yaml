@@ -86,6 +86,12 @@ model_param_options:
         batch_size: ${loader[batch_size]}
     gen_fake: {}
     gen_moons: {}
+    disc_fake: {}
+    disc_hlvs: {}
+    disc_gat:
+      n_features: ${loader[n_features]}
+      n_points: ${loader[n_points]}
+      n_cond: ${len:${loader.y_features}}
     disc_clic:
         n_features: ${loader[n_features]}
         n_prop: 20
@@ -95,7 +101,6 @@ model_param_options:
     disc_graphgym:
         n_features: ${loader[n_features]}
         n_nn: 8
-    disc_hlvs: {}
     disc_treepc:
         features: ${tree[features]} # [4, 64, 128, 256]
     disc_pointnet:
@@ -106,7 +111,6 @@ model_param_options:
     disc_prog:
         leveldisc: disc_graphgym
         levelparams: ${model_param_options[disc_graphgym]}
-    disc_fake: {}
     disc_pointnetmix:
         pointnetd_fc: [512]
         node_feat_size: 3
@@ -296,6 +300,16 @@ loader_options:
             hit_energy: "simHit_E"
         cell_prop_keys: ["E", "x", "y", "layer"]
         y_features: ["E"]
+    hgcal_soham:
+        dataset_path: "~/fgsim/data/soham_pi0"
+        n_points: 128
+        batch_size: 50
+        braches:
+            id: "simHit_detid"
+            energy: "genPh_E"
+            hit_energy: "simHit_E"
+        y_features: ["Egen", "eta", "phi"]
+        x_features: ["E_hit", "x", "y", "layer"]
     pcgraph: ${loader_options[hgcal]}
     moons:
         dataset_path: "~/fgsim/data/moons"
@@ -307,7 +321,7 @@ loader_options:
         dataset_path: "~/fgsim/data/jetnet"
         n_points: 30
         cell_prop_keys: ["eta", "phi", "pt"]
-        dataset_glob: "**/*.csv"
+        dataset_glob: "**/t.hdf5"
         chunk_size: 5000
         batch_size: 200
         validation_set_size: 10000
