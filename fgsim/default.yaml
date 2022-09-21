@@ -59,7 +59,7 @@ model_param_options:
         degrees: [2, 2, 2, 2, 2, 64]
         support: 10
     gen_deeptree:
-        n_global: 1
+        n_global: 3
         n_cond: ${len:${loader.y_features}}
         final_layer_scaler: False
         all_points: False
@@ -245,7 +245,7 @@ training:
     log_interval: 500
     max_epochs: 300
     val:
-        interval: "${div:50000,${loader.batch_size}}"
+        interval: "${div:100000,${loader.batch_size}}"
         use_for_stopping: ["w1E", "w1x", "w1y", "w1layer"]
         metrics:
             ft_w1: {}

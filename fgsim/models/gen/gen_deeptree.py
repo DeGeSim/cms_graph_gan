@@ -7,16 +7,16 @@ from omegaconf import OmegaConf
 from torch_geometric.data import Batch
 
 from fgsim.config import conf
-from fgsim.models.common import DynHLVsLayer
+from fgsim.models.common import DynHLVsLayer, GINCConv
 from fgsim.models.common.deeptree import (
     BranchingLayer,
-    DeepConv,
     GraphTreeWrapper,
     MPLSeq,
     Tree,
     TreeGenType,
 )
 from fgsim.models.common.deeptree.ftxscale import FtxScaleLayer
+from fgsim.models.common.ffn import FFN
 from fgsim.monitoring.logger import logger
 
 
@@ -93,14 +93,25 @@ class ModelClass(nn.Module):
             ]
         )
 
+        # self.ancestor_conv_layers = nn.ModuleList(
+        #     [
+        #         DeepConv(
+        #             in_features=self.features[level],
+        #             out_features=self.features[level + 1],
+        #             n_global=n_global,
+        #             n_cond=self.n_cond,
+        #             **conv_param,
+        #         )
+        #         for level in range(n_levels - 1)
+        #     ]
+        # )
         self.ancestor_conv_layers = nn.ModuleList(
             [
-                DeepConv(
-                    in_features=self.features[level],
-                    out_features=self.features[level + 1],
-                    n_global=n_global,
-                    n_cond=self.n_cond,
-                    **conv_param,
+                GINCConv(
+                    FFN(
+                        self.features[level] + self.n_cond + self.n_global,
+                        self.features[level + 1],
+                    )
                 )
                 for level in range(n_levels - 1)
             ]
@@ -147,34 +158,39 @@ class ModelClass(nn.Module):
         # Do the branching
         for ilevel in range(n_levels - 1):
             # Assign the global features
-            if self.n_global > 0:
-                graph_tree.global_features = self.dyn_hlvs_layers[ilevel](
-                    x=graph_tree.tftx_by_level[ilevel][..., : features[-1]],
-                    cond=graph_tree.cond,
-                    batch=graph_tree.tbatch[graph_tree.idxs_by_level[ilevel]],
-                )
-            else:
-                graph_tree.global_features = torch.empty(
-                    batch_size, 0, dtype=torch.float, device=graph_tree.tftx.device
-                )
+            graph_tree.global_features = self.dyn_hlvs_layers[ilevel](
+                x=graph_tree.tftx_by_level[ilevel][..., : features[-1]],
+                cond=graph_tree.cond,
+                batch=graph_tree.tbatch[graph_tree.idxs_by_level[ilevel]],
+            )
 
             graph_tree = self.branching_layers[ilevel](graph_tree)
 
             graph_tree.tftx = self.ancestor_conv_layers[ilevel](
-                x=graph_tree.tftx,
-                cond=graph_tree.cond,
-                edge_index=self.tree.ancestor_ei(ilevel),
-                edge_attr=self.tree.ancestor_ea(ilevel),
-                batch=graph_tree.tbatch,
-                global_features=graph_tree.global_features,
+                graph_tree.tftx,
+                torch.hstack(
+                    (
+                        graph_tree.cond[graph_tree.tbatch],
+                        graph_tree.global_features[graph_tree.tbatch],
+                    )
+                ),
+                self.tree.ancestor_ei(ilevel + 1),
             )
-            graph_tree.tftx = self.child_conv_layers[ilevel](
-                x=graph_tree.tftx,
-                cond=graph_tree.cond,
-                edge_index=self.tree.children_ei(ilevel),
-                batch=graph_tree.tbatch,
-                global_features=graph_tree.global_features,
-            )
+            # graph_tree.tftx = self.ancestor_conv_layers[ilevel](
+            #     x=graph_tree.tftx,
+            #     cond=graph_tree.cond,
+            #     edge_index=self.tree.ancestor_ei(ilevel + 1),
+            #     edge_attr=self.tree.ancestor_ea(ilevel + 1),
+            #     batch=graph_tree.tbatch,
+            #     global_features=graph_tree.global_features,
+            # )
+            # graph_tree.tftx = self.child_conv_layers[ilevel](
+            #     x=graph_tree.tftx,
+            #     cond=graph_tree.cond,
+            #     edge_index=self.tree.children_ei(ilevel+1),
+            #     batch=graph_tree.tbatch,
+            #     global_features=graph_tree.global_features,
+            # )
 
         batch = graph_tree.to_batch()
         if self.final_layer_scaler:

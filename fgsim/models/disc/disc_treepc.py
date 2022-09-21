@@ -29,7 +29,7 @@ class ModelClass(nn.Module):
             nn.Linear(features[0], 1),
         )
 
-    def forward(self, batch):
+    def forward(self, batch, cond):
         n_features = batch.x.shape[1]
         batch_size = batch.batch[-1] + 1
 
