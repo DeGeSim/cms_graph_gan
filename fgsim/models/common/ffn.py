@@ -14,6 +14,7 @@ class FFN(nn.Module):
         dropout: Optional[bool] = None,
         n_layers: Optional[int] = None,
         n_nodes_per_layer: Optional[int] = None,
+        final_linear: Optional[bool] = False,
     ) -> None:
         if batchnorm is None:
             batchnorm = conf.ffn.batchnorm
@@ -40,7 +41,7 @@ class FFN(nn.Module):
         )
         for ilayer in range(n_layers):
             self.seq.append(nn.Linear(features[ilayer], features[ilayer + 1]))
-            if ilayer != n_layers:
+            if ilayer != n_layers - 1:
                 self.seq.append(activation)
                 if dropout:
                     self.seq.append(nn.Dropout(0.2))
@@ -52,6 +53,17 @@ class FFN(nn.Module):
                             track_running_stats=False,
                         )
                     )
+            else:
+                if not final_linear:
+                    self.seq.append(activation)
+                    if batchnorm:
+                        self.seq.append(
+                            nn.BatchNorm1d(
+                                features[ilayer + 1],
+                                affine=False,
+                                track_running_stats=False,
+                            )
+                        )
 
         self.input_dim = input_dim
         self.output_dim = output_dim
