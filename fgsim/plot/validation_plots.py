@@ -49,8 +49,8 @@ def validation_plots(
     from itertools import combinations
 
     for v1, v2 in combinations(list(range(conf.loader.n_features)), 2):
-        v1name = conf.loader.cell_prop_keys[v1]
-        v2name = conf.loader.cell_prop_keys[v2]
+        v1name = conf.loader.x_features[v1]
+        v2name = conf.loader.x_features[v2]
         cmbname = f"{v1name}_vs_{v2name}"
 
         if best_last_val != "val":

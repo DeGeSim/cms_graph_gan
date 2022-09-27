@@ -52,7 +52,7 @@ def transform_hitlist(
     geo_lup_filtered = geo_lup.reindex(index=np.array(detids, dtype=np.uint))
 
     # check for NaNs of the detid is not present in the geolut
-    check_columns = set(geo_lup_filtered.columns) & set(conf.loader.cell_prop_keys)
+    check_columns = set(geo_lup_filtered.columns) & set(conf.loader.x_features)
     props_df = geo_lup_filtered[list(check_columns)]
     # problemid= df[df.isnull().any(axis =1)].index[0] # 2160231891
     invalids = props_df[props_df.isnull().any(axis=1)].index
@@ -65,7 +65,7 @@ def transform_hitlist(
         [id_to_energy_dict[e] for e in detids], dtype=torch.float32
     )
     xyzpos = torch.tensor(
-        geo_lup_filtered[conf.loader.cell_prop_keys[1:]].values, dtype=torch.float32
+        geo_lup_filtered[conf.loader.x_features[1:]].values, dtype=torch.float32
     )
 
     pc = torch.hstack((hit_energies.view(-1, 1), xyzpos)).float()

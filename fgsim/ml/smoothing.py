@@ -7,7 +7,7 @@ from fgsim.io.sel_loader import scaler
 from fgsim.plot.xyscatter import binbourders_wo_outliers
 
 # This code scales the smearning standard deviations
-var_names = conf.loader.cell_prop_keys
+var_names = conf.loader.x_features
 n_vars = len(var_names)
 scaled_stds = np.array([0.0] * n_vars)
 for ivar in range(n_vars):

@@ -295,7 +295,7 @@ loader_options:
         n_workers_transform: 30
         n_workers_stack: 1
         n_workers_postprocess: 1
-        n_features: ${len:${loader.cell_prop_keys}}
+        n_features: ${len:${loader.x_features}}
     hgcal:
         dataset_path: "~/fgsim/data/hgcal_william"
         n_points: 128
@@ -304,7 +304,7 @@ loader_options:
             id: "simHit_detid"
             energy: "genPh_E"
             hit_energy: "simHit_E"
-        cell_prop_keys: ["E", "x", "y", "layer"]
+        x_features: ["E", "x", "y", "layer"]
         y_features: ["E"]
     hgcal_soham:
         dataset_path: "~/fgsim/data/soham_pi0"
@@ -319,14 +319,15 @@ loader_options:
     pcgraph: ${loader_options[hgcal]}
     moons:
         dataset_path: "~/fgsim/data/moons"
-        cell_prop_keys: ["x", "y"]
+        x_features: ["x", "y"]
         n_points: 512
         cluster_tree: false
         cluster_method: "random"
     jetnet:
         dataset_path: "~/fgsim/data/jetnet"
         n_points: 30
-        cell_prop_keys: ["eta", "phi", "pt"]
+        x_features: ["etarel", "phirel", "ptrel"]
+        y_features: ["pt", "eta", "mass", "num_particles"]
         dataset_glob: "**/t.hdf5"
         chunk_size: 5000
         batch_size: 200

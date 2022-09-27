@@ -75,13 +75,13 @@ def jet_features(
     sim_features = {
         varname: arr
         for varname, arr in zip(
-            conf.loader.cell_prop_keys, sim.x.reshape(-1, 3).T.cpu().numpy()
+            conf.loader.x_features, sim.x.reshape(-1, 3).T.cpu().numpy()
         )
     }
     gen_features = {
         varname: arr
         for varname, arr in zip(
-            conf.loader.cell_prop_keys, gen.x.reshape(-1, 3).T.cpu().numpy()
+            conf.loader.x_features, gen.x.reshape(-1, 3).T.cpu().numpy()
         )
     }
 

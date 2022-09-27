@@ -129,15 +129,15 @@ def compute_hlvs(batch: Union[torch.Tensor, Data]) -> Dict[str, torch.Tensor]:
         X = batch.reshape(-1, batch.shape[-1])
     hlvs: Dict[str, torch.Tensor] = {}
 
-    if "E" in conf.loader.cell_prop_keys:
-        E_idx = conf.loader.cell_prop_keys.index("E")
+    if "E" in conf.loader.x_features:
+        E_idx = conf.loader.x_features.index("E")
         e_weight = X[:, E_idx] / torch.sum(X[:, E_idx])
 
-    for irow, key in enumerate(conf.loader.cell_prop_keys):
+    for irow, key in enumerate(conf.loader.x_features):
         vec = X[:, irow]
         hlvs[key + "_mean"] = torch.mean(vec)
         hlvs[key + "_std"] = torch.std(vec)
-        if "E" in conf.loader.cell_prop_keys:
+        if "E" in conf.loader.x_features:
             if key == "E":
                 continue
             vec_ew = vec * e_weight
