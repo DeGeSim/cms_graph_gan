@@ -30,6 +30,7 @@ class ModelClass(nn.Module):
         branching_param: Dict,
         all_points: bool,
         final_layer_scaler: bool,
+        connect_all_ancestors: bool,
     ):
         super().__init__()
         self.n_global = n_global
@@ -64,6 +65,7 @@ class ModelClass(nn.Module):
 
         self.tree = Tree(
             batch_size=conf.loader.batch_size,
+            connect_all_ancestors=connect_all_ancestors,
             branches=OmegaConf.to_container(conf.tree.branches),
             features=OmegaConf.to_container(conf.tree.features),
         )

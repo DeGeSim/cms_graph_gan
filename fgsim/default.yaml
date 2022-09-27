@@ -63,6 +63,7 @@ model_param_options:
         n_cond: ${len:${loader.y_features}}
         final_layer_scaler: False
         all_points: False
+        connect_all_ancestors: True
         conv_param:
             add_self_loops: True
             nns: both

@@ -12,6 +12,7 @@ class Tree:
         batch_size: int,
         branches: List[int],
         features: List[int],
+        connect_all_ancestors: bool = False,
     ):
         self.batch_size = batch_size
         self.branches = branches
@@ -70,11 +71,13 @@ class Tree:
                 new_children_edges.append(
                     self._children_dense_ei_from_parent(parent)
                 )
-
+                ancestors_by_lvl = (
+                    [parent] + parent.get_ancestors()
+                    if connect_all_ancestors
+                    else [parent]
+                )
                 # ### Add the connections to the ancestors ###
-                for degree, ancestor in enumerate(
-                    [parent], start=1  # + parent.get_ancestors()
-                ):
+                for degree, ancestor in enumerate(ancestors_by_lvl, start=1):
                     source_idxs = ancestor.idxs.repeat(branches[level - 1])
                     ancestor_edges = torch.vstack(
                         [source_idxs, children_idxs],
