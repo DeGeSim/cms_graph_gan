@@ -3,8 +3,8 @@ from typing import Union
 import jetnet
 import numpy as np
 import torch
+from torch_geometric.data import Batch
 
-from fgsim.io.sel_loader import Batch
 from fgsim.utils.jetnetutils import to_stacked_mask
 
 

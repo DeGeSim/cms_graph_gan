@@ -53,29 +53,35 @@ ffn:
     batchnorm: True
     dropout: False
 
+layer_options:
+    deepconv:
+        add_self_loops: True
+        nns: both
+        msg_nn_include_edge_attr: False
+        msg_nn_include_global: True
+        upd_nn_include_global: True
+        residual: True
+    ginconv: {}
+    gincconv: {}
+
 model_param_options:
-    gen_treepc:
-        features: [96, 64, 64, 64, 64, 64, 4]
-        degrees: [2, 2, 2, 2, 2, 64]
-        support: 10
     gen_deeptree:
         n_global: 3
         n_cond: ${len:${loader.y_features}}
-        final_layer_scaler: False
         all_points: False
         connect_all_ancestors: True
-        conv_param:
-            add_self_loops: True
-            nns: both
-            msg_nn_include_edge_attr: False
-            msg_nn_include_global: True
-            upd_nn_include_global: True
-            residual: True
+        msgpass_layer: ginconv
+        conv_param: ${layer_options[${model_param_options.gen_deeptree.msgpass_layer}]}
         branching_param:
             residual: True
         child_param:
             n_mpl: 0
-            n_hidden_nodes: 128
+            n_hidden_nodes: 12
+        final_layer_scaler: False
+    gen_treepc:
+        features: [96, 64, 64, 64, 64, 64, 4]
+        degrees: [2, 2, 2, 2, 2, 64]
+        support: 10
     gen_edgeconv:
         n_layers: 5
         n_features: 2

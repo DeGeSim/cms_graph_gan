@@ -9,7 +9,8 @@ from torch_sparse import SparseTensor, matmul
 
 
 class GINCConv(MessagePassing):
-    r"""The graph isomorphism operator from the `"How Powerful are
+    r"""Modified to accept a condition.
+    The graph isomorphism operator from the `"How Powerful are
     Graph Neural Networks?" <https://arxiv.org/abs/1810.00826>`_ paper
 
     .. math::

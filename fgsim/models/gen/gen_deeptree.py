@@ -8,10 +8,9 @@ from torch_geometric.data import Batch
 
 from fgsim.config import conf
 from fgsim.models.common import DynHLVsLayer, GINCConv
-from fgsim.models.common.deeptree import (
+from fgsim.models.common.deeptree import (  # MPLSeq,
     BranchingLayer,
     GraphTreeWrapper,
-    MPLSeq,
     Tree,
     TreeGenType,
 )
@@ -31,6 +30,7 @@ class ModelClass(nn.Module):
         all_points: bool,
         final_layer_scaler: bool,
         connect_all_ancestors: bool,
+        **kwargs,
     ):
         super().__init__()
         self.n_global = n_global
@@ -118,23 +118,24 @@ class ModelClass(nn.Module):
                 for level in range(n_levels - 1)
             ]
         )
-        self.child_conv_layers = nn.ModuleList(
-            [
-                MPLSeq(
-                    in_features=self.features[level],
-                    out_features=self.features[level],
-                    n_mpl=child_param["n_mpl"],
-                    n_hidden_nodes=max(
-                        child_param["n_hidden_nodes"], self.features[level]
-                    ),
-                    n_global=n_global,
-                    n_cond=self.n_cond,
-                    **conv_param,
-                )
-                for level in range(1, n_levels)
-            ]
-        )
-        self.ftx_scaling = FtxScaleLayer(self.features[-1])
+        # self.child_conv_layers = nn.ModuleList(
+        #     [
+        #         MPLSeq(
+        #             in_features=self.features[level],
+        #             out_features=self.features[level],
+        #             n_mpl=child_param["n_mpl"],
+        #             n_hidden_nodes=max(
+        #                 child_param["n_hidden_nodes"], self.features[level]
+        #             ),
+        #             n_global=n_global,
+        #             n_cond=self.n_cond,
+        #             **conv_param,
+        #         )
+        #         for level in range(1, n_levels)
+        #     ]
+        # )
+        if self.final_layer_scaler:
+            self.ftx_scaling = FtxScaleLayer(self.features[-1])
 
     def forward(self, random_vector: torch.Tensor, cond: torch.Tensor) -> Batch:
         batch_size = self.batch_size
