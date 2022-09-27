@@ -189,12 +189,21 @@ def binbourders_wo_outliers(points: np.ndarray, bins=100) -> np.ndarray:
 
 @wrap_torch_to_np
 def bounds_wo_outliers(points: np.ndarray) -> tuple:
-    thresh = 5.0
     median = np.median(points, axis=0)
-    med_abs_lfluk = np.sqrt(np.median((points[points < median] - median) ** 2))
-    med_abs_ufluk = np.sqrt(np.median((points[points > median] - median) ** 2))
-    upper = median + med_abs_ufluk * thresh
-    lower = median - med_abs_lfluk * thresh
+
+    # med_abs_lfluk = np.sqrt(np.mean((points[points < median] - median) ** 2))
+    # med_abs_ufluk = np.sqrt(np.mean((points[points > median] - median) ** 2))
+    # upper = median + max(med_abs_ufluk,med_abs_ufluk)
+    # lower = median - max(med_abs_ufluk,med_abs_ufluk)
+    outlier_scale = (
+        max(
+            np.abs(np.quantile(points, 0.95) - median),
+            np.abs(np.quantile(points, 0.5) - median),
+        )
+        * 1.1
+    )
+    upper = median + outlier_scale
+    lower = median - outlier_scale
     # print(lower,np.min(points), upper,np.max(points))
     upper = np.min([upper, np.max(points)])
     lower = np.max([lower, np.min(points)])
