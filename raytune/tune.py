@@ -49,7 +49,7 @@ class Trainable(tune.Trainable):
         fgsim.config.conf, _ = fgsim.config.compute_conf(
             fgsim.config.defaultconf, self.exp_config
         )
-        OmegaConf.save(fgsim.config.conf, Path(self.logdir) / "full_config.yaml")
+        OmegaConf.save(fgsim.config.conf, Path(self.logdir) / "conf.yaml")
         fgsim.config.device = fgsim.config.get_device()
         from fgsim.monitoring.logger import init_logger
 

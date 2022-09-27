@@ -66,29 +66,39 @@ defaultconf = OmegaConf.load(Path("~/fgsim/fgsim/default.yaml").expanduser())
 # Load the default settings, overwrite them
 # witht the tag-specific settings and then
 # overwrite those with cli arguments.
-conf: DictConfig
-args = get_args()
-if args.hash is not None:
-    try:
-        if args.ray:
-            fn = glob(f"wd/ray/*/{args.hash}/full_config.yaml")[0]
+conf: DictConfig = defaultconf.copy()
+hyperparameters: DictConfig({})
 
-        else:
-            fn = glob(f"wd/*/{args.hash}/full_config.yaml")[0]
-    except IndexError:
-        raise IndexError("No experiement with hash {args.hash} is set up.")
-    conf = OmegaConf.load(fn)
-    conf["command"] = str(args.command)
-else:
-    fn = f"wd/{args.tag}/config.yaml"
-    if os.path.isfile(fn):
-        tagconf = OmegaConf.load(fn)
+
+def parse_arg_conf():
+    args = get_args()
+    if args.hash is not None:
+        try:
+            if args.ray:
+                globstr = f"wd/ray/*/{args.hash}/"
+            else:
+                globstr = f"wd/*/{args.hash}/"
+            folder = Path(glob(globstr)[0])
+            assert folder.is_dir()
+        except IndexError:
+            raise IndexError("No experiement with hash {args.hash} is set up.")
+        conf = OmegaConf.load(folder / "conf.yaml")
+        hyperparameters = OmegaConf.load(folder / "hyperparameters.yaml")
+
+        conf["command"] = str(args.command)
+
+        return conf, hyperparameters
     else:
-        if args.tag == "default":
-            tagconf = OmegaConf.create({})
+        fn = f"wd/{args.tag}/config.yaml"
+        if os.path.isfile(fn):
+            tagconf = OmegaConf.load(fn)
         else:
-            raise FileNotFoundError
-    conf, hyperparameters = compute_conf(defaultconf, tagconf, vars(args))
+            if args.tag == "default":
+                tagconf = OmegaConf.create({})
+            else:
+                raise FileNotFoundError
+        conf, hyperparameters = compute_conf(defaultconf, tagconf, vars(args))
+    return conf, hyperparameters
 
 
 torch.manual_seed(conf.seed)

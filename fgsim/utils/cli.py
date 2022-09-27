@@ -47,9 +47,12 @@ commandparsers["loadfile"].add_argument(
 
 
 def get_args():
+    return parser.parse_args()
     # No args if run within pytest
     # for ipython / jupyter : "IPython" remove for scalene
-    if any([x in sys.modules for x in ["pytest", "ray"]]):
+    if any(
+        [x in sys.modules for x in ["IPython", "jupyter_core", "pytest", "ray"]]
+    ):
         argv = [
             # "/home/mscham/fgsim/fgsim/__main__.py",
             "--tag",

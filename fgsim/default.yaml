@@ -270,7 +270,6 @@ path:
     training_glob: "*.pt"
     geo_lup: "data/geo_hgcal/DetIdLUT.root"
     run_path: "wd/${tag}/${hash}"
-    full_config: "${path.run_path}/full_config.yaml"
     tensorboard: "${path.run_path}/tb"
     checkpoint: "${path.run_path}/checkpoint.torch"
     checkpoint_old: "${path.run_path}/checkpoint_old.torch"

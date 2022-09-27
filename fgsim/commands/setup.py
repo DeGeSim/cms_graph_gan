@@ -4,7 +4,7 @@ from shutil import copytree
 
 from omegaconf import OmegaConf
 
-from fgsim.config import conf
+from fgsim.config import conf, hyperparameters
 
 
 def gethash_procedure() -> None:
@@ -19,7 +19,10 @@ def setup_procedure() -> str:
 
     os.makedirs(conf.path.run_path, exist_ok=True)
 
-    OmegaConf.save(conf, conf.path.full_config)
+    OmegaConf.save(conf, Path(conf.path.run_path) / "conf.yaml")
+    OmegaConf.save(
+        hyperparameters, Path(conf.path.run_path) / "hyperparameters.yaml"
+    )
 
     # Backup the python files
     copytree(

@@ -100,6 +100,7 @@ def setup_experiment() -> None:
     # Format the hyperparameter for comet
     from fgsim.config import hyperparameters
 
+    assert len(hyperparameters) > 0
     hyperparameters_keyval_list = dict(dict_to_kv(hyperparameters))
     hyperparameters_keyval_list["hash"] = conf["hash"]
     hyperparameters_keyval_list["loader_hash"] = conf["loader_hash"]
