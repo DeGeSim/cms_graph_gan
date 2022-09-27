@@ -57,9 +57,8 @@ class ModelClass(MPNet):
 
     # Edit start
     def forward(self, batch, condition):
-        assert condition.squeeze().dim() == 1
         x = to_stacked_mask(batch)
-        x = super().forward(x, labels=condition.squeeze()).squeeze()
+        x = super().forward(x, labels=condition)
         return x
 
     # Edit end

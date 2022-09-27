@@ -180,6 +180,9 @@ mpgan_mask:
 tree:
     branches: [2, 4, 16]
     features: [64, 32, 16, "${loader.n_features}"]
+# tree:
+#     branches: [2, 3, 5]
+#     features: [64, 32, 16, "${loader.n_features}"]
 
 loss_options:
     WGenLoss:
@@ -238,6 +241,17 @@ optim_options:
         lr: 0.0001
     FakeOptimizer: {}
 
+smoothing_options:
+    hgcal:
+        active: True
+        stds: [0, 0.315, 0.18, .3] # [0, 0.315, 0.2, .15]
+        decay: 1e-5
+    hgcal_soham: ${smoothing_options[hgcal]}
+    pcgraph: ${smoothing_options[hgcal]}
+    jetnet:
+        active: False
+
+
 training:
     gan_mode: CE
     disc_steps_per_gen_step: 5
@@ -245,10 +259,7 @@ training:
         validation_steps: 10
         improvement: 0.2
     checkpoint_minutes: 15
-    smoothing:
-        active: True
-        stds: [0, 0.315, 0.18, .3] # [0, 0.315, 0.2, .15]
-        decay: 1e-5
+    smoothing: ${smoothing_options[${loader_name}]}
     log_interval: 500
     max_epochs: 300
     val:
