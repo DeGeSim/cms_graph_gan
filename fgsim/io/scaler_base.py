@@ -24,11 +24,11 @@ class ScalerBase:
         self.read_chunk = read_chunk
         self.transform_wo_scaling = transform_wo_scaling
         self.scalerpath = Path(conf.path.dataset_processed) / "scaler.gz"
-        if not self.scalerpath.is_file():
-            if conf.command != "preprocess":
+        if conf.command != "preprocess":
+            if not self.scalerpath.is_file():
                 raise FileNotFoundError()
-        else:
-            self.transfs = joblib.load(self.scalerpath)
+            else:
+                self.transfs = joblib.load(self.scalerpath)
 
     def save_scaler(self):
         assert self.len_dict[self.files[0]] >= conf.loader.scaling_fit_size

@@ -3,7 +3,6 @@ from typing import List, Optional, Tuple
 
 import awkward as ak
 import uproot
-from sklearn.preprocessing import MinMaxScaler, PowerTransformer, StandardScaler
 
 from fgsim.config import conf
 from fgsim.io import FileManager, ScalerBase
@@ -52,12 +51,6 @@ file_manager = FileManager(path_to_len=path_to_len)
 scaler = ScalerBase(
     file_manager.files,
     file_manager.file_len_dict,
-    [
-        PowerTransformer(method="box-cox"),
-        StandardScaler(),
-        StandardScaler(),
-        MinMaxScaler(feature_range=(-1, 1)),
-    ],
     read_chunks,
     hitlist_to_graph,
 )
