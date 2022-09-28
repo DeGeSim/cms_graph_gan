@@ -7,8 +7,8 @@ from omegaconf import OmegaConf
 from torch_geometric.data import Batch
 
 from fgsim.config import conf
-from fgsim.models.common import DynHLVsLayer, GINCConv
-from fgsim.models.common.deeptree import (  # MPLSeq,
+from fgsim.models.common import DynHLVsLayer
+from fgsim.models.common.deeptree import (
     BranchingLayer,
     GraphTreeWrapper,
     Tree,
@@ -24,8 +24,8 @@ class ModelClass(nn.Module):
         self,
         n_global: int,
         n_cond: int,
+        conv_name: str,
         conv_param: Dict,
-        child_param: Dict,
         branching_param: Dict,
         all_points: bool,
         final_layer_scaler: bool,
@@ -38,6 +38,8 @@ class ModelClass(nn.Module):
         self.all_points = all_points
         self.batch_size = conf.loader.batch_size
         self.final_layer_scaler = final_layer_scaler
+        self.conv_name = conv_name
+        self.conv_param = conv_param
 
         self.features = conf.tree.features
         self.branches = conf.tree.branches
@@ -95,28 +97,8 @@ class ModelClass(nn.Module):
             ]
         )
 
-        # self.ancestor_conv_layers = nn.ModuleList(
-        #     [
-        #         DeepConv(
-        #             in_features=self.features[level],
-        #             out_features=self.features[level + 1],
-        #             n_global=n_global,
-        #             n_cond=self.n_cond,
-        #             **conv_param,
-        #         )
-        #         for level in range(n_levels - 1)
-        #     ]
-        # )
         self.ancestor_conv_layers = nn.ModuleList(
-            [
-                GINCConv(
-                    FFN(
-                        self.features[level] + self.n_cond + self.n_global,
-                        self.features[level + 1],
-                    )
-                )
-                for level in range(n_levels - 1)
-            ]
+            [self.wrap_layer_init(ilevel) for ilevel in range(n_levels - 1)]
         )
         # self.child_conv_layers = nn.ModuleList(
         #     [
@@ -136,6 +118,71 @@ class ModelClass(nn.Module):
         # )
         if self.final_layer_scaler:
             self.ftx_scaling = FtxScaleLayer(self.features[-1])
+
+    def wrap_layer_init(self, ilevel):
+        if self.conv_name == "gincconv":
+            from fgsim.models.common import GINCConv
+
+            return GINCConv(
+                FFN(
+                    self.features[ilevel] + self.n_cond + self.n_global,
+                    self.features[ilevel + 1],
+                )
+            )
+        elif self.conv_name == "ginconv":
+            from torch_geometric.nn import GINConv
+
+            return GINConv(
+                FFN(
+                    self.features[ilevel] + self.n_cond + self.n_global,
+                    self.features[ilevel + 1],
+                )
+            )
+        elif self.conv_name == "deepconv":
+            from fgsim.models.common.deeptree import DeepConv
+
+            return DeepConv(
+                in_features=self.features[ilevel],
+                out_features=self.features[ilevel + 1],
+                n_global=self.n_global,
+                n_cond=self.n_cond,
+                **self.conv_param,
+            )
+
+    def wrap_ac(
+        self, *, layer, x, cond, edge_index, edge_attr, batch, global_features
+    ):
+        if self.conv_name == "gincconv":
+            return layer(
+                x,
+                torch.hstack(
+                    (
+                        cond[batch],
+                        global_features[batch],
+                    )
+                ),
+                edge_index,
+            )
+        elif self.conv_name == "ginconv":
+            return layer(
+                torch.hstack(
+                    (
+                        x,
+                        cond[batch],
+                        global_features[batch],
+                    )
+                ),
+                edge_index,
+            )
+        elif self.conv_name == "deepconv":
+            return layer(
+                x=x,
+                cond=cond,
+                edge_index=edge_index,
+                edge_attr=edge_attr,
+                batch=batch,
+                global_features=global_features,
+            )
 
     def forward(self, random_vector: torch.Tensor, cond: torch.Tensor) -> Batch:
         batch_size = self.batch_size
@@ -169,24 +216,15 @@ class ModelClass(nn.Module):
 
             graph_tree = self.branching_layers[ilevel](graph_tree)
 
-            graph_tree.tftx = self.ancestor_conv_layers[ilevel](
-                graph_tree.tftx,
-                torch.hstack(
-                    (
-                        graph_tree.cond[graph_tree.tbatch],
-                        graph_tree.global_features[graph_tree.tbatch],
-                    )
-                ),
-                self.tree.ancestor_ei(ilevel + 1),
+            graph_tree.tftx = self.wrap_ac(
+                layer=self.ancestor_conv_layers[ilevel],
+                x=graph_tree.tftx,
+                cond=graph_tree.cond,
+                edge_index=self.tree.ancestor_ei(ilevel + 1),
+                edge_attr=self.tree.ancestor_ea(ilevel + 1),
+                batch=graph_tree.tbatch,
+                global_features=graph_tree.global_features,
             )
-            # graph_tree.tftx = self.ancestor_conv_layers[ilevel](
-            #     x=graph_tree.tftx,
-            #     cond=graph_tree.cond,
-            #     edge_index=self.tree.ancestor_ei(ilevel + 1),
-            #     edge_attr=self.tree.ancestor_ea(ilevel + 1),
-            #     batch=graph_tree.tbatch,
-            #     global_features=graph_tree.global_features,
-            # )
             # graph_tree.tftx = self.child_conv_layers[ilevel](
             #     x=graph_tree.tftx,
             #     cond=graph_tree.cond,

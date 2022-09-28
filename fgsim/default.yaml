@@ -70,8 +70,8 @@ model_param_options:
         n_cond: ${len:${loader.y_features}}
         all_points: False
         connect_all_ancestors: True
-        msgpass_layer: ginconv
-        conv_param: ${layer_options[${model_param_options.gen_deeptree.msgpass_layer}]}
+        conv_name: ginconv
+        conv_param: ${layer_options[${model_param_options.gen_deeptree.conv_name}]}
         branching_param:
             residual: True
         child_param:
