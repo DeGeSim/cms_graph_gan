@@ -36,7 +36,7 @@ class Smoother:
                     [0.0] * conf.loader.n_features,
                     np.diag(
                         (
-                            self.scaled_stds
+                            self.scaled_stds.squeeze()
                             * self.turnoff(step, conf.training.smoothing.decay)
                         )
                         ** 2
@@ -48,7 +48,9 @@ class Smoother:
             .float()
         )
         # x_inv_transf = scaler.inverse_transform(x)
-        # for idx, (name, std) in enumerate(zip(conf.loader.x_features, conf.training.smoothing.stds)):
+        # for idx, (name, std) in enumerate(
+        #     zip(conf.loader.x_features, conf.training.smoothing.stds)
+        # ):
         #     self.plotdist(name, x_inv_transf[:, idx], std=std, presmooth=False)
         return x
 
@@ -80,6 +82,15 @@ class Smoother:
             bins=binbourders_wo_outliers(arr, bins=300),
             histtype="bar",
         )
+        ax2.set_ylabel("Count")
+        # ax2.set_xlabel(
+        #     {
+        #         "E": "E [GeV]",
+        #         "x": "x [cm]",
+        #         "y": "y [cm]",
+        #         "layer": "layer [1]",
+        #     }[name]
+        # )
 
         fig.suptitle(
             f"Histogram for {name} w/o smoothing"
