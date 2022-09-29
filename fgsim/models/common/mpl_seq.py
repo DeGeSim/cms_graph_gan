@@ -2,7 +2,7 @@ from typing import Optional
 
 import torch
 
-from . import DeepConv
+from .deeptree import DeepConv
 
 
 class MPLSeq(torch.nn.Module):
