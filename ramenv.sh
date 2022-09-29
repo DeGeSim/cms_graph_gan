@@ -2,22 +2,25 @@
 ulimit -n `ulimit -H -n`
 
 RAMPATH="/dev/shm/$USER/fgsim"
-
+LOCKFILE="/dev/shm/$USER-ramenv.lock"
 # # Get the file descript and lock the file
 # LOCKPATH=/dev/shm/${USER}/ramenv.lock
 # exec 4> ${LOCKPATH} || exit 1
 # flock 4 || exit 1
 # trap "rm -f ${LOCKPATH}" EXIT
 
+(
+flock -n 9 || exit 1
 if [ ! -d $RAMPATH ]; then
-  echo "Installing  $RAMPATH"
-  mkdir -p $RAMPATH
-  tar -x -f ~/fgsim/env.tar --directory ${RAMPATH}
+    echo "Installing  $RAMPATH"
+    mkdir -p $RAMPATH
+    tar -x -f ~/fgsim/env.tar --directory ${RAMPATH}
 fi
+) 9>$LOCKFILE
 
 # remove aliases that break the conda setup script
 if alias ls &>/dev/null ; then
-  unalias ls
+    unalias ls
 fi
 
 export CONDA_DIR=~/beegfs/conda/miniconda
