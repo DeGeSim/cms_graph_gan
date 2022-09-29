@@ -50,7 +50,7 @@ ffn:
         SELU: {}
     init_weights_bias_const: 0.1
     init_weights: xavier_uniform_
-    batchnorm: True
+    norm: layernorm
     dropout: False
 
 layer_options:
@@ -69,15 +69,17 @@ model_param_options:
         n_global: 3
         n_cond: ${len:${loader.y_features}}
         all_points: False
-        connect_all_ancestors: True
-        conv_name: GINCConv
-        conv_param:
-            n_mpl: 3
-            n_hidden_nodes: 128
-            layer_param: ${layer_options[${model_param_options.gen_deeptree.conv_name}]}
-        child_conv_name: GINConv
         branching_param:
             residual: True
+        connect_all_ancestors: True
+        ancestor_conv_name: GINCConv
+        ancestor_skip_connecton: True
+        ancestor_conv_param:
+            n_mpl: 3
+            n_hidden_nodes: 128
+            layer_param: ${layer_options[${model_param_options.gen_deeptree.ancestor_conv_name}]}
+        child_conv_name: GINConv
+        child_skip_connecton: True
         child_conv_param:
             n_mpl: 0
             n_hidden_nodes: 128

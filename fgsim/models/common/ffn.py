@@ -10,14 +10,14 @@ class FFN(nn.Module):
         self,
         input_dim: int,
         output_dim: int,
-        batchnorm: Optional[bool] = None,
+        norm: Optional[str] = None,
         dropout: Optional[bool] = None,
         n_layers: Optional[int] = None,
         n_nodes_per_layer: Optional[int] = None,
         final_linear: Optional[bool] = False,
     ) -> None:
-        if batchnorm is None:
-            batchnorm = conf.ffn.batchnorm
+        if norm is None:
+            norm = conf.ffn.norm
         if dropout is None:
             dropout = conf.ffn.dropout
         if n_layers is None:
@@ -45,7 +45,7 @@ class FFN(nn.Module):
                 self.seq.append(activation)
                 if dropout:
                     self.seq.append(nn.Dropout(0.2))
-                if batchnorm:
+                if norm == "batchnorm":
                     self.seq.append(
                         nn.BatchNorm1d(
                             features[ilayer + 1],
@@ -53,10 +53,16 @@ class FFN(nn.Module):
                             track_running_stats=False,
                         )
                     )
+                elif norm == "layernorm":
+                    self.seq.append(nn.LayerNorm(features[ilayer + 1]))
+                elif norm == "none":
+                    pass
+                else:
+                    raise Exception
             else:
                 if not final_linear:
                     self.seq.append(activation)
-                    if batchnorm:
+                    if norm == "batchnorm":
                         self.seq.append(
                             nn.BatchNorm1d(
                                 features[ilayer + 1],
@@ -64,6 +70,12 @@ class FFN(nn.Module):
                                 track_running_stats=False,
                             )
                         )
+                    elif norm == "layernorm":
+                        self.seq.append(nn.LayerNorm(features[ilayer + 1]))
+                    elif norm == "none":
+                        pass
+                    else:
+                        raise Exception
 
         self.input_dim = input_dim
         self.output_dim = output_dim
@@ -73,8 +85,8 @@ class FFN(nn.Module):
         if conf.ffn.init_weights != "kaiming_uniform_":
             self.reset_parameters()
 
-    def forward(self, *args, **kwargs):
-        return self.seq(*args, **kwargs)
+    def forward(self, x):
+        return self.seq(x)
 
     def __repr__(self):
         return f"FFN({self.input_dim}->{self.output_dim},n_layers={self.n_layers},hidden_nodes={self.n_nodes_per_layer},activation={self.activation})"
