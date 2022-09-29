@@ -102,6 +102,7 @@ model_param_options:
     gen_moons: {}
     disc_fake: {}
     disc_hlvs: {}
+    disc_benno: {}
     disc_gat:
       n_features: ${loader[n_features]}
       n_points: ${loader[n_points]}

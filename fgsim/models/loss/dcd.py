@@ -32,6 +32,6 @@ class LossGen:
             lpnorm=self.lpnorm,
             pow=self.pow,
         ).mean()
-        if holder.state.epoch >= 150:
-            loss *= 0
+        # if holder.state.epoch >= 150:
+        #     loss *= 0
         return loss
