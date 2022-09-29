@@ -54,15 +54,15 @@ ffn:
     dropout: False
 
 layer_options:
-    deepconv:
+    DeepConv:
         add_self_loops: True
         nns: both
         msg_nn_include_edge_attr: False
         msg_nn_include_global: True
         upd_nn_include_global: True
         residual: True
-    ginconv: {}
-    gincconv: {}
+    GINConv: {}
+    GINCConv: {}
 
 model_param_options:
     gen_deeptree:
@@ -70,13 +70,18 @@ model_param_options:
         n_cond: ${len:${loader.y_features}}
         all_points: False
         connect_all_ancestors: True
-        conv_name: ginconv
-        conv_param: ${layer_options[${model_param_options.gen_deeptree.conv_name}]}
+        conv_name: GINCConv
+        conv_param:
+            n_mpl: 3
+            n_hidden_nodes: 128
+            layer_param: ${layer_options[${model_param_options.gen_deeptree.conv_name}]}
+        child_conv_name: GINConv
         branching_param:
             residual: True
-        child_param:
+        child_conv_param:
             n_mpl: 0
-            n_hidden_nodes: 12
+            n_hidden_nodes: 128
+            layer_param: ${layer_options[${model_param_options.gen_deeptree.child_conv_name}]}
         final_layer_scaler: False
     gen_treepc:
         features: [96, 64, 64, 64, 64, 64, 4]
@@ -256,7 +261,7 @@ training:
     gan_mode: CE
     disc_steps_per_gen_step: 5
     early_stopping:
-        validation_steps: 10
+        validation_steps: 50
         improvement: 0.2
     checkpoint_minutes: 15
     smoothing: ${smoothing_options[${loader_name}]}

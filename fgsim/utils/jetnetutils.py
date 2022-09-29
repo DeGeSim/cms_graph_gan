@@ -8,7 +8,7 @@ from fgsim.config import conf
 
 
 def to_stacked_mask(batch: Union[Data, Batch]):
-    assert conf.loader.n_points * (batch.batch[-1] + 1) > len(batch.x)
+    assert conf.loader.n_points * (batch.batch[-1] + 1) >= len(batch.x)
     x, mask = to_dense_batch(
         x=batch.x, batch=batch.batch, max_num_nodes=conf.loader.n_points
     )
