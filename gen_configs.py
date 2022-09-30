@@ -256,7 +256,7 @@ for exp in exp_list:
     folder = "wd/" + "_".join(exp.tags)
     if not isdir(folder):
         mkdir(folder)
-    OmegaConf.save(exp.config, f"{folder}/config.yaml")
+    OmegaConf.save(exp.config, f"{folder}/conf.yaml")
 print(
     "./run.sh remote --tag "
     + ",".join(["_".join(exp.tags) for exp in exp_list])

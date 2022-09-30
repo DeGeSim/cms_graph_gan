@@ -54,7 +54,7 @@ srun \
 for ((i = 1; i <= 35; i++)); do
     sbatch << EOF
 #!/bin/bash
-#SBATCH --partition=allgpu,cms,cms-desy
+#SBATCH --partition=allgpu
 #SBATCH --job-name=rayworker
 #SBATCH --nodes=1
 #SBATCH --time=24:00:00

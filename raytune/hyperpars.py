@@ -1,39 +1,64 @@
 from ray import tune
 
 hyperpars = {
+    "models": {
+        "gen": {
+            "optim": {"params": {"lr": tune.loguniform(1e-7, 1e-3)}},
+        },
+        "disc": {
+            "optim": {"params": {"lr": tune.loguniform(1e-7, 1e-3)}},
+            "name": tune.choice(["disc_mp", "disc_benno"]),
+        },
+    },
     "training": {
         "gan_mode": tune.choice(["CE", "W", "MSE"]),
         "disc_steps_per_gen_step": tune.randint(1, 10),
     },
     "model_param_options": {
         "gen_deeptree": {
+            "n_global": tune.randint(0, 10),
             "final_layer_scaler": tune.choice([True, False]),
-            "conv_param": {
-                # "add_self_loops": tune.choice([True, False]),
-                "nns": tune.choice(["both", "upd", "msg"]),
-                # "residual": tune.choice([True, False]),
+            "branching_param": {"residual": tune.choice([True, False])},
+            "ancestor_skip_connecton": tune.choice([True, False]),
+            "connect_all_ancestors": tune.choice([True, False]),
+            "ancestor_conv_param": {
+                "n_mpl": tune.randint(1, 3),
+                "n_hidden_nodes": tune.randint(20, 2048),
             },
-            # "branching_param": {"residual": tune.choice([True, False])},
-            "child_param": {
-                "n_mpl": tune.randint(0, 5),
-                # "n_hidden_nodes": tune.choice([128, 512, 1024]),
+            "child_conv_param": {
+                "n_mpl": tune.randint(0, 3),
+                "n_hidden_nodes": tune.randint(20, 2048),
             },
+            "child_skip_connecton": tune.choice([True, False]),
         }
     },
     "ffn": {
-        "batchnorm": tune.choice([True, False]),
-        "dropout": tune.choice([True, False]),
+        "hidden_layer_size": tune.randint(20, 2048),
+        "n_layers": tune.randint(1, 10),
+        "norm": tune.choice(["batchnorm", "layernorm", "none"]),
     },
     "tree_width": tune.choice(["wide", "slim"]),
-    "root_node_size": tune.choice([5, 24, 128, 512, 1024]),
-    "tree": tune.choice(
-        [
-            {"branches": [2, 3, 5], "features": [256, 64, 32, 3]},
-            {"branches": [3, 10], "features": [256, 64, 3]},
-        ]
-    ),
+    "root_node_size": tune.randint(24, 1024),
 }
 
+# "tree": tune.choice(
+#     [
+#         {"branches": [2, 3, 5], "features": [256, 64, 32, 3]},
+#         {"branches": [3, 10], "features": [256, 64, 3]},
+#     ]
+# ),
+# "batchnorm": tune.choice([True, False]),
+# "dropout": tune.choice([True, False]),
+# "conv_param": {
+#     # "add_self_loops": tune.choice([True, False]),
+#     "nns": tune.choice(["both", "upd", "msg"]),
+#     # "residual": tune.choice([True, False]),
+# },
+# # "branching_param": {"residual": tune.choice([True, False])},
+# "child_param": {
+#     "n_mpl": tune.randint(0, 5),
+#     # "n_hidden_nodes": tune.choice([128, 512, 1024]),
+# },
 
 # hyperpars = {
 #     "models": {

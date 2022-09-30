@@ -1,0 +1,12 @@
+loader_name: jetnet
+training:
+  val:
+    use_for_stopping:
+    - fpnd
+    - w1m
+    - w1p
+    metrics:
+      w1m: {}
+      w1p: {}
+      fpnd: {}
+      aoc: {}

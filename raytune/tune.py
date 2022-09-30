@@ -11,11 +11,14 @@ from ray.tune.suggest.hyperopt import HyperOptSearch
 
 import fgsim.config
 
+rayconf = OmegaConf.load(Path("~/fgsim/raytune/ray.yaml").expanduser())
+
 
 def process_tree_conf(exp_config):
     # manipulate the config for the tree
     wide = exp_config["tree_width"] == "wide"
     root_size = exp_config["root_node_size"]
+    exp_config["tree"] = {}
     if wide:
         exp_config.tree["branches"] = [3, 10]
         scaling = np.power(root_size / 3.0, 1 / 2)
@@ -40,14 +43,14 @@ class Trainable(tune.Trainable):
     def setup(self, exp_config):
         self.exp_config = process_tree_conf(OmegaConf.create(exp_config))
 
-        OmegaConf.save(self.exp_config, Path(self.logdir) / "config.yaml")
+        OmegaConf.save(self.exp_config, Path(self.logdir) / "exp.yaml")
         self.exp_config["path"] = {"run_path": self._logdir}
         self.exp_config["command"] = "train"
         self.exp_config["debug"] = False
         self.exp_config["comet_project_name"] = Path(self.logdir).parts[-2]
         self.exp_config["ray"] = True
         fgsim.config.conf, _ = fgsim.config.compute_conf(
-            fgsim.config.defaultconf, self.exp_config
+            fgsim.config.defaultconf, rayconf, self.exp_config
         )
         OmegaConf.save(fgsim.config.conf, Path(self.logdir) / "conf.yaml")
         fgsim.config.device = fgsim.config.get_device()
@@ -119,7 +122,7 @@ analysis = tune.run(
     resources_per_trial={"cpu": 15, "gpu": 1},
     fail_fast="raise" if local else False,
     raise_on_failed_trial=not local,
-    name="jetnet-deeptree2",
+    name="jetnet-deeptree3",
     local_dir="~/fgsim/wd/ray/",
     stop=ExperimentPlateauStopper(metric="fpnd"),
     trial_name_creator=trial_name_id,
