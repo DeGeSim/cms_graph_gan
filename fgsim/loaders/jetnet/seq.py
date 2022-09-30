@@ -19,7 +19,7 @@ def process_seq() -> List[Union[qf.StepBase, Queue]]:
     return [
         qf.ProcessStep(read_chunks, 4, name="read_chunk"),
         qf.PoolStep(
-            transform,
+            transform_and_scale,
             nworkers=conf.loader.n_workers_transform,
             name="transform",
         ),
@@ -39,7 +39,7 @@ def process_seq() -> List[Union[qf.StepBase, Queue]]:
 # reading from the filesystem
 
 
-def transform(pc) -> Data:
+def transform_and_scale(pc) -> Data:
     graph = contruct_graph_from_row(pc)
     graph.x[graph.mask] = torch.from_numpy(
         scaler.transform(graph.x[graph.mask].numpy())

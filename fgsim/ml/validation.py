@@ -14,7 +14,6 @@ from fgsim.utils.check_for_nans import check_chain_for_nans
 
 
 def validate(holder: Holder, loader: QueuedDataset) -> None:
-    holder.models.eval()
     check_chain_for_nans((holder.models,))
 
     # generate the batches

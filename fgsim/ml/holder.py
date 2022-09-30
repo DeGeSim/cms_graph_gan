@@ -226,12 +226,18 @@ class Holder:
         z = torch.randn(*self.models.gen.z_shape, requires_grad=True).to(
             self.device
         )
+        if len(conf.loader.y_features) == 0:
+            cond = torch.empty(
+                (conf.loader.batch_size, 0), dtype=torch.float, device=self.device
+            )
+        else:
+            cond = sim_batch.y
         with with_grad(train_gen):
-            gen_batch = self.models.gen(z, sim_batch.y)
+            gen_batch = self.models.gen(z, cond)
 
         # In both cases the gradient needs to pass though d_gen
         with with_grad(train_gen or train_disc):
-            d_gen = self.models.disc(gen_batch, sim_batch.y).squeeze()
+            d_gen = self.models.disc(gen_batch, cond).squeeze()
 
         self.res = {
             "sim_batch": sim_batch,
@@ -242,7 +248,7 @@ class Holder:
         # but we need it for the validation
         if train_disc or (train_disc == train_gen):
             with with_grad(train_disc):
-                d_sim = self.models.disc(sim_batch, sim_batch.y).squeeze()
+                d_sim = self.models.disc(sim_batch, cond).squeeze()
             self.res["d_sim"] = d_sim
         return self.res
 

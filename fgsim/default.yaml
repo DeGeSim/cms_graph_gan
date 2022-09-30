@@ -250,14 +250,16 @@ optim_options:
     FakeOptimizer: {}
 
 smoothing_options:
+    default:
+        active: False
+    moons: ${smoothing_options[default]}
+    jetnet: ${smoothing_options[default]}
     hgcal:
         active: True
         stds: [0, 0.315, 0.18, .3] # [0, 0.315, 0.2, .15]
         decay: 1e-5
     hgcal_soham: ${smoothing_options[hgcal]}
     pcgraph: ${smoothing_options[hgcal]}
-    jetnet:
-        active: False
 
 
 training:
@@ -267,7 +269,7 @@ training:
         validation_steps: 50
         improvement: 0.2
     checkpoint_minutes: 15
-    smoothing: ${smoothing_options[${loader_name}]}
+    smoothing: "${smoothing_options[${loader_name}]}"
     log_interval: 500
     max_epochs: 300
     val:
@@ -305,7 +307,7 @@ loader_options:
         dataset_glob: "**/*.root"
         preprocess_training: True
         chunk_size: 1000
-        batch_size: 100
+        batch_size: 200
         validation_set_size: 1000
         test_set_size: 5000
         scaling_fit_size: 100
@@ -339,7 +341,8 @@ loader_options:
     moons:
         dataset_path: "~/fgsim/data/moons"
         x_features: ["x", "y"]
-        n_points: 512
+        y_features: []
+        n_points: 128
         cluster_tree: false
         cluster_method: "random"
     jetnet:

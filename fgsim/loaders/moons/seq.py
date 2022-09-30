@@ -1,7 +1,6 @@
 from pathlib import Path
 from typing import List, Tuple, Union
 
-import awkward as ak
 import queueflow as qf
 import torch
 from torch.multiprocessing import Queue, Value
@@ -11,7 +10,7 @@ from torch_geometric.data import Data as Data
 from fgsim.config import conf
 
 from .objcol import read_chunks, scaler
-from .transform import hitlist_to_graph, hitlist_to_pc
+from .transform import transform
 
 # Sharded switch for the postprocessing
 shared_postprocess_switch = Value("i", 0)
@@ -27,7 +26,7 @@ def process_seq() -> List[Union[qf.StepBase, Queue]]:
         qf.PoolStep(
             transform_and_scale,
             nworkers=conf.loader.n_workers_transform,
-            name="transform_and_scale",
+            name="transform",
         ),
         qf.RepackStep(shared_batch_size),
         qf.ProcessStep(aggregate_to_batch, 1, name="batch"),
@@ -50,15 +49,7 @@ def magic_do_nothing(batch: Batch) -> Batch:
     return batch
 
 
-if conf.loader_name == "hgcal":
-    transform_hitlist = hitlist_to_graph
-elif conf.loader_name == "pcgraph":
-    transform_hitlist = hitlist_to_pc
-else:
-    raise Exception
-
-
-def transform_and_scale(hitlist: ak.highlevel.Record) -> Data:
-    graph = transform_hitlist(hitlist)
+def transform_and_scale(*args, **kwargs):
+    graph = transform(*args, **kwargs)
     graph.x = torch.from_numpy(scaler.transform(graph.x.numpy())).float()
     return graph
