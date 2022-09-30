@@ -2,6 +2,7 @@ import hashlib
 from typing import List
 
 from omegaconf import DictConfig, OmegaConf
+from omegaconf.errors import InterpolationKeyError
 
 
 # Exclude the keys that do not affect the training
@@ -31,10 +32,27 @@ def dict_to_kv(o, keystr=""):
                     outL.append(e)
         return outL
     elif hasattr(o, "__str__"):
-
         return (keystr.strip("."), str(o))
     else:
         raise ValueError
+
+
+def dict_to_keylist(o, keystr=""):
+    """Converts a nested dict {"a":"foo", "b": {"foo":"bar"}} to \
+    ["a","b","b/foo"]."""
+    if hasattr(o, "keys"):
+        outL = []
+        for k in o.keys():
+            subkeystr = f"{keystr}/{k}"
+            outL.append(subkeystr)
+            try:
+                elemres = dict_to_keylist(o[k], subkeystr)
+            except InterpolationKeyError:
+                elemres = []
+            for e in elemres:
+                outL.append(e)
+        return outL
+    return []
 
 
 # convert the config to  key-value pairs

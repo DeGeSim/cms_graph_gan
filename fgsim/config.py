@@ -10,13 +10,25 @@ from omegaconf import DictConfig, OmegaConf
 
 from fgsim.utils.cli import get_args
 from fgsim.utils.oc_resolvers import register_resolvers
-from fgsim.utils.oc_utils import gethash, removekeys
+from fgsim.utils.oc_utils import dict_to_keylist, gethash, removekeys
 
 register_resolvers()
 
 
-def compute_conf(*confs):
-    conf = OmegaConf.merge(*confs)
+def compute_conf(default, *confs):
+    default = default.copy()
+
+    # Assert, that only keys existing in the default are overwritten
+    default_key_set = set(dict_to_keylist(default))
+    for c in confs:
+        c_key_set = set(dict_to_keylist(c))
+        if c_key_set <= default_key_set:
+            raise Exception(
+                "Key not present in the default config."
+                f" Difference:\n{c_key_set - default_key_set}"
+            )
+
+    conf = OmegaConf.merge(*(default, *confs))
 
     # remove the dependency on hash and loader hash to be able to resolve
     conf_without_paths = removekeys(
