@@ -200,7 +200,7 @@ class ModelClass(nn.Module):
                 batch=graph_tree.tbatch,
                 global_features=graph_tree.global_features,
             )
-            if self.child_skip_connecton:
+            if self.child_skip_connecton and self.child_conv_param["n_mpl"] > 0:
                 graph_tree.tftx += skip_vec
 
         batch = graph_tree.to_batch()
