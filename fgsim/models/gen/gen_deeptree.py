@@ -22,12 +22,8 @@ class ModelClass(nn.Module):
         self,
         n_global: int,
         n_cond: int,
-        ancestor_conv_name: str,
-        ancestor_skip_connecton: bool,
-        ancestor_conv_param: Dict,
-        child_conv_name: str,
-        child_skip_connecton: bool,
-        child_conv_param: Dict,
+        ancestor_mpl: Dict,
+        child_mpl: Dict,
         branching_param: Dict,
         all_points: bool,
         final_layer_scaler: bool,
@@ -40,12 +36,8 @@ class ModelClass(nn.Module):
         self.all_points = all_points
         self.batch_size = conf.loader.batch_size
         self.final_layer_scaler = final_layer_scaler
-        self.ancestor_conv_name = ancestor_conv_name
-        self.ancestor_skip_connecton = ancestor_skip_connecton
-        self.ancestor_conv_param = ancestor_conv_param
-        self.child_conv_name = child_conv_name
-        self.child_skip_connecton = child_skip_connecton
-        self.child_conv_param = child_conv_param
+        self.ancestor_mpl = ancestor_mpl
+        self.child_mpl = child_mpl
 
         self.features = conf.tree.features
         self.branches = conf.tree.branches
@@ -105,18 +97,14 @@ class ModelClass(nn.Module):
 
         self.ancestor_conv_layers = nn.ModuleList(
             [
-                self.wrap_layer_init(
-                    ilevel, type="ac", conv_name=self.ancestor_conv_name
-                )
+                self.wrap_layer_init(ilevel, type="ac")
                 for ilevel in range(n_levels - 1)
             ]
         )
 
         self.child_conv_layers = nn.ModuleList(
             [
-                self.wrap_layer_init(
-                    ilevel, type="child", conv_name=self.child_conv_name
-                )
+                self.wrap_layer_init(ilevel, type="child")
                 for ilevel in range(n_levels - 1)
             ]
         )
@@ -124,18 +112,15 @@ class ModelClass(nn.Module):
         if self.final_layer_scaler:
             self.ftx_scaling = FtxScaleLayer(self.features[-1])
 
-    def wrap_layer_init(self, ilevel, type: str, conv_name: str):
+    def wrap_layer_init(self, ilevel, type: str):
         if type == "ac":
-            conv_name = self.ancestor_conv_name
-            conv_param = self.ancestor_conv_param
+            conv_param = self.ancestor_mpl
         elif type == "child":
-            conv_name = self.child_conv_name
-            conv_param = self.child_conv_param
+            conv_param = self.child_mpl
         else:
             raise Exception
 
         return MPLSeq(
-            conv_name=conv_name,
             in_features=self.features[ilevel]
             if type == "ac"
             else self.features[ilevel + 1],
@@ -168,6 +153,10 @@ class ModelClass(nn.Module):
 
         # Do the branching
         for ilevel in range(n_levels - 1):
+            assert graph_tree.tftx.shape[1] == self.tree.features[ilevel]
+            assert graph_tree.tftx.shape[0] == (
+                self.tree.tree_lists[ilevel][-1].idxs[-1] + 1
+            )
             # Assign the global features
             graph_tree.global_features = self.dyn_hlvs_layers[ilevel](
                 x=graph_tree.tftx_by_level[ilevel][..., : features[-1]],
@@ -176,9 +165,11 @@ class ModelClass(nn.Module):
             )
 
             graph_tree = self.branching_layers[ilevel](graph_tree)
+            assert graph_tree.tftx.shape[1] == self.tree.features[ilevel]
+            assert graph_tree.tftx.shape[0] == (
+                self.tree.tree_lists[ilevel + 1][-1].idxs[-1] + 1
+            )
 
-            if self.ancestor_skip_connecton:
-                skip_vec = graph_tree.tftx.clone()
             graph_tree.tftx = self.ancestor_conv_layers[ilevel](
                 x=graph_tree.tftx,
                 cond=graph_tree.cond,
@@ -187,11 +178,11 @@ class ModelClass(nn.Module):
                 batch=graph_tree.tbatch,
                 global_features=graph_tree.global_features,
             )
-            if self.ancestor_skip_connecton:
-                graph_tree.tftx += skip_vec[..., : graph_tree.tftx.shape[-1]]
+            assert graph_tree.tftx.shape[1] == self.tree.features[ilevel + 1]
+            assert graph_tree.tftx.shape[0] == (
+                self.tree.tree_lists[ilevel + 1][-1].idxs[-1] + 1
+            )
 
-            if self.child_skip_connecton:
-                skip_vec = graph_tree.tftx.clone()
             graph_tree.tftx = self.child_conv_layers[ilevel](
                 x=graph_tree.tftx,
                 cond=graph_tree.cond,
@@ -200,8 +191,11 @@ class ModelClass(nn.Module):
                 batch=graph_tree.tbatch,
                 global_features=graph_tree.global_features,
             )
-            if self.child_skip_connecton and self.child_conv_param["n_mpl"] > 0:
-                graph_tree.tftx += skip_vec
+
+            assert graph_tree.tftx.shape[1] == self.tree.features[ilevel + 1]
+            assert graph_tree.tftx.shape[0] == (
+                self.tree.tree_lists[ilevel + 1][-1].idxs[-1] + 1
+            )
 
         batch = graph_tree.to_batch()
         if self.final_layer_scaler:

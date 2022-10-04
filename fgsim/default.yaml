@@ -59,10 +59,14 @@ layer_options:
         nns: both
         msg_nn_include_edge_attr: False
         msg_nn_include_global: True
+        msg_nn_final_linear: True
         upd_nn_include_global: True
+        upd_nn_final_linear: True
         residual: True
-    GINConv: {}
-    GINCConv: {}
+    GINConv:
+        final_linear: True
+    GINCConv:
+        final_linear: True
 
 model_param_options:
     gen_deeptree:
@@ -72,18 +76,18 @@ model_param_options:
         branching_param:
             residual: True
         connect_all_ancestors: True
-        ancestor_conv_name: GINCConv
-        ancestor_skip_connecton: True
-        ancestor_conv_param:
-            n_mpl: 3
-            n_hidden_nodes: 1024
-            layer_param: ${layer_options[${model_param_options.gen_deeptree.ancestor_conv_name}]}
-        child_conv_name: GINConv
-        child_skip_connecton: False
-        child_conv_param:
-            n_mpl: 0
+        ancestor_mpl:
+            n_mpl: 1
+            n_hidden_nodes: 512
+            conv_name: DeepConv
+            skip_connecton: True
+            layer_param: ${layer_options[${model_param_options.gen_deeptree.ancestor_mpl.conv_name}]}
+        child_mpl:
+            n_mpl: 1
             n_hidden_nodes: 128
-            layer_param: ${layer_options[${model_param_options.gen_deeptree.child_conv_name}]}
+            conv_name: GINCConv
+            skip_connecton: True
+            layer_param: ${layer_options[${model_param_options.gen_deeptree.child_mpl.conv_name}]}
         final_layer_scaler: False
     gen_treepc:
         features: [96, 64, 64, 64, 64, 64, 4]
@@ -276,8 +280,8 @@ training:
         interval: "${div:100000,${loader.batch_size}}"
         use_for_stopping: ["w1E", "w1x", "w1y", "w1layer"]
         metrics:
-            ft_w1: {}
-            aoc: {}
+            - "ft_w1"
+            - "aoc"
 testing:
     n_events: 2000
 

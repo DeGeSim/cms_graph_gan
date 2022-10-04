@@ -11,7 +11,10 @@ from ray.tune.suggest.hyperopt import HyperOptSearch
 
 import fgsim.config
 
-rayconf = OmegaConf.load(Path("~/fgsim/raytune/ray.yaml").expanduser())
+run_name = "jetnet-deeptree4"
+rayconf = OmegaConf.load(
+    Path(f"~/fgsim/wd/ray/{run_name}/config.yaml").expanduser()
+)
 
 
 def process_tree_conf(exp_config):
@@ -88,7 +91,7 @@ class Trainable(tune.Trainable):
 
 def trial_name_id(trial):
     comconf, _ = fgsim.config.compute_conf(
-        fgsim.config.defaultconf, OmegaConf.create(trial.config)
+        fgsim.config.defaultconf, process_tree_conf(OmegaConf.create(trial.config))
     )
     return comconf.hash
 
@@ -122,7 +125,7 @@ analysis = tune.run(
     resources_per_trial={"cpu": 15, "gpu": 1},
     fail_fast="raise" if local else False,
     raise_on_failed_trial=not local,
-    name="jetnet-deeptree3",
+    name=run_name,
     local_dir="~/fgsim/wd/ray/",
     stop=ExperimentPlateauStopper(metric="fpnd"),
     trial_name_creator=trial_name_id,

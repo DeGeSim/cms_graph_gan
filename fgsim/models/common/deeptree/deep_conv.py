@@ -1,4 +1,4 @@
-from typing import Optional, Union
+from typing import Optional
 
 import torch
 from torch_geometric.nn import MessagePassing
@@ -24,7 +24,9 @@ class DeepConv(MessagePassing):
         nns: str,
         msg_nn_include_edge_attr: bool,
         msg_nn_include_global: bool,
+        msg_nn_final_linear: bool,
         upd_nn_include_global: bool,
+        upd_nn_final_linear: bool,
         residual: bool,
     ):
         super().__init__(aggr="add", flow="source_to_target")
@@ -38,6 +40,8 @@ class DeepConv(MessagePassing):
         self.upd_nn_bool = nns in ["upd", "both"]
         self.msg_nn_include_edge_attr = msg_nn_include_edge_attr
         self.residual = residual
+        self.msg_nn_final_linear = msg_nn_final_linear
+        self.upd_nn_final_linear = upd_nn_final_linear
 
         if n_global == 0:
             msg_nn_include_global = False
@@ -46,26 +50,28 @@ class DeepConv(MessagePassing):
         self.upd_nn_include_global = upd_nn_include_global
 
         # MSG NN
-        self.msg_nn: Union[torch.nn.Module, torch.nn.Identity] = torch.nn.Identity()
+        self.msg_nn: torch.nn.Module = torch.nn.Identity()
         if self.msg_nn_bool:
             self.msg_nn = FFN(
                 in_features
                 + (n_global if msg_nn_include_global else 0)
                 + (1 if msg_nn_include_edge_attr else 0),
                 in_features if self.upd_nn_bool else out_features,
+                final_linear=self.msg_nn_final_linear,
             )
         else:
             # assert not (msg_nn_include_edge_attr or msg_nn_include_global)
             pass
 
         # UPD NN
-        self.update_nn: Union[torch.Module, torch.nn.Identity] = torch.nn.Identity()
+        self.update_nn: torch.nn.Module = torch.nn.Identity()
         if self.upd_nn_bool:
             self.update_nn = FFN(
                 2 * in_features
                 + +n_cond
                 + (n_global if upd_nn_include_global else 0),
                 out_features,
+                final_linear=self.upd_nn_final_linear,
             )
         else:
             # assert not upd_nn_include_global
@@ -141,7 +147,7 @@ class DeepConv(MessagePassing):
                 size=(num_nodes, num_nodes),
             )
             if self.residual:
-                new_x = new_x + x[..., : self.out_features]
+                new_x[..., : self.in_features] += x[..., : self.out_features]
         # If the egde attr are not included, we apply a transformation
         # before the message instead of transforming the message
         else:

@@ -17,24 +17,28 @@ class MPLSeq(torch.nn.Module):
 
     def __init__(
         self,
-        conv_name,
+        conv_name: str,
         in_features: int,
         out_features: int,
         n_cond: int,
         n_global: int,
         n_mpl: int,
         n_hidden_nodes: int,
+        skip_connecton: bool,
         layer_param: dict,
     ):
         super().__init__()
         self.n_cond = n_cond
         self.n_global = n_global
+        self.skip_connecton = skip_connecton
+        self.in_features = in_features
+        self.out_features = out_features
 
         if n_mpl == 0:
             assert in_features == out_features
             self.mpls = torch.nn.ModuleList([])
         else:
-            features = (
+            self.features = (
                 [in_features]
                 + [n_hidden_nodes for _ in range(n_mpl - 1)]
                 + [out_features]
@@ -43,22 +47,30 @@ class MPLSeq(torch.nn.Module):
                 [
                     self.wrap_layer_init(
                         conv_name,
-                        in_features=features[n_ftx],
-                        out_features=features[n_ftx + 1],
+                        in_features=self.features[n_ftx],
+                        out_features=self.features[n_ftx + 1],
                         layer_param=layer_param,
                     )
-                    for n_ftx in range(len(features) - 1)
+                    for n_ftx in range(len(self.features) - 1)
                 ]
             )
 
     def wrap_layer_init(self, conv_name, in_features, out_features, layer_param):
         if conv_name == "GINCConv":
             return GINCConv(
-                FFN(in_features + self.n_cond + self.n_global, out_features)
+                FFN(
+                    in_features + self.n_cond + self.n_global,
+                    out_features,
+                    **layer_param,
+                )
             )
         elif conv_name == "GINConv":
             return GINConv(
-                FFN(in_features + self.n_cond + self.n_global, out_features)
+                FFN(
+                    in_features + self.n_cond + self.n_global,
+                    out_features,
+                    **layer_param,
+                )
             )
         elif conv_name == "DeepConv":
             return DeepConv(
@@ -120,6 +132,11 @@ class MPLSeq(torch.nn.Module):
         edge_attr: Optional[torch.Tensor] = None,
         global_features: Optional[torch.Tensor] = None,
     ) -> torch.Tensor:
+        assert x.shape[-1] == self.in_features
+        if len(self.mpls) == 0:
+            return x
+        if self.skip_connecton:
+            x_clone = x.clone()
         for conv in self.mpls:
             x = self.wrap_mpl(
                 layer=conv,
@@ -130,4 +147,8 @@ class MPLSeq(torch.nn.Module):
                 batch=batch,
                 global_features=global_features,
             )
+
+        assert x.shape[-1] == self.out_features
+        if self.skip_connecton:
+            x[..., : self.in_features] += x_clone[..., : self.out_features]
         return x

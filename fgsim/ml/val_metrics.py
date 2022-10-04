@@ -19,9 +19,10 @@ class ValidationMetrics:
         self._lastlosses: Dict[str, List[float]] = {}
         self.metric_aggr = MetricAggregator(train_log.history["val_metrics"])
 
-        for metric_name, metric_conf in conf.training.val.metrics.items():
+        for metric_name in conf.training.val.metrics:
             assert metric_name != "parts"
-            params = metric_conf if metric_conf is not None else DictConfig({})
+            # params = metric_conf if metric_conf is not None else DictConfig({})
+            params = DictConfig({})
             loss = import_metric(metric_name, params)
 
             self.parts[metric_name] = loss
