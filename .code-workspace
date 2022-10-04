@@ -23,7 +23,7 @@
             {
                 "args": [
                     "--hash",
-                    "4dd1fcb",
+                    "728d65e",
                     // "--ray",
                     // "--debug",
                     "train"
@@ -38,7 +38,21 @@
             {
                 "args": [
                     "--tag",
-                    "hgcal_smoothing",
+                    "two_moons_gincconv",
+                    "--debug",
+                    "setup"
+                ],
+                "cwd": "/home/mscham/fgsim",
+                // "justMyCode": false,
+                "module": "fgsim",
+                "name": "tr setup",
+                "request": "launch",
+                "type": "python"
+            },
+            {
+                "args": [
+                    "--tag",
+                    "two_moons_gincconv",
                     "--debug",
                     "train"
                 ],
@@ -52,7 +66,7 @@
             {
                 "args": [
                     "--tag",
-                    "hgcal_smoothing",
+                    "two_moons_gincconv",
                     "--debug",
                     "test"
                 ],
@@ -66,7 +80,7 @@
             {
                 "args": [
                     "--tag",
-                    "hgcal_smoothing",
+                    "two_moons_gincconv",
                     "--debug",
                     "preprocess"
                 ],
@@ -83,6 +97,20 @@
                 "request": "launch",
                 "program": "raytune/tune.py",
                 "type": "python",
+                "justMyCode": true,
+            },
+            {
+                "cwd": "/home/mscham/fgsim",
+                "name": "file",
+                "request": "launch",
+                "program": "fgsim/__main__.py",
+                "type": "python",
+                "args": [
+                    "--tag",
+                    "two_moons_gincconv",
+                    "--debug",
+                    "train"
+                ],
                 "justMyCode": true,
             },
         ],
@@ -166,6 +194,9 @@
             "zsh": {
                 "path": "${env:HOME}/.apps/CentOSLinux7/bin/zsh",
             }
+        },
+        "editor.codeActionsOnSave": {
+            "source.organizeImports": false
         }
     },
     "tasks": {
