@@ -21,8 +21,8 @@ def compute_conf(default, *confs):
     # Assert, that only keys existing in the default are overwritten
     default_key_set = set(dict_to_keylist(default))
     for c in confs:
-        c_key_set = set(dict_to_keylist(c))
-        if c_key_set <= default_key_set:
+        c_key_set = set(dict_to_keylist(c)) - {"/hash", "/debug", "/command"}
+        if not c_key_set.issubset(default_key_set):
             raise Exception(
                 "Key not present in the default config."
                 f" Difference:\n{c_key_set - default_key_set}"
