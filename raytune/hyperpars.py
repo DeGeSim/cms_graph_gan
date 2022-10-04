@@ -34,7 +34,7 @@ hyperpars = {
     },
     "ffn": {
         "hidden_layer_size": tune.randint(20, 2048),
-        "n_layers": tune.randint(1, 10),
+        "n_layers": tune.randint(1, 12),
         "norm": tune.choice(["batchnorm", "layernorm", "none"]),
     },
     "tree_width": tune.choice(["wide", "slim"]),
