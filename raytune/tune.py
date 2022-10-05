@@ -55,6 +55,8 @@ class Trainable(tune.Trainable):
         fgsim.config.conf, _ = fgsim.config.compute_conf(
             fgsim.config.defaultconf, rayconf, self.exp_config
         )
+        assert fgsim.config.conf.hash in self.logdir
+        assert self.trial_id == fgsim.config.conf.hash
         OmegaConf.save(fgsim.config.conf, Path(self.logdir) / "conf.yaml")
         fgsim.config.device = fgsim.config.get_device()
         from fgsim.monitoring.logger import init_logger
