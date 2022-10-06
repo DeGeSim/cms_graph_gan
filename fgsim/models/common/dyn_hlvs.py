@@ -14,7 +14,7 @@ class DynHLVsLayer(nn.Module):
         self.n_global = n_global
         self.n_cond = n_cond
         self.batch_size = batch_size
-        if self.n_cond == 0:
+        if self.n_global == 0:
             return
 
         self.pre_nn: nn.Module = FFN(self.n_features, self.n_features)
@@ -23,7 +23,7 @@ class DynHLVsLayer(nn.Module):
     def forward(
         self, x: torch.Tensor, cond: torch.Tensor, batch: torch.Tensor
     ) -> torch.Tensor:
-        if self.n_cond == 0:
+        if self.n_global == 0:
             return torch.empty(
                 self.batch_size, self.n_global, dtype=torch.float, device=x.device
             )

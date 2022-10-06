@@ -13,8 +13,8 @@ class FFN(nn.Module):
         norm: Optional[str] = None,
         dropout: Optional[bool] = None,
         n_layers: Optional[int] = None,
-        n_nodes_per_layer: Optional[int] = None,
         final_linear: Optional[bool] = False,
+        n_nodes_per_layer: Optional[int] = None,
     ) -> None:
         if norm is None:
             norm = conf.ffn.norm

@@ -134,7 +134,7 @@ class MPLSeq(torch.nn.Module):
     ) -> torch.Tensor:
         assert x.shape[-1] == self.in_features
         if len(self.mpls) == 0:
-            return x
+            return x[..., : self.out_features]
         if self.skip_connecton:
             x_clone = x.clone()
         for conv in self.mpls:

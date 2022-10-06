@@ -33,7 +33,9 @@ class BranchingLayer(nn.Module):
         n_global: int,
         level: int,
         n_cond: int,
-        residual: bool = True,
+        residual: bool,
+        final_linear: bool,
+        norm: bool,
     ):
         super().__init__()
         assert 0 <= level < len(tree.features)
@@ -45,9 +47,14 @@ class BranchingLayer(nn.Module):
         self.n_cond = n_cond
         self.level = level
         self.residual = residual
+        self.final_linear = final_linear
+        self.norm = norm
 
         self.proj_nn = FFN(
-            self.n_features + n_global + n_cond, self.n_features * self.n_branches
+            self.n_features + n_global + n_cond,
+            self.n_features * self.n_branches,
+            norm=self.norm,
+            final_linear=self.final_linear,
         )
 
     # Split each of the leafs in the the graph.tree into n_branches and connect them

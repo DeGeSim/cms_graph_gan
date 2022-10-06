@@ -74,7 +74,9 @@ model_param_options:
         n_cond: ${len:${loader.y_features}}
         all_points: False
         branching_param:
-            residual: True
+            residual: False
+            final_linear: False
+            norm: batchnorm
         connect_all_ancestors: True
         ancestor_mpl:
             n_mpl: 1

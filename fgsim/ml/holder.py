@@ -50,12 +50,13 @@ class Holder:
 
         self.models: SubNetworkCollector = SubNetworkCollector(conf.models)
         self.models = self.models.float()
-        # from torchinfo import summary
-        # for _, model in self.models.parts.items():
-        #     try:
-        #         summary(model)
-        #     except Exception:
-        #         pass
+        from torchinfo import summary
+
+        for _, model in self.models.parts.items():
+            try:
+                summary(model)
+            except Exception:
+                pass
         self.train_log.log_model_graph(self.models)
         self.losses: LossesCol = LossesCol(self.train_log)
         self.val_loss: ValidationMetrics = ValidationMetrics(self.train_log)
