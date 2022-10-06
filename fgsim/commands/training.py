@@ -12,11 +12,13 @@ from fgsim.ml.holder import Holder
 from fgsim.ml.smoothing import smooth_features
 from fgsim.ml.validation import validate
 from fgsim.monitoring.train_log import TrainLog
+from fgsim.utils.model_summary import log_model
 
 
 class Trainer:
     def __init__(self, holder: Holder) -> None:
         self.holder = holder
+        log_model(self.holder)
         if early_stopping(self.holder):
             exit()
         self.train_log: TrainLog = self.holder.train_log
