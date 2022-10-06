@@ -62,6 +62,7 @@ def object_gen(props: Dict[str, int]) -> DTColl:
         branches=branches,
         features=features,
         batch_size=batch_size,
+        connect_all_ancestors=True,
     )
     branching_layers = [
         BranchingLayer(
@@ -83,16 +84,18 @@ def object_gen(props: Dict[str, int]) -> DTColl:
     )
 
     ancestor_conv_layer = DeepConv(
-        add_self_loops=True,
-        nns="both",
-        msg_nn_include_edge_attr=False,
-        msg_nn_include_global=True,
-        upd_nn_include_global=True,
         in_features=n_features,
         out_features=n_features,
+        nns="both",
         n_global=n_global,
         n_cond=n_cond,
-        residual=False,
+        add_self_loops=True,
+        msg_nn_include_edge_attr=True,
+        msg_nn_include_global=False,
+        upd_nn_include_global=True,
+        msg_nn_final_linear=True,
+        upd_nn_final_linear=True,
+        residual=True,
     )
 
     # BatchNorm makes the batches dependent
@@ -103,8 +106,9 @@ def object_gen(props: Dict[str, int]) -> DTColl:
         ow_nn = FFN(
             ow_nn.input_dim,
             ow_nn.output_dim,
-            batchnorm=False,
+            norm="none",
             dropout=False,
+            final_linear=False,
         )
         return ow_nn
 

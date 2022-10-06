@@ -58,8 +58,8 @@ layer_options:
         add_self_loops: True
         nns: upd
         msg_nn_include_edge_attr: False
-        msg_nn_include_global: True
-        msg_nn_final_linear: True
+        msg_nn_include_global: False
+        msg_nn_final_linear: False
         upd_nn_include_global: True
         upd_nn_final_linear: True
         residual: False
@@ -191,7 +191,11 @@ mpgan_mask:
 
 tree:
     branches: [2, 4, 16]
-    features: [512, 128, 16, "${loader.n_features}"]
+    features:
+        - 512
+        - 128
+        - 16
+        - 4
 # tree:
 #     branches: [2, 3, 5]
 #     features: [64, 32, 16, "${loader.n_features}"]

@@ -12,7 +12,7 @@ class Tree:
         batch_size: int,
         branches: List[int],
         features: List[int],
-        connect_all_ancestors: bool = False,
+        connect_all_ancestors: bool,
     ):
         self.batch_size = batch_size
         self.branches = branches
@@ -127,17 +127,17 @@ class Tree:
         )
 
     def ancestor_ei(self, ilevel):
-        if ilevel == 0 or ilevel > self.n_levels:
+        if ilevel == 0 or ilevel >= self.n_levels:
             raise IndexError
         return torch.hstack(self.ancestor_edge_index_p_level[: ilevel + 1])
 
     def ancestor_ea(self, ilevel):
-        if ilevel == 0 or ilevel > self.n_levels:
+        if ilevel == 0 or ilevel >= self.n_levels:
             raise IndexError
         return torch.vstack(self.ancestor_edge_attrs_p_level[: ilevel + 1])
 
     def children_ei(self, ilevel):
-        if ilevel == 0 or ilevel > self.n_levels:
+        if ilevel == 0 or ilevel >= self.n_levels:
             raise IndexError
         return torch.hstack(self.children_edge_index_p_level[: ilevel + 1])
 

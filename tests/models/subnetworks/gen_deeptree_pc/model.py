@@ -12,9 +12,8 @@ def test_GlobalFeedBackNN_ancestor_conv(static_objects: DTColl):
     tree = static_objects.tree
     n_global = static_objects.props["n_global"]
     n_levels = static_objects.props["n_levels"]
-    for ilevel in range(n_levels):
-        if ilevel > 0:
-            graph = branching_layers[ilevel - 1](graph)
+    for ilevel in range(n_levels - 1):
+        graph = branching_layers[ilevel](graph)
         # ### Global
         graph.global_features = dyn_hlvs_layer(
             x=graph.tftx, cond=graph.cond, batch=graph.tbatch
@@ -23,8 +22,8 @@ def test_GlobalFeedBackNN_ancestor_conv(static_objects: DTColl):
         graph.tftx = ancestor_conv_layer(
             x=graph.tftx,
             cond=graph.cond,
-            edge_index=tree.ancestor_ei(ilevel),
-            edge_attr=tree.ancestor_ea(ilevel),
+            edge_index=tree.ancestor_ei(ilevel + 1),
+            edge_attr=tree.ancestor_ea(ilevel + 1),
             batch=graph.tbatch,
             global_features=graph.global_features,
         )
@@ -44,9 +43,8 @@ def test_GlobalFeedBackNN_GINConv(static_objects: DTColl):
         )
     )
 
-    for ilevel in range(n_levels):
-        if ilevel > 0:
-            graph = branching_layers[ilevel - 1](graph)
+    for ilevel in range(n_levels - 1):
+        graph = branching_layers[ilevel](graph)
         # ### Global
         global_features = dyn_hlvs_layer(
             x=graph.tftx, cond=graph.cond, batch=graph.tbatch
@@ -55,7 +53,7 @@ def test_GlobalFeedBackNN_GINConv(static_objects: DTColl):
 
         graph.tftx = conv(
             x=torch.hstack([graph.tftx, global_features[graph.tbatch]]),
-            edge_index=tree.ancestor_ei(ilevel),
+            edge_index=tree.ancestor_ei(ilevel + 1),
         )
 
 
@@ -91,8 +89,8 @@ def test_full_NN_compute_graph(static_objects: DTColl):
             x=graph.tftx,
             cond=graph.cond,
             global_features=graph.global_features,
-            edge_index=tree.ancestor_ei(ilevel),
-            edge_attr=tree.ancestor_ea(ilevel),
+            edge_index=tree.ancestor_ei(ilevel + 1),
+            edge_attr=tree.ancestor_ea(ilevel + 1),
             batch=graph.tbatch,
         )
         leaf = tree_lists[ilevel][0]
@@ -124,7 +122,7 @@ def test_full_modelparts_grad():
 
     # normalization needs to be set to false, otherwise Batchnorm
     # will propagate some gradient betweeen the events
-    conf.ffn.batchnorm = False
+    conf.ffn.norm = "none"
     conf.ffn.dropout = False
     model = ModelClass(**defaultconf.model_param_options.gen_deeptree).to(device)
 
@@ -168,7 +166,7 @@ def test_full_modelparts_grad():
     check_z()
 
     # Do the branching
-    for ilevel in range(n_levels):
+    for ilevel in range(n_levels - 1):
         # Assign the global features
         graph_tree.global_features = model.dyn_hlvs_layers[ilevel](
             x=graph_tree.tftx_by_level[ilevel][..., : features[-1]],
@@ -187,8 +185,8 @@ def test_full_modelparts_grad():
         graph_tree.tftx = model.ancestor_conv_layers[ilevel](
             x=graph_tree.tftx,
             cond=graph_tree.cond,
-            edge_index=model.tree.ancestor_ei(ilevel),
-            edge_attr=model.tree.ancestor_ea(ilevel),
+            edge_index=model.tree.ancestor_ei(ilevel + 1),
+            edge_attr=model.tree.ancestor_ea(ilevel + 1),
             batch=graph_tree.tbatch,
             global_features=graph_tree.global_features,
         )
@@ -198,7 +196,7 @@ def test_full_modelparts_grad():
         graph_tree.tftx = model.child_conv_layers[ilevel](
             x=graph_tree.tftx,
             cond=graph_tree.cond,
-            edge_index=model.tree.children_ei(ilevel),
+            edge_index=model.tree.children_ei(ilevel + 1),
             batch=graph_tree.tbatch,
             global_features=graph_tree.global_features,
         )
@@ -226,7 +224,7 @@ def test_full_model_grad():
     from fgsim.config import conf, defaultconf, device
     from fgsim.models.gen.gen_deeptree import ModelClass
 
-    conf.ffn.batchnorm = False
+    conf.ffn.norm = "none"
     conf.ffn.dropout = False
     model = ModelClass(**defaultconf.model_param_options.gen_deeptree).to(device)
 

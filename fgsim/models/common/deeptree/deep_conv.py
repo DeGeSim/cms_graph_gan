@@ -49,33 +49,34 @@ class DeepConv(MessagePassing):
         self.msg_nn_include_global = msg_nn_include_global
         self.upd_nn_include_global = upd_nn_include_global
 
+        if self.msg_nn_bool and self.upd_nn_bool:
+            assert not (self.msg_nn_include_global and self.upd_nn_include_global)
+
         # MSG NN
         self.msg_nn: torch.nn.Module = torch.nn.Identity()
         if self.msg_nn_bool:
             self.msg_nn = FFN(
-                in_features
+                self.in_features
                 + (n_global if msg_nn_include_global else 0)
                 + (1 if msg_nn_include_edge_attr else 0),
-                in_features if self.upd_nn_bool else out_features,
+                self.in_features if self.upd_nn_bool else self.out_features,
                 final_linear=self.msg_nn_final_linear,
             )
         else:
-            # assert not (msg_nn_include_edge_attr or msg_nn_include_global)
-            pass
+            assert not (self.msg_nn_include_edge_attr or self.msg_nn_include_global)
 
         # UPD NN
         self.update_nn: torch.nn.Module = torch.nn.Identity()
         if self.upd_nn_bool:
             self.update_nn = FFN(
-                2 * in_features
-                + +n_cond
-                + (n_global if upd_nn_include_global else 0),
+                2 * self.in_features
+                + self.n_cond
+                + (self.n_global if self.upd_nn_include_global else 0),
                 out_features,
                 final_linear=self.upd_nn_final_linear,
             )
         else:
-            # assert not upd_nn_include_global
-            pass
+            assert not upd_nn_include_global
 
     def forward(
         self,
@@ -133,52 +134,25 @@ class DeepConv(MessagePassing):
                     num_nodes=num_nodes,
                 )
 
+        x_clone = x.clone()
+
         # Generate a global feature vector in shape of x
         glo_ftx_mtx = global_features[batch, :]
         glo_cond = cond[batch, :]
-        # If the egde_attrs are included, we transforming the message
-        if self.msg_nn_include_edge_attr:
-            new_x = self.propagate(
-                edge_index=edge_index,
-                edge_attr=edge_attr,
-                x=x,
-                cond=glo_cond,
-                glo_ftx_mtx=glo_ftx_mtx,
-                size=(num_nodes, num_nodes),
-            )
-            if self.residual:
-                new_x[..., : self.in_features] += x[..., : self.out_features]
-        # If the egde attr are not included, we apply a transformation
-        # before the message instead of transforming the message
-        else:
-            # Generate a global feature vector in shape of x
-            if self.msg_nn_include_global:
-                xtransform = self.msg_nn(torch.hstack([x, glo_ftx_mtx]))
-            else:
-                xtransform = self.msg_nn(x)
 
-            new_x = self.propagate(
-                edge_index=edge_index,
-                edge_attr=edge_attr,  # required, pass as empty
-                cond=glo_cond,
-                x=xtransform,
-                glo_ftx_mtx=glo_ftx_mtx,  # required, pass as empty
-                size=(num_nodes, num_nodes),
-            )
-            if self.residual:
-                if self.out_features == self.in_features:
-                    new_x = new_x + x
-                elif self.out_features < self.in_features:
-                    # Downscale: propagate only part of tftx to new_x
-                    new_x = new_x + x[..., : self.out_features]
-                else:
-                    # Upscale: propagate tftx to a part of newx
-                    new_x[..., : self.in_features] = (
-                        new_x[..., : self.in_features] + x
-                    )
+        x = self.propagate(
+            edge_index=edge_index,
+            edge_attr=edge_attr,  # required, pass as empty
+            cond=glo_cond,
+            x=x,
+            glo_ftx_mtx=glo_ftx_mtx,  # required, pass as empty
+            size=(num_nodes, num_nodes),
+        )
+        if self.residual:
+            x[..., : self.in_features] += x_clone[..., : self.out_features]
 
         # self loop
-        return new_x
+        return x
 
     def message(
         self,
@@ -215,5 +189,23 @@ class DeepConv(MessagePassing):
             upd = aggr_out
         return upd
 
-    def __repr__(self):
-        return f"AncestorConv(msg_nn={self.msg_nn}\n, update_nn={self.update_nn}\n)"
+    def __repr__(self) -> str:
+        return f"""\
+DeepConv({self.in_features}->{self.out_features},\
+    n_cond: {self.n_cond},\
+    n_global: {self.n_global},\
+    add_self_loops: {self.add_self_loops},\
+    msg_nn:\
+        {{\
+            {self.msg_nn_bool},\
+            include_edge_attr: {self.msg_nn_include_edge_attr},\
+            include_global: {self.msg_nn_include_global},\
+            final_linear: {self.msg_nn_final_linear},\
+        }},\
+    upd_nn: {{\
+        {self.upd_nn_bool},\
+        include_global: {self.upd_nn_include_global},\
+        include_global: {self.upd_nn_final_linear},\
+    }},\
+    residual: {self.residual},\
+    )"""

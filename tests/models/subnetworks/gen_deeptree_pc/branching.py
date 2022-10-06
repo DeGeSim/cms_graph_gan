@@ -220,31 +220,33 @@ def test_BranchingLayer_shapes(dyn_objects: DTColl):
         n_parents = len(tree_lists[ilevel - 1])
         assert len(tree_lists[ilevel]) == n_parents * n_branches
 
-    for ilevel in range(n_levels):
-        if ilevel > 0:
-            graph = branching_layers[ilevel - 1](graph)
+    for ilevel in range(n_levels - 1):
+        graph = branching_layers[ilevel](graph)
         # split once
         # tftx shape testing
         assert graph.tftx.shape[1] == n_features
         assert graph.tftx.shape[0] == batch_size * sum(
-            [n_branches**i for i in range(ilevel + 1)]
+            [n_branches**i for i in range(ilevel + 2)]
         )
         if ilevel == 0:
             continue
         # edge_index shape testing
-        assert tree.ancestor_ei(ilevel).shape[0] == 2
+        assert tree.ancestor_ei(ilevel + 1).shape[0] == 2
         # Number of connections
         # Sum n_branches^ilayer*ilayer for ilayer in 0..nlayers
-        assert tree.ancestor_ei(ilevel).shape[1] == batch_size * sum(
-            [n_branches**i * i for i in range(ilevel + 1)]
+        assert tree.ancestor_ei(ilevel + 1).shape[1] == batch_size * sum(
+            [
+                n_branches**i * i for i in range(ilevel + 2)
+            ]  # with connect_all_ancestors
+            # [n_branches**i for i in range(ilevel + 2)] # withput connect_all_ancestors
         )
 
-        conlist = tree.ancestor_ei(ilevel).T.cpu().numpy().tolist()
+        conlist = tree.ancestor_ei(ilevel + 1).T.cpu().numpy().tolist()
         connections = {tuple(e) for e in conlist}
         # No double connections
         assert len(connections) == len(conlist)
 
-    conlist = tree.ancestor_ei(ilevel).T.cpu().numpy().tolist()
+    conlist = tree.ancestor_ei(ilevel + 1).T.cpu().numpy().tolist()
     connections = {tuple(e) for e in conlist}
 
     def recurr_check_connection(node: Node, ancestors_idxs: List[np.ndarray]):
