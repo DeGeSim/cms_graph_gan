@@ -87,6 +87,7 @@ def xyscatter_faint(
     title: str,
     v1name: str,
     v2name: str,
+    step: Optional[int] = None,
 ) -> plt.Figure:
     if len(sim) > 5000:
         sampleidxs = np.random.choice(sim.shape[0], size=5000, replace=False)
@@ -123,6 +124,8 @@ def xyscatter_faint(
         xlim=xrange,
         ylim=yrange,
     )
+    if step is not None:
+        title += f"\nStep {step}"
     g.fig.suptitle(title)
     # g.ax_joint.collections[0].set_alpha(0)
     # g.fig.tight_layout()

@@ -12,7 +12,6 @@ import torch
 from scipy.stats import wasserstein_distance
 from torch_geometric.data import Batch
 from torch_scatter import scatter_mean
-from tqdm import tqdm
 
 from fgsim.config import conf, device
 from fgsim.io.queued_dataset import QueuedDataset
@@ -115,7 +114,7 @@ def get_testing_datasets(holder: Holder) -> TestDataset:
         # Sample at least 2k events
         # n_batches = int(conf.testing.n_events / batch_size)
         # assert n_batches <= len(loader.testing_batches)
-        ds_dict = {"sim": qds.testing_batch}
+        ds_dict = {}
 
         for best_or_last in ["best", "last"]:
             # Check if we need to rerun the model
@@ -125,14 +124,28 @@ def get_testing_datasets(holder: Holder) -> TestDataset:
 
             holder.models.eval()
 
-            gen_graphs = []
-            for _ in tqdm(range(conf.loader.test_set_size // batch_size)):
-                holder.reset_gen_points()
-                for igraph in range(batch_size):
-                    gen_graphs.append(holder.gen_points.get_example(igraph))
-            gen_batch = Batch.from_data_list(gen_graphs)
-
-            ds_dict[best_or_last] = gen_batch
+            res_d_l = {
+                "sim_batch": [],
+                "gen_batch": [],
+            }
+            for test_batch in qds.testing_batches:
+                for k, val in holder.pass_batch_through_model(
+                    test_batch.to(holder.device)
+                ).items():
+                    if k in ["sim_batch", "gen_batch"]:
+                        for e in val.to_data_list():
+                            res_d_l[k].append(e)
+                    # else:
+                    #     res_d_l[k].append(val)
+            # d_sim = torch.hstack(res_d_l["d_sim"])
+            # d_gen = torch.hstack(res_d_l["d_gen"])
+            if "sim" not in ds_dict:
+                ds_dict["sim"] = Batch.from_data_list(res_d_l["sim_batch"]).to(
+                    "cpu"
+                )
+            ds_dict[best_or_last] = Batch.from_data_list(res_d_l["gen_batch"]).to(
+                "cpu"
+            )
 
         # scale all the samples
         for k in ds_dict.keys():

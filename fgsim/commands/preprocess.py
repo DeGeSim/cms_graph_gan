@@ -38,9 +38,9 @@ Processing validation batches, queuing {len(data_loader.validation_chunks)} chun
 Processing testing batches, queuing {len(data_loader.testing_chunks)} chunks."""
     )
     # Test Batch
-    data_loader.shared_batch_size.value = conf.loader.test_set_size
+    # data_loader.shared_batch_size.value = conf.loader.test_set_size
     data_loader.qfseq.queue_iterable(data_loader.testing_chunks)
-    test_batch = [e for e in data_loader.qfseq][0]
+    test_batch = [e for e in data_loader.qfseq]
     torch.save(test_batch, conf.path.test)
     logger.warning(f"Testing batches pickled to {conf.path.test}.")
 

@@ -114,7 +114,7 @@ must queue an epoch via `queue_epoch()` and iterate over the instance of the cla
         return self._validation_batches
 
     @property
-    def testing_batch(self):
+    def testing_batches(self):
         if not hasattr(self, "_testing_batches"):
             logger.debug("Testing batches not loaded, loading from disk.")
             self._testing_batches = torch.load(

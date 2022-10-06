@@ -35,7 +35,7 @@ class MPLSeq(torch.nn.Module):
         self.out_features = out_features
 
         if n_mpl == 0:
-            assert in_features == out_features
+            # assert in_features == out_features
             self.mpls = torch.nn.ModuleList([])
         else:
             self.features = (
