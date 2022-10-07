@@ -201,6 +201,8 @@ class ModelClass(nn.Module):
         if self.final_layer_scaler:
             batch.x = self.ftx_scaling(batch.x)
 
+        assert batch.x.shape[0] == conf.loader.n_points * conf.loader.batch_size
+        assert batch.x.shape[-1] == conf.loader.n_features
         return batch
 
     def to(self, device):

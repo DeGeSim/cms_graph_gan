@@ -21,6 +21,8 @@ def dcd(x, gt, alpha=1, lpnorm=2.0, pow=1.0, n_lambda=1, non_reg=False):
     # dist1 (batch_size, n_gt): a gt point finds its nearest neighbour x' in x;
     # idx1  (batch_size, n_gt): the idx of x' \in [0, n_x-1]
     # dist2 and idx2: vice versa
+    assert torch.all(dist1 >= 0)
+    assert torch.all(dist2 >= 0)
     exp_dist1, exp_dist2 = torch.exp(-dist1 * alpha), torch.exp(-dist2 * alpha)
 
     count1 = torch.zeros_like(idx2)
@@ -28,13 +30,16 @@ def dcd(x, gt, alpha=1, lpnorm=2.0, pow=1.0, n_lambda=1, non_reg=False):
     weight1 = count1.gather(1, idx1.long()).float().detach() ** n_lambda
     weight1 = (weight1 + 1e-6) ** (-1) * frac_21
     loss1 = (1 - exp_dist1 * weight1).mean(dim=1)
+    if torch.any(loss1 < 0):
+        raise Exception
 
     count2 = torch.zeros_like(idx1)
     count2.scatter_add_(1, idx2.long(), torch.ones_like(idx2))
     weight2 = count2.gather(1, idx2.long()).float().detach() ** n_lambda
     weight2 = (weight2 + 1e-6) ** (-1) * frac_12
     loss2 = (1 - exp_dist2 * weight2).mean(dim=1)
-
+    if torch.any(loss2 < 0):
+        raise Exception
     return (loss1 + loss2) / 2
 
 
@@ -77,6 +82,7 @@ def distChamfer(a, b, lpnorm=2.0, pow=1.0):
     """
     # original implementation equivalent to
     P = torch.pow(torch.cdist(a, b, p=lpnorm), pow)
+    # assert torch.all(P >= 0)
     return (
         torch.min(P, 2)[0],
         torch.min(P, 1)[0],

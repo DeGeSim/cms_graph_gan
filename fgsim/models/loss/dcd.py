@@ -1,5 +1,5 @@
-from fgsim.io.sel_loader import Batch
-from fgsim.ml.holder import Holder
+from torch_geometric.data import Batch
+
 from fgsim.models.metrics.dcd import dcd
 
 
@@ -14,7 +14,6 @@ class LossGen:
 
     def __call__(
         self,
-        holder: Holder,
         sim_batch: Batch,
         gen_batch: Batch,
         **kwargs,
@@ -34,4 +33,6 @@ class LossGen:
         ).mean()
         # if holder.state.epoch >= 150:
         #     loss *= 0
+        if loss < 0:
+            raise Exception
         return loss

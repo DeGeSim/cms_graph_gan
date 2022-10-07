@@ -1,10 +1,9 @@
 from typing import List
 
 import torch
+from torch_geometric.data import Batch
 
 from fgsim.config import conf
-from fgsim.io.sel_loader import Batch
-from fgsim.ml.holder import Holder
 
 from .mmd import MMD
 
@@ -17,14 +16,14 @@ class LossGen:
         self.bandwidth = bandwidth
         self.batch_wise = batch_wise
 
-    def __call__(self, holder: Holder, batch: Batch, *args, **kwargs):
-        n_features = batch.x.shape[1]
-        batch_size = int(batch.batch[-1] + 1)
+    def __call__(self, sim_batch: Batch, gen_batch: Batch, **kwargs):
+        n_features = sim_batch.x.shape[1]
+        batch_size = int(sim_batch.batch[-1] + 1)
         shape = (
             (1, -1, n_features) if self.batch_wise else (batch_size, -1, n_features)
         )
-        sim_sample = batch.x.reshape(*shape)
-        gen_sample = holder.gen_points_w_grad.x.reshape(*shape)
+        sim_sample = sim_batch.x.reshape(*shape)
+        gen_sample = gen_batch.x.reshape(*shape)
 
         losses: List[torch.Tensor] = []
         for ifeature in range(conf.loader.n_features):
@@ -36,7 +35,10 @@ class LossGen:
                     kernel=self.kernel,
                 )
             )
-        return sum(losses)
+        loss = sum(losses)
+        if loss < 0:
+            raise Exception
+        return loss
 
 
 def sort_by_feature(batch: torch.Tensor, ifeature: int) -> torch.Tensor:

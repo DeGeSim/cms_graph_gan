@@ -197,7 +197,7 @@ tree:
         - 512
         - 128
         - 16
-        - 4
+        - ${loader.n_features}
 # tree:
 #     branches: [2, 3, 5]
 #     features: [64, 32, 16, "${loader.n_features}"]
