@@ -12,9 +12,7 @@ from ray.tune.suggest.hyperopt import HyperOptSearch
 import fgsim.config
 
 run_name = "jetnet-deeptree4"
-rayconf = OmegaConf.load(
-    Path(f"~/fgsim/wd/ray/{run_name}/config.yaml").expanduser()
-)
+rayconf = OmegaConf.load(Path(f"~/fgsim/wd/ray/{run_name}/conf.yaml").expanduser())
 
 
 def process_tree_conf(exp_config):
