@@ -4,6 +4,7 @@ loglevel_qf: 30
 seed: 0
 comet_project_name: "hgcal"
 ray: False
+remote: False
 
 models:
     gen:
@@ -318,8 +319,8 @@ loader_options:
         preprocess_training: True
         chunk_size: 1000
         batch_size: 200
-        validation_set_size: 1000
-        test_set_size: 5000
+        validation_set_size: 10000
+        test_set_size: 50000
         scaling_fit_size: 100
         events_per_file: 10000
         prefetch_batches: 10
@@ -363,5 +364,3 @@ loader_options:
         dataset_glob: "**/t.hdf5"
         chunk_size: 5000
         batch_size: 200
-        validation_set_size: 10000
-        test_set_size: 50000

@@ -57,6 +57,7 @@ def compute_conf(default, *confs):
             "debug",
             "loglevel",
             "loglevel_qf",
+            "remote",
             "path",
         ]
         + [key for key in conf.keys() if key.endswith("_options")],
@@ -82,8 +83,9 @@ conf: DictConfig = defaultconf.copy()
 hyperparameters: DictConfig({})
 
 
-def parse_arg_conf():
-    args = get_args()
+def parse_arg_conf(args=None):
+    if args is None:
+        args = get_args()
     if args.hash is not None:
         try:
             if args.ray:
@@ -101,14 +103,14 @@ def parse_arg_conf():
 
         return conf, hyperparameters
     else:
-        fn = f"wd/{args.tag}/config.yaml"
+        fn = f"wd/{args.tag}/conf.yaml"
         if os.path.isfile(fn):
             tagconf = OmegaConf.load(fn)
         else:
             if args.tag == "default":
                 tagconf = OmegaConf.create({})
             else:
-                raise FileNotFoundError
+                raise FileNotFoundError(f"Tag {args.tag} has no conf.yaml file.")
         conf, hyperparameters = compute_conf(defaultconf, tagconf, vars(args))
     return conf, hyperparameters
 

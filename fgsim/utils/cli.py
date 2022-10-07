@@ -26,6 +26,13 @@ parser.add_argument(
     default=False,
     required=False,
 )
+parser.add_argument(
+    "--remote",
+    dest="remote",
+    action="store_true",
+    default=False,
+    required=False,
+)
 commands = [
     "setup",
     "gethash",
@@ -64,25 +71,3 @@ def get_args():
     else:
         args = parser.parse_args()
     return args
-
-
-if __name__ == "__main__":
-    args = get_args()
-    if args.hash is None:
-        for tag in args.tag.split(","):
-            command = ""
-            for e in sys.argv[1:]:
-                if e is not args.tag:
-                    command += e + " "
-                else:
-                    command += tag + " "
-            print(args.command + " " + tag + " " + command)
-    else:
-        for tag in args.hash.split(","):
-            command = ""
-            for e in sys.argv[1:]:
-                if e is not args.hash:
-                    command += e + " "
-                else:
-                    command += tag + " "
-            print(args.command + " " + tag + " " + command)

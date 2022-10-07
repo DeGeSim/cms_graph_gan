@@ -131,10 +131,10 @@ def option_alpha(exp_config: ExperimentConfig) -> Dict[str, DictConfig]:
         dist = "dcd"
     else:
         return res
-    res["alpha1"]["loss_options"][dist]["alpha1"] = 1
-    res["alpha10"]["loss_options"][dist]["alpha1"] = 10
-    res["alpha50"]["loss_options"][dist]["alpha1"] = 50
-    res["alpha1000"]["loss_options"][dist]["alpha1"] = 1000
+    res["alpha1"]["loss_options"][dist]["alpha"] = 1
+    res["alpha10"]["loss_options"][dist]["alpha"] = 10
+    res["alpha50"]["loss_options"][dist]["alpha"] = 50
+    res["alpha1000"]["loss_options"][dist]["alpha"] = 1000
     return res
 
 
