@@ -6,8 +6,8 @@ from fgsim.io import FileManager, ScalerBase
 from .transform import transform
 
 
-def read_chunks(chunks: List[Tuple[Path, int, int]]) -> List[None]:
-    return [None for chunk in chunks for _ in range(chunk[2] - chunk[1])]
+def read_chunks(chunks: List[Tuple[Path, int, int]]) -> List[int]:
+    return [1 for chunk in chunks for _ in range(chunk[2] - chunk[1])]
 
 
 def path_to_len(_) -> int:

@@ -6,7 +6,8 @@ from torch_geometric.data import Data as Data
 from fgsim.config import conf
 
 
-def transform(_: None) -> Data:
+def transform(_: int) -> Data:
+    assert _ == 1
     x1, which_moon = make_moons(conf.loader.n_points)  # , noise = 0.01)
     mu = [0, 0]
     covar = [[0.01, 0], [0, 0.01]]

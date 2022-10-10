@@ -61,6 +61,7 @@ Processing testing batches, queuing {len(data_loader.testing_chunks)} chunks."""
             ifile += 1
             batch_list = []
     logger.info(f"Saving {output_file}")
-    torch.save(batch_list, f"{output_file}")
+    if len(batch_list) > 0:
+        torch.save(batch_list, f"{output_file}")
     data_loader.qfseq.stop()
     exit(0)
