@@ -170,6 +170,12 @@ must queue an epoch via `queue_epoch()` and iterate over the instance of the cla
         # the ones that are alread processed
         n_skip_batches = n_skip_events // conf.loader.batch_size
 
+        if n_skip_batches > 0:
+            logger.warning(
+                "Skipping"
+                f" {n_skip_batches}(/{self.n_training_events//conf.loader.batch_size})"
+                "  batches."
+            )
         for ibatch in range(n_skip_batches):
             _ = next(self.qfseq)
             logger.debug(f"Skipped batch({ibatch}).")
