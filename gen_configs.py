@@ -56,7 +56,7 @@ model_param_options:
         n_global: 0
         branching_param:
             residual: True
-            final_linear: False
+            final_linear: True
             norm: 'none'
         ancestor_mpl:
             n_mpl: 0
@@ -71,7 +71,7 @@ ffn:
     hidden_layer_size: 512
     n_layers: 3
     norm: layernorm
-    dropout: True
+    dropout: False
 
     """
     ),

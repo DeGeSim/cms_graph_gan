@@ -60,7 +60,7 @@ layer_options:
         nns: upd
         msg_nn_include_edge_attr: False
         msg_nn_include_global: False
-        msg_nn_final_linear: False
+        msg_nn_final_linear: True
         upd_nn_include_global: True
         upd_nn_final_linear: True
         residual: False
@@ -76,7 +76,7 @@ model_param_options:
         all_points: False
         branching_param:
             residual: False
-            final_linear: False
+            final_linear: True
             norm: batchnorm
         connect_all_ancestors: True
         ancestor_mpl:

@@ -66,8 +66,8 @@ class FFN(nn.Module):
                         self.seq.append(
                             nn.BatchNorm1d(
                                 features[ilayer + 1],
-                                affine=False,
-                                track_running_stats=False,
+                                # affine=False,
+                                # track_running_stats=False,
                             )
                         )
                     elif norm == "layernorm":
