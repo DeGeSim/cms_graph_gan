@@ -45,7 +45,7 @@ def run_args(args):
         ] + cmd
     else:
         cmd = ["python", "-m", "fgsim"] + cmd
-    cmd_str = " ".join(cmd)
+    cmd_str = "<[underline]" + " ".join(cmd) + "[/]>"
     # cmd = ["python", "/home/mscham/test.py"]
 
     color_start = "color(11)"
@@ -59,20 +59,27 @@ def run_args(args):
         style=style,
     )
 
-    console.log(f"[bold color(0) on {color_start}]  Start [/] :rocket: {cmd_str} ")
     start = datetime.now()
+    console.print(
+        "[bold color(0) on"
+        f" {color_start}]Start[/] [{start.strftime('%H:%M')}] :rocket: {cmd_str} "
+    )
+
     process = subprocess.run(cmd)
     end = datetime.now()
     dur_str = f":four_o’clock: {(end-start).seconds}sec"
     if process.returncode == 0:
         style = f"bold {color_end}"
-        console.log(f"[bold color(0) on {color_end}] End [/] {cmd_str} {dur_str}")
+        console.print(
+            f"[bold color(0) on {color_end}]End  [/]"
+            f" [{end.strftime('%H:%M')}] :white_check_mark:{cmd_str} {dur_str}"
+        )
 
     else:
         style = f"bold {color_fail}"
-        console.log(
-            f"[bold color(0) on {color_fail}] Fail [/] :x: {process.returncode}"
-            f" {cmd_str} {dur_str}"
+        console.print(
+            f"[bold color(0) on {color_fail}]Fail [/] [{end.strftime('%H:%M')}] :x:"
+            f" {process.returncode} {cmd_str} {dur_str}"
         )
     console.rule(
         f"[{style}]"
