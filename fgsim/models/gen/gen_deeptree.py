@@ -136,7 +136,7 @@ class ModelClass(nn.Module):
         n_levels = len(self.features)
 
         # Init the graph object
-        graph_tree = GraphTreeWrapper(
+        graph_tree: GraphTreeWrapper = GraphTreeWrapper(
             TreeGenType(
                 tftx=random_vector.reshape(batch_size, features[0]),
                 batch_size=batch_size,

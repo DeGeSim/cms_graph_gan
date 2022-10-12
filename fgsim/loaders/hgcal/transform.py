@@ -70,7 +70,35 @@ def transform_hitlist(
 
     pc = torch.hstack((hit_energies.view(-1, 1), xyzpos)).float()
 
-    # ## Edge Index construction
+    # if dequantize:
+    #     dqnoise = torch.empty_like(xyzpos)
+    #     cur_cell_id = 2222132622
+    #     neighbors = geo_lup_filtered.loc[cur_cell_id][
+    #         ["n0", "n1", "n2", "n3", "n4", "n5"]
+    #     ].to_list()
+    #     geo_lup.loc[neighbors]
+    #     A = np.array([[25 / 26.0, 0], [-601 / 1248, 5 / 6.0]])
+    #     # dists = ()
+    #     # {0,0}={{a,b},{c,d}}*{0,0} ,
+    #     # c=0 ,
+    #     # {0,1}={{a,b},{c,d}}*{0,1.2} ,
+    #     # {0,-1}={{a,b},{c,d}}*{0,-1.2} ,
+    #     # {1,0}={{a,b},{c,d}}*{1.04,0.601} ,
+    #     # {-1,0}={{a,b},{c,d}}*{-1.04,-0.601} ,
+    #     # {-1,1}={{a,b},{c,d}}*{-1.04,0.601}
+
+    #     # solve {0, 1} = {1.2 b, 1.2 d}
+    #     # {0, -1} = {-1.2 b, -1.2 d}
+    #     # {1, 0} = {1.04 a + 0.601 b, 1.04 c + 0.601 d}
+    #     # {-1, 0} = {-1.04 a - 0.601 b, -1.04 c - 0.601 d}
+    #     # {-1, 1} = {-1.04 a + 0.601 b, -1.04 c + 0.601 d}
+
+    #     # solve {0, 1} = {1.2 b, 1.2 d}
+    #     # {0, -1} = {-1.2 b, -1.2 d}
+    #     # {1, 0} = {1.04 a + 0.601 b, 1.04 c + 0.601 d}
+    #     # {-1, 0} = {-1.04 a - 0.601 b, -1.04 c - 0.601 d}
+
+    # Edge Index construction
     if construct_edge_index:
         neighbor_keys = [
             "next",

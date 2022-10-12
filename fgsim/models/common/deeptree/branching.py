@@ -170,7 +170,7 @@ class BranchingLayer(nn.Module):
 # )
 
 
-# @torch.jit.script
+@torch.jit.script
 def reshape_features(
     mtx: torch.Tensor,
     n_parents: int,

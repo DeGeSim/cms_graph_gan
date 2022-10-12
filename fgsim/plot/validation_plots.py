@@ -53,7 +53,7 @@ def validation_plots(
         v2name = conf.loader.x_features[v2]
         cmbname = f"{v1name}_vs_{v2name}"
 
-        if best_last_val != "val":
+        if "val" not in best_last_val:
             figure = xyscatter_faint(
                 sim=sim_batch_small.x[:, [v1, v2]].cpu().numpy(),
                 gen=gen_batch_small.x[:, [v1, v2]].cpu().numpy(),
@@ -78,7 +78,7 @@ def validation_plots(
             v2name=v2name,
             step=step,
         )
-        fig_logger(figure, f"xy_hist_{cmbname}.pdf")
+        fig_logger(figure, f"{cmbname}.pdf")
 
     for title, fig in ftx_marginals(
         sim_batch,
