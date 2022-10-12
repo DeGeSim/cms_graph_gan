@@ -144,13 +144,17 @@ def overwrite_path():
     #
     pathlist = [e for e in sys.path if e.endswith("fgsim")]
     # make sure that this is unique
-    if len({e for e in pathlist}) != 1:
+    if len({e for e in pathlist}) == 0:
+        old_path = ""
+    elif len({e for e in pathlist}) == 1:
+        # remove the old path
+        old_path = pathlist[0]
+        for path in pathlist:
+            sys.path.remove(path)
+    elif len({e for e in pathlist}) > 1:
         raise Exception
-    # remove the old path
-    old_path = pathlist[0]
-    for path in pathlist:
-        sys.path.remove(path)
     sys.path.insert(0, new_fgsim_path)
+
     return old_path, new_fgsim_path
 
 
