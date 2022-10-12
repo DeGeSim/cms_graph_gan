@@ -1,6 +1,8 @@
 from pathlib import Path
 from typing import List, Tuple
 
+from sklearn.preprocessing import StandardScaler
+
 from fgsim.io import FileManager, ScalerBase
 
 from .transform import transform
@@ -16,10 +18,10 @@ def path_to_len(_) -> int:
 
 file_manager = FileManager(path_to_len=path_to_len)
 
-
 scaler = ScalerBase(
     file_manager.files,
     file_manager.file_len_dict,
     read_chunks,
     transform,
+    transfs=[StandardScaler(), StandardScaler()],
 )

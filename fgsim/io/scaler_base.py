@@ -5,7 +5,6 @@ import joblib
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
-from sklearn.preprocessing import QuantileTransformer
 
 from fgsim.config import conf
 
@@ -17,10 +16,11 @@ class ScalerBase:
         len_dict: Dict,
         read_chunk: Callable,
         transform_wo_scaling: Callable,
+        transfs,
     ) -> None:
         self.files = files
         self.len_dict = len_dict
-        self.transfs = QuantileTransformer()
+        self.transfs = transfs
         self.read_chunk = read_chunk
         self.transform_wo_scaling = transform_wo_scaling
         self.scalerpath = Path(conf.path.dataset_processed) / "scaler.gz"
@@ -45,9 +45,14 @@ class ScalerBase:
             pcs = pcs[mask]
 
         self.plot_scaling(pcs)
-        # for arr, transf in zip(, self.transfs):
+
         assert pcs.shape[1] == conf.loader.n_features
-        self.transfs.fit(pcs)
+        pcs = np.hstack(
+            [
+                transf.fit_transform(arr.reshape(-1, 1))
+                for arr, transf in zip(pcs.T, self.transfs)
+            ]
+        )
         self.plot_scaling(pcs, True)
 
         joblib.dump(self.transfs, self.scalerpath)
@@ -55,7 +60,12 @@ class ScalerBase:
     def transform(self, pcs: np.ndarray):
         assert len(pcs.shape) == 2
         assert pcs.shape[1] == conf.loader.n_features
-        return self.transfs.transform(pcs)
+        return np.hstack(
+            [
+                transf.transform(arr.reshape(-1, 1))
+                for arr, transf in zip(pcs.T, self.transfs)
+            ]
+        )
 
     def inverse_transform(self, pcs: torch.Tensor):
         assert pcs.shape[-1] == conf.loader.n_features
@@ -63,7 +73,12 @@ class ScalerBase:
         dev = pcs.device
         pcs = pcs.to("cpu").detach().reshape(-1, conf.loader.n_features).numpy()
 
-        t_stacked = self.transfs.inverse_transform(pcs)
+        t_stacked = np.hstack(
+            [
+                transf.inverse_transform(arr.reshape(-1, 1))
+                for arr, transf in zip(pcs.T, self.transfs)
+            ]
+        )
         return torch.from_numpy(t_stacked.reshape(*orgshape)).float().to(dev)
 
     def plot_scaling(self, pcs, post=False):
