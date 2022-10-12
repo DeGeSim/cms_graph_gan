@@ -58,7 +58,7 @@ def validate(holder: Holder, loader: QueuedDataset) -> None:
         sim_batch=sim_batch,
         gen_batch=gen_batch,
         plot_path=None,
-        best_last_val="val/unscaled",
+        best_last_val="val/scaled",
         step=holder.state.grad_step,
     )
     for batch in sim_batch, gen_batch:
@@ -68,7 +68,7 @@ def validate(holder: Holder, loader: QueuedDataset) -> None:
         sim_batch=sim_batch,
         gen_batch=gen_batch,
         plot_path=None,
-        best_last_val="val/scaled",
+        best_last_val="val/unscaled",
         step=holder.state.grad_step,
     )
 
