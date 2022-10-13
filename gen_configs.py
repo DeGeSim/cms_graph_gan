@@ -24,55 +24,42 @@ base_config = ExperimentConfig(
 loader_name: moons
 comet_project_name: moons2
 training:
-  gan_mode: MSE
   val:
     use_for_stopping:
     - w1x
     - w1y
     metrics:
-      - ft_w1
-      - aoc
+    - ft_w1
+    - aoc
 models:
   gen:
-    losses_list: ["mmdpc"]
+    losses_list:
+    - dcd
+    optim:
+      params:
+          lr: 1.0e-4
   disc:
     name: disc_fake
     optim:
       name: FakeOptimizer
-loss_options:
-    cd:
-        factor: 1.0
-        lpnorm: 1
-        batch_wise: False
-        pow: 2
-    dcd:
-        factor: 1.0
-        alpha: 1000
-        lpnorm: 1
-        batch_wise: False
-        pow: 1
 model_param_options:
-    gen_deeptree:
-        n_global: 0
-        branching_param:
-            residual: True
-            final_linear: True
-            norm: 'none'
-        ancestor_mpl:
-            n_mpl: 0
-            conv_name: GINConv
-            skip_connecton: False
-        child_mpl:
-            n_mpl: 0
-            conv_name: GINConv
-            skip_connecton: False
+  gen_deeptree:
+    n_global: 0
+    branching_param: {}
+    ancestor_mpl:
+      n_mpl: 0
+      conv_name: GINConv
+      skip_connecton: false
+    child_mpl:
+      n_mpl: 0
+      conv_name: GINConv
+      skip_connecton: false
 ffn:
-    activation: LeakyReLU
-    hidden_layer_size: 512
-    n_layers: 3
-    norm: layernorm
-    dropout: False
-
+  activation: ReLU
+  hidden_layer_size: 512
+  n_layers: 3
+  norm: none
+  dropout: false
     """
     ),
     ["twomoons"],
@@ -84,57 +71,45 @@ optionslist: List[Callable] = []
 
 
 def add_option(option: Callable):
+    if option.__name__ in [e.__name__ for e in optionslist]:
+        raise Exception("dont add functions twice")
     optionslist.append(option)
 
 
-@add_option
-def option_dist(exp_config: ExperimentConfig) -> Dict[str, DictConfig]:
-    res = defaultdict(exp_config.config.copy)
-    res["dcd"]["models"]["gen"]["losses_list"] = ["dcd"]
-    res["cd"]["models"]["gen"]["losses_list"] = ["cd"]
-    res["mmdpc"]["models"]["gen"]["losses_list"] = ["mmdpc"]
-    return res
+# @add_option
+# def option_lr(exp_config: ExperimentConfig) -> Dict[str, DictConfig]:
+#     res = defaultdict(exp_config.config.copy)
+#     # res["f1"]["loss_options"]["dcd"]["factor"] = 1.0
+#     # res["f.1"]["loss_options"]["dcd"]["factor"] = 0.1
+#     res["f.01"]["loss_options"]["dcd"]["factor"] = 0.001
+#     res["f.001"]["loss_options"]["dcd"]["factor"] = 0.001
+#     res["f.0001"]["loss_options"]["dcd"]["factor"] = 0.0001
+#     res["f.00001"]["loss_options"]["dcd"]["factor"] = 0.00001
+#     return res
+
+
+# @add_option
+# def option_activation(exp_config: ExperimentConfig) -> Dict[str, DictConfig]:
+#     res = defaultdict(exp_config.config.copy)
+#     res["ReLU"]["ffn"]["activation"] = "ReLU"
+#     res["LeakyReLU"]["ffn"]["activation"] = "LeakyReLU"
+#     return res
+
+
+# @add_option
+# def option_dropout(exp_config: ExperimentConfig) -> Dict[str, DictConfig]:
+#     res = defaultdict(exp_config.config.copy)
+#     res["dropout"]["ffn"]["dropout"] = "true"
+#     res["nodropout"]["ffn"]["dropout"] = "false"
+#     return res
 
 
 @add_option
 def option_norm(exp_config: ExperimentConfig) -> Dict[str, DictConfig]:
     res = defaultdict(exp_config.config.copy)
-    if "dcd" in exp_config.tags:
-        dist = "dcd"
-    elif "cd" in exp_config.tags:
-        dist = "cd"
-    else:
-        return res
-    res["lpnorm1"]["loss_options"][dist]["lpnorm"] = 1
-    res["lpnorm2"]["loss_options"][dist]["lpnorm"] = 2
-    return res
-
-
-@add_option
-def option_pow(exp_config: ExperimentConfig) -> Dict[str, DictConfig]:
-    res = defaultdict(exp_config.config.copy)
-    if "dcd" in exp_config.tags:
-        dist = "dcd"
-    elif "cd" in exp_config.tags:
-        dist = "cd"
-    else:
-        return res
-    res["pow1"]["loss_options"][dist]["pow"] = 1
-    res["pow2"]["loss_options"][dist]["pow"] = 2
-    return res
-
-
-@add_option
-def option_alpha(exp_config: ExperimentConfig) -> Dict[str, DictConfig]:
-    res = defaultdict(exp_config.config.copy)
-    if "dcd" in exp_config.tags:
-        dist = "dcd"
-    else:
-        return res
-    res["alpha1"]["loss_options"][dist]["alpha"] = 1
-    res["alpha10"]["loss_options"][dist]["alpha"] = 10
-    res["alpha50"]["loss_options"][dist]["alpha"] = 50
-    res["alpha1000"]["loss_options"][dist]["alpha"] = 1000
+    res["nonorm"]["ffn"]["norm"] = "none"
+    res["batchnorm"]["ffn"]["norm"] = "batchnorm"
+    res["layernorm"]["ffn"]["norm"] = "layernorm"
     return res
 
 

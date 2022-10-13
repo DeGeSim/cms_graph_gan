@@ -20,7 +20,7 @@
             {
                 "args": [
                     "--hash",
-                    "728d65e",
+                    "2135270",
                     // "--ray",
                     // "--debug",
                     "train"
@@ -35,56 +35,56 @@
             {
                 "args": [
                     "--tag",
-                    "two_moons_gincconv",
+                    "twomoons",
                     "--debug",
                     "setup"
                 ],
                 "cwd": "/home/mscham/fgsim",
                 // "justMyCode": false,
                 "module": "fgsim",
-                "name": "tr setup",
+                "name": "setup",
                 "request": "launch",
                 "type": "python"
             },
             {
                 "args": [
                     "--tag",
-                    "two_moons_gincconv",
+                    "twomoons",
                     "--debug",
                     "train"
                 ],
                 "cwd": "/home/mscham/fgsim",
                 // "justMyCode": false,
                 "module": "fgsim",
-                "name": "tr tag",
+                "name": "train",
                 "request": "launch",
                 "type": "python"
             },
             {
                 "args": [
                     "--tag",
-                    "two_moons_gincconv",
+                    "twomoons",
                     "--debug",
                     "test"
                 ],
                 "cwd": "/home/mscham/fgsim",
                 // "justMyCode": false,
                 "module": "fgsim",
-                "name": "te tag",
+                "name": "test",
                 "request": "launch",
                 "type": "python"
             },
             {
                 "args": [
                     "--tag",
-                    "two_moons_gincconv",
+                    "twomoons",
                     "--debug",
                     "preprocess"
                 ],
                 "cwd": "/home/mscham/fgsim",
                 // "justMyCode": false,
                 "module": "fgsim",
-                "name": "pp tag",
+                "name": "preprocess",
                 "request": "launch",
                 "type": "python"
             },
@@ -104,12 +104,27 @@
                 "type": "python",
                 "args": [
                     "--tag",
-                    "two_moons_gincconv",
+                    "twomoons",
                     "--debug",
                     "train"
                 ],
                 "justMyCode": true,
             },
+            {
+                "name": "buildcmd",
+                "type": "python",
+                "request": "launch",
+                "cwd": "/home/mscham/fgsim",
+                "program": "/home/mscham/fgsim/fgsim/utils/buildcmd.py",
+                "console": "integratedTerminal",
+                "args": [
+                    "--tag",
+                    "twomoons",
+                    "--debug",
+                    "setup"
+                ],
+                "justMyCode": true
+            }
         ],
         "version": "0.2.0"
     },

@@ -238,12 +238,14 @@ loss_options:
         kernel: "rbf"
         bandwidth: [10, 15, 20, 50]
         batch_wise: False
+    fd:
+        factor: 0.001
     dcd:
-        factor: 1.0
-        alpha: 1
+        factor: 0.001
+        alpha: 10
         lpnorm: 1
-        batch_wise: False
-        pow: 1
+        batch_wise: false
+        pow: 2
     cd:
         factor: 1.0
         lpnorm: 1
