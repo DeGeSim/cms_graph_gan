@@ -15,8 +15,7 @@ models:
         additional_losses_list: ["dcd"]
         optim:
             name: Adam
-            params:
-                lr: 1.0e-4
+            params: ${optim_options[${models.gen.optim.name}]}
         retain_graph_on_backprop: True
     disc:
         name: disc_mp
@@ -286,7 +285,7 @@ training:
     log_interval: 500
     max_epochs: 300
     val:
-        interval: "${div:100000,${loader.batch_size}}"
+        interval: "${div:10000,${loader.batch_size}}"
         use_for_stopping: ["w1E", "w1x", "w1y", "w1layer"]
         metrics:
             - "ft_w1"

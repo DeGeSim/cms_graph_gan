@@ -45,15 +45,14 @@ models:
 model_param_options:
   gen_deeptree:
     n_global: 0
-    branching_param: {}
+    branching_param:
+      residual: False
+      final_linear: True
+      norm: batchnorm
     ancestor_mpl:
       n_mpl: 0
-      conv_name: GINConv
-      skip_connecton: false
     child_mpl:
       n_mpl: 0
-      conv_name: GINConv
-      skip_connecton: false
 ffn:
   activation: ReLU
   hidden_layer_size: 512
@@ -99,17 +98,47 @@ def add_option(option: Callable):
 # @add_option
 # def option_dropout(exp_config: ExperimentConfig) -> Dict[str, DictConfig]:
 #     res = defaultdict(exp_config.config.copy)
-#     res["dropout"]["ffn"]["dropout"] = "true"
-#     res["nodropout"]["ffn"]["dropout"] = "false"
+#     res["dropout"]["ffn"]["dropout"] = True
+#     res["nodropout"]["ffn"]["dropout"] = False
 #     return res
+
+
+# @add_option
+# def option_norm(exp_config: ExperimentConfig) -> Dict[str, DictConfig]:
+#     res = defaultdict(exp_config.config.copy)
+#     res["nonorm"]["model_param_options"]["gen_deeptree"]["branching_param"][
+#         "norm"
+#     ] = "none"
+#     res["batchnorm"]["model_param_options"]["gen_deeptree"]["branching_param"][
+#         "norm"
+#     ] = "batchnorm"
+#     res["layernorm"]["model_param_options"]["gen_deeptree"]["branching_param"][
+#         "norm"
+#     ] = "layernorm"
+#     return res
+
+
+@add_option
+def option_fl(exp_config: ExperimentConfig) -> Dict[str, DictConfig]:
+    res = defaultdict(exp_config.config.copy)
+    res["fl"]["model_param_options"]["gen_deeptree"]["branching_param"][
+        "final_linear"
+    ] = True
+    res["nofl"]["model_param_options"]["gen_deeptree"]["branching_param"][
+        "final_linear"
+    ] = False
+    return res
 
 
 @add_option
 def option_norm(exp_config: ExperimentConfig) -> Dict[str, DictConfig]:
     res = defaultdict(exp_config.config.copy)
-    res["nonorm"]["ffn"]["norm"] = "none"
-    res["batchnorm"]["ffn"]["norm"] = "batchnorm"
-    res["layernorm"]["ffn"]["norm"] = "layernorm"
+    res["res"]["model_param_options"]["gen_deeptree"]["branching_param"][
+        "residual"
+    ] = True
+    res["nores"]["model_param_options"]["gen_deeptree"]["branching_param"][
+        "residual"
+    ] = False
     return res
 
 
@@ -134,7 +163,12 @@ for exp in exp_list:
         mkdir(folder)
     OmegaConf.save(exp.config, f"{folder}/conf.yaml")
 print(
-    "./run.sh remote --tag "
+    "./run.sh --tag "
     + ",".join(["_".join(exp.tags) for exp in exp_list])
-    + " train"
+    + " setup"
+)
+print(
+    "./run.sh --tag "
+    + ",".join(["_".join(exp.tags) for exp in exp_list])
+    + " --remote train"
 )

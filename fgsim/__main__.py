@@ -7,9 +7,9 @@ from pathlib import Path
 # Add the project to the path, -> `import fgsim.x`
 sys.path.append(os.path.dirname(os.path.realpath(".")))
 
-# from typeguard.importhook import install_import_hook
+from typeguard.importhook import install_import_hook
 
-# install_import_hook("fgsim")
+install_import_hook("fgsim")
 
 
 def main():

@@ -95,7 +95,7 @@ def parse_arg_conf(args=None):
             folder = Path(glob(globstr)[0])
             assert folder.is_dir()
         except IndexError:
-            raise IndexError("No experiement with hash {args.hash} is set up.")
+            raise IndexError(f"No experiement with hash {args.hash} is set up.")
         conf = OmegaConf.load(folder / "conf.yaml")
         hyperparameters = OmegaConf.load(folder / "hyperparameters.yaml")
 

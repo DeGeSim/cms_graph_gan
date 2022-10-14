@@ -26,7 +26,7 @@ class ScalerBase:
         self.scalerpath = Path(conf.path.dataset_processed) / "scaler.gz"
         if conf.command != "preprocess":
             if not self.scalerpath.is_file():
-                raise FileNotFoundError()
+                raise FileNotFoundError(f"No scalar found at {self.scalerpath}")
             else:
                 self.transfs = joblib.load(self.scalerpath)
 
