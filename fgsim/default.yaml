@@ -70,24 +70,24 @@ layer_options:
 
 model_param_options:
     gen_deeptree:
-        n_global: 3
+        n_global: 0
         n_cond: ${len:${loader.y_features}}
         all_points: False
         branching_param:
-            residual: False
+            residual: True
             final_linear: True
-            norm: batchnorm
+            norm: none
         connect_all_ancestors: True
         ancestor_mpl:
-            n_mpl: 1
+            n_mpl: 0
             n_hidden_nodes: 1440
             conv_name: GINConv
             skip_connecton: True
             layer_param: ${layer_options[${model_param_options.gen_deeptree.ancestor_mpl.conv_name}]}
         child_mpl:
-            n_mpl: 1
+            n_mpl: 0
             n_hidden_nodes: 1960
-            conv_name: DeepConv
+            conv_name: GINConv
             skip_connecton: True
             layer_param: ${layer_options[${model_param_options.gen_deeptree.child_mpl.conv_name}]}
         final_layer_scaler: False
@@ -240,7 +240,7 @@ loss_options:
     fd:
         factor: 0.001
     dcd:
-        factor: 0.001
+        factor: 1.0
         alpha: 10
         lpnorm: 1
         batch_wise: false
@@ -282,10 +282,10 @@ training:
         improvement: 0.2
     checkpoint_minutes: 15
     smoothing: "${smoothing_options[${loader_name}]}"
-    log_interval: 500
+    log_interval: 10
     max_epochs: 300
     val:
-        interval: "${div:10000,${loader.batch_size}}"
+        interval: "${div:40000,${loader.batch_size}}"
         use_for_stopping: ["w1E", "w1x", "w1y", "w1layer"]
         metrics:
             - "ft_w1"
@@ -355,6 +355,7 @@ loader_options:
         x_features: ["x", "y"]
         y_features: []
         n_points: 128
+        batch_size: 200
         cluster_tree: false
         cluster_method: "random"
     jetnet:
