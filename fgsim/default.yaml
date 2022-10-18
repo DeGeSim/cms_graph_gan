@@ -254,7 +254,7 @@ loss_options:
 optim_options:
     Adam:
         weight_decay: 1.0e-4
-        lr: 2.e-4
+        lr: 1.e-4
     SGD:
         lr: 2.e-4
     RMSprop:
