@@ -121,7 +121,7 @@ class ModelClass(nn.Module):
             raise Exception
 
         return MPLSeq(
-            in_features=self.features[ilevel]
+            in_features=self.features[ilevel + 1]
             if type == "ac"
             else self.features[ilevel + 1],
             out_features=self.features[ilevel + 1],
@@ -165,7 +165,7 @@ class ModelClass(nn.Module):
             )
 
             graph_tree = self.branching_layers[ilevel](graph_tree)
-            assert graph_tree.tftx.shape[1] == self.tree.features[ilevel]
+            assert graph_tree.tftx.shape[1] == self.tree.features[ilevel + 1]
             assert graph_tree.tftx.shape[0] == (
                 self.tree.tree_lists[ilevel + 1][-1].idxs[-1] + 1
             )

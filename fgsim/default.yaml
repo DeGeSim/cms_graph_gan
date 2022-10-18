@@ -278,7 +278,7 @@ training:
     gan_mode: CE
     disc_steps_per_gen_step: 2
     early_stopping:
-        validation_steps: 50
+        validation_steps: 20
         improvement: 0.2
     checkpoint_minutes: 15
     smoothing: "${smoothing_options[${loader_name}]}"

@@ -42,7 +42,8 @@ class BranchingLayer(nn.Module):
         self.tree = tree
         self.n_branches = self.tree.branches[level]
         self.batch_size = self.tree.batch_size
-        self.n_features = self.tree.features[level]
+        self.n_features_source = self.tree.features[level]
+        self.n_features_target = self.tree.features[level + 1]
         self.n_global = n_global
         self.n_cond = n_cond
         self.level = level
@@ -53,8 +54,8 @@ class BranchingLayer(nn.Module):
             assert final_linear
 
         self.proj_nn = FFN(
-            self.n_features + n_global + n_cond,
-            self.n_features * self.n_branches,
+            self.n_features_source + n_global + n_cond,
+            self.n_features_target * self.n_branches,
             norm=self.norm,
             final_linear=self.final_linear or level + 1 == len(tree.features) - 1,
         )
@@ -63,7 +64,8 @@ class BranchingLayer(nn.Module):
     def forward(self, graph: GraphTreeWrapper) -> GraphTreeWrapper:
         batch_size = self.batch_size
         n_branches = self.n_branches
-        n_features = self.n_features
+        # n_features_source = self.n_features_source
+        n_features_target = self.n_features_target
         parents = self.tree.tree_lists[self.level]
         n_parents = len(parents)
         assert graph.cur_level == self.level
@@ -91,14 +93,14 @@ class BranchingLayer(nn.Module):
         )
 
         # If residual, add the features of the parent to the
-        if self.residual:
-            proj_ftx = proj_ftx + parents_ftxs.repeat_interleave(
-                dim=-1, repeats=n_branches
-            )
+        if self.residual and self.level + 1 != self.tree.n_levels - 1:
+            proj_ftx = proj_ftx + parents_ftxs[
+                ..., :n_features_target
+            ].repeat_interleave(dim=-1, repeats=n_branches)
 
         assert list(proj_ftx.shape) == [
             n_parents * batch_size,
-            n_branches * n_features,
+            n_branches * n_features_target,
         ]
 
         # reshape the projected
@@ -107,7 +109,7 @@ class BranchingLayer(nn.Module):
             n_parents=n_parents,
             batch_size=batch_size,
             n_branches=n_branches,
-            n_features=n_features,
+            n_features=n_features_target,
         )
 
         points = prod([br for br in self.tree.branches[: self.level]])
@@ -126,7 +128,9 @@ class BranchingLayer(nn.Module):
 
         return GraphTreeWrapper(
             TreeGenType(
-                tftx=torch.vstack([graph.tftx, children_ftxs]),
+                tftx=torch.vstack(
+                    [graph.tftx[..., :n_features_target], children_ftxs]
+                ),
                 cond=graph.cond,
                 idxs_by_level=graph.idxs_by_level + [level_idx],
                 children=graph.children + [children],
