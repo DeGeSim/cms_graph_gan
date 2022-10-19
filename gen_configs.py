@@ -21,8 +21,9 @@ class ExperimentOption:
 base_config = ExperimentConfig(
     OmegaConf.create(
         """
-comet_project_name: moons-dist
+comet_project_name: moons2
 loader_name: moons
+seed: 0
 models:
   gen:
     losses_list:
@@ -41,11 +42,10 @@ training:
     metrics:
     - ft_w1
     - aoc
-loss_options:
-    dcd:
-        alpha: 10
-        lpnorm: 1
-        pow: 2
+optim_options:
+    Adam:
+        weight_decay: 1.0e-4
+        lr: 1.e-4
     """
     ),
     ["twomoons_dist"],
@@ -63,20 +63,13 @@ def add_option(option: Callable):
 
 
 @add_option
-def option_lpnorm(exp_config: ExperimentConfig) -> Dict[str, DictConfig]:
+def option_lr(exp_config: ExperimentConfig) -> Dict[str, DictConfig]:
     res = defaultdict(exp_config.config.copy)
-    res["lp.5"]["loss_options"]["dcd"]["lpnorm"] = 0.5
-    res["lp1"]["loss_options"]["dcd"]["lpnorm"] = 1.0
-    res["lp2"]["loss_options"]["dcd"]["lpnorm"] = 2.0
-    return res
-
-
-@add_option
-def option_pow(exp_config: ExperimentConfig) -> Dict[str, DictConfig]:
-    res = defaultdict(exp_config.config.copy)
-    res["pow.5"]["loss_options"]["dcd"]["pow"] = 0.5
-    res["pow1"]["loss_options"]["dcd"]["pow"] = 1.0
-    res["pow2"]["loss_options"]["dcd"]["pow"] = 2.0
+    # res["f1"]["loss_options"]["dcd"]["factor"] = 1.0
+    # res["f.1"]["loss_options"]["dcd"]["factor"] = 0.1
+    res["lrm4"]["optim_options"]["Adam"]["lr"] = 1.0e-4
+    res["lrm5"]["optim_options"]["Adam"]["lr"] = 1.0e-5
+    res["lrm6"]["optim_options"]["Adam"]["lr"] = 1.0e-6
     return res
 
 
@@ -111,16 +104,35 @@ print(
     + " --remote train"
 )
 
+# @add_option
+# def option_reg(exp_config: ExperimentConfig) -> Dict[str, DictConfig]:
+#     res = defaultdict(exp_config.config.copy)
+#     res["nonorm"]["model_param_options"]["gen_deeptree"]["branching_param"][
+#         "norm"
+#     ] = "none"
+#     res["batchnorm"]["model_param_options"]["gen_deeptree"]["branching_param"][
+#         "norm"
+#     ] = "batchnorm"
+#     res["layernorm"]["model_param_options"]["gen_deeptree"]["branching_param"][
+#         "norm"
+#     ] = "layernorm"
+#     return res
 
 # @add_option
-# def option_lr(exp_config: ExperimentConfig) -> Dict[str, DictConfig]:
+# def option_lpnorm(exp_config: ExperimentConfig) -> Dict[str, DictConfig]:
 #     res = defaultdict(exp_config.config.copy)
-#     # res["f1"]["loss_options"]["dcd"]["factor"] = 1.0
-#     # res["f.1"]["loss_options"]["dcd"]["factor"] = 0.1
-#     res["f.01"]["loss_options"]["dcd"]["factor"] = 0.001
-#     res["f.001"]["loss_options"]["dcd"]["factor"] = 0.001
-#     res["f.0001"]["loss_options"]["dcd"]["factor"] = 0.0001
-#     res["f.00001"]["loss_options"]["dcd"]["factor"] = 0.00001
+#     res["lp.5"]["loss_options"]["dcd"]["lpnorm"] = 0.5
+#     res["lp1"]["loss_options"]["dcd"]["lpnorm"] = 1.0
+#     res["lp2"]["loss_options"]["dcd"]["lpnorm"] = 2.0
+#     return res
+
+
+# @add_option
+# def option_pow(exp_config: ExperimentConfig) -> Dict[str, DictConfig]:
+#     res = defaultdict(exp_config.config.copy)
+#     res["pow.5"]["loss_options"]["dcd"]["pow"] = 0.5
+#     res["pow1"]["loss_options"]["dcd"]["pow"] = 1.0
+#     res["pow2"]["loss_options"]["dcd"]["pow"] = 2.0
 #     return res
 
 
