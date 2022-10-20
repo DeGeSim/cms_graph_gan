@@ -12,17 +12,16 @@ from fgsim.utils.cli import get_args
 
 def dump_procedure():
     args = get_args()
-    if args.hash in exp_orga.d:
+    if args.hash in exp_orga.keys():
         # try to archive the experiment:
         try:
             api_experiment_from_hash(args.hash).archive()
         except KeyError:
             pass
-        del exp_orga.d[args.hash]
+        del exp_orga[args.hash]
     else:
         for exp in search_experiement_by_name(args.hash):
             exp.archive()
-    exp_orga.save()
 
     paths = glob(f"wd/*/{args.hash}")
     if len(paths) == 1:

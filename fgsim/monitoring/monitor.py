@@ -1,10 +1,11 @@
+import json
 from pathlib import Path
 from typing import List
 
 import comet_ml
-import yaml
 from omegaconf import OmegaConf
 from omegaconf.dictconfig import DictConfig
+from sqlitedict import SqliteDict
 
 from fgsim.utils.oc_utils import dict_to_kv
 
@@ -14,26 +15,48 @@ api = comet_ml.API(comet_conf.api_key)
 
 class ExperimentOrganizer:
     def __init__(self) -> None:
-        self.fn = Path("~/fgsim/wd/hash2exp.yaml").expanduser()
-        with open(self.fn, "r") as f:
-            self.d = yaml.load(f, Loader=yaml.SafeLoader)
+        self.fn = Path("~/fgsim/hash2exp.sqlite").expanduser()
+        # with open(self.fn, "r") as f:
+        #     self.d = yaml.load(f, Loader=yaml.SafeLoader)
 
-    def __getitem__(self, h: str) -> str:
-        return self.d[h]
+    def __getitem__(self, key: str) -> str:
+        with SqliteDict(
+            self.fn, encode=json.dumps, decode=json.loads, autocommit=True
+        ) as db:
+            value = db[key]
+        return value
 
-    def save(self):
-        with open(self.fn, "w") as f:
-            yaml.dump(self.d, f, Dumper=yaml.SafeDumper)
+    def __setitem__(self, key: str, value: str):
+        with SqliteDict(
+            self.fn, encode=json.dumps, decode=json.loads, autocommit=True
+        ) as db:
+            db[key] = value
+
+    def __delitem__(self, key):
+        with SqliteDict(
+            self.fn, encode=json.dumps, decode=json.loads, autocommit=True
+        ) as db:
+            del db[key]
+
+    def keys(self):
+        with SqliteDict(
+            self.fn, encode=json.dumps, decode=json.loads, autocommit=True
+        ) as db:
+            keys = list(db.keys())
+        return keys
 
     def recreate(self):
         workspace = comet_conf.workspace
         experiments = []
         for project in api.get_projects(workspace):
             experiments = experiments + api.get(workspace, project)
-        self.d = {}
-        for exp in experiments:
-            self.d[exp.name] = exp.id
-        self.save()
+        with SqliteDict(
+            self.fn, encode=json.dumps, decode=json.loads, autocommit=True
+        ) as db:
+            for key in db.keys():
+                del db[key]
+            for exp in experiments:
+                db[exp.name] = exp.id
 
 
 exp_orga = ExperimentOrganizer()
@@ -84,7 +107,7 @@ def setup_experiment() -> None:
     from fgsim.config import conf
 
     """Generates a new experiment."""
-    if conf.hash in exp_orga.d:
+    if conf.hash in exp_orga.keys():
         if conf.ray:
             return
         raise Exception("Experiment exists")
@@ -107,5 +130,4 @@ def setup_experiment() -> None:
     new_api_exp.log_parameters(hyperparameters_keyval_list)
     new_api_exp.log_other("name", conf["hash"])
     new_api_exp.add_tags(list(set(conf.tag.split("_"))))
-    exp_orga.d[conf["hash"]] = new_api_exp.id
-    exp_orga.save()
+    exp_orga[conf["hash"]] = new_api_exp.id

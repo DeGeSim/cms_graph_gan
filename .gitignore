@@ -115,3 +115,4 @@ fgsim/comet.yaml
 venv*
 todo.txt
 env.tar
+hash2exp.sqlite
