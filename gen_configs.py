@@ -46,9 +46,26 @@ optim_options:
     Adam:
         weight_decay: 1.0e-4
         lr: 1.e-4
+ffn:
+    activation: LeakyReLU
+model_param_options:
+    gen_deeptree:
+        dim_red_in_branching: False
+        branching_param:
+            final_linear: True
+            norm: none
+            res_mean: False
+            res_final_layer: True
+tree:
+    branches: [2, 4, 16]
+    features:
+        - 512
+        - 128
+        - 16
+        - 2
     """
     ),
-    ["twomoons_dist"],
+    ["twomoons_scan"],
 )
 
 exp_list: List[ExperimentConfig] = [base_config]
@@ -63,13 +80,66 @@ def add_option(option: Callable):
 
 
 @add_option
-def option_lr(exp_config: ExperimentConfig) -> Dict[str, DictConfig]:
+def option_activation(exp_config: ExperimentConfig) -> Dict[str, DictConfig]:
+    res = defaultdict(exp_config.config.copy)
+    res["LeakyReLu"]["ffn"]["activation"] = "LeakyReLU"
+    res["Tanh"]["ffn"]["activation"] = "Tanh"
+    res["SELU"]["ffn"]["activation"] = "SELU"
+    return res
+
+
+@add_option
+def option_tree(exp_config: ExperimentConfig) -> Dict[str, DictConfig]:
     res = defaultdict(exp_config.config.copy)
     # res["f1"]["loss_options"]["dcd"]["factor"] = 1.0
     # res["f.1"]["loss_options"]["dcd"]["factor"] = 0.1
-    res["lrm4"]["optim_options"]["Adam"]["lr"] = 1.0e-4
-    res["lrm5"]["optim_options"]["Adam"]["lr"] = 1.0e-5
-    res["lrm6"]["optim_options"]["Adam"]["lr"] = 1.0e-6
+    res["4lvl"]
+    res["8lvl"]["tree"]["branches"] = [2] * 7
+    res["8lvl"]["tree"]["features"] = [256, 128, 64, 32, 16, 8, 4, 2]
+    return res
+
+
+@add_option
+def option_dim_red_in_branching(
+    exp_config: ExperimentConfig,
+) -> Dict[str, DictConfig]:
+    res = defaultdict(exp_config.config.copy)
+    res["direct"]["model_param_options"]["gen_deeptree"][
+        "dim_red_in_branching"
+    ] = True
+    res["indirect"]["model_param_options"]["gen_deeptree"][
+        "dim_red_in_branching"
+    ] = False
+    return res
+
+
+@add_option
+def option_res_final_layer(
+    exp_config: ExperimentConfig,
+) -> Dict[str, DictConfig]:
+    res = defaultdict(exp_config.config.copy)
+    res["flres"]["model_param_options"]["gen_deeptree"]["branching_param"][
+        "res_final_layer"
+    ] = True
+    res["noflres"]["model_param_options"]["gen_deeptree"]["branching_param"][
+        "res_final_layer"
+    ] = False
+
+    return res
+
+
+@add_option
+def option_res_mean(
+    exp_config: ExperimentConfig,
+) -> Dict[str, DictConfig]:
+    res = defaultdict(exp_config.config.copy)
+    res["resmean"]["model_param_options"]["gen_deeptree"]["branching_param"][
+        "res_mean"
+    ] = True
+    res["resadd"]["model_param_options"]["gen_deeptree"]["branching_param"][
+        "res_mean"
+    ] = False
+
     return res
 
 
@@ -103,6 +173,18 @@ print(
     + ",".join(["_".join(exp.tags) for exp in exp_list])
     + " --remote train"
 )
+
+
+# @add_option
+# def option_lr(exp_config: ExperimentConfig) -> Dict[str, DictConfig]:
+#     res = defaultdict(exp_config.config.copy)
+#     # res["f1"]["loss_options"]["dcd"]["factor"] = 1.0
+#     # res["f.1"]["loss_options"]["dcd"]["factor"] = 0.1
+#     res["lrm4"]["optim_options"]["Adam"]["lr"] = 1.0e-4
+#     res["lrm5"]["optim_options"]["Adam"]["lr"] = 1.0e-5
+#     res["lrm6"]["optim_options"]["Adam"]["lr"] = 1.0e-6
+#     return res
+
 
 # @add_option
 # def option_reg(exp_config: ExperimentConfig) -> Dict[str, DictConfig]:

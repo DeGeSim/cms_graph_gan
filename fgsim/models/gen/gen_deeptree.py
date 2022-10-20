@@ -28,6 +28,7 @@ class ModelClass(nn.Module):
         all_points: bool,
         final_layer_scaler: bool,
         connect_all_ancestors: bool,
+        dim_red_in_branching: bool,
         **kwargs,
     ):
         super().__init__()
@@ -38,6 +39,7 @@ class ModelClass(nn.Module):
         self.final_layer_scaler = final_layer_scaler
         self.ancestor_mpl = ancestor_mpl
         self.child_mpl = child_mpl
+        self.dim_red_in_branching = dim_red_in_branching
 
         self.features = conf.tree.features
         self.branches = conf.tree.branches
@@ -89,6 +91,7 @@ class ModelClass(nn.Module):
                     level=level,
                     n_global=n_global,
                     n_cond=self.n_cond,
+                    dim_red=self.dim_red_in_branching,
                     **branching_param,
                 )
                 for level in range(n_levels - 1)
@@ -121,7 +124,7 @@ class ModelClass(nn.Module):
             raise Exception
 
         return MPLSeq(
-            in_features=self.features[ilevel + 1]
+            in_features=self.features[ilevel + int(self.dim_red_in_branching)]
             if type == "ac"
             else self.features[ilevel + 1],
             out_features=self.features[ilevel + 1],
@@ -165,7 +168,10 @@ class ModelClass(nn.Module):
             )
 
             graph_tree = self.branching_layers[ilevel](graph_tree)
-            assert graph_tree.tftx.shape[1] == self.tree.features[ilevel + 1]
+            assert (
+                graph_tree.tftx.shape[1]
+                == self.tree.features[ilevel + int(self.dim_red_in_branching)]
+            )
             assert graph_tree.tftx.shape[0] == (
                 self.tree.tree_lists[ilevel + 1][-1].idxs[-1] + 1
             )

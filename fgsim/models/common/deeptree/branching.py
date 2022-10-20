@@ -36,22 +36,36 @@ class BranchingLayer(nn.Module):
         residual: bool,
         final_linear: bool,
         norm: str,
+        dim_red: bool,
+        res_mean: bool,
+        res_final_layer: bool,
     ):
         super().__init__()
         assert 0 <= level < len(tree.features)
         self.tree = tree
-        self.n_branches = self.tree.branches[level]
         self.batch_size = self.tree.batch_size
-        self.n_features_source = self.tree.features[level]
-        self.n_features_target = self.tree.features[level + 1]
         self.n_global = n_global
         self.n_cond = n_cond
         self.level = level
         self.residual = residual
         self.final_linear = final_linear
         self.norm = norm
+        self.dim_red = dim_red
+        self.res_mean = res_mean
+        self.res_final_layer = res_final_layer
+        self.n_branches = self.tree.branches[level]
+        self.n_features_source = self.tree.features[level]
+        self.n_features_target = self.tree.features[level + int(self.dim_red)]
+
+        if res_mean or res_final_layer:
+            assert residual
         if residual:
             assert final_linear
+
+        if self.dim_red:
+            assert self.n_features_source > self.n_features_target
+        else:
+            assert self.n_features_source == self.n_features_target
 
         self.proj_nn = FFN(
             self.n_features_source + n_global + n_cond,
@@ -64,7 +78,6 @@ class BranchingLayer(nn.Module):
     def forward(self, graph: GraphTreeWrapper) -> GraphTreeWrapper:
         batch_size = self.batch_size
         n_branches = self.n_branches
-        # n_features_source = self.n_features_source
         n_features_target = self.n_features_target
         parents = self.tree.tree_lists[self.level]
         n_parents = len(parents)
@@ -92,11 +105,17 @@ class BranchingLayer(nn.Module):
             torch.hstack([parents_ftxs, cond_global, parent_global])
         )
 
+        assert parents_ftxs.shape[-1] == self.n_features_source
+        assert proj_ftx.shape[-1] == self.n_features_target * self.n_branches
+        if self.dim_red:
+            parents_ftxs = parents_ftxs[..., :n_features_target]
         # If residual, add the features of the parent to the
-        if self.residual and self.level + 1 != self.tree.n_levels - 1:
-            proj_ftx = proj_ftx + parents_ftxs[
-                ..., :n_features_target
-            ].repeat_interleave(dim=-1, repeats=n_branches)
+        if self.residual and (
+            self.res_final_layer or self.level + 1 != self.tree.n_levels - 1
+        ):
+            proj_ftx += parents_ftxs.repeat_interleave(dim=-1, repeats=n_branches)
+            if self.res_mean:
+                proj_ftx /= 2
 
         assert list(proj_ftx.shape) == [
             n_parents * batch_size,

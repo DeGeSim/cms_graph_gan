@@ -101,6 +101,7 @@ class FFN(nn.Module):
                 "Sigmoid": "sigmoid",
                 "ReLU": "relu",
                 "LeakyReLU": "leaky_relu",
+                "Tanh": "tanh",
             }[conf.ffn.activation]
 
             # nn.init.kaiming_normal_(m.weight, mode="fan_in", nonlinearity="linear")

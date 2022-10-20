@@ -40,7 +40,7 @@ gan_mode_options:
         disc: [MSEDiscLoss]
 
 ffn:
-    activation: LeakyReLU
+    activation: Tanh
     hidden_layer_size: 512
     n_layers: 3
     activation_params:
@@ -48,6 +48,7 @@ ffn:
             negative_slope: 0.1
         ReLU: {}
         SELU: {}
+        Tanh: {}
     init_weights_bias_const: 0.1
     init_weights: xavier_uniform_
     norm: batchnorm
@@ -70,6 +71,7 @@ layer_options:
 
 model_param_options:
     gen_deeptree:
+        dim_red_in_branching: true
         n_global: 0
         n_cond: ${len:${loader.y_features}}
         all_points: False
@@ -77,6 +79,8 @@ model_param_options:
             residual: True
             final_linear: True
             norm: none
+            res_mean: True
+            res_final_layer: True
         connect_all_ancestors: True
         ancestor_mpl:
             n_mpl: 0
