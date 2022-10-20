@@ -82,8 +82,8 @@ class FFN(nn.Module):
         self.n_layers = n_layers
         self.n_nodes_per_layer = n_nodes_per_layer
         self.activation = activation
-        if conf.ffn.init_weights != "kaiming_uniform_":
-            self.reset_parameters()
+        # if conf.ffn.init_weights != "kaiming_uniform_":
+        #     self.reset_parameters()
 
     def forward(self, x):
         return self.seq(x)
@@ -108,4 +108,4 @@ class FFN(nn.Module):
             getattr(nn.init, conf.ffn.init_weights)(
                 m.weight, gain=nn.init.calculate_gain(nonlinearity)
             )
-            m.bias.data.fill_(conf.ffn.init_weights_bias_const)
+            # m.bias.data.fill_(conf.ffn.init_weights_bias_const)
