@@ -15,7 +15,7 @@ class FileManager:
         self.file_len_dict: Dict[Path, int] = self._load_len_dict()
 
     def _get_file_list(self) -> List[Path]:
-        ds_path = Path(conf.path.dataset)
+        ds_path = Path(conf.path.dataset).expanduser()
         assert ds_path.is_dir()
         files = sorted(ds_path.glob(conf.loader.dataset_glob))
         if len(files) < 1:

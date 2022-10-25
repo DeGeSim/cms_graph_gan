@@ -3,6 +3,7 @@ from typing import List, Tuple
 
 import h5py
 import torch
+from sklearn.preprocessing import PowerTransformer, StandardScaler
 from torch_geometric.data import Data
 
 from fgsim.io import FileManager, ScalerBase
@@ -46,8 +47,7 @@ def read_chunks(
 def contruct_graph_from_row(chk: Tuple[torch.Tensor, torch.Tensor]) -> Data:
     y, x = chk
     res = Data(
-        x=x[..., :3].reshape(-1, 3),
-        mask=x[..., 3].reshape(-1).bool(),
+        x=x[x[..., 3].bool(), :3].reshape(-1, 3),
         y=y.reshape(1, -1),
     )
     return res
@@ -56,11 +56,11 @@ def contruct_graph_from_row(chk: Tuple[torch.Tensor, torch.Tensor]) -> Data:
 scaler = ScalerBase(
     files=file_manager.files,
     len_dict=file_manager.file_len_dict,
-    # transfs=[
-    #     StandardScaler(),
-    #     StandardScaler(),
-    #     PowerTransformer(method="box-cox", standardize=True),
-    # ],
+    transfs=[
+        StandardScaler(),
+        StandardScaler(),
+        PowerTransformer(method="box-cox", standardize=True),
+    ],
     read_chunk=read_chunks,
     transform_wo_scaling=contruct_graph_from_row,
 )

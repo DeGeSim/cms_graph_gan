@@ -41,9 +41,7 @@ def process_seq() -> List[Union[qf.StepBase, Queue]]:
 
 def transform_and_scale(pc) -> Data:
     graph = contruct_graph_from_row(pc)
-    graph.x[graph.mask] = torch.from_numpy(
-        scaler.transform(graph.x[graph.mask].numpy())
-    ).float()
+    graph.x = torch.from_numpy(scaler.transform(graph.x.numpy())).float()
     return graph
 
 

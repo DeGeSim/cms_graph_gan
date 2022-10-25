@@ -1,6 +1,8 @@
 from torch_geometric.data import Batch
 
+from fgsim.config import conf
 from fgsim.models.metrics.dcd import dcd
+from fgsim.utils.jetnetutils import to_stacked_mask
 
 
 class LossGen:
@@ -24,9 +26,10 @@ class LossGen:
         shape = (
             (1, -1, n_features) if self.batch_wise else (batch_size, -1, n_features)
         )
+        sim = to_stacked_mask(sim_batch)[..., : conf.loader.n_features]
         loss = dcd(
             gen_batch.x.reshape(*shape),
-            sim_batch.x.reshape(*shape),
+            sim.reshape(*shape),
             alpha=self.alpha,
             lpnorm=self.lpnorm,
             pow=self.pow,
