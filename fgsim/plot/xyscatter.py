@@ -163,8 +163,8 @@ def xy_hist(
     )
 
     axes[1].hist2d(
-        gen[:, 0],
-        gen[:, 1],
+        np.clip(gen[:, 0], xedges[0], xedges[-1]),
+        np.clip(gen[:, 1], yedges[0], yedges[-1]),
         bins=[xedges, yedges],
     )
     axes[0].set_title("MC")
