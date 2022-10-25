@@ -80,6 +80,16 @@ def validation_plots(
         )
         fig_logger(figure, f"{cmbname}.pdf")
 
+    if conf.loader_name == "jetnet":
+        from fgsim.plot.jetfeatures import jet_features
+
+        for title, fig in jet_features(
+            sim_batch,
+            gen_batch,
+            step=step,
+        ).items():
+            fig_logger(fig, title)
+
     for title, fig in ftx_marginals(
         sim_batch,
         gen_batch,
