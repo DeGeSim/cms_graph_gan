@@ -24,7 +24,9 @@ class Trainer:
         self.train_log: TrainLog = self.holder.train_log
         self.loader: QueuedDataset = QueuedDataset(loader_info)
 
-        if not self.holder.checkpoint_loaded and not conf.ray and not conf.debug:
+        if (
+            not self.holder.checkpoint_loaded and not conf.ray
+        ):  # and not conf.debug:
             self.validation_step()
             self.holder.save_checkpoint()
 

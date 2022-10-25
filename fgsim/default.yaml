@@ -196,7 +196,7 @@ mpgan_mask:
     mask_fne_np: False
 
 tree:
-    branches: [2, 4, 16]
+    branches: [2, 4, 4]
     features:
         - 512
         - 128
@@ -245,7 +245,7 @@ loss_options:
         factor: 0.001
     dcd:
         factor: 1.0
-        alpha: 10
+        alpha: 1
         lpnorm: 1
         batch_wise: false
         pow: 2
