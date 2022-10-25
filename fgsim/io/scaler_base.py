@@ -82,11 +82,7 @@ class ScalerBase:
         return torch.from_numpy(t_stacked.reshape(*orgshape)).float().to(dev)
 
     def plot_scaling(self, pcs, post=False):
-        if post:
-            arr = self.transform(pcs).T
-        else:
-            arr = pcs.T
-        for k, v in zip(conf.loader.x_features, arr):
+        for k, v in zip(conf.loader.x_features, pcs.T):
             fig, ax = plt.subplots(figsize=(10, 7))
             ax.hist(v, bins=500)
             fig.savefig(
