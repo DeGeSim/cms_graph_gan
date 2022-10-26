@@ -67,6 +67,8 @@ def test_full_NN_compute_graph(static_objects: DTColl):
       branching_layer (BranchingLayer): The branching layer to test.
       global_features (torch.Tensor): torch.Tensor
     """
+    torch.autograd.set_detect_anomaly(True)
+
     graph = static_objects.graph
     branching_layers = static_objects.branching_layers
     dyn_hlvs_layer = static_objects.dyn_hlvs_layer
@@ -113,6 +115,7 @@ def test_full_modelparts_grad():
       branching_layer (BranchingLayer): The branching layer to test.
       global_features (torch.Tensor): torch.Tensor
     """
+
     from fgsim.config import conf, defaultconf, device
     from fgsim.models.gen.gen_deeptree import (
         GraphTreeWrapper,
@@ -122,8 +125,20 @@ def test_full_modelparts_grad():
 
     # normalization needs to be set to false, otherwise Batchnorm
     # will propagate some gradient betweeen the events
-    conf.ffn.norm = "none"
-    conf.ffn.dropout = False
+
+    conf.tree.branches = [2, 3, 5]
+    conf.tree.features = [128, 64, 32, 3]
+    # defaultconf.model_param_options.gen_deeptree.dim_red_in_branching = False
+    # defaultconf.model_param_options.gen_deeptree.branching_param.residual = False
+    # defaultconf.model_param_options.gen_deeptree.branching_param.final_linear = (
+    #     False
+    # )
+    # defaultconf.model_param_options.gen_deeptree.branching_param.res_mean = False
+    # defaultconf.model_param_options.gen_deeptree.branching_param.res_final_layer = (
+    #     False
+    # )
+    defaultconf.model_param_options.gen_deeptree.branching_param.norm = "none"
+
     model = ModelClass(**defaultconf.model_param_options.gen_deeptree).to(device)
 
     z = torch.randn(*model.z_shape, requires_grad=True, device=device)
@@ -173,10 +188,11 @@ def test_full_modelparts_grad():
             cond=graph_tree.cond,
             batch=graph_tree.tbatch[graph_tree.idxs_by_level[ilevel]],
         )
-        graph_tree.global_features[1, :].sum().backward(retain_graph=True)
-        check_z()
-        graph_tree.global_features[1, :].sum().backward(retain_graph=True)
-        check_cond()
+        if graph_tree.global_features.numel():
+            graph_tree.global_features[1, :].sum().backward(retain_graph=True)
+            check_z()
+            graph_tree.global_features[1, :].sum().backward(retain_graph=True)
+            check_cond()
         graph_tree = model.branching_layers[ilevel](graph_tree)
 
         graph_tree.tftx[[graph_tree.tbatch == 1]].sum().backward(retain_graph=True)
@@ -226,6 +242,8 @@ def test_full_model_grad():
 
     conf.ffn.norm = "none"
     conf.ffn.dropout = False
+    conf.tree.features[-1] = conf.loader.n_features
+    defaultconf.model_param_options.gen_deeptree.branching_param.norm = "none"
     model = ModelClass(**defaultconf.model_param_options.gen_deeptree).to(device)
 
     z = torch.randn(*model.z_shape, requires_grad=True, device=device)

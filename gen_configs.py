@@ -24,8 +24,8 @@ base_config = ExperimentConfig(
 comet_project_name: jetnet-noac
 loader_name: jetnet
 tree:
-  branches: [3, 10]
-  features: [64, 16, 3]
+  branches: [2,3,5]
+  features: [64,32, 16, 3]
 training:
   smoothing:
     active: False

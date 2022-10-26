@@ -63,16 +63,24 @@ class BranchingLayer(nn.Module):
             assert final_linear
 
         if self.dim_red:
-            assert self.n_features_source > self.n_features_target
+            assert self.n_features_source >= self.n_features_target
         else:
             assert self.n_features_source == self.n_features_target
 
         self.proj_nn = FFN(
             self.n_features_source + n_global + n_cond,
-            self.n_features_target * self.n_branches,
+            self.n_features_source * self.n_branches,
             norm=self.norm,
             final_linear=self.final_linear or level + 1 == len(tree.features) - 1,
         )
+        if self.dim_red:
+            self.reduction_nn = FFN(
+                self.n_features_source,
+                self.n_features_target,
+                norm=self.norm,
+                final_linear=self.final_linear
+                or level + 1 == len(tree.features) - 1,
+            )
 
     # Split each of the leafs in the the graph.tree into n_branches and connect them
     def forward(self, graph: GraphTreeWrapper) -> GraphTreeWrapper:
@@ -106,20 +114,11 @@ class BranchingLayer(nn.Module):
         )
 
         assert parents_ftxs.shape[-1] == self.n_features_source
-        assert proj_ftx.shape[-1] == self.n_features_target * self.n_branches
-        if self.dim_red:
-            parents_ftxs = parents_ftxs[..., :n_features_target]
-        # If residual, add the features of the parent to the
-        if self.residual and (
-            self.res_final_layer or self.level + 1 != self.tree.n_levels - 1
-        ):
-            proj_ftx += parents_ftxs.repeat_interleave(dim=-1, repeats=n_branches)
-            if self.res_mean:
-                proj_ftx /= 2
+        assert proj_ftx.shape[-1] == self.n_features_source * self.n_branches
 
         assert list(proj_ftx.shape) == [
             n_parents * batch_size,
-            n_branches * n_features_target,
+            n_branches * self.n_features_source,
         ]
 
         # reshape the projected
@@ -128,8 +127,24 @@ class BranchingLayer(nn.Module):
             n_parents=n_parents,
             batch_size=batch_size,
             n_branches=n_branches,
-            n_features=n_features_target,
+            n_features=self.n_features_source,
         )
+        # assert (
+        #     children_ftxs[batch_size]
+        #     == proj_ftx[0, self.n_features_source : (self.n_features_source * 2)]
+        # ).all()
+        # del proj_ftx
+
+        if self.dim_red:
+            children_ftxs = self.reduction_nn(children_ftxs)
+            parents_ftxs = parents_ftxs[..., :n_features_target]
+        # If residual, add the features of the parent to the
+        if self.residual and (
+            self.res_final_layer or self.level + 1 != self.tree.n_levels - 1
+        ):
+            children_ftxs += parents_ftxs.repeat(n_branches, 1)
+            if self.res_mean:
+                children_ftxs /= 2
 
         points = prod([br for br in self.tree.branches[: self.level]])
         children = (
@@ -204,9 +219,10 @@ def reshape_features(
     n_features: int,
 ):
     return (
-        mtx.reshape(n_parents, batch_size, n_features * n_branches)
-        .transpose(1, 2)
+        # batch_size*n_parents, n_branches * n_features
+        mtx.reshape(n_parents, batch_size, n_branches * n_features)
+        .transpose(1, 2)  # n_parents, n_branches * n_features, batch_size
         .reshape(n_parents * n_branches, n_features, batch_size)
-        .transpose(1, 2)
+        .transpose(1, 2)  # n_parents * n_branches, batch_size, n_features
         .reshape(n_parents * n_branches * batch_size, n_features)
     )

@@ -11,7 +11,7 @@ from fgsim.models.common.deeptree.node import Node
 device = torch.device("cpu")
 
 
-def test_BranchingLayer_compute_graph(static_objects: DTColl):
+def test_BranchingLayer_compute_graph(branching_objects: DTColl):
     """
     Make sure that the events are independent.
     For this, we apply branching and make sure, that the gradient only
@@ -21,8 +21,8 @@ def test_BranchingLayer_compute_graph(static_objects: DTColl):
       branching_layers[0] (BranchingLayer): The branching layer to test.
       global_features (torch.Tensor): torch.Tensor
     """
-    graph = static_objects.graph
-    branching_layers = static_objects.branching_layers
+    graph = branching_objects.graph
+    branching_layers = branching_objects.branching_layers
 
     new_graph1 = branching_layers[0](graph)
     tree = branching_layers[0].tree

@@ -40,7 +40,7 @@ gan_mode_options:
         disc: [MSEDiscLoss]
 
 ffn:
-    activation: Tanh
+    activation: LeakyReLU
     hidden_layer_size: 512
     n_layers: 3
     activation_params:
@@ -78,8 +78,8 @@ model_param_options:
         branching_param:
             residual: True
             final_linear: True
-            norm: none
-            res_mean: True
+            norm: batchnorm
+            res_mean: False
             res_final_layer: True
         connect_all_ancestors: True
         ancestor_mpl:
@@ -196,10 +196,11 @@ mpgan_mask:
     mask_fne_np: False
 
 tree:
-    branches: [2, 4, 4]
+    branches: [2, 4, 4,4]
     features:
         - 512
         - 128
+        - 64
         - 16
         - ${loader.n_features}
 # tree:

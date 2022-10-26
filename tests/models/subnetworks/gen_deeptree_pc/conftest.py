@@ -5,6 +5,7 @@ from typing import Dict, List
 import pytest
 import torch
 
+# install_import_hook("fgsim")
 from fgsim.models.common import FFN, DynHLVsLayer
 from fgsim.models.common.deeptree import (
     BranchingLayer,
@@ -13,6 +14,9 @@ from fgsim.models.common.deeptree import (
     Tree,
     TreeGenType,
 )
+
+# from typeguard.importhook import install_import_hook
+
 
 device = torch.device("cpu")
 
@@ -70,7 +74,12 @@ def object_gen(props: Dict[str, int]) -> DTColl:
             level=level,
             n_global=n_global,
             n_cond=n_cond,
+            dim_red=False,
+            final_linear=True,
+            norm="none",
             residual=False,
+            res_final_layer=False,
+            res_mean=False,
         ).to(device)
         for level in range(n_levels - 1)
     ]
@@ -160,6 +169,28 @@ def dyn_props(request):
         "n_levels": n_levels,
     }
     return props
+
+
+@pytest.fixture(params=product([True, False], [True, False]))
+def branching_objects(request, static_props):
+    dim_red, residual = request.param
+    objs = object_gen(static_props)
+    objs.branching_layers = [
+        BranchingLayer(
+            tree=objs.tree,
+            level=level,
+            n_global=static_props["n_global"],
+            n_cond=static_props["n_cond"],
+            dim_red=dim_red,
+            final_linear=True,
+            norm="none",
+            residual=residual,
+            res_final_layer=False,
+            res_mean=False,
+        ).to(device)
+        for level in range(static_props["n_levels"] - 1)
+    ]
+    return objs
 
 
 @pytest.fixture()
