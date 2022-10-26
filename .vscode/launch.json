@@ -1,0 +1,113 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "args": [
+                "--hash",
+                "6cb0340",
+                // "--ray",
+                // "--debug",
+                "train"
+            ],
+            "cwd": "/home/mscham/fgsim",
+            // "justMyCode": false,
+            "module": "fgsim",
+            "name": "hash",
+            "request": "launch",
+            "type": "python"
+        },
+        {
+            "args": [
+                "--tag",
+                "jnnoac_rednn",
+                "--debug",
+                "train"
+            ],
+            "cwd": "/home/mscham/fgsim",
+            // "justMyCode": false,
+            "module": "fgsim",
+            "name": "train",
+            "request": "launch",
+            "type": "python"
+        },
+        {
+            "args": [
+                "--tag",
+                "jnnoac_rednn",
+                "--debug",
+                "test"
+            ],
+            "cwd": "/home/mscham/fgsim",
+            // "justMyCode": false,
+            "module": "fgsim",
+            "name": "test",
+            "request": "launch",
+            "type": "python"
+        },
+        {
+            "args": [
+                "--tag",
+                "jnnoac_rednn",
+                "--debug",
+                "preprocess"
+            ],
+            "cwd": "/home/mscham/fgsim",
+            // "justMyCode": false,
+            "module": "fgsim",
+            "name": "preprocess",
+            "request": "launch",
+            "type": "python"
+        },
+        {
+            "cwd": "/home/mscham/fgsim",
+            "name": "ray",
+            "request": "launch",
+            "program": "raytune/tune.py",
+            "type": "python",
+        },
+        {
+            "cwd": "/home/mscham/fgsim",
+            "name": "file",
+            "request": "launch",
+            "program": "fgsim/__main__.py",
+            "type": "python",
+            "args": [
+                "--tag",
+                "jnnoac_rednn",
+                "--debug",
+                "train"
+            ],
+        },
+        {
+            "name": "buildcmd",
+            "type": "python",
+            "request": "launch",
+            "cwd": "/home/mscham/fgsim",
+            "program": "/home/mscham/fgsim/fgsim/utils/buildcmd.py",
+            "console": "integratedTerminal",
+            "args": [
+                "--tag",
+                "jnnoac_rednn",
+                "--debug",
+                "setup"
+            ],
+        },
+        // {
+        //     "args": [],
+        //     "command": "pytest",
+        //     "group": {
+        //         "isDefault": true,
+        //         "kind": "test"
+        //     },
+        //     "isBackground": false,
+        //     "label": "Run test",
+        //     "options": {
+        //         "cwd": "${workspaceFolder}"
+        //     },
+        //     "type": "shell"
+        // }
+    ]
+}
