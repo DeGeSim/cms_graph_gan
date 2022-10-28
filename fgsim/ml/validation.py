@@ -63,14 +63,14 @@ def validate(holder: Holder, loader: QueuedDataset) -> None:
     )
     for batch in sim_batch, gen_batch:
         batch.x = scaler.inverse_transform(batch.x)
-    validation_plots(
-        train_log=holder.train_log,
-        sim_batch=sim_batch,
-        gen_batch=gen_batch,
-        plot_path=None,
-        best_last_val="val/unscaled",
-        step=holder.state.grad_step,
-    )
+    # validation_plots(
+    #     train_log=holder.train_log,
+    #     sim_batch=sim_batch,
+    #     gen_batch=gen_batch,
+    #     plot_path=None,
+    #     best_last_val="val/unscaled",
+    #     step=holder.state.grad_step,
+    # )
 
     # select the best model
     min_stop_crit = min(holder.history["stop_crit"])
