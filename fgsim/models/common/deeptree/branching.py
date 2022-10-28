@@ -59,8 +59,8 @@ class BranchingLayer(nn.Module):
 
         if res_mean or res_final_layer:
             assert residual
-        if residual:
-            assert final_linear
+        # if residual:
+        #     assert final_linear
 
         if self.dim_red:
             assert self.n_features_source >= self.n_features_target
@@ -136,7 +136,6 @@ class BranchingLayer(nn.Module):
         # del proj_ftx
 
         if self.dim_red:
-            children_ftxs = self.reduction_nn(children_ftxs)
             parents_ftxs = parents_ftxs[..., :n_features_target]
         # If residual, add the features of the parent to the
         if self.residual and (
@@ -145,6 +144,9 @@ class BranchingLayer(nn.Module):
             children_ftxs += parents_ftxs.repeat(n_branches, 1)
             if self.res_mean:
                 children_ftxs /= 2
+
+        if self.dim_red:
+            children_ftxs = self.reduction_nn(children_ftxs)
 
         points = prod([br for br in self.tree.branches[: self.level]])
         children = (
