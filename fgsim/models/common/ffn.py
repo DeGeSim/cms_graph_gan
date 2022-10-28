@@ -40,7 +40,9 @@ class FFN(nn.Module):
             **conf.ffn.activation_params[conf.ffn.activation]
         )
         for ilayer in range(n_layers):
-            self.seq.append(nn.Linear(features[ilayer], features[ilayer + 1]))
+            self.seq.append(
+                nn.Linear(features[ilayer], features[ilayer + 1], bias=False)
+            )
             if ilayer != n_layers - 1:
                 self.seq.append(activation)
                 if dropout:
