@@ -4,36 +4,43 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+from fgsim.utils.jetnetutils import to_stacked_mask
+
 # https://proceedings.mlr.press/v80/achlioptas18a.html
 # https://github.com/optas/latent_3d_points
 
 
 class ModelClass(nn.Module):
     def __init__(self, features: List[int]):
-        features = features[::-1]
+        self.features = features[::-1]
 
-        self.layer_num = len(features) - 1
+        self.layer_num = len(self.features) - 1
         super().__init__()
 
         self.fc_layers = nn.ModuleList(
             [
-                nn.Conv1d(features[inx], features[inx + 1], kernel_size=1, stride=1)
+                nn.Conv1d(
+                    self.features[inx],
+                    self.features[inx + 1],
+                    kernel_size=1,
+                    stride=1,
+                )
                 for inx in range(self.layer_num)
             ]
         )
 
         self.leaky_relu = nn.LeakyReLU(negative_slope=0.2)
         self.final_layer = nn.Sequential(
-            nn.Linear(features[-1], features[-2]),
-            nn.Linear(features[-2], features[0]),
-            nn.Linear(features[0], 1),
+            nn.Linear(self.features[-1], self.features[-2]),
+            nn.Linear(self.features[-2], self.features[0]),
+            nn.Linear(self.features[0], 1),
         )
 
     def forward(self, batch, cond):
         n_features = batch.x.shape[1]
         batch_size = batch.batch[-1] + 1
-
-        f = batch.x.reshape(batch_size, -1, n_features)
+        x = to_stacked_mask(batch)[..., : self.features[0]]
+        f = x.reshape(batch_size, -1, n_features)
         # # check if the reshape worked as expected:
         # f_slow = torch.stack(
         #     [
