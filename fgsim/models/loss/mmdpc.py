@@ -4,6 +4,7 @@ import torch
 from torch_geometric.data import Batch
 
 from fgsim.config import conf
+from fgsim.utils.jetnetutils import to_stacked_mask
 
 from .mmd import MMD
 
@@ -22,7 +23,7 @@ class LossGen:
         shape = (
             (1, -1, n_features) if self.batch_wise else (batch_size, -1, n_features)
         )
-        sim_sample = sim_batch.x.reshape(*shape)
+        sim_sample = to_stacked_mask(sim_batch)[..., : conf.loader.n_features]
         gen_sample = gen_batch.x.reshape(*shape)
 
         losses: List[torch.Tensor] = []
