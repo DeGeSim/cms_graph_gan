@@ -1,14 +1,16 @@
+from itertools import combinations
 from pathlib import Path
 from typing import Optional
 
 import matplotlib.pyplot as plt
+from matplotlib.figure import Figure
 from torch_geometric.data import Batch
 
 from fgsim.config import conf
 from fgsim.monitoring.logger import logger
 from fgsim.monitoring.train_log import TrainLog
 from fgsim.plot.marginals import ftx_marginals
-from fgsim.plot.xyscatter import xy_hist, xyscatter_faint
+from fgsim.plot.xyscatter import xy_hist
 
 
 class FigLogger:
@@ -18,9 +20,11 @@ class FigLogger:
         self.best_last_val = best_last_val
         self.step = step
 
-    def __call__(self, figure, filename):
+    def __call__(self, figure: Figure, filename):
         if self.plot_path is not None:
             figure.savefig((self.plot_path / filename).with_suffix(".png"), dpi=150)
+        label = conf.hash if hasattr(conf, "hash") else conf.tag
+        figure.text(0, 0, label, fontsize=10)
         self.train_log.log_figure(
             figure_name=f"val/{filename}"
             if self.best_last_val == "val"
@@ -43,29 +47,30 @@ def validation_plots(
 ):
     fig_logger = FigLogger(train_log, plot_path, best_last_val, step)
 
-    sim_batch_small = Batch.from_data_list(sim_batch[: conf.loader.batch_size])
-    gen_batch_small = Batch.from_data_list(gen_batch[: conf.loader.batch_size])
-
-    from itertools import combinations
+    # sim_batch_small = Batch.from_data_list(sim_batch[: conf.loader.batch_size])
+    # gen_batch_small = Batch.from_data_list(gen_batch[: conf.loader.batch_size])
+    # for v1, v2 in combinations(list(range(conf.loader.n_features)), 2):
+    #     v1name = conf.loader.x_features[v1]
+    #     v2name = conf.loader.x_features[v2]
+    #     cmbname = f"{v1name}_vs_{v2name}"
+    # if "val" not in best_last_val:
+    #     figure = xyscatter_faint(
+    #         sim=sim_batch_small.x[:, [v1, v2]].cpu().numpy(),
+    #         gen=gen_batch_small.x[:, [v1, v2]].cpu().numpy(),
+    #         title=(
+    #             f"Scatter points ({conf.loader.n_points}) in batch"
+    #             f" ({conf.loader.batch_size})"
+    #         ),
+    #         v1name=v1name,
+    #         v2name=v2name,
+    #         step=step,
+    #     )
+    #     fig_logger(figure, f"xyscatter_batch_{cmbname}.pdf")
 
     for v1, v2 in combinations(list(range(conf.loader.n_features)), 2):
         v1name = conf.loader.x_features[v1]
         v2name = conf.loader.x_features[v2]
         cmbname = f"{v1name}_vs_{v2name}"
-
-        if "val" not in best_last_val:
-            figure = xyscatter_faint(
-                sim=sim_batch_small.x[:, [v1, v2]].cpu().numpy(),
-                gen=gen_batch_small.x[:, [v1, v2]].cpu().numpy(),
-                title=(
-                    f"Scatter points ({conf.loader.n_points}) in batch"
-                    f" ({conf.loader.batch_size})"
-                ),
-                v1name=v1name,
-                v2name=v2name,
-                step=step,
-            )
-            fig_logger(figure, f"xyscatter_batch_{cmbname}.pdf")
 
         figure = xy_hist(
             sim=sim_batch.x[:, [v1, v2]].cpu().numpy(),
