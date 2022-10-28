@@ -139,6 +139,10 @@ def xyscatter_faint(
     return g.figure
 
 
+def chip_to_binborders(arr, binborders):
+    return np.clip(arr, binborders[0], binborders[-1])
+
+
 @wrap_torch_to_np
 def xy_hist(
     sim: np.ndarray,
@@ -153,18 +157,17 @@ def xy_hist(
 
     sns.set()
     fig, axes = plt.subplots(1, 2, sharex=True, sharey=True)
-    _, xedges, yedges, _ = axes[0].hist2d(
-        sim[:, 0],
-        sim[:, 1],
-        bins=[
-            binbourders_wo_outliers(sim[:, 0]),
-            binbourders_wo_outliers(sim[:, 1]),
-        ],
+    xedges = binbourders_wo_outliers(sim[:, 0])
+    yedges = binbourders_wo_outliers(sim[:, 1])
+    axes[0].hist2d(
+        chip_to_binborders(sim[:, 0], xedges),
+        chip_to_binborders(sim[:, 1], yedges),
+        bins=[xedges, yedges],
     )
 
     axes[1].hist2d(
-        np.clip(gen[:, 0], xedges[0], xedges[-1]),
-        np.clip(gen[:, 1], yedges[0], yedges[-1]),
+        chip_to_binborders(gen[:, 0], xedges),
+        chip_to_binborders(gen[:, 1], yedges),
         bins=[xedges, yedges],
     )
     axes[0].set_title("MC")
@@ -200,8 +203,8 @@ def bounds_wo_outliers(points: np.ndarray) -> tuple:
     # lower = median - max(med_abs_ufluk,med_abs_ufluk)
     outlier_scale = (
         max(
-            np.abs(np.quantile(points, 0.95) - median),
-            np.abs(np.quantile(points, 0.5) - median),
+            np.abs(np.quantile(points, 0.98) - median),
+            np.abs(np.quantile(points, 0.2) - median),
         )
         * 1.1
     )
