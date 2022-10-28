@@ -135,7 +135,7 @@ class BranchingLayer(nn.Module):
         # ).all()
         # del proj_ftx
 
-        if self.dim_red:
+        if not self.dim_red:
             parents_ftxs = parents_ftxs[..., :n_features_target]
         # If residual, add the features of the parent to the
         if self.residual and (
