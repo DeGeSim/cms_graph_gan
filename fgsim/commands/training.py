@@ -24,9 +24,7 @@ class Trainer:
         self.train_log: TrainLog = self.holder.train_log
         self.loader: QueuedDataset = QueuedDataset(loader_info)
 
-        if (
-            not self.holder.checkpoint_loaded and not conf.ray
-        ):  # and not conf.debug:
+        if not self.holder.checkpoint_loaded and not conf.ray and not conf.debug:
             self.validation_step()
             self.holder.save_checkpoint()
 
@@ -66,7 +64,7 @@ class Trainer:
         self.holder.state.time_io_end = time.time()
         return batch
 
-    def training_step(self, batch) -> None:
+    def training_step(self, batch) -> dict:
         # generate a new batch with the generator
         self.holder.optims.zero_grad(set_to_none=True)
         res = self.holder.pass_batch_through_model(batch, train_disc=True)
@@ -81,6 +79,7 @@ class Trainer:
             res = self.holder.pass_batch_through_model(batch, train_gen=True)
             self.holder.losses.gen(self.holder, **res)
             self.holder.optims.gen.step()
+        return res
 
     def post_training_step(self):
         self.holder.state.processed_events += conf.loader.batch_size
