@@ -101,7 +101,8 @@ ENV/
 .mypy_cache/
 
 # IDE settings
-.vscode/
+.vscode/*
+.vscode/launch.json
 data
 output/
 out.png
