@@ -14,6 +14,7 @@ class FFN(nn.Module):
         dropout: Optional[bool] = None,
         n_layers: Optional[int] = None,
         final_linear: Optional[bool] = False,
+        bias: Optional[bool] = False,
         n_nodes_per_layer: Optional[int] = None,
     ) -> None:
         if norm is None:
@@ -41,7 +42,7 @@ class FFN(nn.Module):
         )
         for ilayer in range(n_layers):
             self.seq.append(
-                nn.Linear(features[ilayer], features[ilayer + 1], bias=False)
+                nn.Linear(features[ilayer], features[ilayer + 1], bias=bias)
             )
             if ilayer != n_layers - 1:
                 self.seq.append(activation)
@@ -84,6 +85,7 @@ class FFN(nn.Module):
         self.n_layers = n_layers
         self.n_nodes_per_layer = n_nodes_per_layer
         self.activation = activation
+        self.bias = bias
         # if conf.ffn.init_weights != "kaiming_uniform_":
         #     self.reset_parameters()
 

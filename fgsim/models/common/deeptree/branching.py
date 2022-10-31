@@ -73,6 +73,7 @@ class BranchingLayer(nn.Module):
             self.n_features_source + n_global + n_cond,
             self.n_features_source * self.n_branches,
             norm=self.norm,
+            bias=False,
             final_linear=self.final_linear or (not self.dim_red and lastlayer),
         )
         if self.dim_red:
@@ -80,6 +81,7 @@ class BranchingLayer(nn.Module):
                 self.n_features_source,
                 self.n_features_target,
                 norm=self.norm,
+                bias=False,
                 final_linear=self.final_linear or lastlayer,
             )
 
