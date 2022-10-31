@@ -67,19 +67,20 @@ class BranchingLayer(nn.Module):
         else:
             assert self.n_features_source == self.n_features_target
 
+        lastlayer = level + 1 == len(tree.features) - 1
+
         self.proj_nn = FFN(
             self.n_features_source + n_global + n_cond,
             self.n_features_source * self.n_branches,
             norm=self.norm,
-            final_linear=self.final_linear or level + 1 == len(tree.features) - 1,
+            final_linear=self.final_linear or (not self.dim_red and lastlayer),
         )
         if self.dim_red:
             self.reduction_nn = FFN(
                 self.n_features_source,
                 self.n_features_target,
                 norm=self.norm,
-                final_linear=self.final_linear
-                or level + 1 == len(tree.features) - 1,
+                final_linear=self.final_linear or lastlayer,
             )
 
     # Split each of the leafs in the the graph.tree into n_branches and connect them

@@ -41,7 +41,7 @@ gan_mode_options:
 
 ffn:
     activation: LeakyReLU
-    hidden_layer_size: 512
+    hidden_layer_size: 100
     n_layers: 3
     activation_params:
         LeakyReLU:
@@ -71,13 +71,13 @@ layer_options:
 
 model_param_options:
     gen_deeptree:
-        dim_red_in_branching: true
+        dim_red_in_branching: True
         n_global: 0
         n_cond: ${len:${loader.y_features}}
         all_points: False
         branching_param:
             residual: True
-            final_linear: True
+            final_linear: False
             norm: batchnorm
             res_mean: False
             res_final_layer: True
@@ -142,7 +142,7 @@ model_param_options:
         leaky_relu_alpha: 0.2
         pointnetd_pointfc: [64, 128, 1024]
         num_hits: ${loader.n_points}
-        mask: false
+        mask: False
     disc_pcgan:
         modus: latent
         latent_dim: 128
@@ -162,7 +162,7 @@ model_param_options:
         final_activation: tanh
         output_node_size: ${loader.n_features}
         input_node_size: 32 # 0 for gen_fc and gen_graphcnn
-        lfc: false
+        lfc: False
         lfc_latent_size: 128
     disc_mp:
         num_particles: ${loader.n_points}
@@ -173,10 +173,10 @@ model_param_options:
         mp_iters: 2
         fe1_layers: null
         final_activation: ""
-        dea: true
-        dea_sum: true
+        dea: True
+        dea_sum: True
         fnd: []
-        mask_fnd_np: false
+        mask_fnd_np: False
         input_node_size: ${loader.n_features}
 
 mpgan_mask:
@@ -248,7 +248,7 @@ loss_options:
         factor: 1.0
         alpha: 1
         lpnorm: 1
-        batch_wise: false
+        batch_wise: False
         pow: 2
     cd:
         factor: 1.0
@@ -361,7 +361,7 @@ loader_options:
         y_features: []
         n_points: 128
         batch_size: 200
-        cluster_tree: false
+        cluster_tree: False
         cluster_method: "random"
     jetnet:
         dataset_path: "~/fgsim/data/jetnet"
