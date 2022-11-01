@@ -112,19 +112,25 @@ class BranchingLayer(nn.Module):
 
         # The proj_nn projects the (n_parents * n_event) x n_features to a
         # (n_parents * n_event) x (n_features*n_branches) matrix
+        # [[parent1], -> [[child1-1 child1-2],
+        #   parent2]]     [child2-1 child2-2]]
         proj_ftx = self.proj_nn(
             torch.hstack([parents_ftxs, cond_global, parent_global])
         )
 
         assert parents_ftxs.shape[-1] == self.n_features_source
         assert proj_ftx.shape[-1] == self.n_features_source * self.n_branches
-
         assert list(proj_ftx.shape) == [
             n_parents * batch_size,
             n_branches * self.n_features_source,
         ]
 
         # reshape the projected
+        # for a single batch
+        # [[child1-1 child1-2], -> [[child1-1,
+        #  [child2-1 child2-2]]      child1-2,
+        #                            child2-1,
+        #                            child1-2]]
         children_ftxs = reshape_features(
             proj_ftx,
             n_parents=n_parents,
@@ -136,11 +142,13 @@ class BranchingLayer(nn.Module):
         #     children_ftxs[batch_size]
         #     == proj_ftx[0, self.n_features_source : (self.n_features_source * 2)]
         # ).all()
-        # del proj_ftx
+        del proj_ftx
 
+        # If this branching layer reduces the dimensionality, we need to slice the
+        # parent_ftxs for the residual connection
         if not self.dim_red:
             parents_ftxs = parents_ftxs[..., :n_features_target]
-        # If residual, add the features of the parent to the
+        # If residual, add the features of the parent to the children
         if self.residual and (
             self.res_final_layer or self.level + 1 != self.tree.n_levels - 1
         ):
@@ -148,11 +156,15 @@ class BranchingLayer(nn.Module):
             if self.res_mean:
                 children_ftxs /= 2
 
+        # Do the down projection to the desired dimension
         if self.dim_red:
             children_ftxs = self.reduction_nn(children_ftxs)
 
+        # Calculate the number of nodes currently in the graphs
         points = prod([br for br in self.tree.branches[: self.level]])
-        children = (
+
+        # Compute the index vector for the children
+        children_idxs = (
             (
                 torch.repeat_interleave(
                     torch.arange(batch_size), n_branches * points
@@ -161,6 +173,8 @@ class BranchingLayer(nn.Module):
             * n_branches
             * points
         )
+
+        # Compute the level_idxs for the new children
         level_idx = torch.arange(
             len(children_ftxs), dtype=torch.long, device=device
         ) + len(graph.tftx)
@@ -172,47 +186,12 @@ class BranchingLayer(nn.Module):
                 ),
                 cond=graph.cond,
                 idxs_by_level=graph.idxs_by_level + [level_idx],
-                children=graph.children + [children],
+                children=graph.children + [children_idxs],
                 cur_level=graph.cur_level + 1,
                 batch_size=batch_size,
                 global_features=graph.global_features,
             )
         )
-
-        new_graph = TreeGenType(
-            tftx=torch.vstack([graph.tftx, children_ftxs]),
-            idxs_by_level=graph.idxs_by_level + [level_idx],
-            children=graph.children + [children],
-            edge_index=torch.hstack(
-                self.tree.ancestor_edge_index_p_level[: self.level + 2]
-            ),
-            edge_attr=torch.vstack(
-                self.tree.ancestor_edge_attrs_p_level[: self.level + 2]
-            ),
-            global_features=graph.global_features,
-            tbatch=torch.arange(batch_size, dtype=torch.long, device=device).repeat(
-                (len(graph.tftx) + len(children_ftxs)) // batch_size
-            ),
-        )
-        return new_graph
-
-
-# new_graph = Data(
-#     x:
-#       [currentpoints*batch_size,n_features]
-#       full feature vector
-#     idxs_by_level:
-#       [n_levels]:
-#           idxs to that x[idxs_by_level[ilevel]]==levels[ilevel]
-#           is the features for the current level
-#     children:
-#       [n_levels-1]:
-#           get the children of the nodes
-#           in ilevel via x[idxs_by_level[ilevel+1]][children[ilevel]]
-#     edge_index=torch.hstack(self.tree.ancestor_edge_index_p_level[: self.level + 2]),
-#     edge_attr=torch.vstack(self.tree.ancestor_edge_attrs_p_level[: self.level + 2]),
-#     global_features=global_features,
-# )
 
 
 @torch.jit.script
