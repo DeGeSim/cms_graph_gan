@@ -75,16 +75,16 @@ class ValidationMetrics:
         # for a given metric and validation run,
         # count the fraction of times that the value of this metric
         # is smaller then the other runs
-        ratio_better = np.apply_along_axis(
-            lambda row: np.array([np.mean(row <= e) for e in row]), 1, loss_history
+        score = np.apply_along_axis(
+            lambda row: np.array([np.mean(row >= e) for e in row]), 1, loss_history
         ).mean(0)
-        ratio_better = [float(val) for val in ratio_better]
-        history["stop_crit"] = list(ratio_better)
-        # overwrite the recorded ratio_better for each
-        for ivalstep in range(len(ratio_better)):
+        score = [float(val) for val in score]
+        history["score"] = list(score)
+        # overwrite the recorded score for each
+        for ivalstep in range(len(score)):
             self.train_log.log_metric(
-                name="val/ratio_better",
-                value=ratio_better[ivalstep],
+                name="score",
+                value=score[ivalstep],
                 step=ivalstep * conf.training.val.interval,
             )
 

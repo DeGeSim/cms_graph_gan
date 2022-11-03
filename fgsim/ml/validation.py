@@ -40,7 +40,7 @@ def validate(holder: Holder, loader: QueuedDataset) -> None:
     assert sim_batch.x.shape[-1] == gen_batch.x.shape[-1]
     assert max_points * 0.7 <= sim_batch.x.shape[0] <= max_points
     assert max_points * 0.7 <= gen_batch.x.shape[0] <= max_points
-    # scale all the samples
+
     for batch in sim_batch, gen_batch:
         if conf.training.smoothing.active:
             batch.x = smooth_features(batch.x, holder.state.grad_step)
@@ -54,15 +54,9 @@ def validate(holder: Holder, loader: QueuedDataset) -> None:
         best_last_val="val/scaled",
         step=holder.state.grad_step,
     )
+    # scale all the samples
     for batch in sim_batch, gen_batch:
         batch.x = scaler.inverse_transform(batch.x)
-
-    # evaluate the validation metrics
-    with torch.no_grad():
-        holder.val_loss(
-            gen_batch=gen_batch, sim_batch=sim_batch, d_gen=d_gen, d_sim=d_sim
-        )
-    holder.val_loss.log_metrics()
 
     validation_plots(
         train_log=holder.train_log,
@@ -73,14 +67,19 @@ def validate(holder: Holder, loader: QueuedDataset) -> None:
         step=holder.state.grad_step,
     )
 
-    # select the best model
-    min_stop_crit = min(holder.history["stop_crit"])
-    if min_stop_crit == holder.history["stop_crit"][-1]:
+    # evaluate the validation metrics
+    with torch.no_grad():
+        holder.val_loss(
+            gen_batch=gen_batch, sim_batch=sim_batch, d_gen=d_gen, d_sim=d_sim
+        )
+    holder.val_loss.log_metrics()
+
+    # save the best model
+    if max(holder.history["score"]) == holder.history["score"][-1]:
         holder.state.best_step = holder.state["grad_step"]
         holder.state.best_epoch = holder.state["epoch"]
         holder.best_model_state = deepcopy(holder.models.state_dict())
 
-        holder.train_log.log_metric("other/min_stop_crit", min_stop_crit)
         holder.train_log.log_metric("other/best_step", holder.state["grad_step"])
         holder.train_log.log_metric("other/best_epoch", holder.state["epoch"])
 
