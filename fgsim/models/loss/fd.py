@@ -21,7 +21,7 @@ class LossGen:
             sim_batch.x.reshape(*shape),
             p=2,
         ).mean()
-        # if holder.state.epoch >= 150:
+        # if holder.state['epoch'] >= 150:
         #     loss *= 0
         if loss < 0:
             raise Exception

@@ -17,7 +17,7 @@ class ValidationMetrics:
         self.train_log = train_log
         self.parts: Dict[str, Callable] = {}
         self._lastlosses: Dict[str, List[float]] = {}
-        self.metric_aggr = MetricAggregator(train_log.history["val_metrics"])
+        self.metric_aggr = MetricAggregator(train_log.state["val_metrics"])
 
         for metric_name in conf.training.val.metrics:
             assert metric_name != "parts"
@@ -66,7 +66,7 @@ class ValidationMetrics:
             self.train_log.log_metric(f"val/{metric_name}", metric_val)
 
         # compute the stop_metric
-        history = self.train_log.history
+        history = self.train_log.state
         val_metrics = history["val_metrics"]
         # collect all metrics for all validation runs in a 2d array
         loss_history = np.stack(

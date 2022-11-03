@@ -43,7 +43,7 @@ def validate(holder: Holder, loader: QueuedDataset) -> None:
     # scale all the samples
     for batch in sim_batch, gen_batch:
         if conf.training.smoothing.active:
-            batch.x = smooth_features(batch.x, holder.state.grad_step)
+            batch.x = smooth_features(batch.x, holder.state["grad_step"])
 
     # validation plots
     validation_plots(
@@ -52,7 +52,7 @@ def validate(holder: Holder, loader: QueuedDataset) -> None:
         gen_batch=gen_batch,
         plot_path=None,
         best_last_val="val/scaled",
-        step=holder.state.grad_step,
+        step=holder.state["grad_step"],
     )
     for batch in sim_batch, gen_batch:
         batch.x = scaler.inverse_transform(batch.x)
@@ -70,14 +70,15 @@ def validate(holder: Holder, loader: QueuedDataset) -> None:
         gen_batch=gen_batch,
         plot_path=None,
         best_last_val="val/unscaled",
-        step=holder.state.grad_step,
+        step=holder.state["grad_step"],
     )
 
     # select the best model
-    min_stop_crit = min(holder.history["stop_crit"])
-    if min_stop_crit == holder.history["stop_crit"][-1]:
-        holder.state.best_step = holder.state["grad_step"]
-        holder.state.best_epoch = holder.state["epoch"]
+    min_stop_crit = min(holder.state["stop_crit"])
+    if min_stop_crit == holder.state["stop_crit"][-1]:
+        logger.warning("New best model")
+        holder.state["best_step"] = holder.state["grad_step"]
+        holder.state["best_epoch"] = holder.state["epoch"]
         holder.best_model_state = deepcopy(holder.models.state_dict())
 
         holder.train_log.log_metric("other/min_stop_crit", min_stop_crit)

@@ -4,7 +4,6 @@ from typing import List
 
 import comet_ml
 from omegaconf import OmegaConf
-from omegaconf.dictconfig import DictConfig
 from sqlitedict import SqliteDict
 
 from fgsim.utils.oc_utils import dict_to_kv
@@ -93,7 +92,7 @@ def experiment_from_hash(hash) -> comet_ml.ExistingExperiment:
     )
 
 
-def get_experiment(state: DictConfig) -> comet_ml.ExistingExperiment:
+def get_experiment(state: dict) -> comet_ml.ExistingExperiment:
     from fgsim.config import conf
 
     experiment = experiment_from_hash(conf.hash)

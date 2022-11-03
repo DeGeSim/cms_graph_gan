@@ -14,7 +14,7 @@ class InteractiveTrainer(Trainer):
     def train_epoch(self):
         self.pre_epoch()
         istep_start = (
-            self.holder.state.processed_events
+            self.holder.state["processed_events"]
             // conf.loader.batch_size
             % self.loader.n_grad_steps_per_epoch
         )
@@ -23,16 +23,16 @@ class InteractiveTrainer(Trainer):
             initial=istep_start,
             total=self.loader.n_grad_steps_per_epoch,
             miniters=20,
-            desc=f"Epoch {self.holder.state.epoch}",
+            desc=f"Epoch {self.holder.state['epoch']}",
         ):
             batch = self.pre_training_step(batch)
             res = self.training_step(batch)
             self.post_training_step()
-            if self.holder.state.grad_step % 10 == 1:
+            if self.holder.state["grad_step"] % 10 == 1:
                 # from time import sleep
                 # sleep(1)
                 self.eval_step(res)
-            # if self.holder.state.grad_step == 500:
+            # if self.holder.state['grad_step'] == 500:
             #     break
 
     def eval_step(self, res):
@@ -44,7 +44,7 @@ class InteractiveTrainer(Trainer):
             sim=sim,
             gen=gen,
             title="Single Training Batch",
-            step=self.holder.state.grad_step,
+            step=self.holder.state["grad_step"],
             v1name=conf.loader.x_features[v1],
             v2name=conf.loader.x_features[v2],
         )

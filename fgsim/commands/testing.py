@@ -58,13 +58,13 @@ def test_procedure() -> None:
         plot_path.mkdir(exist_ok=True)
 
         if best_or_last == "best":
-            step = holder.state.best_step
-            epoch = holder.state.best_epoch
+            step = holder.state["best_step"]
+            epoch = holder.state["best_epoch"]
             gen_batches = test_data.gen_batches_best
 
         else:
-            step = holder.state.grad_step
-            epoch = holder.state.epoch
+            step = holder.state["grad_step"]
+            epoch = holder.state["epoch"]
             gen_batches = test_data.gen_batches_last
 
         test_info = TestInfo(
@@ -100,7 +100,7 @@ def get_testing_datasets(holder: Holder) -> TestDataset:
         logger.info(f"Loading test dataset from {ds_path}")
         test_data = TestDataset(**torch.load(ds_path))
         reprocess = (
-            test_data.grad_step != holder.state.grad_step
+            test_data.grad_step != holder.state["grad_step"]
             or test_data.loader_hash != conf.loader_hash
             or test_data.hash != conf.hash
         )
@@ -153,7 +153,7 @@ def get_testing_datasets(holder: Holder) -> TestDataset:
             sim_batches=ds_dict["sim"],
             gen_batches_best=ds_dict["best"],
             gen_batches_last=ds_dict["last"],
-            grad_step=holder.state.grad_step,
+            grad_step=holder.state["grad_step"],
             hlvs_dict=None,
             loader_hash=conf.loader_hash,
             hash=conf.hash,
