@@ -85,7 +85,7 @@ def test_procedure() -> None:
             sim_batch=test_info.sim_batch,
             gen_batch=test_info.gen_batch,
             plot_path=test_info.plot_path,
-            best_last_val=test_info.best_or_last,
+            best_last_val="test/" + test_info.best_or_last,
             step=test_info.step,
         )
 
@@ -114,7 +114,7 @@ def get_testing_datasets(holder: Holder) -> TestDataset:
         # Sample at least 2k events
         # n_batches = int(conf.testing.n_events / batch_size)
         # assert n_batches <= len(loader.testing_batches)
-        ds_dict = {}
+        ds_dict: Dict[str, Dict[str, Batch]] = {}
 
         for best_or_last in ["best", "last"]:
             # Check if we need to rerun the model
@@ -127,29 +127,28 @@ def get_testing_datasets(holder: Holder) -> TestDataset:
             res_d_l = {
                 "sim_batch": [],
                 "gen_batch": [],
+                "d_sim": [],
+                "d_gen": [],
             }
             for test_batch in qds.testing_batches:
                 for k, val in holder.pass_batch_through_model(
                     test_batch.to(holder.device)
                 ).items():
-                    if k in ["sim_batch", "gen_batch"]:
+                    if "batch" in k:
                         for e in val.to_data_list():
                             res_d_l[k].append(e)
-                    # else:
-                    #     res_d_l[k].append(val)
+                    else:
+                        res_d_l[k].append(val)
             # d_sim = torch.hstack(res_d_l["d_sim"])
             # d_gen = torch.hstack(res_d_l["d_gen"])
             if "sim" not in ds_dict:
-                ds_dict["sim"] = Batch.from_data_list(res_d_l["sim_batch"]).to(
-                    "cpu"
-                )
-            ds_dict[best_or_last] = Batch.from_data_list(res_d_l["gen_batch"]).to(
-                "cpu"
-            )
+                ds_dict["sim"] = Batch.from_data_list(res_d_l["sim_batch"]).cpu()
+            ds_dict[best_or_last] = Batch.from_data_list(res_d_l["gen_batch"]).cpu()
 
         # scale all the samples
         for k in ds_dict.keys():
-            ds_dict[k].x = scaler.inverse_transform(ds_dict[k].x)
+            if isinstance(ds_dict[k], Batch):
+                ds_dict[k].x = scaler.inverse_transform(ds_dict[k].x)
         test_data = TestDataset(
             sim_batches=ds_dict["sim"],
             gen_batches_best=ds_dict["best"],
