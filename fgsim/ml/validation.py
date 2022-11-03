@@ -45,13 +45,6 @@ def validate(holder: Holder, loader: QueuedDataset) -> None:
         if conf.training.smoothing.active:
             batch.x = smooth_features(batch.x, holder.state.grad_step)
 
-    # evaluate the validation metrics
-    with torch.no_grad():
-        holder.val_loss(
-            gen_batch=gen_batch, sim_batch=sim_batch, d_gen=d_gen, d_sim=d_sim
-        )
-    holder.val_loss.log_metrics()
-
     # validation plots
     validation_plots(
         train_log=holder.train_log,
@@ -63,14 +56,22 @@ def validate(holder: Holder, loader: QueuedDataset) -> None:
     )
     for batch in sim_batch, gen_batch:
         batch.x = scaler.inverse_transform(batch.x)
-    # validation_plots(
-    #     train_log=holder.train_log,
-    #     sim_batch=sim_batch,
-    #     gen_batch=gen_batch,
-    #     plot_path=None,
-    #     best_last_val="val/unscaled",
-    #     step=holder.state.grad_step,
-    # )
+
+    # evaluate the validation metrics
+    with torch.no_grad():
+        holder.val_loss(
+            gen_batch=gen_batch, sim_batch=sim_batch, d_gen=d_gen, d_sim=d_sim
+        )
+    holder.val_loss.log_metrics()
+
+    validation_plots(
+        train_log=holder.train_log,
+        sim_batch=sim_batch,
+        gen_batch=gen_batch,
+        plot_path=None,
+        best_last_val="val/unscaled",
+        step=holder.state.grad_step,
+    )
 
     # select the best model
     min_stop_crit = min(holder.history["stop_crit"])

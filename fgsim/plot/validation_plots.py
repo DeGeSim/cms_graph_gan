@@ -85,7 +85,7 @@ def validation_plots(
         )
         fig_logger(figure, f"{cmbname}.pdf")
 
-    if conf.loader_name == "jetnet":
+    if conf.loader_name == "jetnet" and best_last_val != "val/scaled":
         from fgsim.plot.jetfeatures import jet_features
 
         for title, fig in jet_features(
