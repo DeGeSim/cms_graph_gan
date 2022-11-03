@@ -6,7 +6,7 @@ from fgsim.monitoring.logger import logger
 
 
 def early_stopping(holder) -> bool:
-    history = holder.state
+    history = holder.history
     """
     If in the last `valsteps` the stopping metric have shown no
     improvement(=decay), return True, else False.

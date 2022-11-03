@@ -29,7 +29,7 @@ class LossGen:
             lpnorm=self.lpnorm,
             pow=self.pow,
         ).mean()
-        # if holder.state['epoch'] >= 150:
+        # if holder.state.epoch >= 150:
         #     loss *= 0
         if loss < 0:
             raise Exception

@@ -1,3 +1,5 @@
+from typing import Dict
+
 from omegaconf import DictConfig
 from torch.utils.tensorboard import SummaryWriter
 
@@ -13,8 +15,9 @@ class TrainLog:
     """Initialized with the `holder`, provides the logging with cometml/tensorboard.
     """
 
-    def __init__(self, state):
+    def __init__(self, state, history):
         self.state: DictConfig = state
+        self.history: Dict = history
         self.use_tb = not conf.debug or conf.command == "test"
         self.use_comet = (not conf.debug or conf.command == "test") and not conf.ray
         if self.use_tb:
@@ -40,14 +43,14 @@ class TrainLog:
         ):
             return
         traintime = (
-            self.state["time_train_step_end"] - self.state["time_train_step_start"]
+            self.state.time_train_step_end - self.state.time_train_step_start
         )
-        iotime = self.state["time_io_end"] - self.state["time_train_step_start"]
+        iotime = self.state.time_io_end - self.state.time_train_step_start
         utilisation = 1 - iotime / traintime
 
         self.log_metric("other/batchtime", traintime)
         self.log_metric("other/utilisation", utilisation)
-        self.log_metric("other/processed_events", self.state["processed_events"])
+        self.log_metric("other/processed_events", self.state.processed_events)
 
     def log_metrics(self, metrics_dict, *args, **kwargs):
         for k, v in metrics_dict.items():

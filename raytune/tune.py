@@ -72,12 +72,12 @@ class Trainable(tune.Trainable):
         self.trainer = Trainer(self.holder)
 
     def step(self):
-        if self.holder.state["epoch"] > fgsim.config.conf.training.max_epochs:
+        if self.holder.state.epoch > fgsim.config.conf.training.max_epochs:
             self.stop()
         self.trainer.train_epoch()
         if self.early_stoppingf(self.holder):
             self.stop()
-        return {k: v[-1] for k, v in self.holder.state["val_metrics"].items()}
+        return {k: v[-1] for k, v in self.holder.history["val_metrics"].items()}
 
     def cleanup(self):
         self.trainer.loader.qfseq.stop()

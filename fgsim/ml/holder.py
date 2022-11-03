@@ -10,7 +10,8 @@ from glob import glob
 from pathlib import Path
 
 import torch
-import yaml
+from omegaconf import OmegaConf
+from omegaconf.dictconfig import DictConfig
 
 from fgsim.config import conf
 from fgsim.io.sel_loader import Batch
@@ -33,16 +34,19 @@ class Holder:
     def __init__(self, device=torch.device("cpu")) -> None:
         self.device = device
         # Human readable, few values
-        self.state = {
-            "epoch": 0,
-            "processed_events": 0,
-            "grad_step": 0,
-            "complete": False,
+        self.state: DictConfig = OmegaConf.create(
+            {
+                "epoch": 0,
+                "processed_events": 0,
+                "grad_step": 0,
+                "complete": False,
+            }
+        )
+        self.history = {
             "losses": {snwname: {} for snwname in conf.models},
             "val_metrics": {},
         }
-
-        self.train_log = TrainLog(self.state)
+        self.train_log = TrainLog(self.state, self.history)
 
         self.models: SubNetworkCollector = SubNetworkCollector(conf.models)
         self.models = self.models.float()
@@ -66,7 +70,7 @@ class Holder:
         # with gpu_mem_monitor("optims"):
         #     self.optims.load_state_dict(self.optims.state_dict())
 
-        logger.warning(f"Starting with state {self.state}")
+        logger.warning(f"Starting with state {str(OmegaConf.to_yaml(self.state))}")
 
         # Keep the generated samples ready, to be accessed by the losses
         self.gen_points: Batch = None
@@ -100,8 +104,7 @@ class Holder:
                 raise FileNotFoundError("Could not find checkpoint")
             logger.warning("Proceeding without loading checkpoint.")
             return
-        with open(conf.path.state, "r") as f:
-            self.state = yaml.safe_load(f)
+        self.state = OmegaConf.load(conf.path.state)
         # Once the state has been loaded from the checkpoint,
         #  update the logger state
         self.train_log.state = self.state
@@ -125,8 +128,7 @@ class Holder:
     def load_ray_checkpoint(self, ray_tmp_checkpoint_path: str):
         checkpoint_path = Path(ray_tmp_checkpoint_path) / "cp.pth"
         state_path = Path(ray_tmp_checkpoint_path) / "state.pth"
-        with open(state_path, "r") as f:
-            self.state = yaml.safe_load(f)
+        self.state = OmegaConf.load(state_path)
         # Once the state has been loaded from the checkpoint,
         #  update the logger state
         self.train_log.state = self.state
@@ -168,8 +170,7 @@ class Holder:
             conf.path.checkpoint,
         )
         push_to_old(conf.path.state, conf.path.state_old)
-        with open(conf.path.state, "w") as f:
-            yaml.safe_dump(self.state, f)
+        OmegaConf.save(config=self.state, f=conf.path.state)
         self._last_checkpoint_time = datetime.now()
         logger.warning(
             f"{self._last_checkpoint_time.strftime('%d/%m/%Y, %H:%M:%S')}"
@@ -188,9 +189,7 @@ class Holder:
             },
             checkpoint_path,
         )
-
-        with open(state_path, "w") as f:
-            yaml.safe_dump(self.state, f)
+        OmegaConf.save(config=self.state, f=state_path)
         self._last_checkpoint_time = datetime.now()
         logger.warning(
             f"{self._last_checkpoint_time.strftime('%d/%m/%Y, %H:%M:%S')}"
