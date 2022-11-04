@@ -15,6 +15,7 @@ from fgsim.models.common.deeptree import (
     TreeGenType,
 )
 from fgsim.monitoring.logger import logger
+from fgsim.plot.model_plotter import model_plotter
 
 
 class ModelClass(nn.Module):
@@ -153,6 +154,7 @@ class ModelClass(nn.Module):
             .requires_grad_(True)
         )
         graph_tree.tftx_by_level[0][..., : cond.shape[-1]] = graph_tree.cond
+        model_plotter.save_tensor("level0", graph_tree.tftx_by_level[0])
 
         # Do the branching
         for ilevel in range(n_levels - 1):
@@ -175,6 +177,9 @@ class ModelClass(nn.Module):
             assert graph_tree.tftx.shape[0] == (
                 self.tree.tree_lists[ilevel + 1][-1].idxs[-1] + 1
             )
+            model_plotter.save_tensor(
+                f"branching output level{ilevel+1}", graph_tree.tftx_by_level[-1]
+            )
 
             graph_tree.tftx = self.ancestor_conv_layers[ilevel](
                 x=graph_tree.tftx,
@@ -188,6 +193,11 @@ class ModelClass(nn.Module):
             assert graph_tree.tftx.shape[0] == (
                 self.tree.tree_lists[ilevel + 1][-1].idxs[-1] + 1
             )
+            if conf.models.gen.params.ancestor_mpl.n_mpl > 0:
+                model_plotter.save_tensor(
+                    f"ancestor conv output level{ilevel+1}",
+                    graph_tree.tftx_by_level[-1],
+                )
 
             graph_tree.tftx = self.child_conv_layers[ilevel](
                 x=graph_tree.tftx,
@@ -197,11 +207,16 @@ class ModelClass(nn.Module):
                 batch=graph_tree.tbatch,
                 global_features=graph_tree.global_features,
             )
-
             assert graph_tree.tftx.shape[1] == self.tree.features[ilevel + 1]
             assert graph_tree.tftx.shape[0] == (
                 self.tree.tree_lists[ilevel + 1][-1].idxs[-1] + 1
             )
+
+            if conf.models.gen.params.child_mpl.n_mpl > 0:
+                model_plotter.save_tensor(
+                    f"child conv output level{ilevel+1}",
+                    graph_tree.tftx_by_level[-1],
+                )
 
         batch = graph_tree.to_batch()
         if self.final_layer_scaler:

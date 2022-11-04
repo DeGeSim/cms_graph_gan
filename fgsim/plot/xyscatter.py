@@ -203,8 +203,8 @@ def bounds_wo_outliers(points: np.ndarray) -> tuple:
     # lower = median - max(med_abs_ufluk,med_abs_ufluk)
     outlier_scale = (
         max(
-            np.abs(np.quantile(points, 0.98) - median),
-            np.abs(np.quantile(points, 0.2) - median),
+            np.abs(np.quantile(points, 0.99) - median),
+            np.abs(np.quantile(points, 0.1) - median),
         )
         * 1.1
     )

@@ -28,12 +28,7 @@ class InteractiveTrainer(Trainer):
             batch = self.pre_training_step(batch)
             res = self.training_step(batch)
             self.post_training_step()
-            if self.holder.state.grad_step % 10 == 1:
-                # from time import sleep
-                # sleep(1)
-                self.eval_step(res)
-            # if self.holder.state.grad_step == 500:
-            #     break
+            self.eval_step(res)
 
     def eval_step(self, res):
         v1 = 0
