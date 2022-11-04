@@ -67,14 +67,23 @@ class BranchingLayer(nn.Module):
         else:
             assert self.n_features_source == self.n_features_target
 
+        lastlayer = level + 1 == len(tree.features) - 1
+
         self.proj_nn = FFN(
             self.n_features_source + n_global + n_cond,
-            self.n_branches
-            * (self.n_features_target if self.dim_red else self.n_features_source),
+            self.n_features_source * self.n_branches,
             norm=self.norm,
             bias=False,
-            final_linear=False,
+            final_linear=self.final_linear or (not self.dim_red and lastlayer),
         )
+        if self.dim_red:
+            self.reduction_nn = FFN(
+                self.n_features_source,
+                self.n_features_target,
+                norm=self.norm,
+                bias=False,
+                final_linear=self.final_linear or lastlayer,
+            )
 
     # Split each of the leafs in the the graph.tree into n_branches and connect them
     def forward(self, graph: GraphTreeWrapper) -> GraphTreeWrapper:
@@ -110,11 +119,11 @@ class BranchingLayer(nn.Module):
         )
 
         assert parents_ftxs.shape[-1] == self.n_features_source
-        if self.dim_red:
-            assert proj_ftx.shape[-1] == self.n_features_target * self.n_branches
-        else:
-            assert proj_ftx.shape[-1] == self.n_features_source * self.n_branches
-        assert proj_ftx.shape[0] == n_parents * batch_size
+        assert proj_ftx.shape[-1] == self.n_features_source * self.n_branches
+        assert list(proj_ftx.shape) == [
+            n_parents * batch_size,
+            n_branches * self.n_features_source,
+        ]
 
         # reshape the projected
         # for a single batch
@@ -127,9 +136,7 @@ class BranchingLayer(nn.Module):
             n_parents=n_parents,
             batch_size=batch_size,
             n_branches=n_branches,
-            n_features=self.n_features_target
-            if self.dim_red
-            else self.n_features_source,
+            n_features=self.n_features_source,
         )
         # assert (
         #     children_ftxs[batch_size]
@@ -139,7 +146,7 @@ class BranchingLayer(nn.Module):
 
         # If this branching layer reduces the dimensionality, we need to slice the
         # parent_ftxs for the residual connection
-        if self.dim_red:
+        if not self.dim_red:
             parents_ftxs = parents_ftxs[..., :n_features_target]
         # If residual, add the features of the parent to the children
         if self.residual and (
@@ -150,8 +157,8 @@ class BranchingLayer(nn.Module):
                 children_ftxs /= 2
 
         # Do the down projection to the desired dimension
-        # if self.dim_red:
-        #     children_ftxs = self.reduction_nn(children_ftxs)
+        if self.dim_red:
+            children_ftxs = self.reduction_nn(children_ftxs)
 
         # Calculate the number of nodes currently in the graphs
         points = prod([br for br in self.tree.branches[: self.level]])

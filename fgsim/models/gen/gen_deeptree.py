@@ -7,7 +7,7 @@ from omegaconf import OmegaConf
 from torch_geometric.data import Batch
 
 from fgsim.config import conf
-from fgsim.models.common import FFN, DynHLVsLayer, MPLSeq
+from fgsim.models.common import DynHLVsLayer, FtxScaleLayer, MPLSeq
 from fgsim.models.common.deeptree import (
     BranchingLayer,
     GraphTreeWrapper,
@@ -112,12 +112,8 @@ class ModelClass(nn.Module):
             ]
         )
 
-        self.final_layer = FFN(
-            self.features[-1],
-            self.features[-1],
-            bias=False,
-            final_linear=True,
-        )
+        if self.final_layer_scaler:
+            self.ftx_scaling = FtxScaleLayer(self.features[-1])
 
     def wrap_layer_init(self, ilevel, type: str):
         if type == "ac":
@@ -208,7 +204,8 @@ class ModelClass(nn.Module):
             )
 
         batch = graph_tree.to_batch()
-        batch.x = self.final_layer(batch.x)
+        if self.final_layer_scaler:
+            batch.x = self.ftx_scaling(batch.x)
 
         assert batch.x.shape[0] == conf.loader.n_points * conf.loader.batch_size
         assert batch.x.shape[-1] == conf.loader.n_features
