@@ -4,7 +4,7 @@
         {
             "args": [
                 "--hash",
-                "6cb0340",
+                "6bd1172",
                 // "--ray",
                 // "--debug",
                 "train"
@@ -19,7 +19,7 @@
         {
             "args": [
                 "--tag",
-                "jnnoac",
+                "jn_ac_dhlvs",
                 "--debug",
                 "train"
             ],
@@ -33,7 +33,7 @@
         {
             "args": [
                 "--tag",
-                "jnnoac",
+                "jn_ac_dhlvs",
                 "--debug",
                 "test"
             ],
@@ -47,7 +47,7 @@
         {
             "args": [
                 "--tag",
-                "jnnoac",
+                "jn_ac_dhlvs",
                 "--debug",
                 "preprocess"
             ],
@@ -73,7 +73,7 @@
             "type": "python",
             "args": [
                 "--tag",
-                "jnnoac",
+                "jn_ac_dhlvs",
                 "--debug",
                 "train"
             ],
@@ -87,7 +87,7 @@
             "console": "integratedTerminal",
             "args": [
                 "--tag",
-                "jnnoac",
+                "jn_ac_dhlvs",
                 "--debug",
                 "setup"
             ],
