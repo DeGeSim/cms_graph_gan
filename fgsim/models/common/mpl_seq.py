@@ -67,7 +67,7 @@ class MPLSeq(torch.nn.Module):
         elif conv_name == "GINConv":
             return GINConv(
                 FFN(
-                    in_features + self.n_cond + self.n_global,
+                    in_features,  # + self.n_cond + self.n_global,
                     out_features,
                     **layer_param,
                 )
@@ -104,8 +104,8 @@ class MPLSeq(torch.nn.Module):
                 torch.hstack(
                     (
                         x,
-                        cond[batch],
-                        global_features[batch],
+                        # cond[batch],
+                        # global_features[batch],
                     )
                 ),
                 edge_index,

@@ -66,6 +66,7 @@ layer_options:
         residual: False
     GINConv:
         final_linear: True
+        bias: True
     GINCConv:
         final_linear: True
 
