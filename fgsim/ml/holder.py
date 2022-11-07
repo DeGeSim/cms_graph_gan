@@ -104,34 +104,16 @@ class Holder:
                 raise FileNotFoundError("Could not find checkpoint")
             logger.warning("Proceeding without loading checkpoint.")
             return
-        self.state = OmegaConf.load(conf.path.state)
-        # Once the state has been loaded from the checkpoint,
-        #  update the logger state
-        self.train_log.state = self.state
-        checkpoint = torch.load(conf.path.checkpoint, map_location=self.device)
-
-        assert not contains_nans(checkpoint["models"])[0]
-        assert not contains_nans(checkpoint["best_model"])[0]
-
-        self.models.load_state_dict(checkpoint["models"])
-        self.optims.load_state_dict(checkpoint["optims"])
-        self.best_model_state = checkpoint["best_model"]
-        self.history = checkpoint["history"]
-        self.checkpoint_loaded = True
-
-        logger.warning(
-            "Loaded model from checkpoint at"
-            + f" epoch {self.state['epoch']}"
-            + f" grad_step {self.state['grad_step']}."
+        self._load_checkpoint_path(
+            Path(conf.path.state), Path(conf.path.checkpoint)
         )
 
     def load_ray_checkpoint(self, ray_tmp_checkpoint_path: str):
         checkpoint_path = Path(ray_tmp_checkpoint_path) / "cp.pth"
         state_path = Path(ray_tmp_checkpoint_path) / "state.pth"
-        self.state = OmegaConf.load(state_path)
-        # Once the state has been loaded from the checkpoint,
-        #  update the logger state
-        self.train_log.state = self.state
+        self._load_checkpoint_path(state_path, checkpoint_path)
+
+    def _load_checkpoint_path(self, state_path, checkpoint_path):
         checkpoint = torch.load(checkpoint_path, map_location=self.device)
 
         assert not contains_nans(checkpoint["models"])[0]
@@ -140,12 +122,15 @@ class Holder:
         self.models.load_state_dict(checkpoint["models"])
         self.optims.load_state_dict(checkpoint["optims"])
         self.best_model_state = checkpoint["best_model"]
-        self.history = checkpoint["history"]
+
+        self.history.update(checkpoint["history"])
+        self.state.update(OmegaConf.load(state_path))
         self.checkpoint_loaded = True
 
         logger.warning(
-            f"Loaded model from checkpoint at epoch {self.state['epoch']}"
-            + f" grad_step {self.state['grad_step']} from {ray_tmp_checkpoint_path}"
+            "Loaded model from checkpoint at"
+            + f" epoch {self.state['epoch']}"
+            + f" grad_step {self.state['grad_step']}."
         )
 
     def select_best_model(self):

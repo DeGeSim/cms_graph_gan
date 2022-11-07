@@ -13,6 +13,12 @@ from fgsim.monitoring.train_log import TrainLog
 
 
 class ValidationMetrics:
+    """
+    Calling this object will save the output of the validation batches to
+    self.metric_aggr . In the log_metrics they are aggregated and logged
+    and a score is calculated.
+    """
+
     def __init__(self, train_log: TrainLog) -> None:
         self.train_log = train_log
         self.parts: Dict[str, Callable] = {}
@@ -64,8 +70,10 @@ class ValidationMetrics:
         for metric_name, metric_val in up_metrics_d.items():
             # Log the validation loss
             self.train_log.log_metric(f"val/{metric_name}", metric_val)
+        self.log_score()
 
-        # compute the stop_metric
+    def log_score(self):
+        # compute the score
         history = self.train_log.history
         val_metrics = history["val_metrics"]
         # collect all metrics for all validation runs in a 2d array
