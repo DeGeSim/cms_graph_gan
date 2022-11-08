@@ -77,7 +77,7 @@ class Trainable(tune.Trainable):
         self.trainer.train_epoch()
         if self.early_stoppingf(self.holder):
             self.stop()
-        return {k: v[-1] for k, v in self.holder.history["val_metrics"].items()}
+        return {k: v[-1] for k, v in self.holder.history["val"].items()}
 
     def cleanup(self):
         self.trainer.loader.qfseq.stop()

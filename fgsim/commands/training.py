@@ -84,6 +84,8 @@ class Trainer:
     def post_training_step(self):
         self.holder.state.processed_events += conf.loader.batch_size
         self.holder.state.time_train_step_end = time.time()
+        loss_hist = self.holder.history["losses"]
+
         if self.holder.state.grad_step % conf.training.log_interval == 0:
             # aggregate the losses that have accumulated since the last time
             # and logg them
@@ -92,8 +94,13 @@ class Trainer:
                 for lpart in self.holder.losses
             }
             for pname, ploosd in ldict.items():
+                if pname not in loss_hist:
+                    loss_hist[pname] = {}
                 for lname, lossval in ploosd.items():
                     self.train_log.log_metric(f"train/{pname}/{lname}", lossval)
+                    if lname not in loss_hist[pname]:
+                        loss_hist[pname][lname] = []
+                    loss_hist[pname][lname].append(lossval)
             # Also log training speed
             self.train_log.write_trainstep_logs()
         if not conf.ray:

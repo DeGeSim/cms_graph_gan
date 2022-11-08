@@ -66,7 +66,7 @@ layer_options:
         residual: False
     GINConv:
         final_linear: True
-        bias: True
+        bias: False
     GINCConv:
         final_linear: True
 
@@ -78,7 +78,7 @@ model_param_options:
         all_points: False
         branching_param:
             residual: True
-            final_linear: False
+            final_linear: True
             norm: batchnorm
             res_mean: False
             res_final_layer: True

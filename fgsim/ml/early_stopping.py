@@ -18,7 +18,7 @@ def early_stopping(holder) -> bool:
       A boolean value.
     """
     # Make sure some metrics have been recorded
-    if len(history["val_metrics"].keys()) == 0:
+    if len(history["val"].keys()) == 0:
         return False
     # collect at least two values before evaluating the criteria
     # if len(history["stop_crit"]) < 2:

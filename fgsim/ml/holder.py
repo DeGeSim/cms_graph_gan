@@ -4,6 +4,7 @@ depending on the config. Contains the code for checkpointing of model and optimz
 
 
 import os
+from collections import defaultdict
 from contextlib import contextmanager
 from datetime import datetime
 from glob import glob
@@ -43,17 +44,13 @@ class Holder:
             }
         )
         self.history = {
-            "losses": {snwname: {} for snwname in conf.models},
-            "val_metrics": {},
+            "losses": {snwname: defaultdict(list) for snwname in conf.models},
+            "val": defaultdict(list),
         }
-        self.train_log = TrainLog(self.state, self.history)
 
         self.models: SubNetworkCollector = SubNetworkCollector(conf.models)
         self.models = self.models.float()
 
-        self.train_log.log_model_graph(self.models)
-        self.losses: LossesCol = LossesCol(self.train_log)
-        self.val_loss: ValidationMetrics = ValidationMetrics(self.train_log)
         self.optims: OptimCol = OptimCol(conf.models, self.models.get_par_dict())
 
         # try to load a check point
@@ -81,12 +78,17 @@ class Holder:
         self.saved_first_checkpoint = False
 
         # import torcheck
-
         # for partname, model in self.models.parts.items():
         #     torcheck.register(self.optims[partname])
         #     torcheck.add_module_changing_check(model, module_name=partname)
         #     # torcheck.add_module_inf_check(model, module_name=partname)
         #     # torcheck.add_module_nan_check(model, module_name=partname)
+
+        self.train_log = TrainLog(self.state, self.history)
+        self.train_log.log_model_graph(self.models)
+        self.losses: LossesCol = LossesCol(self.train_log)
+        self.val_loss: ValidationMetrics = ValidationMetrics(self.train_log)
+
         self.to(self.device)
 
     def to(self, device):

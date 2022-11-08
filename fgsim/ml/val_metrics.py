@@ -23,7 +23,7 @@ class ValidationMetrics:
         self.train_log = train_log
         self.parts: Dict[str, Callable] = {}
         self._lastlosses: Dict[str, List[float]] = {}
-        self.metric_aggr = MetricAggregator(train_log.history["val_metrics"])
+        self.metric_aggr = MetricAggregator()
 
         for metric_name in conf.training.val.metrics:
             assert metric_name != "parts"
@@ -63,19 +63,18 @@ class ValidationMetrics:
         self.metric_aggr.append_dict(mval)
 
     def log_metrics(self) -> None:
-        # Call metric_aggr to aggregate the collected matrics over the
-        # validation batches. This will also update history["val_metrics"]
+        # Call metric_aggr to aggregate the collected metrics over the
+        # validation batches.
         up_metrics_d = self.metric_aggr.aggregate()
 
         for metric_name, metric_val in up_metrics_d.items():
             # Log the validation loss
             self.train_log.log_metric(f"val/{metric_name}", metric_val)
-        self.log_score()
+            self.train_log.history["val"][metric_name].append(metric_val)
 
-    def log_score(self):
-        # compute the score
+        # compute the stop_metric
         history = self.train_log.history
-        val_metrics = history["val_metrics"]
+        val_metrics = history["val"]
         # collect all metrics for all validation runs in a 2d array
         loss_history = np.stack(
             [val_metrics[metric] for metric in conf.training.val.use_for_stopping]
