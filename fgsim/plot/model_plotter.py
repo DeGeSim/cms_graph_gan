@@ -13,11 +13,15 @@ class ModelPlotter:
         self.combinations = list(combinations(list(range(self.n_features)), 2))
 
     def save_tensor(self, name: str, arr: torch.Tensor):
+        if conf["command"] == "plot_model":
+            return
         self.arrlist.append(
             [name, arr[..., : self.n_features].detach().cpu().numpy()]
         )
 
     def plot_model_outputs(self):
+        if conf["command"] == "plot_model":
+            raise Exception
         self.arrlist = self.arrlist[: (len(self.arrlist) // 2)]
         from matplotlib import pyplot as plt
 

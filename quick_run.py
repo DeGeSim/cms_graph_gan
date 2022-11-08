@@ -6,7 +6,7 @@ from omegaconf import OmegaConf
 
 tagconf = OmegaConf.load("wd/jn_ac_dhlvs/conf.yaml")
 tagconf["tag"] = "jn_ac_dhlvs"
-tagconf["command"] = "train"
+tagconf["command"] = "plot_model"
 tagconf["debug"] = True
 import fgsim.config
 
