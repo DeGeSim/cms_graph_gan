@@ -73,7 +73,7 @@ layer_options:
 model_param_options:
     gen_deeptree:
         dim_red_in_branching: True
-        n_global: 0
+        n_global: 10
         n_cond: ${len:${loader.y_features}}
         all_points: False
         branching_param:
@@ -84,14 +84,14 @@ model_param_options:
             res_final_layer: True
         connect_all_ancestors: True
         ancestor_mpl:
-            n_mpl: 0
-            n_hidden_nodes: 512
+            n_mpl: 1
+            n_hidden_nodes: 100
             conv_name: GINConv
             skip_connecton: True
             layer_param: ${layer_options[${model_param_options.gen_deeptree.ancestor_mpl.conv_name}]}
         child_mpl:
             n_mpl: 0
-            n_hidden_nodes: 1960
+            n_hidden_nodes: 100
             conv_name: GINConv
             skip_connecton: True
             layer_param: ${layer_options[${model_param_options.gen_deeptree.child_mpl.conv_name}]}
@@ -289,7 +289,7 @@ training:
     checkpoint_minutes: 15
     smoothing: "${smoothing_options[${loader_name}]}"
     log_interval: 10
-    max_epochs: 30000
+    max_epochs: 3000
     val:
         interval: "${div:200000,${loader.batch_size}}"
         use_for_stopping: ["w1E", "w1x", "w1y", "w1layer"]

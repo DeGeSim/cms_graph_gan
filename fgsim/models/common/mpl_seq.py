@@ -33,6 +33,7 @@ class MPLSeq(torch.nn.Module):
         self.skip_connecton = skip_connecton
         self.in_features = in_features
         self.out_features = out_features
+        self.n_hidden_nodes = n_hidden_nodes
 
         if n_mpl == 0:
             # assert in_features == out_features
@@ -59,9 +60,10 @@ class MPLSeq(torch.nn.Module):
         if conv_name == "GINCConv":
             return GINCConv(
                 FFN(
-                    in_features + self.n_cond + self.n_global,
+                    in_features,  # + self.n_cond + self.n_global,
                     out_features,
                     **layer_param,
+                    n_nodes_per_layer=self.n_hidden_nodes,
                 )
             )
         elif conv_name == "GINConv":
@@ -70,6 +72,7 @@ class MPLSeq(torch.nn.Module):
                     in_features,  # + self.n_cond + self.n_global,
                     out_features,
                     **layer_param,
+                    n_nodes_per_layer=self.n_hidden_nodes,
                 )
             )
         elif conv_name == "DeepConv":
