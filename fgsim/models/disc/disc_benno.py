@@ -12,7 +12,7 @@ class ModelClass(nn.Module):
 
     def forward(self, batch, cond):
         x = to_stacked_mask(batch)
-        x = self.net(x[..., :3])
+        x = self.net(x[..., :3], mask=(1 - x[..., 3]))
         return x
 
 
