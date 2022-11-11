@@ -13,10 +13,28 @@ class FigLogger:
         self.step = step
 
     def __call__(self, figure: Figure, filename):
+        figure.tight_layout()
+        if hasattr(conf, "hash"):
+            figure.text(
+                0.05,
+                0,
+                f"#{conf.hash}",
+                horizontalalignment="left",
+                verticalalignment="bottom",
+                fontsize=6,
+            )
+        figure.text(
+            0.95,
+            0,
+            f"@{conf.tag}",
+            horizontalalignment="right",
+            verticalalignment="bottom",
+            fontsize=6,
+        )
+
         if self.plot_path is not None:
             figure.savefig((self.plot_path / filename).with_suffix(".png"), dpi=150)
-        label = conf.hash if hasattr(conf, "hash") else conf.tag
-        figure.text(0, 0, label, fontsize=10)
+
         self.train_log.log_figure(
             figure_name=f"{self.best_last_val}/{filename}",
             figure=figure,

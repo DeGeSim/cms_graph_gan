@@ -3,7 +3,7 @@ from itertools import combinations
 import torch
 
 from fgsim.config import conf
-from fgsim.plot.xyscatter import binbourders_wo_outliers, chip_to_binborders
+from fgsim.plot.binborders import binbourders_wo_outliers, chip_to_binborders
 
 
 class ModelPlotter:
