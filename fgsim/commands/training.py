@@ -11,6 +11,7 @@ from fgsim.ml.early_stopping import early_stopping
 from fgsim.ml.holder import Holder
 from fgsim.ml.smoothing import smooth_features
 from fgsim.ml.validation import validate
+from fgsim.monitoring.logger import logger
 from fgsim.monitoring.train_log import TrainLog
 from fgsim.utils.model_summary import log_model
 
@@ -32,8 +33,10 @@ class Trainer:
         while self.holder.state.epoch < conf.training.max_epochs:
             self.train_epoch()
             if early_stopping(self.holder):
+                logger.warning("Early Stopping criteria fulfilled")
                 break
-
+        if self.holder.state.epoch >= conf.training.max_epochs:
+            logger.warning("Max Epochs surpassed")
         self.post_training()
 
     def train_epoch(self):

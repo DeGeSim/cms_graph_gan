@@ -12,6 +12,7 @@ import torch
 from scipy.stats import wasserstein_distance
 from torch_geometric.data import Batch
 from torch_scatter import scatter_mean
+from tqdm import tqdm
 
 from fgsim.config import conf, device
 from fgsim.io.queued_dataset import QueuedDataset
@@ -109,6 +110,7 @@ def get_testing_datasets(holder: Holder) -> TestDataset:
 
     if reprocess:
         # reprocess
+        logger.warning("Reprocessing Dataset")
         # Make sure the batches are loaded
         qds: QueuedDataset = QueuedDataset(loader_info)
         # Sample at least 2k events
@@ -130,7 +132,8 @@ def get_testing_datasets(holder: Holder) -> TestDataset:
                 "d_sim": [],
                 "d_gen": [],
             }
-            for test_batch in qds.testing_batches:
+
+            for test_batch in tqdm(qds.testing_batches, desc=best_or_last):
                 for k, val in holder.pass_batch_through_model(
                     test_batch.to(holder.device)
                 ).items():

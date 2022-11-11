@@ -4,7 +4,6 @@ from omegaconf import DictConfig
 from torch.utils.tensorboard import SummaryWriter
 
 from fgsim.config import conf
-from fgsim.monitoring.logger import logger
 from fgsim.monitoring.monitor import get_experiment
 
 if not conf.ray:
@@ -106,8 +105,6 @@ class TrainLog:
             )
 
     def end(self) -> None:
-        logger.warning("Early Stopping criteria fulfilled")
-
         if self.use_tb:
             self.writer.flush()
             self.writer.close()
