@@ -51,8 +51,8 @@ class ModelClass(torch.nn.Module):
         layers.append(nn.Sigmoid())
         self.fc = nn.Sequential(*layers)
 
-    def forward(self, batch):
-        x = batch.x
+    def forward(self, batch, cond):
+        x = torch.hstack(batch.x, cond)
         n_points = conf.loader.n_points
         batch_size = x.shape[0] // n_points
         # n_features = conf.loader.n_features

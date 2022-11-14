@@ -9,6 +9,8 @@ import torch.nn.parallel
 import torch.utils.data
 from torch.autograd import Variable
 
+from fgsim.utils.jetnetutils import to_stacked_mask
+
 
 class ModelClass(nn.Module):
     def __init__(self, batch_size: int, n_points: int, n_features: int):
@@ -20,10 +22,12 @@ class ModelClass(nn.Module):
             n_features=n_features, n_classes=2, feature_transform=True
         )
 
-    def forward(self, batch):
-        x = batch.x[torch.argsort(batch.batch)].reshape(
-            self.batch_size, self.n_points, self.n_features
-        )
+    def forward(self, batch, condition):
+        x = to_stacked_mask(batch)[..., : self.n_features]
+        # x = torch.hstack(
+        #     [x, condition[batch.batch].reshape(self.batch_size, self.n_points, -1)]
+        # )
+
         x = x.transpose(1, 2)
         out = self.net(x)
         return out
@@ -160,9 +164,7 @@ class STNkd(nn.Module):
             Variable(torch.from_numpy(np.eye(self.k).flatten().astype(np.float32)))
             .view(1, self.k * self.k)
             .repeat(batchsize, 1)
-        )
-        if x.is_cuda:
-            iden = iden.cuda()
+        ).to(x.device)
         x = x + iden
         x = x.view(-1, self.k, self.k)
         return x
