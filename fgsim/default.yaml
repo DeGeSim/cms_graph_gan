@@ -12,7 +12,7 @@ models:
         params: ${model_param_options[${models.gen.name}]}
         losses: "${optionlist:${loss_options},${models.gen.losses_list}}"
         losses_list: ${listadd:${gan_mode_options[${training.gan_mode}][gen]},${models.gen.additional_losses_list}}
-        additional_losses_list: ["dcd"]
+        additional_losses_list: []
         optim:
             name: Adam
             params: ${optim_options[${models.gen.optim.name}]}
@@ -84,7 +84,7 @@ model_param_options:
             res_final_layer: True
         connect_all_ancestors: True
         ancestor_mpl:
-            n_mpl: 1
+            n_mpl: 0
             n_hidden_nodes: 100
             conv_name: GINConv
             skip_connecton: True
@@ -281,7 +281,7 @@ smoothing_options:
 
 
 training:
-    gan_mode: CE
+    gan_mode: MSE
     disc_steps_per_gen_step: 2
     early_stopping:
         validation_steps: 100
