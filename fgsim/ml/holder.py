@@ -90,7 +90,7 @@ class Holder:
         #     # torcheck.add_module_nan_check(model, module_name=partname)
 
         self.losses: LossesCol = LossesCol(self.train_log)
-        self.val_loss: ValidationMetrics = ValidationMetrics(self.train_log)
+        self.val_metrics: ValidationMetrics = ValidationMetrics(self.train_log)
 
         self.to(self.device)
 

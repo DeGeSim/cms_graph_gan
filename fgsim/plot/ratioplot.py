@@ -5,12 +5,15 @@ import mplhep
 import numpy as np
 from matplotlib.figure import Figure
 
+from fgsim.utils.torchtonp import wrap_torch_to_np
+
 from .xyscatter import binbourders_wo_outliers
 
 
+@wrap_torch_to_np
 def ratioplot(
-    sim_arr: np.ndarray,
-    gen_arr: np.ndarray,
+    sim: np.ndarray,
+    gen: np.ndarray,
     title: str,
     step: Optional[int] = None,
 ) -> Figure:
@@ -21,11 +24,11 @@ def ratioplot(
         gridspec_kw={"height_ratios": [2, 1]},
     )
 
-    bins = binbourders_wo_outliers(sim_arr)
+    bins = binbourders_wo_outliers(sim)
     n_bins = len(bins) - 1
 
-    sim_hist, sim_bins = np.histogram(sim_arr, bins=bins)
-    gen_hist, _ = np.histogram(gen_arr, bins=bins)
+    sim_hist, sim_bins = np.histogram(sim, bins=bins)
+    gen_hist, _ = np.histogram(gen, bins=bins)
     sim_error = np.sqrt(sim_hist)
     gen_error = np.sqrt(gen_hist)
 

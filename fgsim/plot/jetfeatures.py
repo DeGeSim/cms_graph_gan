@@ -21,8 +21,8 @@ def jet_features(sim, gen, step=None) -> Dict[str, Figure]:
 
     for ftn in ["pt", "eta", "mass"]:
         plots_d[f"jetfeatures_{ftn}.pdf"] = ratioplot(
-            sim_arr=sim_features_agr[ftn],
-            gen_arr=gen_features_agr[ftn],
+            sim=sim_features_agr[ftn],
+            gen=gen_features_agr[ftn],
             title=var_to_label(ftn),
             step=step,
         )

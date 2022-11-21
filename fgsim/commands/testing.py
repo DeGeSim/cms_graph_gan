@@ -28,8 +28,7 @@ batch_size = conf.loader.batch_size
 @dataclass
 class TestInfo:
     train_log: TrainLog
-    sim_batch: Batch
-    gen_batch: Batch
+    res_d: dict
     hlvs_dict: Optional[Dict[str, Dict[str, np.ndarray]]]
     plot_path: Path
     step: int
@@ -39,9 +38,7 @@ class TestInfo:
 
 @dataclass
 class TestDataset:
-    sim_batches: List
-    gen_batches_best: List
-    gen_batches_last: List
+    res_d: dict
     hlvs_dict: Optional[Dict[str, Dict[str, np.ndarray]]]
     grad_step: int
     loader_hash: str
@@ -52,26 +49,22 @@ def test_procedure() -> None:
     holder: Holder = Holder(device)
     train_log: TrainLog = holder.train_log
 
-    test_data: TestDataset = get_testing_datasets(holder)
-
     for best_or_last in ["last", "best"]:
+        test_data: TestDataset = get_testing_datasets(holder, best_or_last)
         plot_path = Path(f"{conf.path.run_path}/plots_{best_or_last}/")
         plot_path.mkdir(exist_ok=True)
 
         if best_or_last == "best":
             step = holder.state.best_step
             epoch = holder.state.best_epoch
-            gen_batches = test_data.gen_batches_best
 
         else:
             step = holder.state.grad_step
             epoch = holder.state.epoch
-            gen_batches = test_data.gen_batches_last
 
         test_info = TestInfo(
             train_log=train_log,
-            sim_batch=test_data.sim_batches,
-            gen_batch=gen_batches,
+            res_d=test_data.res_d,
             hlvs_dict=test_data.hlvs_dict,
             plot_path=plot_path,
             step=step,
@@ -83,8 +76,7 @@ def test_procedure() -> None:
 
         validation_plots(
             train_log=test_info.train_log,
-            sim_batch=test_info.sim_batch,
-            gen_batch=test_info.gen_batch,
+            res=test_data.res_d,
             plot_path=test_info.plot_path,
             best_last_val="test/" + test_info.best_or_last,
             step=test_info.step,
@@ -93,8 +85,8 @@ def test_procedure() -> None:
     exit(0)
 
 
-def get_testing_datasets(holder: Holder) -> TestDataset:
-    ds_path = Path(conf.path.run_path) / f"testdata.pt"
+def get_testing_datasets(holder: Holder, best_or_last) -> TestDataset:
+    ds_path = Path(conf.path.run_path) / f"testdata_{best_or_last}.pt"
     test_data: TestDataset
 
     if ds_path.is_file():
@@ -110,52 +102,47 @@ def get_testing_datasets(holder: Holder) -> TestDataset:
 
     if reprocess:
         # reprocess
-        logger.warning("Reprocessing Dataset")
+        logger.warning(f"Reprocessing {best_or_last} Dataset")
         # Make sure the batches are loaded
         qds: QueuedDataset = QueuedDataset(loader_info)
         # Sample at least 2k events
         # n_batches = int(conf.testing.n_events / batch_size)
         # assert n_batches <= len(loader.testing_batches)
-        ds_dict: Dict[str, Dict[str, Batch]] = {}
 
-        for best_or_last in ["best", "last"]:
-            # Check if we need to rerun the model
-            # if yes, pickle it
-            if best_or_last == "best":
-                holder.select_best_model()
+        # Check if we need to rerun the model
+        # if yes, pickle it
+        if best_or_last == "best":
+            holder.select_best_model()
 
-            holder.models.eval()
+        holder.models.eval()
 
-            res_d_l = {
-                "sim_batch": [],
-                "gen_batch": [],
-                "d_sim": [],
-                "d_gen": [],
-            }
+        res_d_l = {
+            "sim_batch": [],
+            "gen_batch": [],
+            "d_sim": [],
+            "d_gen": [],
+        }
 
-            for test_batch in tqdm(qds.testing_batches, desc=best_or_last):
-                for k, val in holder.pass_batch_through_model(
-                    test_batch.to(holder.device)
-                ).items():
-                    if "batch" in k:
-                        for e in val.to_data_list():
-                            res_d_l[k].append(e)
-                    else:
-                        res_d_l[k].append(val)
-            # d_sim = torch.hstack(res_d_l["d_sim"])
-            # d_gen = torch.hstack(res_d_l["d_gen"])
-            if "sim" not in ds_dict:
-                ds_dict["sim"] = Batch.from_data_list(res_d_l["sim_batch"]).cpu()
-            ds_dict[best_or_last] = Batch.from_data_list(res_d_l["gen_batch"]).cpu()
+        for test_batch in tqdm(qds.testing_batches, desc=best_or_last):
+            for k, val in holder.pass_batch_through_model(
+                test_batch.to(holder.device)
+            ).items():
+                if "batch" in k:
+                    for e in val.to_data_list():
+                        res_d_l[k].append(e)
+                else:
+                    res_d_l[k].append(val)
 
-        # scale all the samples
-        for k in ds_dict.keys():
-            if isinstance(ds_dict[k], Batch):
-                ds_dict[k].x = scaler.inverse_transform(ds_dict[k].x)
+        # aggregate the results over the batches
+        for k in ["sim_batch", "gen_batch"]:
+            batch = Batch.from_data_list(res_d_l[k]).cpu()
+            batch.x = scaler.inverse_transform(batch.x)
+            res_d_l[k] = batch
+        for k in ["d_sim", "d_gen"]:
+            res_d_l[k] = torch.hstack(res_d_l[k])
+
         test_data = TestDataset(
-            sim_batches=ds_dict["sim"],
-            gen_batches_best=ds_dict["best"],
-            gen_batches_last=ds_dict["last"],
+            res_d=res_d_l,
             grad_step=holder.state.grad_step,
             hlvs_dict=None,
             loader_hash=conf.loader_hash,
@@ -180,12 +167,12 @@ def subsample(arr: np.ndarray):
 
 def test_metrics(test_info: TestInfo):
     train_log = test_info.train_log
-    sim_batches = test_info.sim_batch
-    gen_batches = test_info.gen_batch
+    sim_batch = test_info.res_d["sim_batch"]
+    gen_batch = test_info.res_d["gen_batch"]
 
     metrics_dict: Dict[str, float] = {}
 
-    for k, v in jetnet_metrics(sim_batches, gen_batches).items():
+    for k, v in jetnet_metrics(sim_batch, gen_batch).items():
         metrics_dict[k] = v
 
     # KS tests
