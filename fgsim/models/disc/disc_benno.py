@@ -22,17 +22,16 @@ class Disc(nn.Module):
         n_dim=3,
         l_dim=25,
         hidden=512,
-        num_layers=3,
+        num_layers=4,
         num_heads=5,
-        n_part=2,
-        dropout=0.5,
+        n_part=30,
+        dropout=0.05,
     ):
         super().__init__()
         self.hidden_nodes = hidden
         self.n_dim = n_dim
-        self.l_dim = l_dim * num_heads
-        self.n_part = n_part
-        self.embbed = nn.Linear(n_dim, self.l_dim)
+        self.l_dim = l_dim
+        self.embbed = nn.Linear(n_dim, l_dim)
         self.encoder = nn.TransformerEncoder(
             nn.TransformerEncoderLayer(
                 d_model=self.l_dim,
@@ -45,25 +44,33 @@ class Disc(nn.Module):
             ),
             num_layers=num_layers,
         )
-        self.hidden = nn.Linear(self.l_dim, 2 * hidden)
+        self.encoder_class = nn.TransformerEncoderLayer(
+            d_model=self.l_dim,
+            nhead=num_heads,
+            dim_feedforward=hidden,
+            dropout=dropout,
+            norm_first=False,
+            activation=lambda x: leaky_relu(x, 0.2),
+            batch_first=True,
+        )
+        self.hidden = nn.Linear(l_dim, 2 * hidden)
         self.hidden2 = nn.Linear(2 * hidden, hidden)
         self.out = nn.Linear(hidden, 1)
 
-    def forward(self, x, mask=None):
-        # IN (batch,particles,features) OUT (batch,particles,features)
+    def forward(self, x, m=None, p=None, mask=None, noise=0):
         x = self.embbed(x)
+        mask = (
+            torch.concat(
+                (torch.zeros_like((mask[:, 0]).reshape(len(x), 1)), mask), dim=1
+            )
+            .to(x.device)
+            .bool()
+        )
         x = torch.concat(
             (torch.zeros_like(x[:, 0, :]).reshape(len(x), 1, -1), x), axis=1
         )
-        if mask is not None:
-            mask = (
-                torch.concat(
-                    (torch.zeros_like((mask[:, 0]).reshape(len(x), 1)), mask), dim=1
-                )
-                .to(x.device)
-                .bool()
-            )
-        x = self.encoder(x, src_key_padding_mask=mask)
+        x = self.encoder(x, src_key_padding_mask=mask.bool())
+        x = x[:, 0, :]
         x = leaky_relu(self.hidden(x), 0.2)
         x = leaky_relu(self.hidden2(x), 0.2)
         x = self.out(x)
