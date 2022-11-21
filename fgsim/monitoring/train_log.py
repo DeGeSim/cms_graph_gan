@@ -59,7 +59,7 @@ class TrainLog:
             )
 
     def log_metric(self, name: str, value=None, step=None, epoch=None) -> None:
-        if conf.debug:
+        if conf.debug and conf.command != "test":
             return
         assert value is not None
         if step is None:
@@ -68,7 +68,7 @@ class TrainLog:
             epoch = self.state["epoch"]
         value = float(value)
         if self.use_tb:
-            self.writer.add_scalar(name, value, step)
+            self.writer.add_scalar(name, value, step, new_style=True)
         if self.use_comet:
             self.experiment.log_metric(
                 name,
@@ -104,10 +104,12 @@ class TrainLog:
                 step=self.state["grad_step"],
             )
 
-    def end(self) -> None:
+    def __del__(self):
         if self.use_tb:
             self.writer.flush()
             self.writer.close()
+
+    def end(self) -> None:
         if self.use_comet:
             self.experiment.log_other("ended", True)
             self.experiment.end()

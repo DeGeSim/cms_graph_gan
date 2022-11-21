@@ -91,11 +91,11 @@ class Trainer:
 
         if self.holder.state.grad_step % conf.training.log_interval == 0:
             # aggregate the losses that have accumulated since the last time
-            # and logg them
             ldict = {
                 lpart.name: lpart.metric_aggr.aggregate()
                 for lpart in self.holder.losses
             }
+            # and log them & attacht them to the history (for early stopping)
             for pname, ploosd in ldict.items():
                 if pname not in loss_hist:
                     loss_hist[pname] = {}

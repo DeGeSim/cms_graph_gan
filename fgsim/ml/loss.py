@@ -18,7 +18,9 @@ class LossFunction(Protocol):
 
 class SubNetworkLoss:
     """Holds all losses for a single subnetwork.
-    Calling this class should return a single (1D) loss for the gradient step"""
+    Calling this class should return a single (1D) loss for the gradient step
+    Saves all losses in a MetricAggregator
+    """
 
     def __init__(
         self, subnetworkname: str, pconf: DictConfig, train_log: TrainLog
