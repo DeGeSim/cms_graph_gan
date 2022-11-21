@@ -15,7 +15,7 @@
     "settings": {
         "[python]": {
             "editor.codeActionsOnSave": {
-                "source.organizeImports": true
+                "source.organizeImports": false
             },
             "editor.formatOnSave": true
         },
@@ -24,36 +24,28 @@
         "docwriter.style": "Google",
         "editor.formatOnSave": true,
         "files.exclude": {
-            "**/*.egg-info/**": true,
             "**/.*/**": true,
-            "**/.DS_Store": true,
-            "**/.git": true,
-            "**/.hg": true,
-            "**/.svn": true,
             "**/CVS": true,
             "**/Thumbs.db": true,
             "**/__*__/**": true,
-            "**/__pycache__": true,
-            "**/_build/**": true,
-            "**/node_modules/*/**": true,
-            "**/old/**": true,
+            "fgsim/old/": true,
+            "*.egg-info": true,
             "data/": true,
-            "venv1.10.1+cu111/": true,
             "wd/": true,
             "env.tar": true,
-            "wd/*": true
+            "performance/*": true,
         },
         "files.watcherExclude": {
-            "**/.git/objects/**": true,
-            "**/.git/subtree-cache/**": true,
-            "**/.hg/store/**": true,
-            "**/node_modules/*/**": true,
+            "**/.*/**": true,
+            "**/CVS": true,
+            "**/Thumbs.db": true,
+            "**/__*__/**": true,
+            "fgsim/old/": true,
+            "*.egg-info": true,
             "data/": true,
-            "logandrun/": true,
-            "venv1.10.1+cu111/": true,
             "wd/": true,
-            "wd/*": true,
             "env.tar": true,
+            "performance/*": true,
         },
         "jupyter.jupyterLaunchRetries": 1,
         "python.analysis.typeCheckingMode": "basic",
@@ -91,8 +83,5 @@
                 "path": "${env:HOME}/.apps/CentOSLinux7/bin/zsh",
             }
         },
-        "editor.codeActionsOnSave": {
-            "source.organizeImports": false
-        }
     },
 }
