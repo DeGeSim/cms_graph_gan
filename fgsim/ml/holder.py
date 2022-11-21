@@ -51,9 +51,10 @@ class Holder:
         self.models: SubNetworkCollector = SubNetworkCollector(conf.models)
         self.models = self.models.float()
 
-        self.optims: OptimAndSchedulerCol = OptimAndSchedulerCol(
-            conf.models, self.models.get_par_dict()
-        )
+        if conf.command == "train":
+            self.optims: OptimAndSchedulerCol = OptimAndSchedulerCol(
+                conf.models, self.models.get_par_dict()
+            )
 
         # try to load a check point
         self.checkpoint_loaded = False
@@ -96,7 +97,8 @@ class Holder:
     def to(self, device):
         self.device = device
         self.models = self.models.to(device)
-        self.optims.to(device)
+        if conf.command == "train":
+            self.optims.to(device)
 
         return self
 
@@ -124,7 +126,8 @@ class Holder:
         assert not contains_nans(checkpoint["best_model"])[0]
 
         self.models.load_state_dict(checkpoint["models"])
-        self.optims.load_state_dict(checkpoint["optims"])
+        if conf.command == "train":
+            self.optims.load_state_dict(checkpoint["optims"])
         self.best_model_state = checkpoint["best_model"]
 
         self.history.update(checkpoint["history"])

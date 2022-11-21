@@ -46,14 +46,14 @@ def validate(holder: Holder, loader: QueuedDataset) -> None:
             batch.x = smooth_features(batch.x, holder.state.grad_step)
 
     # validation plots
-    validation_plots(
-        train_log=holder.train_log,
-        sim_batch=sim_batch,
-        gen_batch=gen_batch,
-        plot_path=None,
-        best_last_val="val/scaled",
-        step=holder.state.grad_step,
-    )
+    # validation_plots(
+    #     train_log=holder.train_log,
+    #     sim_batch=sim_batch,
+    #     gen_batch=gen_batch,
+    #     plot_path=None,
+    #     best_last_val="val/scaled",
+    #     step=holder.state.grad_step,
+    # )
     # scale all the samples
     for batch in sim_batch, gen_batch:
         batch.x = scaler.inverse_transform(batch.x)
