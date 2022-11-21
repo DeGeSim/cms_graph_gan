@@ -72,7 +72,7 @@ class Trainer:
         self.holder.optims.zero_grad(set_to_none=True)
         res = self.holder.pass_batch_through_model(batch, train_disc=True)
         self.holder.losses.disc(self.holder, **res)
-        self.holder.optims.disc.step()
+        self.holder.optims.step("disc")
 
         # generator
         if self.holder.state.grad_step % conf.training.disc_steps_per_gen_step == 0:
@@ -81,7 +81,7 @@ class Trainer:
             self.holder.optims.zero_grad(set_to_none=True)
             res = self.holder.pass_batch_through_model(batch, train_gen=True)
             self.holder.losses.gen(self.holder, **res)
-            self.holder.optims.gen.step()
+            self.holder.optims.step("gen")
         return res
 
     def post_training_step(self):
@@ -112,9 +112,9 @@ class Trainer:
         self.holder.state.time_train_step_start = time.time()
 
     def validation_step(self):
-        self.holder.models.eval()
+        #  self.holder.models.eval()
         validate(self.holder, self.loader)
-        self.holder.models.train()
+        #  self.holder.models.train()
         self.holder.state.time_train_step_start = time.time()
 
     def pre_epoch(self):

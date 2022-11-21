@@ -18,7 +18,7 @@ from fgsim.config import conf
 from fgsim.io.sel_loader import Batch
 from fgsim.ml.loss import LossesCol
 from fgsim.ml.network import SubNetworkCollector
-from fgsim.ml.optim import OptimCol
+from fgsim.ml.optim import OptimAndSchedulerCol
 from fgsim.ml.val_metrics import ValidationMetrics
 from fgsim.monitoring.logger import logger
 from fgsim.monitoring.train_log import TrainLog
@@ -51,7 +51,9 @@ class Holder:
         self.models: SubNetworkCollector = SubNetworkCollector(conf.models)
         self.models = self.models.float()
 
-        self.optims: OptimCol = OptimCol(conf.models, self.models.get_par_dict())
+        self.optims: OptimAndSchedulerCol = OptimAndSchedulerCol(
+            conf.models, self.models.get_par_dict()
+        )
 
         # try to load a check point
         self.checkpoint_loaded = False
