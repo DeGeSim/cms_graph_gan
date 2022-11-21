@@ -15,7 +15,7 @@ def w1m(
         jets1=to_stacked_mask(gen_batch)[:1000, ..., :3],
         jets2=to_stacked_mask(sim_batch)[:1000, ..., :3],
     )[0]
-    return min(score * 1e3, 1e8)
+    return min(score * 1e3, 1e5)
 
 
 def w1p(
@@ -25,7 +25,7 @@ def w1p(
         jets1=to_stacked_mask(gen_batch)[:1000, ..., :3],
         jets2=to_stacked_mask(sim_batch)[:1000, ..., :3],
     )[0]
-    return min(score * 1e3, 1e8)
+    return min(score * 1e3, 1e5)
 
 
 def w1efp(
@@ -37,7 +37,7 @@ def w1efp(
         num_batches=1,
         efp_jobs=10,
     )[0]
-    return min(score * 1e5, 1e8)
+    return min(score * 1e5, 1e5)
 
 
 def fpnd(gen_batch: Batch, **kwargs) -> Union[float, torch.Tensor, np.float32]:

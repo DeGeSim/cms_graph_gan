@@ -37,9 +37,13 @@ models:
 scheduler_options:
     NullScheduler: {}
     OneCycleLR:
-        max_lr_factor: 10
-        epochs: 500
-        steps_per_epoch: 575
+        max_lr_factor: 100
+        total_steps: ${prod:500, 575}
+    CyclicLR:
+        max_lr_factor: 100
+        base_lr: 1.e-5
+        step_size_up: 2000
+
 
 gan_mode_options:
     CE:
@@ -97,7 +101,7 @@ model_param_options:
             res_final_layer: True
         connect_all_ancestors: True
         ancestor_mpl:
-            n_mpl: 0
+            n_mpl: 1
             n_hidden_nodes: 100
             conv_name: GINConv
             skip_connecton: True

@@ -21,37 +21,34 @@ class ExperimentOption:
 base_config = ExperimentConfig(
     OmegaConf.create(
         """
-comet_project_name: jetnet-noac
+comet_project_name: jetnet-scheduler
 dataset_name: jetnet
-tree:
-  branches: [2,3,5]
-  features: [64,32, 16, 3]
-training:
-  smoothing:
-    active: False
-  val:
-    interval: 500
-    use_for_stopping:
-    - fpnd
-    metrics:
-      - w1m
-      - w1p
-      - fpnd
-      - aoc
-# ffn:
-#     activation: LeakyReLU
-model_param_options:
-    gen_deeptree:
-        dim_red_in_branching: False
-        branching_param:
-            residual: True
-            final_linear: True
-            norm: batchnorm
-            res_mean: False
-            res_final_layer: False
+models:
+    gen:
+        optim:
+            name: Adam
+        scheduler:
+            name: NullScheduler
+optim_options:
+    Adam:
+        weight_decay: 1.0e-4
+        lr: 2.e-4
+    SGD:
+        lr: 2.e-4
+    RMSprop:
+        lr: 2.e-4
+scheduler_options:
+    NullScheduler: {}
+    OneCycleLR:
+        max_lr_factor: 100
+        total_steps: ${prod:500, 575}
+    CyclicLR:
+        max_lr_factor: 100
+        base_lr: 1.e-5
+        step_size_up: 2000
     """,
     ),
-    ["jnnoac"],
+    ["jn", "sched"],
 )
 
 
@@ -64,117 +61,94 @@ def add_option(option: Callable):
     optionslist.append(option)
 
 
-@add_option
-def option_fl(exp_config: ExperimentConfig) -> Dict[str, DictConfig]:
-    res = defaultdict(exp_config.config.copy)
-    # res["fl"]["model_param_options"]["gen_deeptree"]["branching_param"][
-    #     "final_linear"
-    # ] = True
-    res["nofl"]["model_param_options"]["gen_deeptree"]["branching_param"][
-        "residual"
-    ] = False
-    res["nofl"]["model_param_options"]["gen_deeptree"]["branching_param"][
-        "final_linear"
-    ] = False
-    return res
-
-
-@add_option
-def option_dim_red_in_branching(
-    exp_config: ExperimentConfig,
-) -> Dict[str, DictConfig]:
-    res = defaultdict(exp_config.config.copy)
-    res["direct"]["model_param_options"]["gen_deeptree"][
-        "dim_red_in_branching"
-    ] = True
-    # res["indirect"]["model_param_options"]["gen_deeptree"][
-    #     "dim_red_in_branching"
-    # ] = False
-    return res
-
-
-@add_option
-def option_res_mean(
-    exp_config: ExperimentConfig,
-) -> Dict[str, DictConfig]:
-    res = defaultdict(exp_config.config.copy)
-    res["resmean"]["model_param_options"]["gen_deeptree"]["branching_param"][
-        "res_mean"
-    ] = True
-    # res["resadd"]["model_param_options"]["gen_deeptree"]["branching_param"][
-    #     "res_mean"
-    # ] = False
-
-    return res
-
-
-@add_option
-def option_norm(exp_config: ExperimentConfig) -> Dict[str, DictConfig]:
-    res = defaultdict(exp_config.config.copy)
-    # res["res"]["model_param_options"]["gen_deeptree"]["branching_param"][
-    #     "residual"
-    # ] = True
-    res["nores"]["model_param_options"]["gen_deeptree"]["branching_param"][
-        "residual"
-    ] = False
-    return res
-
-
-@add_option
-def option_res_final_layer(
-    exp_config: ExperimentConfig,
-) -> Dict[str, DictConfig]:
-    res = defaultdict(exp_config.config.copy)
-    res["flres"]["model_param_options"]["gen_deeptree"]["branching_param"][
-        "res_final_layer"
-    ] = True
-    # res["noflres"]["model_param_options"]["gen_deeptree"]["branching_param"][
-    #     "res_final_layer"
-    # ] = False
-
-    return res
-
-
-@add_option
-def option_reg(exp_config: ExperimentConfig) -> Dict[str, DictConfig]:
-    res = defaultdict(exp_config.config.copy)
-    res["nonorm"]["model_param_options"]["gen_deeptree"]["branching_param"][
-        "norm"
-    ] = "none"
-    # res["batchnorm"]["model_param_options"]["gen_deeptree"]["branching_param"][
-    #     "norm"
-    # ] = "batchnorm"
-    res["layernorm"]["model_param_options"]["gen_deeptree"]["branching_param"][
-        "norm"
-    ] = "layernorm"
-    return res
-
-
 exp_list: List[ExperimentConfig] = [base_config]
 
-# # factorize all options
-# for option in optionslist:
-#     new_exp_list = []
-#     for exp in exp_list:
-#         res_dict = option(exp)
-#         if len(res_dict.keys()) == 0:
-#             new_exp_list.append(exp)
-#         else:
-#             for new_tag, new_conf in res_dict.items():
-#                 new_exp_list.append(
-#                     ExperimentConfig(new_conf, tags=exp.tags + [new_tag])
-#                 )
-#     exp_list = new_exp_list
 
-# Only apply one option at the time
-for option in optionslist:
-    res_dict = option(base_config)
-    for new_tag, new_conf in res_dict.items():
-        if new_conf == base_config.config:
-            raise Exception(f"Tag {new_tag} is the same as base config")
-        exp_list.append(
-            ExperimentConfig(new_conf, tags=base_config.tags + [new_tag])
-        )
+@add_option
+def option_optim(exp_config: ExperimentConfig) -> Dict[str, DictConfig]:
+    res = defaultdict(exp_config.config.copy)
+    res["Adam"]["models"]["gen"]["optim"]["name"] = "Adam"
+    res["SGD"]["models"]["gen"]["optim"]["name"] = "SGD"
+    # res["RMSprop"]["models"]["gen"]["optim"]["name"] = "RMSprop"
+    return res
+
+
+@add_option
+def option_lr(exp_config: ExperimentConfig) -> Dict[str, DictConfig]:
+    optimizer = exp_config.config["models"]["gen"]["optim"]["name"]
+    res = defaultdict(exp_config.config.copy)
+    # res["lrm3"]["optim_options"][optimizer]["lr"] = 1.0e-3
+    res["lrm4"]["optim_options"][optimizer]["lr"] = 1e-4
+    res["lrm5"]["optim_options"][optimizer]["lr"] = 1e-5
+    # res["lrm6"]["optim_options"][optimizer]["lr"] = 1.0e-6
+    return res
+
+
+@add_option
+def option_scheduler(exp_config: ExperimentConfig) -> Dict[str, DictConfig]:
+    res = defaultdict(exp_config.config.copy)
+    # res["NullScheduler"]["models"]["gen"]["scheduler"]["name"] = "NullScheduler"
+    res["OneCycleLR"]["models"]["gen"]["scheduler"]["name"] = "OneCycleLR"
+    res["CyclicLR"]["models"]["gen"]["scheduler"]["name"] = "CyclicLR"
+    return res
+
+
+@add_option
+def option_maxschedlr(exp_config: ExperimentConfig) -> Dict[str, DictConfig]:
+    scheduler = exp_config.config["models"]["gen"]["scheduler"]["name"]
+    if scheduler == "NullScheduler":
+        return {}
+    res = defaultdict(exp_config.config.copy)
+    res["lrf100"]["scheduler_options"][scheduler]["max_lr_factor"] = 100
+    # res["lrf25"]["scheduler_options"][scheduler]["max_lr_factor"] = 25
+    res["lrf10"]["scheduler_options"][scheduler]["max_lr_factor"] = 10
+    return res
+
+
+@add_option
+def option_schedopt(exp_config: ExperimentConfig) -> Dict[str, DictConfig]:
+    scheduler = exp_config.config["models"]["gen"]["scheduler"]["name"]
+    if scheduler == "NullScheduler":
+        return {}
+    res = defaultdict(exp_config.config.copy)
+    if scheduler == "OneCycleLR":
+        res["ts7"]["scheduler_options"][scheduler]["total_steps"] = int(5e7)
+        # res["ts6"]["scheduler_options"][scheduler]["total_steps"] = 5e6
+        res["ts5"]["scheduler_options"][scheduler]["total_steps"] = int(5e5)
+    elif scheduler == "CyclicLR":
+        res["ssu4"]["scheduler_options"][scheduler]["step_size_up"] = int(1e4)
+        # res["ssu5"]["scheduler_options"][scheduler]["step_size_up"] = 1e5
+        res["ssu6"]["scheduler_options"][scheduler]["step_size_up"] = int(1e6)
+    else:
+        raise NotImplementedError
+
+    return res
+
+
+if True:
+    # factorize all options
+    for option in optionslist:
+        new_exp_list = []
+        for exp in exp_list:
+            res_dict = option(exp)
+            if len(res_dict.keys()) == 0:
+                new_exp_list.append(exp)
+            else:
+                for new_tag, new_conf in res_dict.items():
+                    new_exp_list.append(
+                        ExperimentConfig(new_conf, tags=exp.tags + [new_tag])
+                    )
+        exp_list = new_exp_list
+else:
+    # Only apply one option at the time
+    for option in optionslist:
+        res_dict = option(base_config)
+        for new_tag, new_conf in res_dict.items():
+            if new_conf == base_config.config:
+                raise Exception(f"Tag {new_tag} is the same as base config")
+            exp_list.append(
+                ExperimentConfig(new_conf, tags=base_config.tags + [new_tag])
+            )
 
 
 for exp in exp_list:
@@ -213,16 +187,6 @@ print(
 #     # res["4lvl"]
 #     res["8lvl"]["tree"]["branches"] = [2,3,5]
 #     res["8lvl"]["tree"]["features"] = [256, 128, 64, 32, 16, 8, 4, 3]
-#     return res
-
-# @add_option
-# def option_lr(exp_config: ExperimentConfig) -> Dict[str, DictConfig]:
-#     res = defaultdict(exp_config.config.copy)
-#     # res["f1"]["loss_options"]["dcd"]["factor"] = 1.0
-#     # res["f.1"]["loss_options"]["dcd"]["factor"] = 0.1
-#     res["lrm4"]["optim_options"]["Adam"]["lr"] = 1.0e-4
-#     res["lrm5"]["optim_options"]["Adam"]["lr"] = 1.0e-5
-#     res["lrm6"]["optim_options"]["Adam"]["lr"] = 1.0e-6
 #     return res
 
 
@@ -269,6 +233,92 @@ print(
 #     res["batchnorm"]["model_param_options"]["gen_deeptree"]["branching_param"][
 #         "norm"
 #     ] = "batchnorm"
+#     res["layernorm"]["model_param_options"]["gen_deeptree"]["branching_param"][
+#         "norm"
+#     ] = "layernorm"
+#     return res
+
+
+# @add_option
+# def option_fl(exp_config: ExperimentConfig) -> Dict[str, DictConfig]:
+#     res = defaultdict(exp_config.config.copy)
+#     # res["fl"]["model_param_options"]["gen_deeptree"]["branching_param"][
+#     #     "final_linear"
+#     # ] = True
+#     res["nofl"]["model_param_options"]["gen_deeptree"]["branching_param"][
+#         "residual"
+#     ] = False
+#     res["nofl"]["model_param_options"]["gen_deeptree"]["branching_param"][
+#         "final_linear"
+#     ] = False
+#     return res
+
+
+# @add_option
+# def option_dim_red_in_branching(
+#     exp_config: ExperimentConfig,
+# ) -> Dict[str, DictConfig]:
+#     res = defaultdict(exp_config.config.copy)
+#     res["direct"]["model_param_options"]["gen_deeptree"][
+#         "dim_red_in_branching"
+#     ] = True
+#     # res["indirect"]["model_param_options"]["gen_deeptree"][
+#     #     "dim_red_in_branching"
+#     # ] = False
+#     return res
+
+
+# @add_option
+# def option_res_mean(
+#     exp_config: ExperimentConfig,
+# ) -> Dict[str, DictConfig]:
+#     res = defaultdict(exp_config.config.copy)
+#     res["resmean"]["model_param_options"]["gen_deeptree"]["branching_param"][
+#         "res_mean"
+#     ] = True
+#     # res["resadd"]["model_param_options"]["gen_deeptree"]["branching_param"][
+#     #     "res_mean"
+#     # ] = False
+
+#     return res
+
+
+# @add_option
+# def option_norm(exp_config: ExperimentConfig) -> Dict[str, DictConfig]:
+#     res = defaultdict(exp_config.config.copy)
+#     # res["res"]["model_param_options"]["gen_deeptree"]["branching_param"][
+#     #     "residual"
+#     # ] = True
+#     res["nores"]["model_param_options"]["gen_deeptree"]["branching_param"][
+#         "residual"
+#     ] = False
+#     return res
+
+
+# @add_option
+# def option_res_final_layer(
+#     exp_config: ExperimentConfig,
+# ) -> Dict[str, DictConfig]:
+#     res = defaultdict(exp_config.config.copy)
+#     res["flres"]["model_param_options"]["gen_deeptree"]["branching_param"][
+#         "res_final_layer"
+#     ] = True
+#     # res["noflres"]["model_param_options"]["gen_deeptree"]["branching_param"][
+#     #     "res_final_layer"
+#     # ] = False
+
+#     return res
+
+
+# @add_option
+# def option_reg(exp_config: ExperimentConfig) -> Dict[str, DictConfig]:
+#     res = defaultdict(exp_config.config.copy)
+#     res["nonorm"]["model_param_options"]["gen_deeptree"]["branching_param"][
+#         "norm"
+#     ] = "none"
+#     # res["batchnorm"]["model_param_options"]["gen_deeptree"]["branching_param"][
+#     #     "norm"
+#     # ] = "batchnorm"
 #     res["layernorm"]["model_param_options"]["gen_deeptree"]["branching_param"][
 #         "norm"
 #     ] = "layernorm"
