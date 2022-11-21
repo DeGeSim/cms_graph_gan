@@ -22,7 +22,7 @@ base_config = ExperimentConfig(
     OmegaConf.create(
         """
 comet_project_name: jetnet-noac
-loader_name: jetnet
+dataset_name: jetnet
 tree:
   branches: [2,3,5]
   features: [64,32, 16, 3]

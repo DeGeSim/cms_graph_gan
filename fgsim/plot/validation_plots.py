@@ -59,7 +59,7 @@ def validation_plots(
             f"2dhist_{conf.loader.x_features[v1]}_vs_{conf.loader.x_features[v2]}.pdf",
         )
 
-    if conf.loader_name == "jetnet" and best_last_val != "val/scaled":
+    if conf.dataset_name == "jetnet" and best_last_val != "val/scaled":
         from fgsim.plot.jetfeatures import jet_features
 
         for title, fig in jet_features(

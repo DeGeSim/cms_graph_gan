@@ -41,7 +41,6 @@ scheduler_options:
         epochs: 500
         steps_per_epoch: 575
 
-
 gan_mode_options:
     CE:
         gen: [CEGenLoss]
@@ -210,17 +209,7 @@ mpgan_mask:
     mask_c: True
     mask_fne_np: False
 
-tree:
-    branches: [2, 4, 4,4]
-    features:
-        - 512
-        - 128
-        - 64
-        - 16
-        - ${loader.n_features}
-# tree:
-#     branches: [2, 3, 5]
-#     features: [64, 32, 16, "${loader.n_features}"]
+tree: ${mergedefault:${dataset_options},${dataset_name},tree}
 
 loss_options:
     WGenLoss:
@@ -281,19 +270,6 @@ optim_options:
         lr: 2.e-4
     FakeOptimizer: {}
 
-smoothing_options:
-    default:
-        active: False
-    moons: ${smoothing_options[default]}
-    jetnet: ${smoothing_options[default]}
-    hgcal:
-        active: True
-        stds: [0, 0.315, 0.18, .3] # [0, 0.315, 0.2, .15]
-        decay: 1e-5
-    hgcal_soham: ${smoothing_options[hgcal]}
-    pcgraph: ${smoothing_options[hgcal]}
-
-
 training:
     gan_mode: MSE
     disc_steps_per_gen_step: 2
@@ -301,19 +277,16 @@ training:
         validation_steps: 1000
         improvement: 0.05
     checkpoint_minutes: 15
-    smoothing: "${smoothing_options[${loader_name}]}"
+    smoothing: ${mergedefault:${dataset_options},${dataset_name},smoothing}
     log_interval: 10
     max_epochs: 3000
-    val:
-        interval: "${div:200000,${loader.batch_size}}"
-        use_for_stopping: ["w1E", "w1x", "w1y", "w1layer"]
-        metrics: ["ft_w1","aoc"]
+    val: ${mergedefault:${dataset_options},${dataset_name},validation}
 testing:
     n_events: 2000
 
 path:
     dataset: "${loader.dataset_path}"
-    dataset_processed: "${path.dataset}/pkl_${loader_name}_${loader_hash}"
+    dataset_processed: "${path.dataset}/pkl_${dataset_name}_${loader_hash}"
     ds_lenghts: "${path.dataset_processed}/filelengths.yaml"
     training: "${path.dataset_processed}/training"
     validation: "${path.dataset_processed}/validation.pt"
@@ -328,59 +301,90 @@ path:
     state_old: "${path.run_path}/state_old.yaml"
     comet_exp_key: "${path.run_path}/comet_experiment_key"
 
-loader: "${merge:${loader_options[default]},${loader_options[${loader_name}]}}"
-loader_name: pcgraph
+loader: ${mergedefault:${dataset_options},${dataset_name},loader}
+dataset_name: default
 
-loader_options:
+dataset_options:
     default:
-        rootprefix: "treeMaker/tree"
-        dataset_glob: "**/*.root"
-        preprocess_training: True
-        chunk_size: 1000
-        batch_size: 200
-        validation_set_size: 10000
-        test_set_size: 50000
-        scaling_fit_size: 10000
-        events_per_file: 10000
-        prefetch_batches: 10
-        n_workers_transform: 30
-        n_workers_stack: 1
-        n_workers_postprocess: 1
-        n_features: ${len:${loader.x_features}}
-    hgcal:
-        dataset_path: "~/fgsim/data/hgcal_william"
-        n_points: 128
-        batch_size: 50
-        braches:
-            id: "simHit_detid"
-            energy: "genPh_E"
-            hit_energy: "simHit_E"
-        x_features: ["E", "x", "y", "layer"]
-        y_features: ["E"]
-    hgcal_soham:
-        dataset_path: "~/fgsim/data/soham_pi0"
-        n_points: 128
-        batch_size: 50
-        braches:
-            id: "simHit_detid"
-            energy: "genPh_E"
-            hit_energy: "simHit_E"
-        y_features: ["Egen", "eta", "phi"]
-        x_features: ["E_hit", "x", "y", "layer"]
-    pcgraph: ${loader_options[hgcal]}
-    moons:
-        dataset_path: "~/fgsim/data/moons"
-        x_features: ["x", "y"]
-        y_features: []
-        n_points: 128
-        batch_size: 200
-        cluster_tree: False
-        cluster_method: "random"
+        tree:
+            branches: [2, 4, 4,4]
+            features:
+                - 512
+                - 128
+                - 64
+                - 16
+                - ${loader.n_features}
+        smoothing:
+            active: False
+        validation:
+            interval: "${div:200000,${dataset_options[${dataset_name}][loader][batch_size]}}"
+        loader:
+            rootprefix: "treeMaker/tree"
+            dataset_glob: "**/*.root"
+            preprocess_training: True
+            chunk_size: 1000
+            batch_size: 200
+            validation_set_size: 10000
+            test_set_size: 50000
+            scaling_fit_size: 10000
+            events_per_file: 10000
+            prefetch_batches: 10
+            n_workers_transform: 30
+            n_workers_stack: 1
+            n_workers_postprocess: 1
+            n_features: ${len:${dataset_options[${dataset_name}][loader][x_features]}}
     jetnet:
-        dataset_path: "~/fgsim/data/jetnet"
-        n_points: 30
-        x_features: ["etarel", "phirel", "ptrel"]
-        y_features: ["pt", "eta", "mass", "num_particles"]
-        dataset_glob: "**/t.hdf5"
-        chunk_size: 5000
-        batch_size: 200
+        tree:
+            branches: [2,3,5]
+            features: [64,32,16,3]
+        validation:
+            interval: 2000
+            use_for_stopping: ['w1m','w1p','fpnd']
+            metrics: ['w1m','w1p','fpnd','aoc']
+        loader:
+            dataset_path: "~/fgsim/data/jetnet"
+            n_points: 30
+            x_features: ["etarel", "phirel", "ptrel"]
+            y_features: ["pt", "eta", "mass", "num_particles"]
+            dataset_glob: "**/t.hdf5"
+            chunk_size: 5000
+            batch_size: 200
+    hgcal_graph:
+        validation:
+            use_for_stopping: ["w1E", "w1x", "w1y", "w1layer"]
+            metrics: ["ft_w1","aoc"]
+        smoothing:
+            active: True
+            stds: [0, 0.315, 0.18, .3] # [0, 0.315, 0.2, .15]
+            decay: 1e-5
+        loader:
+            dataset_path: "~/fgsim/data/hgcal_william"
+            n_points: 128
+            batch_size: 50
+            braches:
+                id: "simHit_detid"
+                energy: "genPh_E"
+                hit_energy: "simHit_E"
+            x_features: ["E", "x", "y", "layer"]
+            y_features: ["E"]
+    hgcal_pc: ${dataset_options[hgcal_graph]}
+    hgcal_soham:
+        loader:
+            dataset_path: "~/fgsim/data/soham_pi0"
+            n_points: 128
+            batch_size: 50
+            braches:
+                id: "simHit_detid"
+                energy: "genPh_E"
+                hit_energy: "simHit_E"
+            y_features: ["Egen", "eta", "phi"]
+            x_features: ["E_hit", "x", "y", "layer"]
+    moons:
+        loader:
+            dataset_path: "~/fgsim/data/moons"
+            x_features: ["x", "y"]
+            y_features: []
+            n_points: 128
+            batch_size: 200
+            cluster_tree: False
+            cluster_method: "random"

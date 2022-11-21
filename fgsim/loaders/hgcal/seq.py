@@ -50,9 +50,9 @@ def magic_do_nothing(batch: Batch) -> Batch:
     return batch
 
 
-if conf.loader_name == "hgcal":
+if conf.dataset_name == "hgcal":
     transform_hitlist = hitlist_to_graph
-elif conf.loader_name == "pcgraph":
+elif conf.dataset_name == "pcgraph":
     transform_hitlist = hitlist_to_pc
 else:
     raise Exception

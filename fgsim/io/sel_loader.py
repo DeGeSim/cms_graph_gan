@@ -6,7 +6,7 @@ from fgsim.io.loader import LoaderInfo
 
 # Import the specified processing sequence
 loader_info: LoaderInfo = importlib.import_module(
-    f"fgsim.loaders.{conf.loader_name}"
+    f"fgsim.loaders.{conf.dataset_name}"
 ).loader
 
 file_manager = loader_info.file_manager
