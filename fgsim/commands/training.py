@@ -104,6 +104,11 @@ class Trainer:
                     if lname not in loss_hist[pname]:
                         loss_hist[pname][lname] = []
                     loss_hist[pname][lname].append(lossval)
+
+            # log the learning rates
+            for pname, plr in self.holder.optims.metric_aggr.aggregate().items():
+                self.train_log.log_metric(f"train/{pname}/lr", plr)
+
             # Also log training speed
             self.train_log.write_trainstep_logs()
         if not conf.ray:

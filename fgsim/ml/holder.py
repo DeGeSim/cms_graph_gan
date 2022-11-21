@@ -47,13 +47,15 @@ class Holder:
             "losses": {snwname: defaultdict(list) for snwname in conf.models},
             "val": defaultdict(list),
         }
+        self.train_log = TrainLog(self.state, self.history)
 
         self.models: SubNetworkCollector = SubNetworkCollector(conf.models)
         self.models = self.models.float()
+        self.train_log.log_model_graph(self.models)
 
         if conf.command == "train":
             self.optims: OptimAndSchedulerCol = OptimAndSchedulerCol(
-                conf.models, self.models.get_par_dict()
+                conf.models, self.models.get_par_dict(), self.train_log
             )
 
         # try to load a check point
@@ -87,8 +89,6 @@ class Holder:
         #     # torcheck.add_module_inf_check(model, module_name=partname)
         #     # torcheck.add_module_nan_check(model, module_name=partname)
 
-        self.train_log = TrainLog(self.state, self.history)
-        self.train_log.log_model_graph(self.models)
         self.losses: LossesCol = LossesCol(self.train_log)
         self.val_loss: ValidationMetrics = ValidationMetrics(self.train_log)
 

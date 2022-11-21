@@ -4,13 +4,20 @@ from typing import Dict
 import torch
 from omegaconf.dictconfig import DictConfig
 
+from fgsim.monitoring.metrics_aggr import MetricAggregator
+from fgsim.monitoring.train_log import TrainLog
+
 
 class OptimAndSchedulerCol:
     """Collect all optimizers for the different parts
     of the model to do eg. holder.model.zero_grad()."""
 
-    def __init__(self, pconf: DictConfig, submodelpar_dict: Dict):
+    def __init__(
+        self, pconf: DictConfig, submodelpar_dict: Dict, train_log: TrainLog
+    ):
         self.pconf = pconf
+        self.train_log = train_log
+        self.metric_aggr = MetricAggregator()
         self._optimizers: Dict[str, torch.optim.Optimizer] = {}
         self._schedulers: Dict[str, torch.optim.lr_scheduler._LRScheduler] = {}
 
@@ -78,12 +85,19 @@ class OptimAndSchedulerCol:
             optim.zero_grad(*args, **kwargs)
 
     def step(self, pname):
+        # optimizer step
         self._optimizers[pname].step()
-        if pname in self._schedulers:
-            try:
-                self._schedulers[pname].step()
-            except ValueError:
-                pass
+
+        if pname not in self._schedulers:
+            return
+
+        try:
+            self._schedulers[pname].step()
+        except ValueError:
+            pass
+        lrs = self._schedulers[pname].get_last_lr()
+        assert len(lrs) == 1
+        self.metric_aggr.append_dict({pname: lrs[0]})
 
     def __getitem__(self, subnetworkname: str) -> torch.optim.Optimizer:
         return self._optimizers[subnetworkname]
