@@ -161,10 +161,6 @@ def convert(tensorarr: List[torch.Tensor]) -> np.ndarray:
     return torch.cat(tensorarr).flatten().detach().cpu().numpy()
 
 
-def subsample(arr: np.ndarray):
-    return np.random.choice(arr, size=conf.testing.n_events, replace=False)
-
-
 def test_metrics(test_info: TestInfo):
     train_log = test_info.train_log
     sim_batch = test_info.res_d["sim_batch"]

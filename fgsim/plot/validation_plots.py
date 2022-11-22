@@ -47,7 +47,7 @@ def validation_plots(
             gen=res["gen_batch"].x[:, [v1, v2]].cpu().numpy(),
             title=(
                 f"2D Histogram for {conf.loader.n_points} points in"
-                f" {conf.testing.n_events} events"
+                f" {conf.loader.test_set_size} events"
             ),
             v1name=var_to_label(v1),
             v2name=var_to_label(v2),

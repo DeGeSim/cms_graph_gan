@@ -287,8 +287,6 @@ training:
     log_interval: 100
     max_epochs: 3000
     val: ${mergedefault:${dataset_options},${dataset_name},validation}
-testing:
-    n_events: 2000
 
 path:
     dataset: "${loader.dataset_path}"

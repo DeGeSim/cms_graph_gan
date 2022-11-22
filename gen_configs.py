@@ -46,6 +46,7 @@ scheduler_options:
         max_lr_factor: 100
         base_lr: 1.e-5
         step_size_up: 2000
+        cycle_momentum: True
     """,
     ),
     ["jn", "sched"],
@@ -68,7 +69,7 @@ exp_list: List[ExperimentConfig] = [base_config]
 def option_optim(exp_config: ExperimentConfig) -> Dict[str, DictConfig]:
     res = defaultdict(exp_config.config.copy)
     res["Adam"]["models"]["gen"]["optim"]["name"] = "Adam"
-    res["SGD"]["models"]["gen"]["optim"]["name"] = "SGD"
+    # res["SGD"]["models"]["gen"]["optim"]["name"] = "SGD"
     # res["RMSprop"]["models"]["gen"]["optim"]["name"] = "RMSprop"
     return res
 
@@ -88,8 +89,10 @@ def option_lr(exp_config: ExperimentConfig) -> Dict[str, DictConfig]:
 def option_scheduler(exp_config: ExperimentConfig) -> Dict[str, DictConfig]:
     res = defaultdict(exp_config.config.copy)
     # res["NullScheduler"]["models"]["gen"]["scheduler"]["name"] = "NullScheduler"
-    res["OneCycleLR"]["models"]["gen"]["scheduler"]["name"] = "OneCycleLR"
+    # res["OneCycleLR"]["models"]["gen"]["scheduler"]["name"] = "OneCycleLR"
     res["CyclicLR"]["models"]["gen"]["scheduler"]["name"] = "CyclicLR"
+    if exp_config.config["models"]["gen"]["optim"]["name"] == "Adam":
+        res["CyclicLR"]["scheduler_options"]["CyclicLR"]["cycle_momentum"] = False
     return res
 
 
