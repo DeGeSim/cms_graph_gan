@@ -28,3 +28,6 @@ class Metric:
             )
 
         return out_dict
+
+
+ft_w1 = Metric()

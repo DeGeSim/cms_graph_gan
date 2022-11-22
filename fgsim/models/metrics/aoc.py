@@ -28,3 +28,6 @@ class Metric:
             > 0.5
         )
         return float(roc_auc_score(self.y_true, y_pred))
+
+
+aoc = Metric()
