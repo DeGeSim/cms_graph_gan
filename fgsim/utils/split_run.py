@@ -2,6 +2,7 @@
 import subprocess
 from copy import deepcopy
 from datetime import datetime
+from pathlib import Path
 
 from rich.console import Console
 
@@ -15,8 +16,14 @@ def run_args(args):
     if args.remote:
         if args.command in ["setup", "overwrite", "dump"]:
             raise Exception("Command not allowed remote")
-        if args.hash is None:
-            args.hash = parse_arg_conf(args)[0].hash
+        if args.hash is None or args.tag is None:
+            conf = parse_arg_conf(args)[0]
+            if args.hash is not None:
+                assert args.hash == conf.hash
+            if args.tag is not None:
+                assert args.tag == conf.tag
+            args.hash = conf.hash
+            args.tag = conf.tag
 
     cmd = []
     if args.hash is not None:
@@ -33,14 +40,16 @@ def run_args(args):
     cmd.append(args.command)
 
     if args.remote:
+        jobstr = f"{args.tag}.{args.hash}.{args.command}"
+        slurm_log_path = Path(f"~/slurm/{jobstr}-%j.out").expanduser()
         cmd = [
             "sbatch",
             "--partition=allgpu",
             "--time=48:00:00",
             "--nodes=1",
             "--constraint=P100|V100|A100",
-            f"--output=wd/slurm-train-{args.hash}-%j.out",
-            f"--job-name=train.{args.hash}",
+            f"--output={slurm_log_path}",
+            f"--job-name={jobstr}",
             "run.sh",
         ] + cmd
     else:
