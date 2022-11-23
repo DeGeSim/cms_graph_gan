@@ -15,7 +15,7 @@ models:
         additional_losses_list: []
         optim:
             name: Adam
-            params: ${optim_options[${models.gen.optim.name}]}
+            params: ${optim_options[gen][${models.gen.optim.name}]}
         scheduler:
             name: NullScheduler
             params: ${scheduler_options[${models.gen.scheduler.name}]}
@@ -27,12 +27,35 @@ models:
         losses_list: ${gan_mode_options[${training.gan_mode}][disc]}
         optim:
             name: Adam
-            params:
-                lr: 3.0e-4
+            params: ${optim_options[disc][${models.gen.optim.name}]}
         scheduler:
             name: NullScheduler
             params: ${scheduler_options[${models.disc.scheduler.name}]}
         retain_graph_on_backprop: False
+
+
+optim_options:
+    gen:
+        Adam:
+            weight_decay: 1.0e-4
+            lr: 2.e-4
+            betas: [0.9, 0.999]
+        SGD:
+            lr: 2.e-4
+        RMSprop:
+            lr: 2.e-4
+        FakeOptimizer: {}
+    disc:
+        Adam:
+            weight_decay: 1.0e-4
+            lr: 3.0e-4
+            betas: [0.9, 0.999]
+        SGD:
+            lr: 2.e-4
+        RMSprop:
+            lr: 2.e-4
+        FakeOptimizer: {}
+
 
 scheduler_options:
     NullScheduler: {}
@@ -44,6 +67,8 @@ scheduler_options:
         base_lr: 1.e-5
         step_size_up: 2000
         cycle_momentum: True
+    CosineAnnealingWarmRestarts:
+        T_0: 10_000
 
 
 gan_mode_options:
@@ -264,17 +289,6 @@ loss_options:
         lpnorm: 1
         batch_wise: False
         pow: 1
-
-optim_options:
-    Adam:
-        weight_decay: 1.0e-4
-        lr: 2.e-4
-        betas: [0.9, 0.999]
-    SGD:
-        lr: 2.e-4
-    RMSprop:
-        lr: 2.e-4
-    FakeOptimizer: {}
 
 training:
     gan_mode: MSE
