@@ -91,7 +91,9 @@ def get_testing_datasets(holder: Holder, best_or_last) -> TestDataset:
 
     if ds_path.is_file():
         logger.info(f"Loading test dataset from {ds_path}")
-        test_data = TestDataset(**torch.load(ds_path))
+        test_data = TestDataset(
+            **torch.load(ds_path, map_location=torch.device("cpu"))
+        )
         reprocess = (
             test_data.grad_step != holder.state.grad_step
             or test_data.loader_hash != conf.loader_hash
@@ -123,19 +125,19 @@ def get_testing_datasets(holder: Holder, best_or_last) -> TestDataset:
             "d_gen": [],
         }
 
-        for test_batch in tqdm(qds.testing_batches, desc=best_or_last):
+        for test_batch in tqdm(qds.testing_batches, desc=best_or_last, miniters=20):
             for k, val in holder.pass_batch_through_model(
                 test_batch.to(holder.device)
             ).items():
                 if "batch" in k:
                     for e in val.to_data_list():
-                        res_d_l[k].append(e)
+                        res_d_l[k].append(e.cpu())
                 else:
-                    res_d_l[k].append(val)
+                    res_d_l[k].append(val.cpu())
 
         # aggregate the results over the batches
         for k in ["sim_batch", "gen_batch"]:
-            batch = Batch.from_data_list(res_d_l[k]).cpu()
+            batch = Batch.from_data_list(res_d_l[k])
             batch.x = scaler.inverse_transform(batch.x)
             res_d_l[k] = batch
         for k in ["d_sim", "d_gen"]:
