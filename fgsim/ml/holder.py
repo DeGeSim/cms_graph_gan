@@ -223,7 +223,8 @@ class Holder:
 
         # In both cases the gradient needs to pass though d_gen
         with with_grad(train_gen or train_disc):
-            d_gen = self.models.disc(gen_batch, cond).squeeze()
+            d_gen = self.models.disc(gen_batch, cond)
+            assert d_gen.shape == (conf.loader.batch_size, 1)
 
         self.res = {
             "sim_batch": sim_batch,
@@ -234,7 +235,8 @@ class Holder:
         # but we need it for the validation
         if train_disc or (train_disc == train_gen):
             with with_grad(train_disc):
-                d_sim = self.models.disc(sim_batch, cond).squeeze()
+                d_sim = self.models.disc(sim_batch, cond)
+                assert d_sim.shape == (conf.loader.batch_size, 1)
             self.res["d_sim"] = d_sim
         return self.res
 

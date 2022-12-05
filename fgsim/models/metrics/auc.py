@@ -21,4 +21,4 @@ class Metric:
         return float(roc_auc_score(y_true, y_pred))
 
 
-aoc = Metric()
+auc = Metric()

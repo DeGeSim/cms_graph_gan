@@ -30,8 +30,8 @@ def validate(holder: Holder, loader: QueuedDataset) -> None:
                     res_d_l[k].append(e)
             else:
                 res_d_l[k].append(val)
-    d_sim = torch.hstack(res_d_l["d_sim"])
-    d_gen = torch.hstack(res_d_l["d_gen"])
+    d_sim = torch.vstack(res_d_l["d_sim"])
+    d_gen = torch.vstack(res_d_l["d_gen"])
 
     sim_batch = Batch.from_data_list(res_d_l["sim_batch"])
     gen_batch = Batch.from_data_list(res_d_l["gen_batch"])
