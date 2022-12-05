@@ -157,6 +157,8 @@ model_param_options:
     disc_fake: {}
     disc_hlvs: {}
     disc_benno: {}
+    disc_deeptree: {}
+    disc_diffpool: {}
     disc_gat:
       n_features: ${loader[n_features]}
       n_points: ${loader[n_points]}

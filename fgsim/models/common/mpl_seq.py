@@ -1,7 +1,7 @@
 from typing import Optional
 
 import torch
-from torch_geometric.nn import GINConv
+from torch_geometric.nn import EdgeConv, GINConv
 
 from fgsim.models.common import GINCConv
 from fgsim.models.common.deeptree import DeepConv
@@ -66,6 +66,15 @@ class MPLSeq(torch.nn.Module):
                     n_nodes_per_layer=self.n_hidden_nodes,
                 )
             )
+        if conv_name == "EdgeConv":
+            return EdgeConv(
+                FFN(
+                    in_features * 2,  # + self.n_cond + self.n_global,
+                    out_features,
+                    **layer_param,
+                    n_nodes_per_layer=self.n_hidden_nodes,
+                )
+            )
         elif conv_name == "GINConv":
             return GINConv(
                 FFN(
@@ -111,6 +120,11 @@ class MPLSeq(torch.nn.Module):
                         # global_features[batch],
                     )
                 ),
+                edge_index,
+            )
+        elif isinstance(layer, EdgeConv):
+            return layer(
+                x,
                 edge_index,
             )
         elif isinstance(layer, DeepConv):
