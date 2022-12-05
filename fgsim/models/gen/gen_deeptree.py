@@ -1,5 +1,5 @@
 from math import prod
-from typing import Dict
+from typing import Dict, Optional
 
 import torch
 import torch.nn as nn
@@ -116,6 +116,10 @@ class ModelClass(nn.Module):
         if self.final_layer_scaler:
             self.ftx_scaling = FtxScaleLayer(self.features[-1])
 
+        # Allocate the Tensors used later to construct the batch
+        self.presaved_batch: Optional[Batch] = None
+        self.presaved_batch_indexing: Optional[torch.Tensor] = None
+
     def wrap_layer_init(self, ilevel, type: str):
         if type == "ac":
             conv_param = self.ancestor_mpl
@@ -218,12 +222,20 @@ class ModelClass(nn.Module):
                     graph_tree.tftx_by_level[-1],
                 )
 
-        batch = graph_tree.to_batch()
+        if self.presaved_batch is None:
+            (
+                self.presaved_batch,
+                self.presaved_batch_indexing,
+            ) = graph_tree.get_batch_skeleton()
+
+        batch = self.presaved_batch.clone()
+        batch.x = graph_tree.tftx_by_level[-1][self.presaved_batch_indexing]
         if self.final_layer_scaler:
             batch.x = self.ftx_scaling(batch.x)
 
         assert batch.x.shape[0] == conf.loader.n_points * conf.loader.batch_size
         assert batch.x.shape[-1] == conf.loader.n_features
+        assert batch.num_graphs == conf.loader.batch_size
         return batch
 
     def to(self, device):

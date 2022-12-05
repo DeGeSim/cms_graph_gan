@@ -2,7 +2,6 @@ from typing import List, Optional, Union
 
 import torch
 from torch_geometric.data import Batch, Data
-from torch_geometric.nn import knn_graph
 
 # from fgsim.config import conf, device
 from fgsim.io.batch_tools import batch_from_pcs_list
@@ -60,34 +59,24 @@ class GraphTreeWrapper:
     def __getitem__(self, *args, **kwargs):
         return self.data.__getitem__(*args, **kwargs)
 
-    def to_batch(self, n_nn: int = 0) -> Batch:
+    def get_batch_skeleton(self) -> Batch:
         """
-        It takes a batch of graphs and returns a batch of graphs
-
-        Args:
-        batch (Union[Batch, TreeGenType, GraphTreeWrapper]):
-        a batch of graphs, either a Batch object,
-        a TreeGenType object, or a GraphTreeWrapper object.
-        n_nn (int): number of nearest neighbors to use for the graph.
-        If 0, no graph is used. Defaults to 0
+        It takes a batch of graphs and returns the skeleton batch of graphs
 
         Returns:
-        A batch object with the edge_index attribute set
-        to the k-nearest neighbors of the nodes in the graph.
+        A batch object with the edge_index
+
         """
-        if not hasattr(self, "__presaved_batch"):
-            res = batch_from_pcs_list(
-                self.tftx_by_level[-1],
-                self.batch_by_level[-1],
-            )
-            self.__presaved_batch: Batch = res.clone().detach()
-            self.__presaved_batch.x = None
-            self.__presaved_batch_indexing: torch.Tensor = torch.argsort(
-                self.batch_by_level[-1]
-            )
-        else:
-            res = self.__presaved_batch.clone()
-            res.x = self.tftx_by_level[-1][self.__presaved_batch_indexing]
+        res: Batch = batch_from_pcs_list(
+            self.tftx_by_level[-1],
+            self.batch_by_level[-1],
+        )
+        self.__presaved_batch: Batch = res.detach().clone()
+        self.__presaved_batch.x = None
+        self.__presaved_batch_indexing: torch.Tensor = torch.argsort(
+            self.batch_by_level[-1]
+        )
+        return self.__presaved_batch, self.__presaved_batch_indexing
         # if isinstance(batch, GraphTreeWrapper):
         #     res = batch_from_pcs_list(
         #         batch.tftx_by_level[-1],
@@ -99,9 +88,6 @@ class GraphTreeWrapper:
         #         graph_tree.tftx_by_level[-1],
         #         graph_tree.batch_by_level[-1],
         #     )
-        if n_nn > 1:
-            res.edge_index = knn_graph(x=res.x, k=n_nn, batch=res.batch)
-        return res
 
 
 # It's a wrapper around the `data.tftx` array that allows you to index it by level
