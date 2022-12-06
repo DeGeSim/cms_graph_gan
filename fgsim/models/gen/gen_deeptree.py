@@ -27,7 +27,6 @@ class ModelClass(nn.Module):
         ancestor_mpl: Dict,
         child_mpl: Dict,
         branching_param: Dict,
-        all_points: bool,
         final_layer_scaler: bool,
         connect_all_ancestors: bool,
         dim_red_in_branching: bool,
@@ -36,7 +35,6 @@ class ModelClass(nn.Module):
         super().__init__()
         self.n_global = n_global
         self.n_cond = n_cond
-        self.all_points = all_points
         self.batch_size = conf.loader.batch_size
         self.final_layer_scaler = final_layer_scaler
         self.ancestor_mpl = ancestor_mpl
@@ -51,14 +49,7 @@ class ModelClass(nn.Module):
         self.z_shape = conf.loader.batch_size, 1, self.features[0]
 
         # Calculate the output points
-        if all_points:
-            # If we use all point, we need to sum all of the splits
-            self.output_points = sum(
-                [prod(self.features[: i + 1]) for i in range(len(self.features))]
-            )
-        else:
-            # otherwise the branches ^ n_splits works
-            self.output_points = prod(self.features)
+        self.output_points = prod(self.branches)
         logger.debug(f"Generator output will be {self.output_points}")
         if conf.loader.n_points > self.output_points:
             raise RuntimeError(

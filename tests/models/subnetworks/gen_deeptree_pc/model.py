@@ -137,6 +137,7 @@ def test_full_modelparts_grad():
     # defaultconf.model_param_options.gen_deeptree.branching_param.res_final_layer = (
     #     False
     # )
+    conf.ffn.norm = "none"
     defaultconf.model_param_options.gen_deeptree.branching_param.norm = "none"
 
     model = ModelClass(**defaultconf.model_param_options.gen_deeptree).to(device)
@@ -243,6 +244,7 @@ def test_full_model_grad():
     conf.ffn.norm = "none"
     conf.ffn.dropout = False
     conf.tree.features[-1] = conf.loader.n_features
+
     defaultconf.model_param_options.gen_deeptree.branching_param.norm = "none"
     model = ModelClass(**defaultconf.model_param_options.gen_deeptree).to(device)
 
