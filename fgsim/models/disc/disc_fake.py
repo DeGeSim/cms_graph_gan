@@ -9,5 +9,5 @@ class ModelClass(torch.nn.Module):
 
     def forward(self, gen_batch: Data, *args, **kwargs):
         return self.par * torch.ones(
-            gen_batch.batch[-1] + 1, device=gen_batch.x.device
+            (gen_batch.batch[-1] + 1, 1), device=gen_batch.x.device
         )
