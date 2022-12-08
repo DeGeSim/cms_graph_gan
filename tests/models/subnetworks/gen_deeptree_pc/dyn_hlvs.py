@@ -20,6 +20,8 @@ def test_dyn_hlvs_compute_graph(static_objects: DTColl):
     dyn_hlvs_layer = static_objects.dyn_hlvs_layer
     tree = static_objects.tree
 
+    tftx_copy = graph.tftx.requires_grad_()
+
     new_graph1 = branching_layers[0](graph)
     new_global_features = dyn_hlvs_layer(
         x=new_graph1.tftx, cond=graph.cond, batch=tree.tbatch_by_level[1]
@@ -28,16 +30,17 @@ def test_dyn_hlvs_compute_graph(static_objects: DTColl):
     sum(event_2_global).backward(retain_graph=True)
 
     zero_feature = torch.zeros_like(graph.tftx[0])
-    assert graph.tftx.grad is not None
-    assert torch.all(graph.tftx.grad[0] == zero_feature)
-    assert torch.all(graph.tftx.grad[1] == zero_feature)
-    assert torch.any(graph.tftx.grad[2] != zero_feature)
+    assert tftx_copy.grad is not None
+    assert torch.all(tftx_copy.grad[0] == zero_feature)
+    assert torch.all(tftx_copy.grad[1] == zero_feature)
+    assert torch.any(tftx_copy.grad[2] != zero_feature)
 
 
 def test_dyn_hlvs_compute_graph2(static_objects: DTColl):
     graph = static_objects.graph
     dyn_hlvs_layer = static_objects.dyn_hlvs_layer
     tree = static_objects.tree
+    tftx_copy = graph.tftx.requires_grad_()
 
     new_global_features = dyn_hlvs_layer(
         x=graph.tftx, cond=graph.cond, batch=tree.tbatch_by_level[0]
@@ -46,7 +49,7 @@ def test_dyn_hlvs_compute_graph2(static_objects: DTColl):
     sum(event_2_global).backward(retain_graph=True)
 
     zero_feature = torch.zeros_like(graph.tftx[0])
-    assert graph.tftx.grad is not None
-    assert torch.all(graph.tftx.grad[0] == zero_feature)
-    assert torch.all(graph.tftx.grad[1] == zero_feature)
-    assert torch.any(graph.tftx.grad[2] != zero_feature)
+    assert tftx_copy.grad is not None
+    assert torch.all(tftx_copy.grad[0] == zero_feature)
+    assert torch.all(tftx_copy.grad[1] == zero_feature)
+    assert torch.any(tftx_copy.grad[2] != zero_feature)

@@ -25,6 +25,7 @@ def test_BranchingLayer_compute_graph(branching_objects: DTColl):
     branching_layers = branching_objects.branching_layers
     tree = branching_objects.tree
 
+    tftx_copy = graph.tftx.requires_grad_()
     new_graph1 = branching_layers[0](graph)
     tree = branching_layers[0].tree
     assert torch.all(
@@ -37,10 +38,10 @@ def test_BranchingLayer_compute_graph(branching_objects: DTColl):
     pc_leaf_point.backward(retain_graph=True)
 
     zero_feature = torch.zeros_like(graph.tftx[0])
-    assert graph.tftx.grad is not None
-    assert torch.all(graph.tftx.grad[0] == zero_feature)
-    assert torch.all(graph.tftx.grad[1] == zero_feature)
-    assert torch.any(graph.tftx.grad[2] != zero_feature)
+    assert tftx_copy.grad is not None
+    assert torch.all(tftx_copy.grad[0] == zero_feature)
+    assert torch.all(tftx_copy.grad[1] == zero_feature)
+    assert torch.any(tftx_copy.grad[2] != zero_feature)
 
     new_graph2 = branching_layers[1](new_graph1)
     assert torch.all(
@@ -52,10 +53,10 @@ def test_BranchingLayer_compute_graph(branching_objects: DTColl):
     pc_leaf_point = new_graph2.tftx[leaf.idxs[2]]
     sum(pc_leaf_point).backward()
 
-    assert graph.tftx.grad is not None
-    assert torch.all(graph.tftx.grad[0] == zero_feature)
-    assert torch.all(graph.tftx.grad[1] == zero_feature)
-    assert torch.any(graph.tftx.grad[2] != zero_feature)
+    assert tftx_copy.grad is not None
+    assert torch.all(tftx_copy.grad[0] == zero_feature)
+    assert torch.all(tftx_copy.grad[1] == zero_feature)
+    assert torch.any(tftx_copy.grad[2] != zero_feature)
 
 
 def test_tree_ancestor_connectivity_static(static_objects: DTColl):

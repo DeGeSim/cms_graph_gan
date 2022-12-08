@@ -102,16 +102,17 @@ class BranchingLayer(nn.Module):
         device = parents_ftxs.device
 
         # Compute the new feature vectors:
-        parents_idxs = torch.cat([parent.idxs for parent in parents])
-        assert (parents_idxs == self.tree.parents_idxs_by_level[self.level]).all()
         # for the parents indices generate a matrix where
         # each row is the global vector of the respective event
-        if graph.global_features.numel() == 0:
+        if prod(graph.global_features.shape) == 0:
             graph.global_features = torch.empty(
                 batch_size, self.n_global, dtype=torch.float, device=device
             )
-        parent_global = graph.global_features[parents_idxs % batch_size, :]
-        cond_global = graph.cond[parents_idxs % batch_size, :]
+
+        parent_global = graph.global_features.repeat(
+            self.tree.points_by_level[self.level], 1
+        )
+        cond_global = graph.cond.repeat(self.tree.points_by_level[self.level], 1)
         # With the idxs of the parent index the event vector
 
         # The proj_nn projects the (n_parents * n_event) x n_features to a
@@ -164,18 +165,13 @@ class BranchingLayer(nn.Module):
         if self.dim_red:
             children_ftxs = self.reduction_nn(children_ftxs)
 
-        # graph.data.tftx = torch.vstack(
-        #     [graph.tftx[..., :n_features_target], children_ftxs]
-        # )
-        # graph.data.cond = graph.cond
-        # graph.data.idxs_by_level = self.tree.idxs_by_level + [level_idx]
-        # graph.data.cur_level = graph.cur_level + 1
-        # graph.data.batch_size = batch_size
-        # graph.data.global_features = graph.global_features
-        # graph.data.tbatch = torch.arange(
-        #     batch_size, dtype=torch.long, device=device
-        # ).repeat((len(graph.data.tftx)) // batch_size)
-        # return graph
+        graph.data.tftx = torch.vstack(
+            [graph.tftx[..., :n_features_target], children_ftxs]
+        )
+        graph.data.cond = graph.cond
+        graph.data.cur_level = graph.cur_level + 1
+        graph.data.global_features = graph.global_features
+        return graph
 
         return GraphTreeWrapper(
             TreeGenType(

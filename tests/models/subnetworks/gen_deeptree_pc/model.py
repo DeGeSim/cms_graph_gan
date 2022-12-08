@@ -118,7 +118,7 @@ def test_full_modelparts_grad():
       global_features (torch.Tensor): torch.Tensor
     """
 
-    from fgsim.config import conf, defaultconf, device
+    from fgsim.config import conf, defaultconf
     from fgsim.models.gen.gen_deeptree import (
         GraphTreeWrapper,
         ModelClass,
@@ -127,7 +127,7 @@ def test_full_modelparts_grad():
 
     # normalization needs to be set to false, otherwise Batchnorm
     # will propagate some gradient betweeen the events
-
+    device = torch.device("cpu")
     conf.tree.branches = [2, 3, 5]
     conf.tree.features = [128, 64, 32, 3]
     # defaultconf.model_param_options.gen_deeptree.dim_red_in_branching = False
@@ -166,9 +166,8 @@ def test_full_modelparts_grad():
 
     batch_size = model.batch_size
     features = model.features
-    branches = model.branches
     tree = model.tree
-    n_levels = len(branches)
+    n_levels = len(features)
 
     # Init the graph object
     graph_tree = GraphTreeWrapper(
