@@ -226,7 +226,7 @@ class Holder:
             d_gen = self.models.disc(gen_batch, cond)
             assert d_gen.shape == (conf.loader.batch_size, 1)
 
-        self.res = {
+        res = {
             "sim_batch": sim_batch,
             "gen_batch": gen_batch,
             "d_gen": d_gen,
@@ -237,8 +237,8 @@ class Holder:
             with with_grad(train_disc):
                 d_sim = self.models.disc(sim_batch, cond)
                 assert d_sim.shape == (conf.loader.batch_size, 1)
-            self.res["d_sim"] = d_sim
-        return self.res
+            res["d_sim"] = d_sim
+        return res
 
 
 @contextmanager
