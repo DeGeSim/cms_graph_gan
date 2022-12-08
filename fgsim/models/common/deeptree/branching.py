@@ -57,6 +57,10 @@ class BranchingLayer(nn.Module):
         self.n_features_source = self.tree.features[level]
         self.n_features_target = self.tree.features[level + int(self.dim_red)]
 
+        # Calculate the number of nodes currently in the graphs
+        self.points = prod([br for br in self.tree.branches[: self.level]])
+        assert self.points == self.tree.points_by_level[self.level]
+
         if res_mean or res_final_layer:
             assert residual
         # if residual:
@@ -94,13 +98,13 @@ class BranchingLayer(nn.Module):
         n_parents = len(parents)
         assert graph.cur_level == self.level
 
-        parents_ftxs = graph.tftx[graph.idxs_by_level[self.level]]
+        parents_ftxs = graph.tftx[self.tree.idxs_by_level[self.level]]
         device = parents_ftxs.device
 
         # Compute the new feature vectors:
         parents_idxs = torch.cat([parent.idxs for parent in parents])
-
-        # for the parents indeces generate a matrix where
+        assert (parents_idxs == self.tree.parents_idxs_by_level[self.level]).all()
+        # for the parents indices generate a matrix where
         # each row is the global vector of the respective event
         if graph.global_features.numel() == 0:
             graph.global_features = torch.empty(
@@ -120,10 +124,10 @@ class BranchingLayer(nn.Module):
 
         assert parents_ftxs.shape[-1] == self.n_features_source
         assert proj_ftx.shape[-1] == self.n_features_source * self.n_branches
-        assert list(proj_ftx.shape) == [
+        assert proj_ftx.shape == (
             n_parents * batch_size,
             n_branches * self.n_features_source,
-        ]
+        )
 
         # reshape the projected
         # for a single batch
@@ -160,24 +164,18 @@ class BranchingLayer(nn.Module):
         if self.dim_red:
             children_ftxs = self.reduction_nn(children_ftxs)
 
-        # Calculate the number of nodes currently in the graphs
-        points = prod([br for br in self.tree.branches[: self.level]])
-
-        # Compute the index vector for the children
-        children_idxs = (
-            (
-                torch.repeat_interleave(
-                    torch.arange(batch_size), n_branches * points
-                ).reshape(-1, n_branches)
-            )
-            * n_branches
-            * points
-        )
-
-        # Compute the level_idxs for the new children
-        level_idx = torch.arange(
-            len(children_ftxs), dtype=torch.long, device=device
-        ) + len(graph.tftx)
+        # graph.data.tftx = torch.vstack(
+        #     [graph.tftx[..., :n_features_target], children_ftxs]
+        # )
+        # graph.data.cond = graph.cond
+        # graph.data.idxs_by_level = self.tree.idxs_by_level + [level_idx]
+        # graph.data.cur_level = graph.cur_level + 1
+        # graph.data.batch_size = batch_size
+        # graph.data.global_features = graph.global_features
+        # graph.data.tbatch = torch.arange(
+        #     batch_size, dtype=torch.long, device=device
+        # ).repeat((len(graph.data.tftx)) // batch_size)
+        # return graph
 
         return GraphTreeWrapper(
             TreeGenType(
@@ -185,12 +183,11 @@ class BranchingLayer(nn.Module):
                     [graph.tftx[..., :n_features_target], children_ftxs]
                 ),
                 cond=graph.cond,
-                idxs_by_level=graph.idxs_by_level + [level_idx],
-                children=graph.children + [children_idxs],
                 cur_level=graph.cur_level + 1,
                 batch_size=batch_size,
                 global_features=graph.global_features,
-            )
+            ),
+            tree=graph.tree,
         )
 
 

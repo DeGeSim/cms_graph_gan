@@ -140,7 +140,8 @@ class ModelClass(nn.Module):
             TreeGenType(
                 tftx=random_vector.reshape(batch_size, features[0]),
                 batch_size=batch_size,
-            )
+            ),
+            tree=self.tree,
         )
         # overwrite the first features of the reandom vector with the condition
         graph_tree.cond = (
@@ -159,10 +160,12 @@ class ModelClass(nn.Module):
                 self.tree.tree_lists[ilevel][-1].idxs[-1] + 1
             )
             # Assign the global features
-            graph_tree.global_features = self.dyn_hlvs_layers[ilevel](
+            graph_tree.data.global_features = self.dyn_hlvs_layers[ilevel](
                 x=graph_tree.tftx_by_level[ilevel][..., : features[-1]],
                 cond=graph_tree.cond,
-                batch=graph_tree.tbatch[graph_tree.idxs_by_level[ilevel]],
+                batch=self.tree.tbatch_by_level[ilevel][
+                    self.tree.idxs_by_level[ilevel]
+                ],
             )
 
             graph_tree = self.branching_layers[ilevel](graph_tree)
@@ -182,7 +185,7 @@ class ModelClass(nn.Module):
                 cond=graph_tree.cond,
                 edge_index=self.tree.ancestor_ei(ilevel + 1),
                 edge_attr=self.tree.ancestor_ea(ilevel + 1),
-                batch=graph_tree.tbatch,
+                batch=self.tree.tbatch_by_level[ilevel],
                 global_features=graph_tree.global_features,
             )
             assert graph_tree.tftx.shape[1] == self.tree.features[ilevel + 1]
@@ -200,7 +203,7 @@ class ModelClass(nn.Module):
                 cond=graph_tree.cond,
                 edge_index=self.tree.children_ei(ilevel + 1),
                 edge_attr=None,
-                batch=graph_tree.tbatch,
+                batch=self.tree.tbatch_by_level[ilevel],
                 global_features=graph_tree.global_features,
             )
             assert graph_tree.tftx.shape[1] == self.tree.features[ilevel + 1]

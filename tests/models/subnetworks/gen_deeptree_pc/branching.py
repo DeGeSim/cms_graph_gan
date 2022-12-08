@@ -23,11 +23,12 @@ def test_BranchingLayer_compute_graph(branching_objects: DTColl):
     """
     graph = branching_objects.graph
     branching_layers = branching_objects.branching_layers
+    tree = branching_objects.tree
 
     new_graph1 = branching_layers[0](graph)
     tree = branching_layers[0].tree
     assert torch.all(
-        new_graph1.tftx[new_graph1.idxs_by_level[1]]
+        new_graph1.tftx[tree.idxs_by_level[1]]
         == new_graph1.tftx[torch.hstack([e.idxs for e in tree.tree_lists[1]])]
     )
     leaf = tree.tree_lists[1][0]
@@ -43,7 +44,7 @@ def test_BranchingLayer_compute_graph(branching_objects: DTColl):
 
     new_graph2 = branching_layers[1](new_graph1)
     assert torch.all(
-        new_graph2.tftx[new_graph2.idxs_by_level[2]]
+        new_graph2.tftx[tree.idxs_by_level[2]]
         == new_graph2.tftx[torch.hstack([e.idxs for e in tree.tree_lists[2]])]
     )
 

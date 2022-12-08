@@ -18,10 +18,11 @@ def test_dyn_hlvs_compute_graph(static_objects: DTColl):
     graph = static_objects.graph
     branching_layers = static_objects.branching_layers
     dyn_hlvs_layer = static_objects.dyn_hlvs_layer
+    tree = static_objects.tree
 
     new_graph1 = branching_layers[0](graph)
     new_global_features = dyn_hlvs_layer(
-        x=new_graph1.tftx, cond=graph.cond, batch=new_graph1.tbatch
+        x=new_graph1.tftx, cond=graph.cond, batch=tree.tbatch_by_level[1]
     )
     event_2_global = new_global_features[2]
     sum(event_2_global).backward(retain_graph=True)
@@ -36,8 +37,10 @@ def test_dyn_hlvs_compute_graph(static_objects: DTColl):
 def test_dyn_hlvs_compute_graph2(static_objects: DTColl):
     graph = static_objects.graph
     dyn_hlvs_layer = static_objects.dyn_hlvs_layer
+    tree = static_objects.tree
+
     new_global_features = dyn_hlvs_layer(
-        x=graph.tftx, cond=graph.cond, batch=graph.tbatch
+        x=graph.tftx, cond=graph.cond, batch=tree.tbatch_by_level[0]
     )
     event_2_global = new_global_features[2]
     sum(event_2_global).backward(retain_graph=True)

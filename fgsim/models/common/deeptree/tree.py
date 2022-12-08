@@ -38,13 +38,29 @@ class Tree:
             [Node(torch.arange(self.batch_size, dtype=torch.long))]
         ]
 
+        self.points_by_level: List[int] = [
+            prod([br for br in self.branches[:ilevel]])
+            for ilevel in range(self.n_levels)
+        ]
+
         self.tbatch_by_level: List[torch.Tensor] = [
             torch.arange(batch_size, dtype=torch.long).repeat(
-                prod([branches[:ilevel]])
+                sum(
+                    [self.points_by_level[iilevel] for iilevel in range(ilevel + 1)]
+                )
             )
-            for ilevel in range(1, self.n_levels)
+            for ilevel in range(self.n_levels)
         ]
+        # tbatch = torch.arange(batch_size, dtype=torch.long, device=device).repeat(
+        #     (len(tftx)) // batch_size
+        # )
+
         next_x_index = self.batch_size
+
+        self.parents_idxs_by_level: List[torch.Tensor] = []
+        self.idxs_by_level: List[torch.Tensor] = [
+            torch.arange(batch_size, dtype=torch.long)
+        ]
 
         # Start with 1 because the root is initialized
         for level in range(1, self.n_levels):
@@ -54,8 +70,12 @@ class Tree:
             new_children_edges: List[torch.Tensor] = []
             new_edge_attrs: List[torch.Tensor] = []
 
+            parents = self.tree_lists[level - 1]
+            n_parents = len(parents)
+            n_children = n_parents * branches[level - 1]
+
             # split the nodes in the previous layer
-            for iparent, parent in enumerate(self.tree_lists[level - 1]):
+            for iparent, parent in enumerate(parents):
                 children_idxs = torch.arange(
                     next_x_index,
                     next_x_index + branches[level - 1] * batch_size,
@@ -96,16 +116,32 @@ class Tree:
                 torch.hstack(new_children_edges)
             )
             self.ancestor_edge_attrs_p_level.append(torch.vstack(new_edge_attrs))
+            self.parents_idxs_by_level.append(
+                torch.cat([parent.idxs for parent in parents])
+            )
+
+            self.idxs_by_level.append(
+                torch.arange(n_children * batch_size, dtype=torch.long)
+                + self.idxs_by_level[-1][-1]
+                + 1
+            )
 
     def to(self, device):
+        # Lists of tensors
         for attr in [
             "ancestor_edge_index_p_level",
             "ancestor_edge_attrs_p_level",
             "children_edge_index_p_level",
             "tbatch_by_level",
+            "parents_idxs_by_level",
+            "idxs_by_level",
         ]:
             attr_obj = getattr(self, attr)
             setattr(self, attr, [e.to(device) for e in attr_obj])
+        # lists of Lists of Tensors:
+        for attr in []:
+            attr_obj = getattr(self, attr)
+            setattr(self, attr, [[ee.to(device) for ee in e] for e in attr_obj])
         for level in self.tree_lists:
             for node in level:
                 node.idxs = node.idxs.to(device)

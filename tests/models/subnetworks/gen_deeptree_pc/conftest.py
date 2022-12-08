@@ -41,7 +41,12 @@ def object_gen(props: Dict[str, int]) -> DTColl:
 
     features = [n_features for _ in range(n_levels)]
     branches = [n_branches for _ in range(n_levels - 1)]
-
+    tree = Tree(
+        branches=branches,
+        features=features,
+        batch_size=batch_size,
+        connect_all_ancestors=True,
+    )
     graph = GraphTreeWrapper(
         TreeGenType(
             tftx=torch.randn(
@@ -59,15 +64,10 @@ def object_gen(props: Dict[str, int]) -> DTColl:
                 requires_grad=True,
             ),
             batch_size=batch_size,
-        )
+        ),
+        tree,
     )
 
-    tree = Tree(
-        branches=branches,
-        features=features,
-        batch_size=batch_size,
-        connect_all_ancestors=True,
-    )
     branching_layers = [
         BranchingLayer(
             tree=tree,

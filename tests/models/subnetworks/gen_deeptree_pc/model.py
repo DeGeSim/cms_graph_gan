@@ -16,7 +16,7 @@ def test_GlobalFeedBackNN_ancestor_conv(static_objects: DTColl):
         graph = branching_layers[ilevel](graph)
         # ### Global
         graph.global_features = dyn_hlvs_layer(
-            x=graph.tftx, cond=graph.cond, batch=graph.tbatch
+            x=graph.tftx, cond=graph.cond, batch=tree.tbatch_by_level[ilevel + 1]
         )
         assert graph.global_features.shape[1] == n_global
         graph.tftx = ancestor_conv_layer(
@@ -24,7 +24,7 @@ def test_GlobalFeedBackNN_ancestor_conv(static_objects: DTColl):
             cond=graph.cond,
             edge_index=tree.ancestor_ei(ilevel + 1),
             edge_attr=tree.ancestor_ea(ilevel + 1),
-            batch=graph.tbatch,
+            batch=tree.tbatch_by_level[ilevel + 1],
             global_features=graph.global_features,
         )
 
@@ -47,12 +47,14 @@ def test_GlobalFeedBackNN_GINConv(static_objects: DTColl):
         graph = branching_layers[ilevel](graph)
         # ### Global
         global_features = dyn_hlvs_layer(
-            x=graph.tftx, cond=graph.cond, batch=graph.tbatch
+            x=graph.tftx, cond=graph.cond, batch=tree.tbatch_by_level[ilevel + 1]
         )
         assert global_features.shape[1] == n_global
 
         graph.tftx = conv(
-            x=torch.hstack([graph.tftx, global_features[graph.tbatch]]),
+            x=torch.hstack(
+                [graph.tftx, global_features[tree.tbatch_by_level[ilevel + 1]]]
+            ),
             edge_index=tree.ancestor_ei(ilevel + 1),
         )
 
@@ -82,7 +84,7 @@ def test_full_NN_compute_graph(static_objects: DTColl):
     x_old = graph.tftx
     for ilevel in range(n_levels - 1):
         graph.global_features = dyn_hlvs_layer(
-            x=graph.tftx, cond=graph.cond, batch=graph.tbatch
+            x=graph.tftx, cond=graph.cond, batch=tree.tbatch_by_level[ilevel]
         )
         assert graph.global_features.shape[1] == n_global
 
@@ -93,7 +95,7 @@ def test_full_NN_compute_graph(static_objects: DTColl):
             global_features=graph.global_features,
             edge_index=tree.ancestor_ei(ilevel + 1),
             edge_attr=tree.ancestor_ea(ilevel + 1),
-            batch=graph.tbatch,
+            batch=tree.tbatch_by_level[ilevel + 1],
         )
         leaf = tree_lists[ilevel][0]
         pc_leaf_point = graph.tftx[leaf.idxs[2]]
@@ -165,6 +167,7 @@ def test_full_modelparts_grad():
     batch_size = model.batch_size
     features = model.features
     branches = model.branches
+    tree = model.tree
     n_levels = len(branches)
 
     # Init the graph object
@@ -173,12 +176,17 @@ def test_full_modelparts_grad():
             tftx=z.reshape(batch_size, features[0]),
             cond=cond,
             batch_size=batch_size,
-        )
+        ),
+        model.tree,
     )
     # check
-    graph_tree.cond[[graph_tree.tbatch == 1]].sum().backward(retain_graph=True)
+    graph_tree.cond[[tree.tbatch_by_level[0] == 1]].sum().backward(
+        retain_graph=True
+    )
     check_cond()
-    graph_tree.tftx[[graph_tree.tbatch == 1]].sum().backward(retain_graph=True)
+    graph_tree.tftx[[tree.tbatch_by_level[0] == 1]].sum().backward(
+        retain_graph=True
+    )
     check_z()
 
     # Do the branching
@@ -187,7 +195,7 @@ def test_full_modelparts_grad():
         graph_tree.global_features = model.dyn_hlvs_layers[ilevel](
             x=graph_tree.tftx_by_level[ilevel][..., : features[-1]],
             cond=graph_tree.cond,
-            batch=graph_tree.tbatch[graph_tree.idxs_by_level[ilevel]],
+            batch=tree.tbatch_by_level[ilevel][tree.idxs_by_level[ilevel]],
         )
         if graph_tree.global_features.numel():
             graph_tree.global_features[1, :].sum().backward(retain_graph=True)
@@ -196,7 +204,9 @@ def test_full_modelparts_grad():
             check_cond()
         graph_tree = model.branching_layers[ilevel](graph_tree)
 
-        graph_tree.tftx[[graph_tree.tbatch == 1]].sum().backward(retain_graph=True)
+        graph_tree.tftx[[tree.tbatch_by_level[ilevel + 1] == 1]].sum().backward(
+            retain_graph=True
+        )
         check_z()
 
         graph_tree.tftx = model.ancestor_conv_layers[ilevel](
@@ -204,24 +214,28 @@ def test_full_modelparts_grad():
             cond=graph_tree.cond,
             edge_index=model.tree.ancestor_ei(ilevel + 1),
             edge_attr=model.tree.ancestor_ea(ilevel + 1),
-            batch=graph_tree.tbatch,
+            batch=tree.tbatch_by_level[ilevel + 1],
             global_features=graph_tree.global_features,
         )
-        graph_tree.tftx[[graph_tree.tbatch == 1]].sum().backward(retain_graph=True)
+        graph_tree.tftx[[tree.tbatch_by_level[ilevel + 1] == 1]].sum().backward(
+            retain_graph=True
+        )
         check_z()
 
         graph_tree.tftx = model.child_conv_layers[ilevel](
             x=graph_tree.tftx,
             cond=graph_tree.cond,
             edge_index=model.tree.children_ei(ilevel + 1),
-            batch=graph_tree.tbatch,
+            batch=tree.tbatch_by_level[ilevel + 1],
             global_features=graph_tree.global_features,
         )
-        graph_tree.tftx[[graph_tree.tbatch == 1]].sum().backward(retain_graph=True)
+        graph_tree.tftx[[tree.tbatch_by_level[ilevel + 1] == 1]].sum().backward(
+            retain_graph=True
+        )
         check_z()
 
     graph_tree.data.x = graph_tree.tftx_by_level[-1]
-    graph_tree.data.batch = graph_tree.batch_by_level[-1]
+    graph_tree.data.batch = tree.tbatch_by_level[-1][tree.idxs_by_level[-1]]
 
     graph_tree.data.x[graph_tree.data.batch == 1].sum().backward(retain_graph=True)
 
