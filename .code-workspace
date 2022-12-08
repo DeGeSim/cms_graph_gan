@@ -10,6 +10,12 @@
     "folders": [
         {
             "path": "."
+        },
+        {
+            "path": "../queueflow"
+        },
+        {
+            "path": "../standalone_scripts"
         }
     ],
     "settings": {

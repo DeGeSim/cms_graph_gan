@@ -4,7 +4,7 @@
         {
             "args": [
                 "--hash",
-                "6bd1172",
+                "98ebc8f",
                 // "--ray",
                 // "--debug",
                 "train"
@@ -19,7 +19,7 @@
         {
             "args": [
                 "--tag",
-                "jn_ac_dhlvs",
+                "jn_dfake",
                 "--debug",
                 "train"
             ],
@@ -33,7 +33,7 @@
         {
             "args": [
                 "--tag",
-                "jn_ac_dhlvs",
+                "jn_dfake",
                 "--debug",
                 "test"
             ],
@@ -47,7 +47,7 @@
         {
             "args": [
                 "--tag",
-                "jn_ac_dhlvs",
+                "jn_dfake",
                 "--debug",
                 "preprocess"
             ],
@@ -73,10 +73,19 @@
             "type": "python",
             "args": [
                 "--tag",
-                "jn_ac_dhlvs",
+                "jn_dfake",
                 "--debug",
                 "train"
             ],
+        },
+        {
+            "cwd": "/home/mscham/fgsim",
+            "name": "discstudies",
+            "request": "launch",
+            "program": "/home/mscham/standalone_scripts/discstudies.py",
+            "type": "python",
+            "args": [],
+            "justMyCode": false
         },
         {
             "name": "buildcmd",
@@ -87,7 +96,7 @@
             "console": "integratedTerminal",
             "args": [
                 "--tag",
-                "jn_ac_dhlvs",
+                "jn_dfake",
                 "--debug",
                 "setup"
             ],
