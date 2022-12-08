@@ -36,8 +36,8 @@ class ModelClass(nn.Module):
         self.child_mpl = child_mpl
         self.dim_red_in_branching = dim_red_in_branching
 
-        self.features = conf.tree.features
-        self.branches = conf.tree.branches
+        self.features = OmegaConf.to_container(conf.tree.features)
+        self.branches = OmegaConf.to_container(conf.tree.branches)
         n_levels = len(self.features)
 
         # Shape of the random vector
@@ -56,8 +56,8 @@ class ModelClass(nn.Module):
         self.tree = Tree(
             batch_size=conf.loader.batch_size,
             connect_all_ancestors=connect_all_ancestors,
-            branches=OmegaConf.to_container(conf.tree.branches),
-            features=OmegaConf.to_container(conf.tree.features),
+            branches=self.branches,
+            features=self.features,
         )
 
         self.dyn_hlvs_layers = nn.ModuleList(
@@ -86,19 +86,21 @@ class ModelClass(nn.Module):
             ]
         )
 
-        self.ancestor_conv_layers = nn.ModuleList(
-            [
-                self.wrap_layer_init(ilevel, type="ac")
-                for ilevel in range(n_levels - 1)
-            ]
-        )
+        if self.ancestor_mpl["n_mpl"] > 0:
+            self.ancestor_conv_layers = nn.ModuleList(
+                [
+                    self.wrap_layer_init(ilevel, type="ac")
+                    for ilevel in range(n_levels - 1)
+                ]
+            )
 
-        self.child_conv_layers = nn.ModuleList(
-            [
-                self.wrap_layer_init(ilevel, type="child")
-                for ilevel in range(n_levels - 1)
-            ]
-        )
+        if self.child_mpl["n_mpl"] > 0:
+            self.child_conv_layers = nn.ModuleList(
+                [
+                    self.wrap_layer_init(ilevel, type="child")
+                    for ilevel in range(n_levels - 1)
+                ]
+            )
 
         if self.final_layer_scaler:
             self.ftx_scaling = FtxScaleLayer(self.features[-1])
@@ -153,10 +155,10 @@ class ModelClass(nn.Module):
 
         # Do the branching
         for ilevel in range(n_levels - 1):
-            assert graph_tree.tftx.shape[1] == self.tree.features[ilevel]
-            assert graph_tree.tftx.shape[0] == (
-                self.tree.tree_lists[ilevel][-1].idxs[-1] + 1
-            )
+            # assert graph_tree.tftx.shape[1] == self.tree.features[ilevel]
+            # assert graph_tree.tftx.shape[0] == (
+            #     self.tree.tree_lists[ilevel][-1].idxs[-1] + 1
+            # )
             # Assign the global features
             graph_tree.global_features = self.dyn_hlvs_layers[ilevel](
                 x=graph_tree.tftx_by_level(ilevel)[..., : features[-1]],
@@ -167,53 +169,55 @@ class ModelClass(nn.Module):
             )
 
             graph_tree = self.branching_layers[ilevel](graph_tree, cond)
-            assert (
-                graph_tree.tftx.shape[1]
-                == self.tree.features[ilevel + int(self.dim_red_in_branching)]
-            )
-            assert graph_tree.tftx.shape[0] == (
-                self.tree.tree_lists[ilevel + 1][-1].idxs[-1] + 1
-            )
+            # assert (
+            #     graph_tree.tftx.shape[1]
+            #     == self.tree.features[ilevel + int(self.dim_red_in_branching)]
+            # )
+            # assert graph_tree.tftx.shape[0] == (
+            #     self.tree.tree_lists[ilevel + 1][-1].idxs[-1] + 1
+            # )
             # model_plotter.save_tensor(
             #     f"branching output level{ilevel+1}", graph_tree.tftx_by_level(-1)
             # )
 
-            graph_tree.tftx = self.ancestor_conv_layers[ilevel](
-                x=graph_tree.tftx,
-                cond=cond,
-                edge_index=self.tree.ancestor_ei(ilevel + 1),
-                edge_attr=self.tree.ancestor_ea(ilevel + 1),
-                batch=self.tree.tbatch_by_level[ilevel],
-                global_features=graph_tree.global_features,
-            )
-            assert graph_tree.tftx.shape[1] == self.tree.features[ilevel + 1]
-            assert graph_tree.tftx.shape[0] == (
-                self.tree.tree_lists[ilevel + 1][-1].idxs[-1] + 1
-            )
-            # if len(self.ancestor_conv_layers) > 0:
-            #     model_plotter.save_tensor(
-            #         f"ancestor conv output level{ilevel+1}",
-            #         graph_tree.tftx_by_level(-1),
-            #     )
+            if self.ancestor_mpl["n_mpl"] > 0:
+                graph_tree.tftx = self.ancestor_conv_layers[ilevel](
+                    x=graph_tree.tftx,
+                    cond=cond,
+                    edge_index=self.tree.ancestor_ei(ilevel + 1),
+                    edge_attr=self.tree.ancestor_ea(ilevel + 1),
+                    batch=self.tree.tbatch_by_level[ilevel],
+                    global_features=graph_tree.global_features,
+                )
+                # assert graph_tree.tftx.shape[1] == self.tree.features[ilevel + 1]
+                # assert graph_tree.tftx.shape[0] == (
+                #     self.tree.tree_lists[ilevel + 1][-1].idxs[-1] + 1
+                # )
+                # if len(self.ancestor_conv_layers) > 0:
+                #     model_plotter.save_tensor(
+                #         f"ancestor conv output level{ilevel+1}",
+                #         graph_tree.tftx_by_level(-1),
+                #     )
 
-            graph_tree.tftx = self.child_conv_layers[ilevel](
-                x=graph_tree.tftx,
-                cond=cond,
-                edge_index=self.tree.children_ei(ilevel + 1),
-                edge_attr=None,
-                batch=self.tree.tbatch_by_level[ilevel],
-                global_features=graph_tree.global_features,
-            )
-            assert graph_tree.tftx.shape[1] == self.tree.features[ilevel + 1]
-            assert graph_tree.tftx.shape[0] == (
-                self.tree.tree_lists[ilevel + 1][-1].idxs[-1] + 1
-            )
+            if self.child_mpl["n_mpl"] > 0:
+                graph_tree.tftx = self.child_conv_layers[ilevel](
+                    x=graph_tree.tftx,
+                    cond=cond,
+                    edge_index=self.tree.children_ei(ilevel + 1),
+                    edge_attr=None,
+                    batch=self.tree.tbatch_by_level[ilevel],
+                    global_features=graph_tree.global_features,
+                )
+                # assert graph_tree.tftx.shape[1] == self.tree.features[ilevel + 1]
+                # assert graph_tree.tftx.shape[0] == (
+                #     self.tree.tree_lists[ilevel + 1][-1].idxs[-1] + 1
+                # )
 
-            # if len(self.child_conv_layers) > 0:
-            #     model_plotter.save_tensor(
-            #         f"child conv output level{ilevel+1}",
-            #         graph_tree.tftx_by_level(-1),
-            #     )
+                # if len(self.child_conv_layers) > 0:
+                #     model_plotter.save_tensor(
+                #         f"child conv output level{ilevel+1}",
+                #         graph_tree.tftx_by_level(-1),
+                # )
 
         if self.presaved_batch is None:
             (
