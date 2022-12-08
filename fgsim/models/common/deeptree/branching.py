@@ -5,7 +5,7 @@ import torch.nn as nn
 
 from fgsim.models.common import FFN
 
-from .graph_tree import GraphTreeWrapper, TreeGenType
+from .graph_tree import TreeGraph
 from .tree import Tree
 
 
@@ -90,7 +90,7 @@ class BranchingLayer(nn.Module):
             )
 
     # Split each of the leafs in the the graph.tree into n_branches and connect them
-    def forward(self, graph: GraphTreeWrapper) -> GraphTreeWrapper:
+    def forward(self, graph: TreeGraph, cond) -> TreeGraph:
         batch_size = self.batch_size
         n_branches = self.n_branches
         n_features_target = self.n_features_target
@@ -99,20 +99,15 @@ class BranchingLayer(nn.Module):
         assert graph.cur_level == self.level
 
         parents_ftxs = graph.tftx[self.tree.idxs_by_level[self.level]]
-        device = parents_ftxs.device
 
         # Compute the new feature vectors:
         # for the parents indices generate a matrix where
         # each row is the global vector of the respective event
-        if prod(graph.global_features.shape) == 0:
-            graph.global_features = torch.empty(
-                batch_size, self.n_global, dtype=torch.float, device=device
-            )
 
         parent_global = graph.global_features.repeat(
             self.tree.points_by_level[self.level], 1
         )
-        cond_global = graph.cond.repeat(self.tree.points_by_level[self.level], 1)
+        cond_global = cond.repeat(self.tree.points_by_level[self.level], 1)
         # With the idxs of the parent index the event vector
 
         # The proj_nn projects the (n_parents * n_event) x n_features to a
@@ -165,26 +160,13 @@ class BranchingLayer(nn.Module):
         if self.dim_red:
             children_ftxs = self.reduction_nn(children_ftxs)
 
-        graph.data.tftx = torch.vstack(
+        graph.tftx = torch.vstack(
             [graph.tftx[..., :n_features_target], children_ftxs]
         )
-        graph.data.cond = graph.cond
-        graph.data.cur_level = graph.cur_level + 1
-        graph.data.global_features = graph.global_features
-        return graph
 
-        return GraphTreeWrapper(
-            TreeGenType(
-                tftx=torch.vstack(
-                    [graph.tftx[..., :n_features_target], children_ftxs]
-                ),
-                cond=graph.cond,
-                cur_level=graph.cur_level + 1,
-                batch_size=batch_size,
-                global_features=graph.global_features,
-            ),
-            tree=graph.tree,
-        )
+        graph.cur_level = graph.cur_level + 1
+        graph.global_features = graph.global_features
+        return graph
 
 
 @torch.jit.script

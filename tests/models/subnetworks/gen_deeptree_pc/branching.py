@@ -21,12 +21,20 @@ def test_BranchingLayer_compute_graph(branching_objects: DTColl):
       branching_layers[0] (BranchingLayer): The branching layer to test.
       global_features (torch.Tensor): torch.Tensor
     """
+    graph, tree, cond, branching_layers, _, _ = (
+        branching_objects.graph,
+        branching_objects.tree,
+        branching_objects.cond,
+        branching_objects.branching_layers,
+        branching_objects.dyn_hlvs_layer,
+        branching_objects.ancestor_conv_layer,
+    )
     graph = branching_objects.graph
     branching_layers = branching_objects.branching_layers
     tree = branching_objects.tree
 
     tftx_copy = graph.tftx.requires_grad_()
-    new_graph1 = branching_layers[0](graph)
+    new_graph1 = branching_layers[0](graph, cond)
     tree = branching_layers[0].tree
     assert torch.all(
         new_graph1.tftx[tree.idxs_by_level[1]]
@@ -43,7 +51,7 @@ def test_BranchingLayer_compute_graph(branching_objects: DTColl):
     assert torch.all(tftx_copy.grad[1] == zero_feature)
     assert torch.any(tftx_copy.grad[2] != zero_feature)
 
-    new_graph2 = branching_layers[1](new_graph1)
+    new_graph2 = branching_layers[1](new_graph1, cond)
     assert torch.all(
         new_graph2.tftx[tree.idxs_by_level[2]]
         == new_graph2.tftx[torch.hstack([e.idxs for e in tree.tree_lists[2]])]
@@ -206,9 +214,13 @@ def test_tree_children_connectivity_static(static_objects: DTColl):
 
 
 def test_BranchingLayer_shapes(dyn_objects: DTColl):
-    props = dyn_objects.props
-    graph = dyn_objects.graph
-    tree = dyn_objects.tree
+    graph, tree, cond, branching_layers, props = (
+        dyn_objects.graph,
+        dyn_objects.tree,
+        dyn_objects.cond,
+        dyn_objects.branching_layers,
+        dyn_objects.props,
+    )
     branching_layers = dyn_objects.branching_layers
     n_features = props["n_features"]
     n_branches = props["n_branches"]
@@ -223,7 +235,7 @@ def test_BranchingLayer_shapes(dyn_objects: DTColl):
         assert len(tree_lists[ilevel]) == n_parents * n_branches
 
     for ilevel in range(n_levels - 1):
-        graph = branching_layers[ilevel](graph)
+        graph = branching_layers[ilevel](graph, cond)
         # split once
         # tftx shape testing
         assert graph.tftx.shape[1] == n_features

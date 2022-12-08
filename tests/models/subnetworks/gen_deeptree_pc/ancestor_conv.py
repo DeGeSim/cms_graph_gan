@@ -82,13 +82,13 @@ def test_ancestorconv_single_event(ancestor_conv, graph):
         [[0.3, 0.2]], dtype=torch.float, device=device
     ).reshape(batch_size, n_global)
 
-    graph.cond = torch.tensor([[5]], dtype=torch.float, device=device).reshape(
+    cond = torch.tensor([[5]], dtype=torch.float, device=device).reshape(
         batch_size, 1
     )
 
     res = ancestor_conv(
         x=graph.tftx,
-        cond=graph.cond,
+        cond=cond,
         edge_index=graph.edge_index,
         edge_attr=graph.edge_attr,
         batch=graph.tbatch,
@@ -106,7 +106,7 @@ def test_ancestorconv_single_event(ancestor_conv, graph):
     res_expect = torch.hstack(
         [
             graph.tftx,
-            graph.cond[graph.tbatch],
+            cond[graph.tbatch],
             global_features[graph.tbatch],
             messages,
         ]
@@ -122,7 +122,9 @@ def test_ancestorconv_double_event(ancestor_conv):
     # n_levels = 2
     n_global = 2
     batch_size = 2
-
+    cond = torch.tensor(
+        [[5] * batch_size], dtype=torch.float, device=device
+    ).reshape(batch_size, 1)
     graph = Data(
         tftx=torch.tensor(
             [[1], [1.5], [2], [2.5], [5], [5.5]],
@@ -130,9 +132,6 @@ def test_ancestorconv_double_event(ancestor_conv):
             device=device,
             requires_grad=True,
         ),
-        cond=torch.tensor(
-            [[5] * batch_size], dtype=torch.float, device=device
-        ).reshape(batch_size, 1),
         edge_index=torch.tensor(
             [[0, 1, 0, 1], [2, 3, 4, 5]], dtype=torch.long, device=device
         ),
@@ -147,7 +146,7 @@ def test_ancestorconv_double_event(ancestor_conv):
 
     res = ancestor_conv(
         x=graph.tftx,
-        cond=graph.cond,
+        cond=cond,
         edge_index=graph.edge_index,
         edge_attr=graph.edge_attr,
         batch=graph.tbatch,
@@ -181,7 +180,7 @@ def test_ancestorconv_double_event(ancestor_conv):
     res_expect = torch.hstack(
         [
             graph.tftx,
-            graph.cond[graph.tbatch],
+            cond[graph.tbatch],
             global_features[graph.tbatch],
             messages,
         ]
@@ -196,14 +195,13 @@ def test_ancestorconv_three_levels(ancestor_conv):
     # n_levels = 2
     n_global = 2
     batch_size = 1
-
+    cond = torch.tensor(
+        [[5] * batch_size], dtype=torch.float, device=device
+    ).reshape(batch_size, 1)
     graph = Data(
         tftx=torch.arange(
             7, dtype=torch.float, device=device, requires_grad=True
         ).reshape(-1, 1),
-        cond=torch.tensor(
-            [[5] * batch_size], dtype=torch.float, device=device
-        ).reshape(batch_size, 1),
         edge_index=torch.tensor(
             [[0, 0, 0, 0, 0, 0, 1, 1, 2, 2], [1, 2, 3, 4, 5, 6, 3, 4, 5, 6]],
             dtype=torch.long,
@@ -218,7 +216,7 @@ def test_ancestorconv_three_levels(ancestor_conv):
 
     res = ancestor_conv(
         x=graph.tftx,
-        cond=graph.cond,
+        cond=cond,
         edge_index=graph.edge_index,
         edge_attr=graph.edge_attr,
         batch=graph.tbatch,
@@ -260,7 +258,7 @@ def test_ancestorconv_three_levels(ancestor_conv):
     res_expect = torch.hstack(
         [
             graph.tftx,
-            graph.cond[graph.tbatch],
+            cond[graph.tbatch],
             global_features[graph.tbatch],
             messages,
         ]
@@ -277,13 +275,13 @@ def test_ancestorconv_all_modes():
     n_cond = 1
     batch_size = 1
 
+    cond = torch.tensor(
+        [[5] * batch_size], dtype=torch.float, device=device
+    ).reshape(batch_size, 1)
     graph = Data(
         tftx=torch.arange(
             7, dtype=torch.float, device=device, requires_grad=True
         ).reshape(-1, 1),
-        cond=torch.tensor(
-            [[5] * batch_size], dtype=torch.float, device=device
-        ).reshape(batch_size, 1),
         edge_index=torch.tensor(
             [[0, 0, 0, 0, 0, 0, 1, 1, 2, 2], [1, 2, 3, 4, 5, 6, 3, 4, 5, 6]],
             dtype=torch.long,
@@ -343,7 +341,7 @@ def test_ancestorconv_all_modes():
                                         )
                                         kwargs = {
                                             "x": graph.tftx,
-                                            "cond": graph.cond,
+                                            "cond": cond,
                                             "edge_index": graph.edge_index,
                                             "batch": graph.tbatch,
                                         }

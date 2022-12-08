@@ -8,12 +8,7 @@ from torch_geometric.data import Batch
 
 from fgsim.config import conf
 from fgsim.models.common import DynHLVsLayer, FtxScaleLayer, MPLSeq
-from fgsim.models.common.deeptree import (
-    BranchingLayer,
-    GraphTreeWrapper,
-    Tree,
-    TreeGenType,
-)
+from fgsim.models.common.deeptree import BranchingLayer, Tree, TreeGraph
 from fgsim.monitoring.logger import logger
 
 # from fgsim.plot.model_plotter import model_plotter
@@ -136,22 +131,25 @@ class ModelClass(nn.Module):
         n_levels = len(self.features)
 
         # Init the graph object
-        graph_tree: GraphTreeWrapper = GraphTreeWrapper(
-            TreeGenType(
-                tftx=random_vector.reshape(batch_size, features[0]),
-                batch_size=batch_size,
+        graph_tree = TreeGraph(
+            tftx=random_vector.reshape(batch_size, features[0]),
+            global_features=torch.empty(
+                batch_size,
+                self.n_global,
+                dtype=torch.float,
+                device=random_vector.device,
             ),
             tree=self.tree,
         )
         # overwrite the first features of the reandom vector with the condition
-        graph_tree.cond = (
-            cond.clone()
-            .detach()
-            .reshape(batch_size, self.n_cond)
-            .requires_grad_(True)
-        )
-        graph_tree.tftx_by_level[0][..., : cond.shape[-1]] = graph_tree.cond
-        # model_plotter.save_tensor("level0", graph_tree.tftx_by_level[0])
+        # cond = (
+        #     cond.clone()
+        #     .detach()
+        #     .reshape(batch_size, self.n_cond)
+        #     .requires_grad_(True)
+        # )
+        # graph_tree.tftx[..., : cond.shape[-1]] += cond
+        # model_plotter.save_tensor("level0", graph_tree.tftx)
 
         # Do the branching
         for ilevel in range(n_levels - 1):
@@ -160,15 +158,15 @@ class ModelClass(nn.Module):
                 self.tree.tree_lists[ilevel][-1].idxs[-1] + 1
             )
             # Assign the global features
-            graph_tree.data.global_features = self.dyn_hlvs_layers[ilevel](
-                x=graph_tree.tftx_by_level[ilevel][..., : features[-1]],
-                cond=graph_tree.cond,
+            graph_tree.global_features = self.dyn_hlvs_layers[ilevel](
+                x=graph_tree.tftx_by_level(ilevel)[..., : features[-1]],
+                cond=cond,
                 batch=self.tree.tbatch_by_level[ilevel][
                     self.tree.idxs_by_level[ilevel]
                 ],
             )
 
-            graph_tree = self.branching_layers[ilevel](graph_tree)
+            graph_tree = self.branching_layers[ilevel](graph_tree, cond)
             assert (
                 graph_tree.tftx.shape[1]
                 == self.tree.features[ilevel + int(self.dim_red_in_branching)]
@@ -177,12 +175,12 @@ class ModelClass(nn.Module):
                 self.tree.tree_lists[ilevel + 1][-1].idxs[-1] + 1
             )
             # model_plotter.save_tensor(
-            #     f"branching output level{ilevel+1}", graph_tree.tftx_by_level[-1]
+            #     f"branching output level{ilevel+1}", graph_tree.tftx_by_level(-1)
             # )
 
             graph_tree.tftx = self.ancestor_conv_layers[ilevel](
                 x=graph_tree.tftx,
-                cond=graph_tree.cond,
+                cond=cond,
                 edge_index=self.tree.ancestor_ei(ilevel + 1),
                 edge_attr=self.tree.ancestor_ea(ilevel + 1),
                 batch=self.tree.tbatch_by_level[ilevel],
@@ -195,12 +193,12 @@ class ModelClass(nn.Module):
             # if len(self.ancestor_conv_layers) > 0:
             #     model_plotter.save_tensor(
             #         f"ancestor conv output level{ilevel+1}",
-            #         graph_tree.tftx_by_level[-1],
+            #         graph_tree.tftx_by_level(-1),
             #     )
 
             graph_tree.tftx = self.child_conv_layers[ilevel](
                 x=graph_tree.tftx,
-                cond=graph_tree.cond,
+                cond=cond,
                 edge_index=self.tree.children_ei(ilevel + 1),
                 edge_attr=None,
                 batch=self.tree.tbatch_by_level[ilevel],
@@ -214,7 +212,7 @@ class ModelClass(nn.Module):
             # if len(self.child_conv_layers) > 0:
             #     model_plotter.save_tensor(
             #         f"child conv output level{ilevel+1}",
-            #         graph_tree.tftx_by_level[-1],
+            #         graph_tree.tftx_by_level(-1),
             #     )
 
         if self.presaved_batch is None:
@@ -224,7 +222,7 @@ class ModelClass(nn.Module):
             ) = graph_tree.get_batch_skeleton()
 
         batch = self.presaved_batch.clone()
-        batch.x = graph_tree.tftx_by_level[-1][self.presaved_batch_indexing]
+        batch.x = graph_tree.tftx_by_level(-1)[self.presaved_batch_indexing]
         if self.final_layer_scaler:
             batch.x = self.ftx_scaling(batch.x)
 

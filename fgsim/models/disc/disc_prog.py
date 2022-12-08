@@ -3,7 +3,7 @@ from torch_geometric.data import Data
 
 from fgsim.config import conf, device
 from fgsim.ml.network import import_nn
-from fgsim.models.branching.graph_tree import GraphTreeWrapper
+from fgsim.models.branching.graph_tree import TreeGraph
 
 
 class ModelClass(torch.nn.Module):
@@ -25,11 +25,11 @@ class ModelClass(torch.nn.Module):
         # )
 
     def forward(self, batch: Data):
-        batch = GraphTreeWrapper(batch)
+        batch = TreeGraph(batch)
         discs_out = {}
         for ilevel in range(self.tftx_by_level):
             level_graph = Data(
-                x=batch.tftx_by_level[ilevel], batch=batch.batch_by_level[ilevel]
+                x=batch.tftx_by_level(ilevel), batch=batch.batch_by_level(ilevel)
             )
             discs_out[f"level{ilevel}"] = self.level_discs[ilevel](level_graph)
             # if ilevel == self.tftx_by_level - 1:

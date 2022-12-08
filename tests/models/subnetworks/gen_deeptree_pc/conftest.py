@@ -7,13 +7,7 @@ import torch
 
 # install_import_hook("fgsim")
 from fgsim.models.common import FFN, DynHLVsLayer
-from fgsim.models.common.deeptree import (
-    BranchingLayer,
-    DeepConv,
-    GraphTreeWrapper,
-    Tree,
-    TreeGenType,
-)
+from fgsim.models.common.deeptree import BranchingLayer, DeepConv, Tree, TreeGraph
 
 # from typeguard.importhook import install_import_hook
 
@@ -24,11 +18,12 @@ device = torch.device("cpu")
 @dataclass
 class DTColl:
     props: Dict[str, int]
-    graph: GraphTreeWrapper
+    graph: TreeGraph
     tree: Tree
     branching_layers: List[BranchingLayer]
     dyn_hlvs_layer: DynHLVsLayer
     ancestor_conv_layer: DeepConv
+    cond: torch.Tensor
 
 
 def object_gen(props: Dict[str, int]) -> DTColl:
@@ -47,25 +42,26 @@ def object_gen(props: Dict[str, int]) -> DTColl:
         batch_size=batch_size,
         connect_all_ancestors=True,
     )
-    graph = GraphTreeWrapper(
-        TreeGenType(
-            tftx=torch.randn(
-                batch_size,
-                n_features,
-                dtype=torch.float,
-                device=device,
-                requires_grad=True,
-            ),
-            cond=torch.randn(
-                batch_size,
-                n_cond,
-                dtype=torch.float,
-                device=device,
-                requires_grad=True,
-            ),
-            batch_size=batch_size,
+    global_features = torch.empty(
+        batch_size, n_global, dtype=torch.float, device=device
+    )
+    cond = torch.randn(
+        batch_size,
+        n_cond,
+        dtype=torch.float,
+        device=device,
+        requires_grad=True,
+    )
+    graph = TreeGraph(
+        tftx=torch.randn(
+            batch_size,
+            n_features,
+            dtype=torch.float,
+            device=device,
+            requires_grad=True,
         ),
-        tree,
+        tree=tree,
+        global_features=global_features,
     )
 
     branching_layers = [
@@ -141,6 +137,7 @@ def object_gen(props: Dict[str, int]) -> DTColl:
         branching_layers=branching_layers,
         dyn_hlvs_layer=dyn_hlvs_layer,
         ancestor_conv_layer=ancestor_conv_layer,
+        cond=cond,
     )
 
 

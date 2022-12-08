@@ -5,23 +5,26 @@ from torch_geometric.nn.conv import GINConv
 
 
 def test_GlobalFeedBackNN_ancestor_conv(static_objects: DTColl):
-    graph = static_objects.graph
-    branching_layers = static_objects.branching_layers
-    dyn_hlvs_layer = static_objects.dyn_hlvs_layer
-    ancestor_conv_layer = static_objects.ancestor_conv_layer
-    tree = static_objects.tree
+    graph, tree, cond, branching_layers, dyn_hlvs_layer, ancestor_conv_layer = (
+        static_objects.graph,
+        static_objects.tree,
+        static_objects.cond,
+        static_objects.branching_layers,
+        static_objects.dyn_hlvs_layer,
+        static_objects.ancestor_conv_layer,
+    )
     n_global = static_objects.props["n_global"]
     n_levels = static_objects.props["n_levels"]
     for ilevel in range(n_levels - 1):
-        graph = branching_layers[ilevel](graph)
+        graph = branching_layers[ilevel](graph, cond)
         # ### Global
         graph.global_features = dyn_hlvs_layer(
-            x=graph.tftx, cond=graph.cond, batch=tree.tbatch_by_level[ilevel + 1]
+            x=graph.tftx, cond=cond, batch=tree.tbatch_by_level[ilevel + 1]
         )
         assert graph.global_features.shape[1] == n_global
         graph.tftx = ancestor_conv_layer(
             x=graph.tftx,
-            cond=graph.cond,
+            cond=cond,
             edge_index=tree.ancestor_ei(ilevel + 1),
             edge_attr=tree.ancestor_ea(ilevel + 1),
             batch=tree.tbatch_by_level[ilevel + 1],
@@ -30,10 +33,14 @@ def test_GlobalFeedBackNN_ancestor_conv(static_objects: DTColl):
 
 
 def test_GlobalFeedBackNN_GINConv(static_objects: DTColl):
-    graph = static_objects.graph
-    branching_layers = static_objects.branching_layers
-    dyn_hlvs_layer = static_objects.dyn_hlvs_layer
-    tree = static_objects.tree
+    graph, tree, cond, branching_layers, dyn_hlvs_layer, _ = (
+        static_objects.graph,
+        static_objects.tree,
+        static_objects.cond,
+        static_objects.branching_layers,
+        static_objects.dyn_hlvs_layer,
+        static_objects.ancestor_conv_layer,
+    )
     n_global = static_objects.props["n_global"]
     n_levels = static_objects.props["n_levels"]
     n_features = static_objects.props["n_features"]
@@ -44,10 +51,10 @@ def test_GlobalFeedBackNN_GINConv(static_objects: DTColl):
     )
 
     for ilevel in range(n_levels - 1):
-        graph = branching_layers[ilevel](graph)
+        graph = branching_layers[ilevel](graph, cond)
         # ### Global
         global_features = dyn_hlvs_layer(
-            x=graph.tftx, cond=graph.cond, batch=tree.tbatch_by_level[ilevel + 1]
+            x=graph.tftx, cond=cond, batch=tree.tbatch_by_level[ilevel + 1]
         )
         assert global_features.shape[1] == n_global
 
@@ -71,11 +78,14 @@ def test_full_NN_compute_graph(static_objects: DTColl):
     """
     torch.autograd.set_detect_anomaly(True)
 
-    graph = static_objects.graph
-    branching_layers = static_objects.branching_layers
-    dyn_hlvs_layer = static_objects.dyn_hlvs_layer
-    ancestor_conv_layer = static_objects.ancestor_conv_layer
-    tree = static_objects.tree
+    graph, tree, cond, branching_layers, dyn_hlvs_layer, ancestor_conv_layer = (
+        static_objects.graph,
+        static_objects.tree,
+        static_objects.cond,
+        static_objects.branching_layers,
+        static_objects.dyn_hlvs_layer,
+        static_objects.ancestor_conv_layer,
+    )
     n_global = static_objects.props["n_global"]
     n_levels = static_objects.props["n_levels"]
 
@@ -84,14 +94,14 @@ def test_full_NN_compute_graph(static_objects: DTColl):
     x_old = graph.tftx
     for ilevel in range(n_levels - 1):
         graph.global_features = dyn_hlvs_layer(
-            x=graph.tftx, cond=graph.cond, batch=tree.tbatch_by_level[ilevel]
+            x=graph.tftx, cond=cond, batch=tree.tbatch_by_level[ilevel]
         )
         assert graph.global_features.shape[1] == n_global
 
-        graph = branching_layers[ilevel](graph)
+        graph = branching_layers[ilevel](graph, cond)
         graph.tftx = ancestor_conv_layer(
             x=graph.tftx,
-            cond=graph.cond,
+            cond=cond,
             global_features=graph.global_features,
             edge_index=tree.ancestor_ei(ilevel + 1),
             edge_attr=tree.ancestor_ea(ilevel + 1),
@@ -119,11 +129,7 @@ def test_full_modelparts_grad():
     """
 
     from fgsim.config import conf, defaultconf
-    from fgsim.models.gen.gen_deeptree import (
-        GraphTreeWrapper,
-        ModelClass,
-        TreeGenType,
-    )
+    from fgsim.models.gen.gen_deeptree import ModelClass, TreeGraph
 
     # normalization needs to be set to false, otherwise Batchnorm
     # will propagate some gradient betweeen the events
@@ -170,18 +176,18 @@ def test_full_modelparts_grad():
     n_levels = len(features)
 
     # Init the graph object
-    graph_tree = GraphTreeWrapper(
-        TreeGenType(
-            tftx=z.reshape(batch_size, features[0]),
-            cond=cond,
-            batch_size=batch_size,
+    graph_tree = TreeGraph(
+        global_features=torch.empty(
+            batch_size,
+            model.n_global,
+            dtype=torch.float,
+            device=device,
         ),
-        model.tree,
+        tftx=z.reshape(batch_size, features[0]),
+        tree=model.tree,
     )
     # check
-    graph_tree.cond[[tree.tbatch_by_level[0] == 1]].sum().backward(
-        retain_graph=True
-    )
+    cond[[tree.tbatch_by_level[0] == 1]].sum().backward(retain_graph=True)
     check_cond()
     graph_tree.tftx[[tree.tbatch_by_level[0] == 1]].sum().backward(
         retain_graph=True
@@ -192,8 +198,8 @@ def test_full_modelparts_grad():
     for ilevel in range(n_levels - 1):
         # Assign the global features
         graph_tree.global_features = model.dyn_hlvs_layers[ilevel](
-            x=graph_tree.tftx_by_level[ilevel][..., : features[-1]],
-            cond=graph_tree.cond,
+            x=graph_tree.tftx_by_level(ilevel)[..., : features[-1]],
+            cond=cond,
             batch=tree.tbatch_by_level[ilevel][tree.idxs_by_level[ilevel]],
         )
         if graph_tree.global_features.numel():
@@ -201,7 +207,7 @@ def test_full_modelparts_grad():
             check_z()
             graph_tree.global_features[1, :].sum().backward(retain_graph=True)
             check_cond()
-        graph_tree = model.branching_layers[ilevel](graph_tree)
+        graph_tree = model.branching_layers[ilevel](graph_tree, cond)
 
         graph_tree.tftx[[tree.tbatch_by_level[ilevel + 1] == 1]].sum().backward(
             retain_graph=True
@@ -210,7 +216,7 @@ def test_full_modelparts_grad():
 
         graph_tree.tftx = model.ancestor_conv_layers[ilevel](
             x=graph_tree.tftx,
-            cond=graph_tree.cond,
+            cond=cond,
             edge_index=model.tree.ancestor_ei(ilevel + 1),
             edge_attr=model.tree.ancestor_ea(ilevel + 1),
             batch=tree.tbatch_by_level[ilevel + 1],
@@ -223,7 +229,7 @@ def test_full_modelparts_grad():
 
         graph_tree.tftx = model.child_conv_layers[ilevel](
             x=graph_tree.tftx,
-            cond=graph_tree.cond,
+            cond=cond,
             edge_index=model.tree.children_ei(ilevel + 1),
             batch=tree.tbatch_by_level[ilevel + 1],
             global_features=graph_tree.global_features,
@@ -233,10 +239,10 @@ def test_full_modelparts_grad():
         )
         check_z()
 
-    graph_tree.data.x = graph_tree.tftx_by_level[-1]
-    graph_tree.data.batch = tree.tbatch_by_level[-1][tree.idxs_by_level[-1]]
+    x = graph_tree.tftx_by_level(-1)
+    batchidx = tree.tbatch_by_level[-1][tree.idxs_by_level[-1]]
 
-    graph_tree.data.x[graph_tree.data.batch == 1].sum().backward(retain_graph=True)
+    x[batchidx == 1].sum().backward(retain_graph=True)
 
     check_z()
 
@@ -251,26 +257,27 @@ def test_full_model_grad():
       branching_layer (BranchingLayer): The branching layer to test.
       global_features (torch.Tensor): torch.Tensor
     """
-    from fgsim.config import conf, defaultconf, device
+    from fgsim.config import conf, defaultconf
     from fgsim.models.gen.gen_deeptree import ModelClass
 
     conf.ffn.norm = "none"
     conf.ffn.dropout = False
     conf.tree.features[-1] = conf.loader.n_features
 
+    device = torch.device("cpu")
     defaultconf.model_param_options.gen_deeptree.branching_param.norm = "none"
     model = ModelClass(**defaultconf.model_param_options.gen_deeptree).to(device)
 
-    z = torch.randn(*model.z_shape, requires_grad=True, device=device)
+    z = torch.randn(*model.z_shape, device=device).requires_grad_()
     cond = torch.randn(
         (defaultconf.loader.batch_size, len(defaultconf.loader.y_features)),
-        requires_grad=True,
         device=device,
     )
+    tftx_copy = z
     batch = model(z, cond)
     sum_of_features = batch.x[batch.batch == 1].sum()
     sum_of_features.backward(retain_graph=True)
-    zero_feature = torch.zeros_like(z[0])
-    assert torch.all(z.grad[0] == zero_feature)
-    assert torch.any(z.grad[1] != zero_feature)
-    assert torch.all(z.grad[2] == zero_feature)
+    zero_feature = torch.zeros_like(tftx_copy[0])
+    assert torch.all(tftx_copy.grad[0] == zero_feature)
+    assert torch.any(tftx_copy.grad[1] != zero_feature)
+    assert torch.all(tftx_copy.grad[2] == zero_feature)
