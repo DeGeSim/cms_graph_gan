@@ -45,13 +45,15 @@ class ModelClass(nn.Module):
 
         # Calculate the output points
         self.output_points = prod(self.branches)
+        assert self.output_points == conf.loader.n_points
+        assert self.features[-1] == conf.loader.n_features
+
         logger.debug(f"Generator output will be {self.output_points}")
         if conf.loader.n_points > self.output_points:
             raise RuntimeError(
                 "Model cannot generate a sufficent number of points: "
                 f"{conf.loader.n_points} < {self.output_points}"
             )
-        conf.models.gen.output_points = self.output_points
 
         self.tree = Tree(
             batch_size=conf.loader.batch_size,
@@ -230,9 +232,9 @@ class ModelClass(nn.Module):
         if self.final_layer_scaler:
             batch.x = self.ftx_scaling(batch.x)
 
-        assert batch.x.shape[0] == conf.loader.n_points * conf.loader.batch_size
-        assert batch.x.shape[-1] == conf.loader.n_features
-        assert batch.num_graphs == conf.loader.batch_size
+        assert batch.x.shape[0] == self.output_points * batch_size
+        assert batch.x.shape[-1] == features[-1]
+        assert batch.num_graphs == batch_size
         return batch
 
     def to(self, device):
