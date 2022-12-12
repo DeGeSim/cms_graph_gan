@@ -3,6 +3,7 @@ from typing import Dict, Optional
 from matplotlib.figure import Figure
 
 from fgsim.config import conf
+from fgsim.plot.labels import var_to_label
 
 from .ratioplot import ratioplot
 
@@ -31,7 +32,7 @@ def ftx_marginals(
         plots_d[f"marginal_{ftn}.pdf"] = ratioplot(
             sim=sim_features[ftn],
             gen=gen_features[ftn],
-            title=ftn,
+            title=var_to_label(ftn),
             step=step,
         )
 
