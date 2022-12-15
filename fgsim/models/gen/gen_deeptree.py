@@ -153,7 +153,7 @@ class ModelClass(nn.Module):
         #     .requires_grad_(True)
         # )
         # graph_tree.tftx[..., : cond.shape[-1]] += cond
-        # model_plotter.save_tensor("level0", graph_tree.tftx)
+        # model_plotter.save_tensor("input noise", graph_tree.tftx)
 
         # Do the branching
         for ilevel in range(n_levels - 1):
@@ -179,7 +179,8 @@ class ModelClass(nn.Module):
             #     self.tree.tree_lists[ilevel + 1][-1].idxs[-1] + 1
             # )
             # model_plotter.save_tensor(
-            #     f"branching output level{ilevel+1}", graph_tree.tftx_by_level(-1)
+            #     f"branching output level{ilevel+1}",
+            #     graph_tree.tftx_by_level(ilevel + 1),
             # )
 
             if self.ancestor_mpl["n_mpl"] > 0:
@@ -195,11 +196,10 @@ class ModelClass(nn.Module):
                 # assert graph_tree.tftx.shape[0] == (
                 #     self.tree.tree_lists[ilevel + 1][-1].idxs[-1] + 1
                 # )
-                # if len(self.ancestor_conv_layers) > 0:
-                #     model_plotter.save_tensor(
-                #         f"ancestor conv output level{ilevel+1}",
-                #         graph_tree.tftx_by_level(-1),
-                #     )
+                # model_plotter.save_tensor(
+                #     f"ancestor conv output level{ilevel+1}",
+                #     graph_tree.tftx_by_level(ilevel + 1),
+                # )
 
             if self.child_mpl["n_mpl"] > 0:
                 graph_tree.tftx = self.child_conv_layers[ilevel](
@@ -215,10 +215,9 @@ class ModelClass(nn.Module):
                 #     self.tree.tree_lists[ilevel + 1][-1].idxs[-1] + 1
                 # )
 
-                # if len(self.child_conv_layers) > 0:
-                #     model_plotter.save_tensor(
-                #         f"child conv output level{ilevel+1}",
-                #         graph_tree.tftx_by_level(-1),
+                # model_plotter.save_tensor(
+                #     f"child conv output level{ilevel+1}",
+                #     graph_tree.tftx_by_level(ilevel + 1),
                 # )
 
         if self.presaved_batch is None:

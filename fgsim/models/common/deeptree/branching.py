@@ -8,6 +8,8 @@ from fgsim.models.common import FFN
 from .graph_tree import TreeGraph
 from .tree import Tree
 
+# from fgsim.plot.model_plotter import model_plotter
+
 
 class BranchingLayer(nn.Module):
     """Splits the last set of Nodes of a given graph.
@@ -155,7 +157,10 @@ class BranchingLayer(nn.Module):
             children_ftxs += parents_ftxs.repeat(n_branches, 1)
             if self.res_mean:
                 children_ftxs /= 2
-
+        # model_plotter.save_tensor(
+        #     f"branching output level{self.level}",
+        #     children_ftxs,
+        # )
         # Do the down projection to the desired dimension
         if self.dim_red:
             children_ftxs = self.reduction_nn(children_ftxs)
