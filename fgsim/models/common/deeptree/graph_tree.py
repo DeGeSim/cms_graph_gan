@@ -1,3 +1,5 @@
+from typing import Tuple
+
 import torch
 from torch_geometric.data import Batch
 
@@ -19,7 +21,7 @@ class TreeGraph:
         self.cur_level = cur_level
         self.global_features = global_features
 
-    def get_batch_skeleton(self) -> Batch:
+    def get_batch_skeleton(self) -> Tuple[Batch, torch.Tensor]:
         """
         It takes a batch of graphs and returns the skeleton batch of graphs
 
