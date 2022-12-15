@@ -5,7 +5,7 @@ from fgsim.config import conf
 labels_dict: Dict[str, str] = {
     "etarel": "$\\eta_\\mathrm{rel}$",
     "phirel": "$\\phi_\\mathrm{rel}$",
-    "ptrel": "$\\phi^\\mathrm{T}_\\mathrm{rel}$",
+    "ptrel": "$p^\\mathrm{T}_\\mathrm{rel}$",
     "mass": "$m_{rel}$",
     "phi": "$Σ ϕ_{rel}$",
     "pt": "$Σp_{T,rel}$",
