@@ -45,15 +45,6 @@ def validate(holder: Holder, loader: QueuedDataset) -> None:
         if conf.training.smoothing.active:
             batch.x = smooth_features(batch.x, holder.state.grad_step)
 
-    # validation plots
-    # validation_plots(
-    #     train_log=holder.train_log,
-    #     sim_batch=sim_batch,
-    #     gen_batch=gen_batch,
-    #     plot_path=None,
-    #     best_last_val="val/scaled",
-    #     step=holder.state.grad_step,
-    # )
     # scale all the samples
     for batch in sim_batch, gen_batch:
         batch.x = scaler.inverse_transform(batch.x)
@@ -65,13 +56,14 @@ def validate(holder: Holder, loader: QueuedDataset) -> None:
         "d_sim": d_sim,
     }
 
-    validation_plots(
-        train_log=holder.train_log,
-        res=results_d,
-        plot_path=None,
-        best_last_val="val/unscaled",
-        step=holder.state.grad_step,
-    )
+    if holder.state.grad_step % conf.training.val.plot_interval == 0:
+        validation_plots(
+            train_log=holder.train_log,
+            res=results_d,
+            plot_path=None,
+            best_last_val="val/unscaled",
+            step=holder.state.grad_step,
+        )
 
     # evaluate the validation metrics
     with torch.no_grad():
