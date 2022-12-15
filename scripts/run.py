@@ -47,10 +47,10 @@ def run_args(args):
             "--partition=allgpu",
             "--time=48:00:00",
             "--nodes=1",
-            "--constraint=P100|V100|A100",
+            "--constraint=V100|A100",
             f"--output={slurm_log_path}",
             f"--job-name={jobstr}",
-            "run.sh",
+            "scripts/run.sh",
         ] + cmd
     else:
         cmd = ["python", "-m", "fgsim"] + cmd
