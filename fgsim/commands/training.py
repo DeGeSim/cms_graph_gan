@@ -25,10 +25,6 @@ class Trainer:
         self.train_log: TrainLog = self.holder.train_log
         self.loader: QueuedDataset = QueuedDataset(loader_info)
 
-        if not self.holder.checkpoint_loaded and not conf.ray and not conf.debug:
-            self.validation_step()
-            self.holder.save_checkpoint()
-
     def training_loop(self):
         while self.holder.state.epoch < conf.training.max_epochs:
             self.train_epoch()
@@ -53,11 +49,12 @@ class Trainer:
             miniters=20,
             desc=f"Epoch {self.holder.state.epoch}",
         ):
+            if self.holder.state.grad_step % conf.training.val.interval == 0:
+                self.validation_step()
             batch = self.pre_training_step(batch)
             self.training_step(batch)
             self.post_training_step()
-            if self.holder.state.grad_step % conf.training.val.interval == 0:
-                self.validation_step()
+
         self.post_epoch()
 
     def pre_training_step(self, batch):
@@ -118,7 +115,8 @@ class Trainer:
 
     def validation_step(self):
         #  self.holder.models.eval()
-        validate(self.holder, self.loader)
+        if not conf.debug:
+            validate(self.holder, self.loader)
         #  self.holder.models.train()
         self.holder.state.time_train_step_start = time.time()
 

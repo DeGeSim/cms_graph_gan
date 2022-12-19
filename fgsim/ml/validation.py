@@ -45,16 +45,25 @@ def validate(holder: Holder, loader: QueuedDataset) -> None:
         if conf.training.smoothing.active:
             batch.x = smooth_features(batch.x, holder.state.grad_step)
 
-    # scale all the samples
-    for batch in sim_batch, gen_batch:
-        batch.x = scaler.inverse_transform(batch.x)
-
     results_d = {
         "sim_batch": sim_batch,
         "gen_batch": gen_batch,
         "d_gen": d_gen,
         "d_sim": d_sim,
     }
+
+    if holder.state.grad_step % conf.training.val.plot_interval == 0:
+        validation_plots(
+            train_log=holder.train_log,
+            res=results_d,
+            plot_path=None,
+            best_last_val="val/scaled",
+            step=holder.state.grad_step,
+        )
+
+    # scale all the samples
+    for batch in results_d["sim_batch"], results_d["gen_batch"]:
+        batch.x = scaler.inverse_transform(batch.x)
 
     if holder.state.grad_step % conf.training.val.plot_interval == 0:
         validation_plots(
