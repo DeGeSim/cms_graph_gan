@@ -44,7 +44,7 @@ def run_args(args):
         slurm_log_path = Path(f"~/slurm/{jobstr}-%j.out").expanduser()
         cmd = [
             "sbatch",
-            "--partition=allgpu",
+            "--partition=maxgpu",
             "--time=48:00:00",
             "--nodes=1",
             "--constraint=V100|A100",

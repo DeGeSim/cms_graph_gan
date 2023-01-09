@@ -19,7 +19,7 @@
         {
             "args": [
                 "--tag",
-                "jn_dfake",
+                "base_",
                 "--debug",
                 "train"
             ],
@@ -33,7 +33,7 @@
         {
             "args": [
                 "--tag",
-                "jn_dfake",
+                "base_",
                 "--debug",
                 "test"
             ],
@@ -47,7 +47,7 @@
         {
             "args": [
                 "--tag",
-                "jn_dfake",
+                "base_",
                 "--debug",
                 "preprocess"
             ],
@@ -73,7 +73,7 @@
             "type": "python",
             "args": [
                 "--tag",
-                "jn_dfake",
+                "base_",
                 "--debug",
                 "train"
             ],
@@ -96,7 +96,7 @@
             "console": "integratedTerminal",
             "args": [
                 "--tag",
-                "jn_dfake",
+                "base_",
                 "--debug",
                 "setup"
             ],
