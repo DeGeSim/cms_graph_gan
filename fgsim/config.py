@@ -132,6 +132,6 @@ def get_device():
 device = get_device()
 
 plt.rcParams["savefig.bbox"] = "tight"
-plt.rcParams["backend"] = "Agg"
+# plt.rcParams["backend"] = "Agg"
 plt.rcParams["figure.dpi"] = 150
 np.set_printoptions(formatter={"float_kind": "{:.3g}".format})
