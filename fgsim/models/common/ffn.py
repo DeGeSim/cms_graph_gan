@@ -85,8 +85,7 @@ class FFN(nn.Module):
         self.hidden_layer_size = hidden_layer_size
         self.activation = activation
         self.bias = bias
-        # if conf.ffn.init_weights != "kaiming_uniform_":
-        #     self.reset_parameters()
+        self.reset_parameters()
 
     def forward(self, x):
         return self.seq(x)
@@ -99,16 +98,38 @@ class FFN(nn.Module):
 
     def init_weights(self, m):
         if isinstance(m, nn.Linear):
-            nonlinearity = {
-                "SELU": "selu",
-                "Sigmoid": "sigmoid",
-                "ReLU": "relu",
-                "LeakyReLU": "leaky_relu",
-                "Tanh": "tanh",
-            }[conf.ffn.activation]
-
-            # nn.init.kaiming_normal_(m.weight, mode="fan_in", nonlinearity="linear")
-            getattr(nn.init, self.weight_init_method)(
-                m.weight, gain=nn.init.calculate_gain(nonlinearity)
-            )
-            # m.bias.data.fill_(conf.ffn.init_weights_bias_const)
+            if self.weight_init_method == "default":
+                m.reset_parameters()
+            elif self.weight_init_method == "kaiming_uniform_":
+                nn.init.kaiming_uniform_(
+                    m.weight,
+                    a=conf.ffn.activation_params["LeakyReLU"]["negative_slope"],
+                    mode="fan_in",
+                    nonlinearity="leaky_relu",
+                )
+                return
+            elif self.weight_init_method == "xavier_uniform_":
+                nonlinearity = {
+                    "SELU": "selu",
+                    "Sigmoid": "sigmoid",
+                    "ReLU": "relu",
+                    "LeakyReLU": "leaky_relu",
+                    "Tanh": "tanh",
+                    "GELU": "relu",
+                }[self.activation]
+                if nonlinearity == "leaky_relu":
+                    getattr(nn.init, self.weight_init_method)(
+                        m.weight,
+                        gain=nn.init.calculate_gain(
+                            nonlinearity,
+                            conf.ffn.activation_params["LeakyReLU"][
+                                "negative_slope"
+                            ],
+                        ),
+                    )
+                else:
+                    getattr(nn.init, self.weight_init_method)(
+                        m.weight, gain=nn.init.calculate_gain(nonlinearity)
+                    )
+            else:
+                pass
