@@ -154,7 +154,7 @@ class ModelClass(nn.Module):
         # )
         # graph_tree.tftx[..., : cond.shape[-1]] += cond
         # model_plotter.save_tensor("input noise", graph_tree.tftx)
-
+        print_dist("initial", graph_tree.tftx_by_level(0))
         # Do the branching
         for ilevel in range(n_levels - 1):
             # assert graph_tree.tftx.shape[1] == self.tree.features[ilevel]
@@ -171,6 +171,7 @@ class ModelClass(nn.Module):
             )
 
             graph_tree = self.branching_layers[ilevel](graph_tree, cond)
+            print_dist("branching", graph_tree.tftx_by_level(ilevel + 1))
             # assert (
             #     graph_tree.tftx.shape[1]
             #     == self.tree.features[ilevel + int(self.dim_red_in_branching)]
@@ -192,6 +193,7 @@ class ModelClass(nn.Module):
                     batch=self.tree.tbatch_by_level[ilevel],
                     global_features=graph_tree.global_features,
                 )
+                print_dist("ac", graph_tree.tftx_by_level(ilevel + 1))
                 # assert graph_tree.tftx.shape[1] == self.tree.features[ilevel + 1]
                 # assert graph_tree.tftx.shape[0] == (
                 #     self.tree.tree_lists[ilevel + 1][-1].idxs[-1] + 1
@@ -240,3 +242,14 @@ class ModelClass(nn.Module):
         super().to(device)
         self.tree.to(device)
         return self
+
+
+def print_dist(name, x):
+    return
+    if not conf.debug:
+        return
+    x = x.detach().cpu().numpy()
+    print(
+        f"{name}:\n\tmean\n\t{x.mean(0)} global {x.mean():.2f}\n"
+        f"\tstd\n\t{x.std(0)} global {x.std():.2f}"
+    )

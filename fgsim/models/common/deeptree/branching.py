@@ -3,6 +3,7 @@ from math import prod
 import torch
 import torch.nn as nn
 
+from fgsim.config import conf
 from fgsim.models.common import FFN
 
 from .graph_tree import TreeGraph
@@ -119,7 +120,7 @@ class BranchingLayer(nn.Module):
         proj_ftx = self.proj_nn(
             torch.hstack([parents_ftxs, cond_global, parent_global])
         )
-
+        foo("br proj_ftx", proj_ftx)
         assert parents_ftxs.shape[-1] == self.n_features_source
         assert proj_ftx.shape[-1] == self.n_features_source * self.n_branches
         assert proj_ftx.shape == (
@@ -146,6 +147,7 @@ class BranchingLayer(nn.Module):
         # ).all()
         del proj_ftx
 
+        foo("br children_ftxs pre skip", children_ftxs)
         # If this branching layer reduces the dimensionality, we need to slice the
         # parent_ftxs for the residual connection
         if not self.dim_red:
@@ -162,6 +164,7 @@ class BranchingLayer(nn.Module):
         #     children_ftxs,
         # )
         # Do the down projection to the desired dimension
+        foo("br post skip", children_ftxs)
         if self.dim_red:
             children_ftxs = self.reduction_nn(children_ftxs)
 
@@ -189,4 +192,15 @@ def reshape_features(
         .reshape(n_parents * n_branches, n_features, batch_size)
         .transpose(1, 2)  # n_parents * n_branches, batch_size, n_features
         .reshape(n_parents * n_branches * batch_size, n_features)
+    )
+
+
+def foo(name, x):
+    return
+    if not conf.debug:
+        return
+    x = x.detach().cpu().numpy()
+    print(
+        f"{name}:\n\tmean\n\t{x.mean(0)} global {x.mean():.2f}\n"
+        f"\tstd\n\t{x.std(0)} global {x.std():.2f}"
     )
