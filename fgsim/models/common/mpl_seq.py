@@ -63,7 +63,7 @@ class MPLSeq(torch.nn.Module):
                     in_features,  # + self.n_cond + self.n_global,
                     out_features,
                     **layer_param,
-                    n_nodes_per_layer=self.n_hidden_nodes,
+                    hidden_layer_size=self.n_hidden_nodes,
                 )
             )
         if conv_name == "EdgeConv":
@@ -72,7 +72,7 @@ class MPLSeq(torch.nn.Module):
                     in_features * 2,  # + self.n_cond + self.n_global,
                     out_features,
                     **layer_param,
-                    n_nodes_per_layer=self.n_hidden_nodes,
+                    hidden_layer_size=self.n_hidden_nodes,
                 )
             )
         elif conv_name == "GINConv":
@@ -81,7 +81,7 @@ class MPLSeq(torch.nn.Module):
                     in_features,  # + self.n_cond + self.n_global,
                     out_features,
                     **layer_param,
-                    n_nodes_per_layer=self.n_hidden_nodes,
+                    hidden_layer_size=self.n_hidden_nodes,
                 )
             )
         elif conv_name == "DeepConv":

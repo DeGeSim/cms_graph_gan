@@ -10,12 +10,14 @@ class FFN(nn.Module):
         self,
         input_dim: int,
         output_dim: int,
+        weight_init_method: Optional[str] = None,
+        activation: Optional[str] = None,
         norm: Optional[str] = None,
         dropout: Optional[bool] = None,
         n_layers: Optional[int] = None,
         final_linear: Optional[bool] = False,
         bias: Optional[bool] = False,
-        n_nodes_per_layer: Optional[int] = None,
+        hidden_layer_size: Optional[int] = None,
     ) -> None:
         if norm is None:
             norm = conf.ffn.norm
@@ -23,28 +25,41 @@ class FFN(nn.Module):
             dropout = conf.ffn.dropout
         if n_layers is None:
             n_layers = conf.ffn.n_layers
-        if n_nodes_per_layer is None:
-            n_nodes_per_layer = max(
+
+        if hidden_layer_size is None:
+            hidden_layer_size = max(
                 conf.ffn.hidden_layer_size, input_dim, output_dim
             )
+        if activation is None:
+            activation = conf.ffn.activation
+        if weight_init_method is None:
+            weight_init_method = conf.ffn.weight_init_method
+
+        def activation_function():
+            return getattr(nn, activation)(
+                **conf.ffn.activation_params[conf.ffn.activation]
+            )
+
         super().__init__()
         # +2 for input and output
         features: List[int] = (
             [input_dim]
-            + [n_nodes_per_layer] * (n_layers - 1)
+            + [hidden_layer_size] * (n_layers - 1)
             + [
                 output_dim,
             ]
         )
+        # to keep the std of 1, the last layer should not see a reduction
+        # in dimensionality, because otherwise it
+
         self.seq = nn.Sequential()
-        activation = getattr(nn, conf.ffn.activation)(
-            **conf.ffn.activation_params[conf.ffn.activation]
-        )
         for ilayer in range(n_layers):
             self.seq.append(
                 nn.Linear(features[ilayer], features[ilayer + 1], bias=bias)
             )
-            if ilayer != n_layers - 1:
+            if ilayer == n_layers - 1 and final_linear:
+                continue
+            else:
                 if dropout:
                     self.seq.append(nn.Dropout(0.2))
                 if norm == "batchnorm":
@@ -61,29 +76,13 @@ class FFN(nn.Module):
                     pass
                 else:
                     raise Exception
-                self.seq.append(activation)
-            else:
-                if not final_linear:
-                    if norm == "batchnorm":
-                        self.seq.append(
-                            nn.BatchNorm1d(
-                                features[ilayer + 1],
-                                # affine=False,
-                                # track_running_stats=False,
-                            )
-                        )
-                    elif norm == "layernorm":
-                        self.seq.append(nn.LayerNorm(features[ilayer + 1]))
-                    elif norm == "none":
-                        pass
-                    else:
-                        raise Exception
-                    self.seq.append(activation)
+                self.seq.append(activation_function())
 
         self.input_dim = input_dim
         self.output_dim = output_dim
+        self.weight_init_method = weight_init_method
         self.n_layers = n_layers
-        self.n_nodes_per_layer = n_nodes_per_layer
+        self.hidden_layer_size = hidden_layer_size
         self.activation = activation
         self.bias = bias
         # if conf.ffn.init_weights != "kaiming_uniform_":
@@ -93,7 +92,7 @@ class FFN(nn.Module):
         return self.seq(x)
 
     def __repr__(self):
-        return f"FFN({self.input_dim}->{self.output_dim},n_layers={self.n_layers},hidden_nodes={self.n_nodes_per_layer},activation={self.activation})"
+        return f"FFN({self.input_dim}->{self.output_dim},n_layers={self.n_layers},hidden_nodes={self.hidden_layer_size},activation={self.activation})"
 
     def reset_parameters(self):
         self.seq.apply(self.init_weights)
@@ -109,7 +108,7 @@ class FFN(nn.Module):
             }[conf.ffn.activation]
 
             # nn.init.kaiming_normal_(m.weight, mode="fan_in", nonlinearity="linear")
-            getattr(nn.init, conf.ffn.init_weights)(
+            getattr(nn.init, self.weight_init_method)(
                 m.weight, gain=nn.init.calculate_gain(nonlinearity)
             )
             # m.bias.data.fill_(conf.ffn.init_weights_bias_const)

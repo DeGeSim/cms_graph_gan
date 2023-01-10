@@ -2,7 +2,7 @@ tag: default
 loglevel: 20
 loglevel_qf: 30
 seed: 0
-comet_project_name: "hgcal"
+comet_project_name: "jetnet-ffn"
 ray: False
 remote: False
 
@@ -92,8 +92,7 @@ ffn:
         ReLU: {}
         SELU: {}
         Tanh: {}
-    init_weights_bias_const: 0.1
-    init_weights: xavier_uniform_
+    weight_init_method: xavier_uniform_
     norm: batchnorm
     dropout: False
 
