@@ -92,7 +92,7 @@ ffn:
         ReLU: {}
         SELU: {}
         Tanh: {}
-    weight_init_method: xavier_uniform_
+    weight_init_method: default
     norm: batchnorm
     dropout: False
 
@@ -299,7 +299,7 @@ training:
     checkpoint_minutes: 15
     smoothing: ${mergedefault:${dataset_options},${dataset_name},smoothing}
     log_interval: 100
-    max_epochs: 10000
+    max_epochs: 5000
     val: ${mergedefault:${dataset_options},${dataset_name},validation}
 
 path:
