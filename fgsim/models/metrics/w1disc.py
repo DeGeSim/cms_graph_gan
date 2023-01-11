@@ -15,3 +15,6 @@ class Metric:
             d_gen.detach().cpu().numpy().reshape(-1)[:2000],
             d_sim.detach().cpu().numpy().reshape(-1)[:2000],
         )
+
+
+w1disc = Metric()
