@@ -2,9 +2,12 @@ import os
 import shutil
 from glob import glob
 
+import wandb
+
 from fgsim.monitoring.monitor import (
-    api_experiment_from_hash,
-    exp_orga,
+    comet_api,
+    exp_orga_comet,
+    exp_orga_wandb,
     search_experiement_by_name,
 )
 from fgsim.utils.cli import get_args
@@ -12,17 +15,8 @@ from fgsim.utils.cli import get_args
 
 def dump_procedure():
     args = get_args()
-    if args.hash in exp_orga.keys():
-        # try to archive the experiment:
-        try:
-            api_experiment_from_hash(args.hash).archive()
-        except KeyError:
-            pass
-        del exp_orga[args.hash]
-    else:
-        for exp in search_experiement_by_name(args.hash):
-            exp.archive()
 
+    # local
     paths = glob(f"wd/*/{args.hash}")
     if len(paths) == 1:
         assert os.path.isdir(paths[0])
@@ -32,3 +26,23 @@ def dump_procedure():
     else:
         print("No directory found!")
         raise Exception
+
+    # comet_ml
+    if args.hash in exp_orga_comet.keys():
+        # try to archive the experiment:
+        try:
+            comet_api.get_experiment_by_key(exp_orga_comet[hash]).archive()
+        except KeyError:
+            pass
+        del exp_orga_comet[args.hash]
+    else:
+        for exp in search_experiement_by_name(args.hash):
+            exp.archive()
+
+    # wandb
+    from fgsim.config import conf
+
+    api = wandb.Api()
+    run = api.run(f"{conf.comet_project_name}/{exp_orga_wandb[conf.hash]}")
+    run.delete()
+    del exp_orga_wandb[args.hash]

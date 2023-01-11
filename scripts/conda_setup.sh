@@ -71,7 +71,7 @@ mamba install --yes black isort flake8 mypy pytest pre-commit ipykernel jupyter 
 # jetnet requirements
 mamba install --yes coffea h5py wurlitzer
 pip install jetnet
-# pip install torchtyping
+pip install wandb
 
 
 # mamba pack -n fgsim -o ${TARBALL_BASE_PATH}

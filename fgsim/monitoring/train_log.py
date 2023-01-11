@@ -1,10 +1,11 @@
 from typing import Dict
 
+import wandb
 from omegaconf import DictConfig
 from torch.utils.tensorboard import SummaryWriter
 
 from fgsim.config import conf
-from fgsim.monitoring.monitor import get_experiment
+from fgsim.monitoring.monitor import exp_orga_wandb, get_experiment
 
 if not conf.ray:
     from comet_ml.experiment import BaseExperiment
@@ -19,15 +20,30 @@ class TrainLog:
         self.history: Dict = history
         self.use_tb = not conf.debug or conf.command == "test"
         self.use_comet = (not conf.debug or conf.command == "test") and not conf.ray
+        self.use_wandb = (not conf.debug or conf.command == "test") and not conf.ray
         if self.use_tb:
             self.writer: SummaryWriter = SummaryWriter(conf.path.tensorboard)
 
         if self.use_comet:
             self.experiment: BaseExperiment = get_experiment(self.state)
 
+        if self.use_wandb:
+            wandb.init(
+                id=exp_orga_wandb[conf["hash"]],
+                resume="must",
+                dir=conf.path.run_path,
+                project=conf.comet_project_name,
+            )
+            wandb.log(
+                data={"other/epoch": self.state["epoch"]},
+                step=self.state["grad_step"],
+            )
+
     def log_model_graph(self, model):
         if self.use_comet:
             self.experiment.set_model_graph(str(model))
+        if self.use_wandb:
+            wandb.watch(model)
 
     def write_trainstep_logs(self) -> None:
         if not all(
@@ -76,6 +92,8 @@ class TrainLog:
                 step=step,
                 epoch=epoch,
             )
+        if self.use_wandb:
+            wandb.log(data={name: value}, step=step)
 
     def log_figure(
         self,
@@ -95,12 +113,19 @@ class TrainLog:
                 overwrite=overwrite,
                 step=step,
             )
+        if self.use_wandb:
+            wandb.log(data={figure_name: wandb.Image(figure)}, step=step)
 
     def next_epoch(self) -> None:
         self.state["epoch"] += 1
         if self.use_comet:
             self.experiment.log_epoch_end(
                 self.state["epoch"],
+                step=self.state["grad_step"],
+            )
+        if self.use_wandb:
+            wandb.log(
+                data={"other/epoch": self.state["epoch"]},
                 step=self.state["grad_step"],
             )
 
@@ -113,3 +138,5 @@ class TrainLog:
         if self.use_comet:
             self.experiment.log_other("ended", True)
             self.experiment.end()
+        if self.use_wandb:
+            wandb.finish()
