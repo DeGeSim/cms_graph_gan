@@ -13,8 +13,6 @@ def gethash_procedure() -> None:
 
 
 def setup_procedure() -> str:
-    setup_experiment()
-
     srcpath = Path(conf.path.run_path) / "fgsim"
     # If the experiment has been setup, exit directly
     if Path(conf.path.run_path).is_dir():
@@ -35,6 +33,7 @@ def setup_procedure() -> str:
         dirs_exist_ok=True,
     )
 
+    setup_experiment()
     return conf.hash
 
 
