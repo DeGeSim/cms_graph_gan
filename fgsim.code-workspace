@@ -10,12 +10,6 @@
     "folders": [
         {
             "path": "."
-        },
-        {
-            "path": "../queueflow"
-        },
-        {
-            "path": "../standalone_scripts"
         }
     ],
     "settings": {
@@ -30,7 +24,7 @@
         "docwriter.style": "Google",
         "editor.formatOnSave": true,
         "files.exclude": {
-            "**/.*/**": true,
+            "**/.*": true,
             "**/CVS": true,
             "**/Thumbs.db": true,
             "**/__*__/**": true,
@@ -38,11 +32,12 @@
             "*.egg-info": true,
             "data/": true,
             "wd/": true,
-            "env.tar": true,
+            "*.tar": true,
+            "*.sqlite": true,
             "performance/*": true,
         },
         "files.watcherExclude": {
-            "**/.*/**": true,
+            "**/.*": true,
             "**/CVS": true,
             "**/Thumbs.db": true,
             "**/__*__/**": true,
@@ -50,8 +45,11 @@
             "*.egg-info": true,
             "data/": true,
             "wd/": true,
-            "env.tar": true,
+            "*.tar": true,
+            "*.sqlite": true,
             "performance/*": true,
+            "**/.git": true,
+            "**/node_modules/*/**": true
         },
         "jupyter.jupyterLaunchRetries": 1,
         "python.analysis.typeCheckingMode": "basic",
