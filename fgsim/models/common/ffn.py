@@ -13,7 +13,7 @@ class FFN(nn.Module):
         weight_init_method: Optional[str] = None,
         activation: Optional[str] = None,
         norm: Optional[str] = None,
-        dropout: Optional[bool] = None,
+        dropout: Optional[float] = None,
         n_layers: Optional[int] = None,
         final_linear: Optional[bool] = False,
         bias: Optional[bool] = False,
@@ -23,6 +23,8 @@ class FFN(nn.Module):
             norm = conf.ffn.norm
         if dropout is None:
             dropout = conf.ffn.dropout
+        if dropout == 0:
+            dropout = None
         if n_layers is None:
             n_layers = conf.ffn.n_layers
 
@@ -61,7 +63,7 @@ class FFN(nn.Module):
                 continue
             else:
                 if dropout:
-                    self.seq.append(nn.Dropout(0.2))
+                    self.seq.append(nn.Dropout(dropout))
                 if norm == "batchnorm":
                     self.seq.append(
                         nn.BatchNorm1d(

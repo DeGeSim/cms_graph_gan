@@ -7,13 +7,42 @@ from fgsim.models.common import FFN  # , MPLSeq
 # from torch_geometric.nn.pool import TopKPooling
 
 
-ffn_param = {
-    "norm": "batchnorm",
-    "dropout": False,
-    "bias": False,
-    "n_layers": 2,
-    "hidden_layer_size": 20,
-}
+ffn_param = {"bias": False, "n_layers": 2, "hidden_layer_size": 20, "dropout": 0.5}
+
+
+class TSumTDisc(nn.Module):
+    """Classifies PC via FNN -> Add -> FNN"""
+
+    def __init__(self, n_ftx_out, n_ftx_disc) -> None:
+        super().__init__()
+        self.disc_emb = EPiC(
+            n_in=n_ftx_out, n_latent=5, n_global=4, n_out=n_ftx_disc
+        )
+        self.disc_emb = FFN(n_ftx_out, n_ftx_disc, **ffn_param)
+        self.disc = FFN(n_ftx_disc, 1, **ffn_param, final_linear=True)
+
+    def forward(self, x, batch):
+        x = self.disc_emb(x, batch)
+        x = global_add_pool(x, batch)
+        x = self.disc(x)
+        return x
+
+
+class EPiC(nn.Module):
+    """update with global vector"""
+
+    def __init__(self, n_in, n_latent, n_global, n_out) -> None:
+        super().__init__()
+        self.emb_nn = FFN(n_in, n_latent, **ffn_param)
+        self.global_nn = FFN(n_latent, n_global, **ffn_param)
+        self.out_nn = FFN(n_latent + n_global, n_out, **ffn_param)
+
+    def forward(self, x, batch):
+        x = self.emb_nn(x)
+        x_aggr = global_add_pool(x, batch)
+        x_global = self.global_nn(x_aggr)
+        x = self.out_nn(torch.hstack([x, x_global[batch]]))
+        return x
 
 
 class ModelClass(nn.Module):
@@ -47,8 +76,8 @@ class ModelClass(nn.Module):
         #             ratio=self.nodes[ilevel + 1],
         #         )
         #     )
-        #     self.pcdiscs.append(EmbPoolDisc(3, self.n_ftx_disc))
-        self.last_level_disc = EmbPoolDisc(3, self.n_ftx_disc)
+        #     self.pcdiscs.append(TSumTDisc(3, self.n_ftx_disc))
+        self.last_level_disc = TSumTDisc(3, self.n_ftx_disc)
 
     def forward(self, batch, condition):
         x: torch.Tensor
@@ -71,6 +100,13 @@ class ModelClass(nn.Module):
 
 def signsqrt(x: torch.Tensor):
     return torch.sign(x) * torch.sqrt(torch.abs(x))
+
+
+def skipadd(a: torch.Tensor, b: torch.Tensor):
+    assert a.shape[:-1] == b.shape[:-1]
+    ldim = min(a.shape[-1], b.shape[-1])
+    a[..., :ldim] += b[..., :ldim]
+    return a
 
 
 # class LevelLayer(nn.Module):
@@ -107,44 +143,3 @@ def signsqrt(x: torch.Tensor):
 #         # x = self.mpls(x=x, edge_index=ei, batch=batch, cond=condition)
 #         x_emb = self.out_emb(x)
 #         return x, x_emb #, ei
-
-
-class EmbPoolDisc(nn.Module):
-    """Classifies PC via FNN -> Add -> FNN"""
-
-    def __init__(self, n_ftx_out, n_ftx_disc) -> None:
-        super().__init__()
-        self.disc_emb = EPiC(
-            n_in=n_ftx_out, n_latent=5, n_global=4, n_out=n_ftx_disc
-        )
-        self.disc = FFN(n_ftx_disc, 1, **ffn_param, final_linear=True)
-
-    def forward(self, x, batch):
-        x = self.disc_emb(x, batch)
-        x = global_add_pool(x, batch)
-        x = self.disc(x)
-        return x
-
-
-def skipadd(a: torch.Tensor, b: torch.Tensor):
-    assert a.shape[:-1] == b.shape[:-1]
-    ldim = min(a.shape[-1], b.shape[-1])
-    a[..., :ldim] += b[..., :ldim]
-    return a
-
-
-class EPiC(nn.Module):
-    """update with global vector"""
-
-    def __init__(self, n_in, n_latent, n_global, n_out) -> None:
-        super().__init__()
-        self.emb_nn = FFN(n_in, n_latent, **ffn_param)
-        self.global_nn = FFN(n_latent, n_global, **ffn_param)
-        self.out_nn = FFN(n_latent + n_global, n_out, **ffn_param)
-
-    def forward(self, x, batch):
-        x = self.emb_nn(x)
-        x_aggr = global_add_pool(x, batch)
-        x_global = self.global_nn(x_aggr)
-        x = self.out_nn(torch.hstack([x, x_global[batch]]))
-        return x

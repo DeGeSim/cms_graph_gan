@@ -2,7 +2,7 @@ tag: default
 loglevel: 20
 loglevel_qf: 30
 seed: 0
-comet_project_name: "jetnet-ffn"
+comet_project_name: "jetnet-disctd"
 ray: False
 remote: False
 
@@ -94,7 +94,7 @@ ffn:
         Tanh: {}
     weight_init_method: default
     norm: batchnorm
-    dropout: False
+    dropout: 0.0
 
 layer_options:
     DeepConv:
