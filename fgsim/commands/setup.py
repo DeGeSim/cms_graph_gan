@@ -5,6 +5,7 @@ from shutil import copytree
 from omegaconf import OmegaConf
 
 from fgsim.config import conf, hyperparameters
+from fgsim.monitoring.monitor import setup_experiment
 
 
 def gethash_procedure() -> None:
@@ -12,6 +13,8 @@ def gethash_procedure() -> None:
 
 
 def setup_procedure() -> str:
+    setup_experiment()
+
     srcpath = Path(conf.path.run_path) / "fgsim"
     # If the experiment has been setup, exit directly
     if Path(conf.path.run_path).is_dir():
@@ -32,9 +35,6 @@ def setup_procedure() -> str:
         dirs_exist_ok=True,
     )
 
-    from fgsim.monitoring.monitor import setup_experiment
-
-    setup_experiment()
     return conf.hash
 
 
