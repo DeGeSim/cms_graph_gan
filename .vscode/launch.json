@@ -4,7 +4,7 @@
         {
             "args": [
                 "--hash",
-                "98ebc8f",
+                "47a6ed9",
                 // "--ray",
                 // "--debug",
                 "train"
@@ -19,7 +19,7 @@
         {
             "args": [
                 "--tag",
-                "base_",
+                "ddt_wlevels_wemb",
                 "--debug",
                 "train"
             ],
@@ -33,7 +33,7 @@
         {
             "args": [
                 "--tag",
-                "base_",
+                "ddt_wlevels_wemb",
                 "--debug",
                 "test"
             ],
@@ -47,7 +47,7 @@
         {
             "args": [
                 "--tag",
-                "base_",
+                "ddt_wlevels_wemb",
                 "--debug",
                 "preprocess"
             ],
@@ -73,9 +73,22 @@
             "type": "python",
             "args": [
                 "--tag",
-                "base_",
+                "ddt_wlevels_wemb",
                 "--debug",
                 "train"
+            ],
+        },
+        {
+            "cwd": "/home/mscham/fgsim",
+            "name": "setup",
+            "request": "launch",
+            "program": "fgsim/__main__.py",
+            "type": "python",
+            "args": [
+                "--tag",
+                "ddt_wlevels_wemb",
+                // "--debug",
+                "setup"
             ],
         },
         {
@@ -88,17 +101,17 @@
             "justMyCode": false
         },
         {
-            "name": "buildcmd",
+            "name": "run.py",
             "type": "python",
             "request": "launch",
             "cwd": "/home/mscham/fgsim",
-            "program": "/home/mscham/fgsim/fgsim/utils/buildcmd.py",
+            "program": "/home/mscham/fgsim/scripts/run.py",
             "console": "integratedTerminal",
             "args": [
-                "--tag",
-                "base_",
-                "--debug",
-                "setup"
+                "--hash",
+                "47a6ed9",
+                "--remote",
+                "train"
             ],
         },
         // {

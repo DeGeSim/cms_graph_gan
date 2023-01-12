@@ -16,11 +16,11 @@ def run_args(args):
     if args.remote:
         if args.command in ["setup", "overwrite", "dump"]:
             raise Exception("Command not allowed remote")
-        if args.hash is None or args.tag is None:
+        if args.hash is None or args.tag == "default":
             conf = parse_arg_conf(args)[0]
             if args.hash is not None:
                 assert args.hash == conf.hash
-            if args.tag is not None:
+            if args.tag != "default":
                 assert args.tag == conf.tag
             args.hash = conf.hash
             args.tag = conf.tag
