@@ -52,14 +52,14 @@ def validate(holder: Holder, loader: QueuedDataset) -> None:
         "d_sim": d_sim,
     }
 
-    if holder.state.grad_step % conf.training.val.plot_interval == 0:
-        validation_plots(
-            train_log=holder.train_log,
-            res=results_d,
-            plot_path=None,
-            best_last_val="val/scaled",
-            step=holder.state.grad_step,
-        )
+    # if holder.state.grad_step % conf.training.val.plot_interval == 0:
+    #     validation_plots(
+    #         train_log=holder.train_log,
+    #         res=results_d,
+    #         plot_path=None,
+    #         best_last_val="val/scaled",
+    #         step=holder.state.grad_step,
+    #     )
 
     # scale all the samples
     for batch in results_d["sim_batch"], results_d["gen_batch"]:

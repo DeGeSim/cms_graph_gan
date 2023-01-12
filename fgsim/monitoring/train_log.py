@@ -19,7 +19,8 @@ class TrainLog:
         self.state: DictConfig = state
         self.history: Dict = history
         self.use_tb = not conf.debug or conf.command == "test"
-        self.use_comet = (not conf.debug or conf.command == "test") and not conf.ray
+        self.use_comet = False
+        # (not conf.debug or conf.command == "test") and not conf.ray
         self.use_wandb = (not conf.debug or conf.command == "test") and not conf.ray
         if self.use_tb:
             self.writer: SummaryWriter = SummaryWriter(conf.path.tensorboard)
@@ -43,7 +44,8 @@ class TrainLog:
         if self.use_comet:
             self.experiment.set_model_graph(str(model))
         if self.use_wandb:
-            wandb.watch(model)
+            pass
+            # wandb.watch(model)
 
     def write_trainstep_logs(self) -> None:
         if not all(
