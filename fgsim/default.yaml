@@ -194,7 +194,13 @@ model_param_options:
         z2_dim: 10
         d_dim: 256
         pool: "max1"
-
+    disc_gapt:
+        num_particles: ${loader.n_points}
+        input_feat_size: ${loader.n_features}
+    gen_gapt:
+        num_particles: ${loader.n_points}
+        output_feat_size: ${loader.n_features}
+        embed_dim: 32
     gen_mp:
         num_particles: ${loader.n_points}
         hidden_node_size: 32
