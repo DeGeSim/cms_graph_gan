@@ -106,6 +106,9 @@ class GAPT_G(nn.Module):
         for sab in self.sabs:
             x = sab(x, _attn_mask(mask))
 
-        x = torch.tanh(self.final_fc(x))
+        # *** MODIFIED ***
+        # x = torch.tanh(self.final_fc(x))
+        x = self.final_fc(x)
+        # *** MODIFIED END ***
 
         return torch.cat((x, mask - 0.5), dim=2) if mask is not None else x
