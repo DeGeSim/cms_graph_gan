@@ -1,25 +1,31 @@
 import torch
 from torch import nn
 from torch_geometric.nn import global_add_pool, knn_graph
-from torch_geometric.nn.pool import TopKPooling
 
 from fgsim.models.common import FFN, MPLSeq
 
-ffn_param = {"bias": False, "n_layers": 2, "hidden_layer_size": 40, "dropout": 0.3}
+# from torch_geometric.nn.pool import TopKPooling
+
+
+ffn_param = {"bias": False, "n_layers": 2, "hidden_layer_size": 40, "dropout": 0.0}
 
 
 class TSumTDisc(nn.Module):
     """Classifies PC via FNN -> Add -> FNN"""
 
-    def __init__(self, n_ftx_out, n_ftx_disc) -> None:
+    def __init__(self, n_ftx_out) -> None:
         super().__init__()
-        self.disc_emb = EPiC(
-            n_in=n_ftx_out, n_latent=5, n_global=4, n_out=n_ftx_disc
+        self.disc_emb = nn.ModuleList(
+            [
+                EPiC(n_in=n_ftx_out, n_latent=5, n_global=4, n_out=n_ftx_out)
+                for _ in range(4)
+            ]
         )
-        self.disc = FFN(n_ftx_disc, 1, **ffn_param, final_linear=True)
+        self.disc = FFN(n_ftx_out, 1, **ffn_param, final_linear=True)
 
     def forward(self, x, batch):
-        x = self.disc_emb(x, batch)
+        for layer in self.disc_emb:
+            x = layer(x, batch)
         x = global_add_pool(x, batch)
         x = self.disc(x)
         return x
@@ -58,40 +64,38 @@ class ModelClass(nn.Module):
 
         for ilevel in range(self.n_levels - 1):
             self.embeddings.append(
-                # FFN(3, 1, **ffn_param)
-                LevelLayer(
+                Embedding(
                     n_ftx_in=self.features[ilevel],
                     n_ftx_out=self.features[ilevel + 1],
                     n_ftx_space=self.n_ftx_space,
                     n_ftx_latent=self.n_ftx_latent,
-                    n_ftx_disc=self.n_ftx_disc,
                 )
             )
-            self.pools.append(
-                TopKPooling(
-                    in_channels=1,  # self.features[ilevel + 1],
-                    ratio=self.nodes[ilevel + 1],
-                )
-            )
-            self.pcdiscs.append(TSumTDisc(self.features[ilevel], self.n_ftx_disc))
-        self.last_level_disc = TSumTDisc(self.features[-1], self.n_ftx_disc)
+            # self.pools.append(
+            #     TopKPooling(
+            #         in_channels=1,  # self.features[ilevel + 1],
+            #         ratio=self.nodes[ilevel + 1],
+            #     )
+            # )
+            self.pcdiscs.append(TSumTDisc(self.features[ilevel + 1]))
+        self.last_level_disc = TSumTDisc(self.features[-1])
 
     def forward(self, batch, condition):
         x: torch.Tensor
         x, batchidx = batch.x, batch.batch
         x_disc = torch.zeros((batch.num_graphs, 1), dtype=x.dtype, device=x.device)
-        for ilevel in range(self.n_levels - 1):
+        for ilevel in range(1):  # self.n_levels - 1):
+            x = self.embeddings[ilevel](x, batchidx, condition)
             x_disc += self.pcdiscs[ilevel](x, batchidx)
 
-            x = self.embeddings[ilevel](x, batchidx, condition)[1]
-            _, _, _, batchidx, perm, _ = self.pools[ilevel](
-                x=x,
-                edge_index=torch.empty(2, 0, dtype=torch.long, device=x.device),
-                batch=batchidx,
-            )
-            x = x[perm]
+        #     _, _, _, batchidx, perm, _ = self.pools[ilevel](
+        #         x=x,
+        #         edge_index=torch.empty(2, 0, dtype=torch.long, device=x.device),
+        #         batch=batchidx,
+        #     )
+        #     x = x[perm]
 
-        x_disc += self.last_level_disc(x, batchidx)
+        # x_disc += self.last_level_disc(x, batchidx)
         return x_disc
 
 
@@ -106,25 +110,24 @@ def skipadd(a: torch.Tensor, b: torch.Tensor):
     return a
 
 
-class LevelLayer(nn.Module):
-    def __init__(
-        self, n_ftx_in, n_ftx_out, n_ftx_space, n_ftx_latent, n_ftx_disc
-    ) -> None:
+class Embedding(nn.Module):
+    def __init__(self, n_ftx_in, n_ftx_out, n_ftx_space, n_ftx_latent) -> None:
         super().__init__()
         self.n_ftx_in = n_ftx_in
         self.n_ftx_space = n_ftx_space
         self.n_ftx_latent = n_ftx_latent
         self.n_ftx_out = n_ftx_out
-        self.n_ftx_disc = n_ftx_disc
 
-        self.space_emb = FFN(n_ftx_in, n_ftx_latent, **ffn_param)
+        # self.space_emb = FFN(n_ftx_in, n_ftx_latent, **ffn_param)
         self.mpls = MPLSeq(
             "GINConv",
-            self.n_ftx_latent,
+            self.n_ftx_in,
             self.n_ftx_latent,
             skip_connecton=True,
             n_hidden_nodes=self.n_ftx_latent,
-            layer_param={},
+            layer_param={
+                k: v for k, v in ffn_param.items() if k != "hidden_layer_size"
+            },
             n_global=0,
             n_cond=0,
             n_mpl=2,
@@ -132,8 +135,8 @@ class LevelLayer(nn.Module):
         self.out_emb = FFN(self.n_ftx_latent, self.n_ftx_out, **ffn_param)
 
     def forward(self, x, batch, condition):
-        x = self.space_emb(x)
-        ei = knn_graph(x[..., : self.n_ftx_space], batch=batch, k=15)
+        # x = self.space_emb(x)
+        ei = knn_graph(x[..., : self.n_ftx_space], batch=batch, k=5)
         x = self.mpls(x=x, edge_index=ei, batch=batch, cond=condition)
         x_emb = self.out_emb(x)
-        return x, x_emb  # , ei
+        return x_emb
