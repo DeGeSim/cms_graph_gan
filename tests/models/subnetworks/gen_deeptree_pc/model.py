@@ -270,9 +270,12 @@ def test_full_model_grad():
     model = ModelClass(**defaultconf.model_param_options.gen_deeptree).to(device)
 
     z = torch.randn(*model.z_shape, device=device).requires_grad_()
-    cond = torch.randn(
-        (defaultconf.loader.batch_size, len(defaultconf.loader.y_features)),
-        device=device,
+    cond = (
+        torch.ones(
+            (defaultconf.loader.batch_size, len(defaultconf.loader.y_features)),
+            device=device,
+        )
+        * conf.loader.n_points
     )
     tftx_copy = z
     batch = model(z, cond)

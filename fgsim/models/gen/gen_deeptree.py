@@ -4,7 +4,7 @@ from typing import Dict, Optional
 import torch
 import torch.nn as nn
 from omegaconf import OmegaConf
-from torch_geometric.data import Batch
+from torch_geometric.data import Batch, Data
 
 from fgsim.config import conf
 from fgsim.models.common import DynHLVsLayer, FtxScaleLayer, MPLSeq
@@ -222,18 +222,31 @@ class ModelClass(nn.Module):
                 #     graph_tree.tftx_by_level(ilevel + 1),
                 # )
 
-        if self.presaved_batch is None:
-            (
-                self.presaved_batch,
-                self.presaved_batch_indexing,
-            ) = graph_tree.get_batch_skeleton()
+        # if self.presaved_batch is None:
+        #     (
+        #         self.presaved_batch,
+        #         self.presaved_batch_indexing,
+        #     ) = graph_tree.get_batch_skeleton()
 
-        batch = self.presaved_batch.clone()
-        batch.x = graph_tree.tftx_by_level(-1)[self.presaved_batch_indexing]
+        # batch = self.presaved_batch.clone()
+        # batch.x = graph_tree.tftx_by_level(-1)[self.presaved_batch_indexing]
+
+        num_vec = cond[..., conf.loader.y_features.index("num_particles")].int()
+
+        x = graph_tree.tftx_by_level(-1)
+        assert x.shape[0] == self.output_points * batch_size
+        x = x.reshape(
+            conf.loader.n_points, conf.loader.batch_size, conf.loader.n_features
+        ).transpose(0, 1)
+
+        batch = Batch.from_data_list(
+            [Data(x=xe[:ne]) for xe, ne in zip(x, num_vec)]
+        )
+
         if self.final_layer_scaler:
             batch.x = self.ftx_scaling(batch.x)
 
-        assert batch.x.shape[0] == self.output_points * batch_size
+        assert batch_size <= batch.x.shape[0] <= self.output_points * batch_size
         assert batch.x.shape[-1] == features[-1]
         assert batch.num_graphs == batch_size
         return batch
