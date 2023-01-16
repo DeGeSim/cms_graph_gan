@@ -3,7 +3,7 @@ from itertools import combinations
 import torch
 
 from fgsim.config import conf
-from fgsim.plot.binborders import binbourders_wo_outliers, chip_to_binborders
+from fgsim.plot.binborders import binborders_wo_outliers, chip_to_binborders
 
 
 class ModelPlotter:
@@ -43,8 +43,8 @@ class ModelPlotter:
                 x_name = conf.loader.x_features[self.combinations[icomb][0]]
                 y_name = conf.loader.x_features[self.combinations[icomb][1]]
 
-                xedges = binbourders_wo_outliers(x)
-                yedges = binbourders_wo_outliers(y)
+                xedges = binborders_wo_outliers(x)
+                yedges = binborders_wo_outliers(y)
                 axes.hist2d(
                     chip_to_binborders(x, xedges),
                     chip_to_binborders(y, yedges),

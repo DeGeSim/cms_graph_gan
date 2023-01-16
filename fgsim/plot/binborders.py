@@ -4,8 +4,13 @@ from fgsim.utils.torchtonp import wrap_torch_to_np
 
 
 @wrap_torch_to_np
-def binbourders_wo_outliers(points: np.ndarray, bins=50) -> np.ndarray:
+def binborders_wo_outliers(points: np.ndarray, bins=50) -> np.ndarray:
     return np.linspace(*bounds_wo_outliers(points), num=bins, endpoint=True)
+
+
+@wrap_torch_to_np
+def binborders_by_bounds(lower, upper, bins=50) -> np.ndarray:
+    return np.linspace(lower, upper, num=bins, endpoint=True)
 
 
 @wrap_torch_to_np

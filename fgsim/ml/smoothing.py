@@ -4,7 +4,7 @@ import torch
 
 from fgsim.config import conf
 from fgsim.io.sel_loader import scaler
-from fgsim.plot.xyscatter import binbourders_wo_outliers
+from fgsim.plot.xyscatter import binborders_wo_outliers
 
 
 class Smoother:
@@ -79,7 +79,7 @@ class Smoother:
         fig, ax2 = plt.subplots(1, 1, figsize=(6, 4))
         ax2.hist(
             arr,
-            bins=binbourders_wo_outliers(arr, bins=300),
+            bins=binborders_wo_outliers(arr, bins=300),
             histtype="bar",
         )
         ax2.set_ylabel("Count")

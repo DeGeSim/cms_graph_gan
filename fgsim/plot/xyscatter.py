@@ -7,7 +7,7 @@ import seaborn as sns
 import torch
 
 from fgsim.plot.binborders import (
-    binbourders_wo_outliers,
+    binborders_wo_outliers,
     bounds_wo_outliers,
     chip_to_binborders,
 )
@@ -158,8 +158,8 @@ def xy_hist(
 
     sns.set()
     fig, axes = plt.subplots(1, 2, sharex=True, sharey=True)
-    xedges = binbourders_wo_outliers(sim[:, 0])
-    yedges = binbourders_wo_outliers(sim[:, 1])
+    xedges = binborders_wo_outliers(sim[:, 0])
+    yedges = binborders_wo_outliers(sim[:, 1])
     axes[0].hist2d(
         chip_to_binborders(sim[:, 0], xedges),
         chip_to_binborders(sim[:, 1], yedges),

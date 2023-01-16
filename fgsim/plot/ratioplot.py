@@ -7,7 +7,7 @@ from matplotlib.figure import Figure
 
 from fgsim.utils.torchtonp import wrap_torch_to_np
 
-from .xyscatter import binbourders_wo_outliers
+from .binborders import binborders_by_bounds, binborders_wo_outliers
 
 
 @wrap_torch_to_np
@@ -23,8 +23,10 @@ def ratioplot(
         figsize=(6, 8),
         gridspec_kw={"height_ratios": [2, 1]},
     )
-
-    bins = binbourders_wo_outliers(sim)
+    if title == "Disc Score":
+        bins = binborders_by_bounds(0, 1)
+    else:
+        bins = binborders_wo_outliers(sim)
     n_bins = len(bins) - 1
 
     sim_hist, sim_bins = np.histogram(sim, bins=bins)
