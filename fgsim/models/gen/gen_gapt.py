@@ -84,7 +84,11 @@ class GAPT_G(nn.Module):
         if self.use_mask:
             # unnormalize the last jet label - the normalized # of particles per jet
             # (between 1/``num_particles`` and 1) - to between 0 and ``num_particles`` - 1
-            num_jet_particles = (labels[:, -1] * self.num_particles).int() - 1
+            # *** MODIFIED ***
+            # num_jet_particles = (labels[:, -1] * self.num_particles).int() - 1
+            num_jet_particles = labels[:, -1].int() - 1
+            assert (num_jet_particles > 0).all()
+            # *** MODIFIED END ***
             # sort the particles bythe first noise feature per particle, and the first
             # ``num_jet_particles`` particles receive a 1-mask, the rest 0.
             mask = (
