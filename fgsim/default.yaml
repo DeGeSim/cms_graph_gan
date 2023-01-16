@@ -360,7 +360,7 @@ dataset_options:
             n_points: 128
             n_features: ${len:${dataset_options[${dataset_name}][loader][x_features]}}
             x_features: ["foo"]
-            y_features: ["bar"]
+            y_features: ["num_particles"]
     jetnet:
         tree:
             branches: [2,3,5]

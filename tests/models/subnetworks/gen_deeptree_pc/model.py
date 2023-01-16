@@ -227,17 +227,18 @@ def test_full_modelparts_grad():
         )
         check_z()
 
-        graph_tree.tftx = model.child_conv_layers[ilevel](
-            x=graph_tree.tftx,
-            cond=cond,
-            edge_index=model.tree.children_ei(ilevel + 1),
-            batch=tree.tbatch_by_level[ilevel + 1],
-            global_features=graph_tree.global_features,
-        )
-        graph_tree.tftx[[tree.tbatch_by_level[ilevel + 1] == 1]].sum().backward(
-            retain_graph=True
-        )
-        check_z()
+        if hasattr(model, "child_conv_layers"):
+            graph_tree.tftx = model.child_conv_layers[ilevel](
+                x=graph_tree.tftx,
+                cond=cond,
+                edge_index=model.tree.children_ei(ilevel + 1),
+                batch=tree.tbatch_by_level[ilevel + 1],
+                global_features=graph_tree.global_features,
+            )
+            graph_tree.tftx[[tree.tbatch_by_level[ilevel + 1] == 1]].sum().backward(
+                retain_graph=True
+            )
+            check_z()
 
     x = graph_tree.tftx_by_level(-1)
     batchidx = tree.tbatch_by_level[-1][tree.idxs_by_level[-1]]
