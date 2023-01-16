@@ -45,7 +45,7 @@ class TrainLog:
             self.experiment.set_model_graph(str(model))
         if self.use_wandb:
             pass
-            # wandb.watch(model)
+            wandb.watch(model)
 
     def write_trainstep_logs(self) -> None:
         if not all(
