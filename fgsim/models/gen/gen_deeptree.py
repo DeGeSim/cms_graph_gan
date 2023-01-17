@@ -240,7 +240,16 @@ class ModelClass(nn.Module):
         ).transpose(0, 1)
 
         batch = Batch.from_data_list(
-            [Data(x=xe[:ne]) for xe, ne in zip(x, num_vec)]
+            [
+                Data(
+                    x=xe[
+                        xe[..., conf.loader.x_ftx_energy_pos]
+                        .topk(k=ne, dim=0, largest=True, sorted=False)
+                        .indices
+                    ]
+                )
+                for xe, ne in zip(x, num_vec)
+            ]
         )
 
         if self.final_layer_scaler:
