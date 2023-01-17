@@ -86,7 +86,7 @@ def validate(holder: Holder, loader: QueuedDataset) -> None:
         holder.best_model_state = deepcopy(holder.models.state_dict())
         logger.warning(f"New best model at step {holder.state.best_step}")
 
-    holder.train_log.log_metric("other/best_step", holder.state["grad_step"])
-    holder.train_log.log_metric("other/best_epoch", holder.state["epoch"])
+    holder.train_log.log_metric("other/best_step", holder.state["best_step"])
+    holder.train_log.log_metric("other/best_epoch", holder.state["best_epoch"])
 
     logger.debug("Validation done.")
