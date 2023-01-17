@@ -5,7 +5,10 @@ import numpy as np
 import torch
 from torch_geometric.data import Batch
 
+from fgsim.config import conf
 from fgsim.utils.jetnetutils import to_stacked_mask
+
+jet_type = conf.loader.dataset_glob.strip("**/").strip(".hdf5")
 
 
 def w1m(
@@ -44,7 +47,7 @@ def fpnd(gen_batch: Batch, **kwargs) -> Union[float, torch.Tensor, np.float32]:
     try:
         score = jetnet.evaluation.gen_metrics.fpnd(
             jets=to_stacked_mask(gen_batch)[:50000, ..., :3],
-            jet_type="t",
+            jet_type=jet_type,
             use_tqdm=False,
         )
         return min(float(score), 1e5)
