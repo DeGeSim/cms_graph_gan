@@ -67,9 +67,9 @@ class ValidationMetrics:
         # validation batches.
         up_metrics_d = self.metric_aggr.aggregate()
 
+        # Log the validation loss
+        self.train_log.log_metrics(up_metrics_d, prefix="val")
         for metric_name, metric_val in up_metrics_d.items():
-            # Log the validation loss
-            self.train_log.log_metric(f"val/{metric_name}", metric_val)
             self.train_log.history["val"][metric_name].append(metric_val)
 
         # compute the stop_metric
@@ -90,7 +90,7 @@ class ValidationMetrics:
         # overwrite the recorded score for each
         for ivalstep in range(len(score)):
             self.train_log.log_metric(
-                name="score",
+                name="trend/score",
                 value=score[ivalstep],
                 step=ivalstep * conf.training.val.interval,
             )

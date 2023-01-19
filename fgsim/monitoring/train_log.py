@@ -1,5 +1,6 @@
-from typing import Dict
+from typing import Dict, Union
 
+import torch
 import wandb
 from omegaconf import DictConfig
 from torch.utils.tensorboard import SummaryWriter
@@ -27,6 +28,14 @@ class TrainLog:
 
         if self.use_comet:
             self.experiment: BaseExperiment = get_experiment(self.state)
+
+        if self.use_tb:
+            self.writer.add_scalar(
+                "epoch",
+                self.state["epoch"],
+                self.state["grad_step"],
+                new_style=True,
+            )
 
         if self.use_wandb:
             wandb.init(
@@ -65,16 +74,45 @@ class TrainLog:
         iotime = self.state.time_io_end - self.state.time_train_step_start
         utilisation = 1 - iotime / traintime
 
-        self.log_metric("other/batchtime", traintime)
-        self.log_metric("other/utilisation", utilisation)
-        self.log_metric("other/processed_events", self.state.processed_events)
+        self.log_metrics(
+            {
+                "batchtime": traintime,
+                "utilisation": utilisation,
+                "processed_events": self.state.processed_events,
+            },
+            prefix="speed",
+        )
 
-    def log_metrics(self, metrics_dict, *args, **kwargs):
-        for k, v in metrics_dict.items():
-            self.log_metric(
-                name=k,
-                value=v,
+    def log_metrics(
+        self,
+        metrics_dict: dict[str, Union[float, torch.Tensor]],
+        step=None,
+        epoch=None,
+        prefix=None,
+    ):
+        if conf.debug and conf.command != "test":
+            return
+        if step is None:
+            step = self.state["grad_step"]
+        if epoch is None:
+            epoch = self.state["epoch"]
+
+        if prefix is not None:
+            metrics_dict = {f"{prefix}/{k}": v for k, v in metrics_dict.items()}
+
+        if self.use_comet:
+            self.experiment.log_metrics(
+                metrics_dict,
+                step=step,
+                epoch=epoch,
             )
+
+        if self.use_tb:
+            for name, value in metrics_dict.items():
+                self.writer.add_scalar(name, value, step, new_style=True)
+
+        if self.use_wandb:
+            wandb.log(metrics_dict | {"epoch": epoch}, step=step)
 
     def log_metric(self, name: str, value=None, step=None, epoch=None) -> None:
         if conf.debug and conf.command != "test":
@@ -85,6 +123,7 @@ class TrainLog:
         if epoch is None:
             epoch = self.state["epoch"]
         value = float(value)
+
         if self.use_tb:
             self.writer.add_scalar(name, value, step, new_style=True)
         if self.use_comet:
@@ -125,9 +164,17 @@ class TrainLog:
                 self.state["epoch"],
                 step=self.state["grad_step"],
             )
+
+        if self.use_tb:
+            self.writer.add_scalar(
+                "epoch",
+                self.state["epoch"],
+                self.state["grad_step"],
+                new_style=True,
+            )
         if self.use_wandb:
             wandb.log(
-                data={"other/epoch": self.state["epoch"]},
+                data={"epoch": self.state["epoch"]},
                 step=self.state["grad_step"],
             )
 

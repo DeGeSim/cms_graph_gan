@@ -94,17 +94,25 @@ class Trainer:
             }
             # and log them & attacht them to the history (for early stopping)
             for pname, ploosd in ldict.items():
+                self.train_log.log_metrics(
+                    {
+                        f"train/{pname}/{lname}": lossval
+                        for lname, lossval in ploosd.items()
+                    }
+                )
                 if pname not in loss_hist:
                     loss_hist[pname] = {}
                 for lname, lossval in ploosd.items():
-                    self.train_log.log_metric(f"train/{pname}/{lname}", lossval)
                     if lname not in loss_hist[pname]:
                         loss_hist[pname][lname] = []
                     loss_hist[pname][lname].append(lossval)
 
             # log the learning rates
-            for pname, plr in self.holder.optims.metric_aggr.aggregate().items():
-                self.train_log.log_metric(f"train/{pname}/lr", plr)
+            lr_dict = self.holder.optims.metric_aggr.aggregate()
+
+            self.train_log.log_metrics(
+                {f"train/{pname}/lr": plr for pname, plr in lr_dict.items()}
+            )
 
             # Also log training speed
             self.train_log.write_trainstep_logs()

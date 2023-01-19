@@ -180,10 +180,12 @@ def test_metrics(test_info: TestInfo):
     #         hlvs_dict["sim"][var], hlvs_dict["best"][var]
     #     ).pvalue
 
-    metrics_dict = {
-        f"test/{test_info.best_or_last}/{k}": v for k, v in metrics_dict.items()
-    }
-    train_log.log_metrics(metrics_dict, step=test_info.step, epoch=test_info.epoch)
+    train_log.log_metrics(
+        metrics_dict,
+        step=test_info.step,
+        epoch=test_info.epoch,
+        prefix=f"test/{test_info.best_or_last}",
+    )
 
 
 def jetnet_metrics(sim_batch, gen_batch) -> Dict[str, float]:
