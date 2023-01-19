@@ -1,6 +1,7 @@
 from typing import List, Optional
 
 from torch import nn
+from torch.nn.utils.parametrizations import spectral_norm
 
 from fgsim.config import conf
 
@@ -56,9 +57,10 @@ class FFN(nn.Module):
 
         self.seq = nn.Sequential()
         for ilayer in range(n_layers):
-            self.seq.append(
-                nn.Linear(features[ilayer], features[ilayer + 1], bias=bias)
-            )
+            m = nn.Linear(features[ilayer], features[ilayer + 1], bias=bias)
+            if norm == "spectral":
+                m = spectral_norm(m)
+            self.seq.append(m)
             if ilayer == n_layers - 1 and final_linear:
                 continue
             else:
@@ -74,7 +76,7 @@ class FFN(nn.Module):
                     )
                 elif norm == "layernorm":
                     self.seq.append(nn.LayerNorm(features[ilayer + 1]))
-                elif norm == "none":
+                elif norm in ("none", "spectral"):
                     pass
                 else:
                     raise Exception
