@@ -157,6 +157,10 @@ model_param_options:
     disc_benno: {}
     disc_deeptree: {}
     disc_diffpool: {}
+    disc_dt_tsumt2: {}
+    disc_dt_wlevels: {}
+    disc_dt_wall: {}
+    disc_dt_epictsumt: {}
     disc_gat:
       n_features: ${loader[n_features]}
       n_points: ${loader[n_points]}
@@ -342,7 +346,7 @@ dataset_options:
             active: False
         validation:
             interval: "${div:1_000_000,${dataset_options[${dataset_name}][loader][batch_size]}}"
-            plot_interval: "${div:10_000_000,${dataset_options[${dataset_name}][loader][batch_size]}}"
+            plot_interval: "${div:1_000_000,${dataset_options[${dataset_name}][loader][batch_size]}}"
         loader:
             rootprefix: "treeMaker/tree"
             dataset_glob: "**/*.root"
