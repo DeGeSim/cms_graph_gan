@@ -377,6 +377,7 @@ dataset_options:
             dataset_path: "~/fgsim/data/jetnet"
             n_points: 30
             x_features: ["etarel", "phirel", "ptrel"]
+            x_ftx_energy_pos: 2
             y_features: ["pt", "eta", "mass", "num_particles"]
             dataset_glob: "**/t.hdf5"
             chunk_size: 5000
