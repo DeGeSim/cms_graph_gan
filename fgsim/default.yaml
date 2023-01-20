@@ -155,6 +155,16 @@ model_param_options:
     disc_fake: {}
     disc_hlvs: {}
     disc_benno: {}
+    disc_benno_lin:
+        n_dim: 3
+        l_dim: 40
+        hidden: 1024
+        num_layers: 8
+        heads: 8
+        dropout: 0.5
+        activation: gelu
+        slope: 0.1
+        norm: false
     disc_deeptree: {}
     disc_diffpool: {}
     disc_dt_tsumt2: {}
