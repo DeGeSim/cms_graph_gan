@@ -180,7 +180,7 @@ def test_metrics(test_info: TestInfo):
     #         hlvs_dict["sim"][var], hlvs_dict["best"][var]
     #     ).pvalue
 
-    train_log.log_metrics(
+    train_log.log_test_metrics(
         metrics_dict,
         step=test_info.step,
         epoch=test_info.epoch,

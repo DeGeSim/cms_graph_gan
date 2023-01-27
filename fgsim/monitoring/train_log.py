@@ -38,7 +38,7 @@ class TrainLog:
             )
 
         if self.use_wandb:
-            wandb.init(
+            self.wandb_run = wandb.init(
                 id=exp_orga_wandb[conf["hash"]],
                 resume="must",
                 dir=conf.path.run_path,
@@ -53,8 +53,82 @@ class TrainLog:
         if self.use_comet:
             self.experiment.set_model_graph(str(model))
         if self.use_wandb:
-            pass
             wandb.watch(model)
+
+    def log_metrics(
+        self,
+        metrics_dict: dict[str, Union[float, torch.Tensor]],
+        step=None,
+        epoch=None,
+        prefix=None,
+    ):
+        if conf.debug and conf.command != "test":
+            return
+        if step is None:
+            step = self.state["grad_step"]
+            epoch = self.state["epoch"]
+        if epoch is None:
+            raise Exception
+
+        if prefix is not None:
+            metrics_dict = {f"{prefix}/{k}": v for k, v in metrics_dict.items()}
+
+        self._log_metrics_comet(metrics_dict, step, epoch)
+        self._log_metrics_tb(metrics_dict, step, epoch)
+        self._log_metrics_wandb(metrics_dict, step, epoch)
+
+    def _log_metrics_comet(self, md: dict, step: int, epoch: int):
+        if self.use_comet:
+            self.experiment.log_metrics(
+                md,
+                step=step,
+                epoch=epoch,
+            )
+
+    def _log_metrics_tb(self, md: dict, step: int, epoch: int):
+        if self.use_tb:
+            for name, value in md.items():
+                self.writer.add_scalar(name, value, step, new_style=True)
+
+    def _log_metrics_wandb(self, md: dict, step: int, epoch: int):
+        if self.use_wandb:
+            wandb.log(md | {"epoch": epoch}, step=step)
+
+    def log_figure(
+        self,
+        figure_name,
+        figure,
+        overwrite=False,
+        step=None,
+    ):
+        if step is None:
+            step = self.state["grad_step"]
+        if self.use_tb:
+            self.writer.add_figure(tag=figure_name, figure=figure, global_step=step)
+        if self.use_comet:
+            self.experiment.log_figure(
+                figure_name=figure_name,
+                figure=figure,
+                overwrite=overwrite,
+                step=step,
+            )
+        if self.use_wandb:
+            wandb.log(data={figure_name: wandb.Image(figure)}, step=step)
+
+    def log_test_metrics(
+        self,
+        metrics_dict: dict[str, Union[float, torch.Tensor]],
+        step: int,
+        epoch: int,
+        prefix: str,
+    ):
+        metrics_dict = {f"{prefix}/{k}": v for k, v in metrics_dict.items()}
+        self._log_metrics_comet(metrics_dict, step, epoch)
+        self._log_metrics_tb(metrics_dict, step, epoch)
+        self._log_metrics_wandb(metrics_dict, step, epoch)
+        if self.use_wandb:
+            for k, v in metrics_dict.items():
+                wandb.run.summary[k] = v
 
     def write_trainstep_logs(self) -> None:
         if not all(
@@ -83,80 +157,6 @@ class TrainLog:
             prefix="speed",
         )
 
-    def log_metrics(
-        self,
-        metrics_dict: dict[str, Union[float, torch.Tensor]],
-        step=None,
-        epoch=None,
-        prefix=None,
-    ):
-        if conf.debug and conf.command != "test":
-            return
-        if step is None:
-            step = self.state["grad_step"]
-        if epoch is None:
-            epoch = self.state["epoch"]
-
-        if prefix is not None:
-            metrics_dict = {f"{prefix}/{k}": v for k, v in metrics_dict.items()}
-
-        if self.use_comet:
-            self.experiment.log_metrics(
-                metrics_dict,
-                step=step,
-                epoch=epoch,
-            )
-
-        if self.use_tb:
-            for name, value in metrics_dict.items():
-                self.writer.add_scalar(name, value, step, new_style=True)
-
-        if self.use_wandb:
-            wandb.log(metrics_dict | {"epoch": epoch}, step=step)
-
-    def log_metric(self, name: str, value=None, step=None, epoch=None) -> None:
-        if conf.debug and conf.command != "test":
-            return
-        assert value is not None
-        if step is None:
-            step = self.state["grad_step"]
-        if epoch is None:
-            epoch = self.state["epoch"]
-        value = float(value)
-
-        if self.use_tb:
-            self.writer.add_scalar(name, value, step, new_style=True)
-        if self.use_comet:
-            self.experiment.log_metric(
-                name,
-                value,
-                step=step,
-                epoch=epoch,
-            )
-        if self.use_wandb:
-            wandb.log(data={name: value}, step=step)
-
-    def log_figure(
-        self,
-        figure_name,
-        figure,
-        overwrite=False,
-        step=None,
-    ):
-        if step is None:
-            step = self.state["grad_step"]
-        if self.use_tb:
-            self.writer.add_figure(tag=figure_name, figure=figure, global_step=step)
-        if self.use_comet:
-            self.experiment.log_figure(
-                figure_name=figure_name,
-                figure=figure,
-                overwrite=overwrite,
-                step=step,
-            )
-        if self.use_wandb:
-            wandb.log(data={figure_name: wandb.Image(figure)}, step=step)
-
     def next_epoch(self) -> None:
         self.state["epoch"] += 1
         if self.use_comet:
@@ -182,6 +182,9 @@ class TrainLog:
         if self.use_tb:
             self.writer.flush()
             self.writer.close()
+        if self.use_wandb:
+            if not self.state["complete"]:
+                wandb.run.mark_preempting()
 
     def end(self) -> None:
         if self.use_comet:

@@ -62,7 +62,7 @@ class ValidationMetrics:
                     mval[metric_name] = comp_metrics
         self.metric_aggr.append_dict(mval)
 
-    def log_metrics(self) -> None:
+    def log_metrics(self, n_grad_steps_per_epoch) -> None:
         # Call metric_aggr to aggregate the collected metrics over the
         # validation batches.
         up_metrics_d = self.metric_aggr.aggregate()
@@ -89,10 +89,11 @@ class ValidationMetrics:
         history["score"] = list(score)
         # overwrite the recorded score for each
         for ivalstep in range(len(score)):
-            self.train_log.log_metric(
-                name="trend/score",
-                value=score[ivalstep],
+            self.train_log.log_metrics(
+                {"trend/score": score[ivalstep]},
                 step=ivalstep * conf.training.val.interval,
+                epoch=(ivalstep * conf.training.val.interval)
+                // n_grad_steps_per_epoch,
             )
 
     def __getitem__(self, lossname: str) -> Callable:
