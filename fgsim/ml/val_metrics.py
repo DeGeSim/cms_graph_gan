@@ -1,5 +1,6 @@
 """Dynamically import the losses"""
 import importlib
+from datetime import datetime
 from typing import Callable, Dict, List, Optional
 
 import numpy as np
@@ -7,7 +8,6 @@ import torch
 from omegaconf import DictConfig
 
 from fgsim.config import conf
-from fgsim.io.sel_loader import Batch
 from fgsim.monitoring.metrics_aggr import MetricAggregator
 from fgsim.monitoring.train_log import TrainLog
 
@@ -34,24 +34,13 @@ class ValidationMetrics:
             self.parts[metric_name] = loss
             setattr(self, metric_name, loss)
 
-    def __call__(
-        self,
-        gen_batch: Batch,
-        sim_batch: Batch,
-        d_gen: torch.Tensor,
-        d_sim: torch.Tensor,
-    ) -> None:
+    def __call__(self, **kwargs) -> None:
         # During the validation, this function is called once per batch.
         # All losses are save in a dict for later evaluation log_lossses
-        kwargs = {
-            "gen_batch": gen_batch,
-            "sim_batch": sim_batch,
-            "d_gen": d_gen,
-            "d_sim": d_sim,
-        }
         mval = {}
         with torch.no_grad():
             for metric_name, metric in self.parts.items():
+                start = datetime.now()
                 comp_metrics = metric(**kwargs)
                 if isinstance(comp_metrics, dict):
                     # If the loss is processed for each hlv
@@ -60,6 +49,10 @@ class ValidationMetrics:
                         mval[var] = float(lossval)
                 else:
                     mval[metric_name] = comp_metrics
+                print(
+                    f"Metric {metric_name} took"
+                    f" {(datetime.now()-start).seconds} sec"
+                )
         self.metric_aggr.append_dict(mval)
 
     def log_metrics(self, n_grad_steps_per_epoch) -> None:
