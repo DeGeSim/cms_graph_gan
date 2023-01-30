@@ -20,8 +20,9 @@ class LossGen:
 
         # The energy is scaled with a box-cox
         # to move the enery to 0, we need to produce a negative value
-        notenergies = gen_batch.xnot[..., conf.loader.x_ftx_energy_pos]
-        # it should not be completly outside the distribution
-        loss += notenergies[notenergies > -6].sum()
+        notenergies = gen_batch.xnot[..., conf.loader.x_ftx_energy_pos] + 6
+        # it should not be completly outside the distribution -> shift by 6
+
+        loss += (notenergies * (notenergies > 0).float()).sum()
 
         return loss
