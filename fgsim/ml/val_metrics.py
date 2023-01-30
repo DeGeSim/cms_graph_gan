@@ -1,6 +1,7 @@
 """Dynamically import the losses"""
 import importlib
-from datetime import datetime
+
+# from datetime import datetime
 from typing import Callable, Dict, List, Optional
 
 import numpy as np
@@ -40,7 +41,7 @@ class ValidationMetrics:
         mval = {}
         with torch.no_grad():
             for metric_name, metric in self.parts.items():
-                start = datetime.now()
+                # start = datetime.now()
                 comp_metrics = metric(**kwargs)
                 if isinstance(comp_metrics, dict):
                     # If the loss is processed for each hlv
@@ -49,10 +50,10 @@ class ValidationMetrics:
                         mval[var] = float(lossval)
                 else:
                     mval[metric_name] = comp_metrics
-                print(
-                    f"Metric {metric_name} took"
-                    f" {(datetime.now()-start).seconds} sec"
-                )
+                # print(
+                #     f"Metric {metric_name} took"
+                #     f" {(datetime.now()-start).seconds} sec"
+                # )
         self.metric_aggr.append_dict(mval)
 
     def log_metrics(self, n_grad_steps_per_epoch) -> None:
