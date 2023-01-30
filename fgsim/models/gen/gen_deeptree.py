@@ -239,18 +239,18 @@ class ModelClass(nn.Module):
             conf.loader.n_points, conf.loader.batch_size, conf.loader.n_features
         ).transpose(0, 1)
 
-        batch = Batch.from_data_list(
-            [
-                Data(
-                    x=xe[
-                        xe[..., conf.loader.x_ftx_energy_pos]
-                        .topk(k=ne, dim=0, largest=True, sorted=False)
-                        .indices
-                    ]
-                )
-                for xe, ne in zip(x, num_vec)
-            ]
-        )
+        batch_list = []
+        for xe, ne in zip(x, num_vec):
+            idxs = (
+                xe[..., conf.loader.x_ftx_energy_pos]
+                .topk(k=ne, dim=0, largest=True, sorted=False)
+                .indices
+            )
+            xesel = xe[idxs]
+            xenot = xe[~idxs]
+            batch_list.append(Data(x=xesel, xnot=xenot))
+
+        batch = Batch.from_data_list(batch_list)
 
         if self.final_layer_scaler:
             batch.x = self.ftx_scaling(batch.x)
