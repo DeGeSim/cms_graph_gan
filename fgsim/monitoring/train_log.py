@@ -182,13 +182,8 @@ class TrainLog:
         if self.use_tb:
             self.writer.flush()
             self.writer.close()
-        if self.use_wandb:
-            if not self.state["complete"]:
-                wandb.run.mark_preempting()
 
     def end(self) -> None:
         if self.use_comet:
             self.experiment.log_other("ended", True)
             self.experiment.end()
-        if self.use_wandb:
-            wandb.finish()
