@@ -284,7 +284,7 @@ loss_options:
     frechetpcdist:
         factor: 1.0
     extozero:
-        factor: 0.1
+        factor: 0.001
     outside_interval:
         factor: 1.0
         high: 4.0
