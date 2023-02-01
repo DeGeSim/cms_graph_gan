@@ -241,13 +241,8 @@ class ModelClass(nn.Module):
 
         batch_list = []
         for xe, ne in zip(x, num_vec):
-            idxs = (
-                xe[..., conf.loader.x_ftx_energy_pos]
-                .topk(k=ne, dim=0, largest=True, sorted=False)
-                .indices
-            )
-            xesel = xe[idxs]
-            xenot = xe[~idxs]
+            xesel = xe[:ne]
+            xenot = xe[ne + 1 :]
             batch_list.append(Data(x=xesel, xnot=xenot))
 
         batch = Batch.from_data_list(batch_list)
