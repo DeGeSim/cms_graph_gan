@@ -209,8 +209,11 @@ class Holder:
     ):
         assert not (train_gen and train_disc)
         # generate the random vector
-        z = torch.randn(*self.models.gen.z_shape, requires_grad=True).to(
-            self.device
+        z = torch.randn(
+            *self.models.gen.z_shape,
+            requires_grad=True,
+            dtype=torch.float,
+            device=self.device,
         )
         if len(conf.loader.y_features) == 0:
             cond = torch.empty(
