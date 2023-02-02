@@ -43,6 +43,7 @@ class TrainLog:
                 resume="must",
                 dir=conf.path.run_path,
                 project=conf.comet_project_name,
+                job_type=conf.command,
             )
             wandb.log(
                 data={"other/epoch": self.state["epoch"]},
@@ -128,7 +129,7 @@ class TrainLog:
         self._log_metrics_wandb(metrics_dict, step, epoch)
         if self.use_wandb:
             for k, v in metrics_dict.items():
-                wandb.run.summary[k] = v
+                self.wandb_run.summary[k] = v
 
     def write_trainstep_logs(self) -> None:
         if not all(

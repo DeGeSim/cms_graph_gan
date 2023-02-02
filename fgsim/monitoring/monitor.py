@@ -93,6 +93,7 @@ def setup_experiment() -> None:
         tags=tags_list,
         config=hyperparameters_keyval_list,
         dir=conf.path.run_path,
+        job_type=conf.command,
         resume=False,
     )
     exp_orga_wandb[conf["hash"]] = run.id
