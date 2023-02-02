@@ -74,24 +74,11 @@ def validate(holder: Holder, loader: QueuedDataset) -> None:
             step=holder.state.grad_step,
         )
 
-    if len({"kpd", "fid"} & set(conf.training.val.metrics)):
-        import jetnet
+    if len({"kpd", "fgd"} & set(conf.training.val.metrics)):
+        from fgsim.utils.jetnetutils import to_efp
 
-        from fgsim.utils.jetnetutils import to_stacked_mask
-
-        sim_jets = (
-            to_stacked_mask(results_d["sim_batch"])[:5000, ..., :3].cpu().numpy()
-        )
-        results_d["sim_efps"] = jetnet.utils.efps(
-            sim_jets, efpset_args=[("d<=", 4)]
-        )
-
-        gen_jets = (
-            to_stacked_mask(results_d["gen_batch"])[:5000, ..., :3].cpu().numpy()
-        )
-        results_d["gen_efps"] = jetnet.utils.efps(
-            gen_jets, efpset_args=[("d<=", 4)]
-        )
+        results_d["sim_efps"] = to_efp(results_d["sim_batch"])
+        results_d["gen_efps"] = to_efp(results_d["gen_batch"])
 
     # evaluate the validation metrics
     with torch.no_grad():

@@ -2,7 +2,7 @@
 # based on https://github.com/mchong6/FID_IS_infinity/blob/master/score_infinity.py
 
 import numpy as np
-from numba import njit, prange, set_num_threads
+from numba import njit, prange  # , set_num_threads
 from numpy.typing import ArrayLike
 from scipy.stats import iqr
 
@@ -40,7 +40,8 @@ def mmd_poly_quadratic_unbiased(
     return _mmd_quadratic_unbiased(XX, YY, XY)
 
 
-@njit(parallel=True)
+# @njit(parallel=True)
+@njit
 def _average_batches_mmd(X, Y, num_batches, batch_size, seed):
     # can't use list.append with numba prange
     # https://github.com/numba/numba/issues/4206#issuecomment-503947050
@@ -71,7 +72,7 @@ def mmd(
     if normalise:
         X, Y = normalise_features(X, Y)
 
-    set_num_threads(num_threads)
+    # set_num_threads(num_threads)
     vals_point = _average_batches_mmd(X, Y, num_batches, batch_size, seed)
     return [np.median(vals_point), iqr(vals_point, rng=(16.275, 83.725))]
 
@@ -82,9 +83,11 @@ class Metric:
     ):
         pass
 
-    def __call__(self, sim_efps, gen_efps, **kwargs) -> float:
-        score = mmd(sim_efps, gen_efps)[0]
-        return min(float(score), 1e5)
+    def __call__(self, sim_efps, gen_efps, **kwargs) -> tuple[float, float]:
+        if np.isnan(gen_efps).any():
+            return (1e5, 1e5)
+        score = mmd(sim_efps, gen_efps)
+        return tuple(min(float(e), 1e5) for e in score)
 
 
 kpd = Metric()

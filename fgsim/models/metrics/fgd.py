@@ -1,78 +1,17 @@
 # https://github.com/rkansal47/MPGAN/blob/development/metrics/metrics.py
 # based on https://github.com/mchong6/FID_IS_infinity/blob/master/score_infinity.py
 
-import logging
-
 import numpy as np
-from numpy.typing import ArrayLike
 from scipy import linalg
 from scipy.optimize import curve_fit
 
-
-def normalise_features(X: ArrayLike, Y: ArrayLike = None):
-    maxes = np.max(np.abs(X), axis=0)
-
-    return (X / maxes, Y / maxes) if Y is not None else X / maxes
+from fgsim.monitoring.logger import logger
 
 
 def linear(x, intercept, slope):
     return intercept + slope * x
 
 
-def fpd_infinity(
-    X: ArrayLike,
-    Y: ArrayLike,
-    min_samples: int = 20_000,
-    max_samples: int = 50_000,
-    num_batches: int = 20,
-    num_points: int = 10,
-    seed: int = 42,
-    normalise: bool = True,
-    inverse_intervals: bool = True,
-    n_jobs: int = 1,
-):
-    if normalise:
-        X, Y = normalise_features(X, Y)
-
-    # Choose the number of images to evaluate FID_N at either regular intervals over N or 1/N
-    if inverse_intervals:
-        batches = (
-            1 / np.linspace(1.0 / min_samples, 1.0 / max_samples, num_points)
-        ).astype("int32")
-    else:
-        batches = np.linspace(min_samples, max_samples, num_points).astype("int32")
-    # batches = np.linspace(min_samples, max_samples, num_points).astype("int32")
-
-    np.random.seed(seed)
-
-    vals = []
-
-    for i, batch_size in enumerate(batches):
-        vals_point = []
-        for _ in range(num_batches):
-            rand1 = np.random.choice(len(X), size=batch_size)
-            rand2 = np.random.choice(len(Y), size=batch_size)
-
-            rand_sample1 = X[rand1]
-            rand_sample2 = Y[rand2]
-
-            val = frechet_gaussian_distance(
-                rand_sample1, rand_sample2, normalise=False
-            )
-            vals_point.append(val)
-
-        vals.append(np.mean(vals_point))
-
-    vals = np.array(vals)
-
-    params, covs = curve_fit(
-        linear, 1 / batches, vals, bounds=([0, 0], [np.inf, np.inf])
-    )
-
-    return (params[0], np.sqrt(np.diag(covs)[0]))
-
-
-# from https://github.com/mseitzer/pytorch-fid
 def _calculate_frechet_distance(mu1, sigma1, mu2, sigma2, eps=1e-6):
     """Numpy implementation of the Frechet Distance.
     The Frechet distance between two multivariate Gaussians X_1 ~ N(mu_1, C_1)
@@ -114,16 +53,15 @@ def _calculate_frechet_distance(mu1, sigma1, mu2, sigma2, eps=1e-6):
             f"fid calculation produces singular product; adding {eps} to diagonal"
             " of cov estimates"
         )
-        logging.debug(msg)
+        logger.debug(msg)
         offset = np.eye(sigma1.shape[0]) * eps
         covmean = linalg.sqrtm((sigma1 + offset).dot(sigma2 + offset))
 
     # Numerical error might give slight imaginary component
     if np.iscomplexobj(covmean):
-        if not np.allclose(np.diagonal(covmean).imag, 0, atol=1e-3):
-            # m = np.max(np.abs(covmean.imag))
-            pass
-            # raise ValueError("Imaginary component {}".format(m))
+        # if not np.allclose(np.diagonal(covmean).imag, 0, atol=1e-3):
+        #     m = np.max(np.abs(covmean.imag))
+        # raise ValueError("Imaginary component {}".format(m))
         covmean = covmean.real
 
     tr_covmean = np.trace(covmean)
@@ -131,9 +69,7 @@ def _calculate_frechet_distance(mu1, sigma1, mu2, sigma2, eps=1e-6):
     return diff.dot(diff) + np.trace(sigma1) + np.trace(sigma2) - 2 * tr_covmean
 
 
-def frechet_gaussian_distance(
-    X: ArrayLike, Y: ArrayLike, normalise: bool = True
-) -> float:
+def frechet_gaussian_distance(X, Y, normalise: bool = True) -> float:
     if normalise:
         X, Y = normalise_features(X, Y)
 
@@ -145,15 +81,72 @@ def frechet_gaussian_distance(
     return _calculate_frechet_distance(mu1, sigma1, mu2, sigma2)
 
 
+def normalise_features(X, Y=None):
+    maxes = np.max(np.abs(X), axis=0)
+
+    return (X / maxes, Y / maxes) if Y is not None else X / maxes
+
+
+def fpd_infinity(
+    X,
+    Y,
+    min_samples: int = 5_000,
+    max_samples: int = 50_000,
+    num_batches: int = 10,
+    num_points: int = 200,
+    seed: int = 42,
+    normalise: bool = True,
+    n_jobs=None,
+):
+    if normalise:
+        X, Y = normalise_features(X, Y)
+
+    # Choose the number of images to evaluate FID_N at regular intervals over N
+    batches = (
+        1 / np.linspace(1.0 / min_samples, 1.0 / max_samples, num_points)
+    ).astype("int32")
+    # batches = np.linspace(min_samples, max_samples, num_points).astype("int32")
+
+    np.random.seed(seed)
+
+    vals = []
+
+    for i, batch_size in enumerate(batches):
+        vals_point = []
+        for _ in range(num_batches):
+            rand1 = np.random.choice(len(X), size=batch_size)
+            rand2 = np.random.choice(len(Y), size=batch_size)
+
+            rand_sample1 = X[rand1]
+            rand_sample2 = Y[rand2]
+
+            val = frechet_gaussian_distance(
+                rand_sample1, rand_sample2, normalise=False
+            )
+            vals_point.append(val)
+
+        vals.append(np.mean(vals_point))
+
+    vals = np.array(vals)
+
+    params, covs = curve_fit(
+        linear, 1 / batches, vals, bounds=([0, 0], [np.inf, np.inf])
+    )
+
+    return (params[0], np.sqrt(np.diag(covs)[0]))
+
+
 class Metric:
     def __init__(
         self,
     ):
         pass
 
-    def __call__(self, sim_efps, gen_efps, **kwargs) -> float:
+    def __call__(self, sim_efps, gen_efps, **kwargs) -> tuple[float, float]:
+        if np.isnan(gen_efps).any():
+            return (1e5, 1e5)
         score = fpd_infinity(sim_efps, gen_efps)
-        return min(float(score), 1e5)
+        return tuple(min(float(e), 1e5) for e in score)
 
 
-fid = Metric()
+fgd = Metric()

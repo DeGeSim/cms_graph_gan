@@ -21,6 +21,7 @@ from fgsim.ml.holder import Holder
 from fgsim.monitoring.logger import logger
 from fgsim.monitoring.train_log import TrainLog
 from fgsim.plot.validation_plots import validation_plots
+from fgsim.utils.jetnetutils import to_efp
 
 batch_size = conf.loader.batch_size
 
@@ -143,6 +144,9 @@ def get_testing_datasets(holder: Holder, best_or_last) -> TestDataset:
         for k in ["d_sim", "d_gen"]:
             res_d_l[k] = torch.hstack(res_d_l[k])
 
+        res_d_l["sim_efps"] = to_efp(res_d_l["sim_batch"])
+        res_d_l["gen_efps"] = to_efp(res_d_l["gen_batch"])
+
         test_data = TestDataset(
             res_d=res_d_l,
             grad_step=holder.state.grad_step,
@@ -165,12 +169,10 @@ def convert(tensorarr: List[torch.Tensor]) -> np.ndarray:
 
 def test_metrics(test_info: TestInfo):
     train_log = test_info.train_log
-    sim_batch = test_info.res_d["sim_batch"]
-    gen_batch = test_info.res_d["gen_batch"]
 
     metrics_dict: Dict[str, float] = {}
 
-    for k, v in jetnet_metrics(sim_batch, gen_batch).items():
+    for k, v in jetnet_metrics(**test_info.res_d).items():
         metrics_dict[k] = v
 
     # KS tests
@@ -188,16 +190,20 @@ def test_metrics(test_info: TestInfo):
     )
 
 
-def jetnet_metrics(sim_batch, gen_batch) -> Dict[str, float]:
-    from fgsim.models.metrics import fpnd, w1efp, w1m, w1p
+def jetnet_metrics(**res_d) -> Dict[str, float]:
+    from fgsim.models.metrics import cov_mmd, fgd, fpnd, kpd, w1efp, w1m, w1p
 
-    assert fpnd(sim_batch) < 10
+    assert fpnd(res_d["sim_batch"]) < 10
     metrics_dict = {}
 
-    metrics_dict["fpnd"] = fpnd(gen_batch)
-    metrics_dict["w1m"] = w1m(gen_batch=gen_batch, sim_batch=sim_batch)
-    metrics_dict["w1p"] = w1p(gen_batch=gen_batch, sim_batch=sim_batch)
-    metrics_dict["w1efp"] = w1efp(gen_batch=gen_batch, sim_batch=sim_batch)
+    metrics_dict["fpnd"] = fpnd(**res_d)
+    metrics_dict["w1m"], metrics_dict["w1m_delta"] = w1m(**res_d)
+    metrics_dict["w1p"], metrics_dict["w1p_delta"] = w1p(**res_d)
+    metrics_dict["w1efp"], metrics_dict["w1efp_delta"] = w1efp(**res_d)
+    metrics_dict["cov"], metrics_dict["mmd"] = cov_mmd(**res_d)
+    metrics_dict["fgd"], metrics_dict["fgd_delta"] = fgd(**res_d)
+    metrics_dict["kpd"], metrics_dict["kpd_delta"] = kpd(**res_d)
+
     return metrics_dict
 
 
