@@ -10,7 +10,7 @@ pickle_lup_path = Path(conf.path.geo_lup).with_suffix(".pd")
 if not pickle_lup_path.is_file():
     with uproot.open(conf.path.geo_lup) as rf:
         geo_lup = rf["analyzer/tree;1"].arrays(library="ak")
-    geo_lup = ak.to_pandas(geo_lup)
+    geo_lup = ak.to_dataframe(geo_lup)
     geo_lup.set_index("globalid", inplace=True)
     # Fix the layers being the same for all subdetector
     # assign negative values for z<0

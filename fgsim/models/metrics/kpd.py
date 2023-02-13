@@ -2,7 +2,7 @@
 # based on https://github.com/mchong6/FID_IS_infinity/blob/master/score_infinity.py
 
 import numpy as np
-from numba import njit, prange  # , set_num_threads
+from numba import njit, prange, set_num_threads
 from numpy.typing import ArrayLike
 from scipy.stats import iqr
 
@@ -27,7 +27,7 @@ def _mmd_quadratic_unbiased(XX: ArrayLike, YY: ArrayLike, XY: ArrayLike):
 @njit
 def _poly_kernel_pairwise(X: ArrayLike, Y: ArrayLike, degree: int) -> np.ndarray:
     gamma = 1.0 / X.shape[-1]
-    return (X @ Y.swapaxes(-2, -1) * gamma + 1.0) ** degree
+    return (X @ Y.T * gamma + 1.0) ** degree
 
 
 @njit
@@ -40,8 +40,7 @@ def mmd_poly_quadratic_unbiased(
     return _mmd_quadratic_unbiased(XX, YY, XY)
 
 
-# @njit(parallel=True)
-@njit
+@njit(parallel=True)
 def _average_batches_mmd(X, Y, num_batches, batch_size, seed):
     # can't use list.append with numba prange
     # https://github.com/numba/numba/issues/4206#issuecomment-503947050
@@ -72,7 +71,7 @@ def mmd(
     if normalise:
         X, Y = normalise_features(X, Y)
 
-    # set_num_threads(num_threads)
+    set_num_threads(num_threads)
     vals_point = _average_batches_mmd(X, Y, num_batches, batch_size, seed)
     return [np.median(vals_point), iqr(vals_point, rng=(16.275, 83.725))]
 
