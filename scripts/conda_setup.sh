@@ -50,7 +50,7 @@ conda config --add channels comet_ml
 
 
 
-mamba install --yes  -c pytorch  pytorch=1.11 cudatoolkit=11.3
+mamba install --yes  -c pytorch  cudatoolkit=11.6
 mamba install --yes numpy
 python -c 'import torch; assert torch.cuda.is_available()'
 # mamba install glib
@@ -70,6 +70,11 @@ mamba install --yes black isort flake8 mypy pytest pre-commit ipykernel jupyter 
 
 # jetnet requirements
 mamba install --yes coffea h5py wurlitzer
+
+# crypto vs openssl bug
+# https://stackoverflow.com/questions/74981558/error-updating-python3-pip-attributeerror-module-lib-has-no-attribute-openss
+mamba install cryptography==38.0.4
+
 pip install jetnet
 pip install wandb
 
