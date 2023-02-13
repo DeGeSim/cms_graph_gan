@@ -117,8 +117,6 @@ def get_testing_datasets(holder: Holder, best_or_last) -> TestDataset:
         if best_or_last == "best":
             holder.select_best_model()
 
-        holder.models.eval()
-
         res_d_l = {
             "sim_batch": [],
             "gen_batch": [],
@@ -128,7 +126,7 @@ def get_testing_datasets(holder: Holder, best_or_last) -> TestDataset:
 
         for test_batch in tqdm(qds.testing_batches, desc=best_or_last, miniters=20):
             for k, val in holder.pass_batch_through_model(
-                test_batch.to(holder.device)
+                test_batch.to(holder.device), eval=True
             ).items():
                 if "batch" in k:
                     for e in val.to_data_list():

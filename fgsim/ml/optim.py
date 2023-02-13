@@ -3,7 +3,9 @@ from typing import Dict
 
 import torch
 from omegaconf.dictconfig import DictConfig
+from torch.optim.swa_utils import SWALR, AveragedModel
 
+from fgsim.ml.network import SubNetworkCollector
 from fgsim.monitoring.metrics_aggr import MetricAggregator
 from fgsim.monitoring.train_log import TrainLog
 
@@ -13,14 +15,24 @@ class OptimAndSchedulerCol:
     of the model to do eg. holder.model.zero_grad()."""
 
     def __init__(
-        self, pconf: DictConfig, submodelpar_dict: Dict, train_log: TrainLog
+        self,
+        pconf: DictConfig,
+        models: SubNetworkCollector,
+        swa_models: Dict[str, AveragedModel],
+        train_log: TrainLog,
     ):
         self.pconf = pconf
+        self.models = models
+        self.swa_models = swa_models
         self.train_log = train_log
         self.metric_aggr = MetricAggregator()
         self._optimizers: Dict[str, torch.optim.Optimizer] = {}
         self._schedulers: Dict[str, torch.optim.lr_scheduler._LRScheduler] = {}
+        # self._swa_schedulers: Dict[str, SWALR] = {}
 
+        submodelpar_dict = models.get_par_dict()
+
+        # configure optimizers and schedulers according to the config
         for name, submodelconf in pconf.items():
             assert name != "parts"
             optimparams = (
@@ -42,20 +54,23 @@ class OptimAndSchedulerCol:
             # Setup the scheduler
             if submodelconf.scheduler.name == "NullScheduler":
                 continue
-            schedulerparams = (
-                submodelconf.scheduler.params
-                if submodelconf.scheduler.params is not None
-                else {}
-            )
-            if "max_lr_factor" in schedulerparams:
-                schedulerparams["max_lr"] = (
-                    schedulerparams["max_lr_factor"] * optimparams["lr"]
+            elif submodelconf.scheduler.name == "SWA":
+                self._schedulers[name] = SWALR(optim, optimparams["lr"])
+            else:
+                schedulerparams = (
+                    submodelconf.scheduler.params
+                    if submodelconf.scheduler.params is not None
+                    else {}
                 )
-                del schedulerparams["max_lr_factor"]
-            scheduler = getattr(
-                torch.optim.lr_scheduler, submodelconf.scheduler.name
-            )(optimizer=optim, **schedulerparams)
-            self._schedulers[name] = scheduler
+                if "max_lr_factor" in schedulerparams:
+                    schedulerparams["max_lr"] = (
+                        schedulerparams["max_lr_factor"] * optimparams["lr"]
+                    )
+                    del schedulerparams["max_lr_factor"]
+                scheduler = getattr(
+                    torch.optim.lr_scheduler, submodelconf.scheduler.name
+                )(optimizer=optim, **schedulerparams)
+                self._schedulers[name] = scheduler
 
     def load_state_dict(self, state_dict):
         optims_state = state_dict["optimizers"]
@@ -90,12 +105,19 @@ class OptimAndSchedulerCol:
 
         if pname not in self._schedulers:
             return
+        scheduler = self._schedulers[pname]
+        # SWA after X epochs
+        if not isinstance(scheduler, SWALR):
+            try:
+                scheduler.step()
+            except ValueError:
+                pass
+            lrs = scheduler.get_last_lr()
+        else:
+            self.swa_models[pname].update_parameters(self.models.parts[pname])
+            scheduler.step()
+            lrs = scheduler.get_last_lr()
 
-        try:
-            self._schedulers[pname].step()
-        except ValueError:
-            pass
-        lrs = self._schedulers[pname].get_last_lr()
         assert len(lrs) == 1
         self.metric_aggr.append_dict({pname: lrs[0]})
 

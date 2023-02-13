@@ -17,7 +17,7 @@ models:
             name: Adam
             params: ${optim_options[gen][${models.gen.optim.name}]}
         scheduler:
-            name: CyclicLR
+            name: SWA
             params: ${scheduler_options[${models.gen.scheduler.name}]}
         retain_graph_on_backprop: True
     disc:
@@ -29,7 +29,7 @@ models:
             name: Adam
             params: ${optim_options[disc][${models.gen.optim.name}]}
         scheduler:
-            name: NullScheduler
+            name: SWA
             params: ${scheduler_options[${models.disc.scheduler.name}]}
         retain_graph_on_backprop: False
 
@@ -59,6 +59,7 @@ optim_options:
 
 scheduler_options:
     NullScheduler: {}
+    SWA: {}
     OneCycleLR:
         max_lr_factor: 100
         total_steps: ${prod:500, 575}
@@ -321,7 +322,7 @@ training:
     checkpoint_minutes: 15
     smoothing: ${mergedefault:${dataset_options},${dataset_name},smoothing}
     log_interval: 500
-    max_epochs: 5000
+    max_epochs: 10000
     val: ${mergedefault:${dataset_options},${dataset_name},validation}
 
 path:

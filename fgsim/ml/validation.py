@@ -24,7 +24,7 @@ def validate(holder: Holder, loader: QueuedDataset) -> None:
         "d_gen": [],
     }
     for val_batch in loader.validation_batches:
-        for k, val in holder.pass_batch_through_model(val_batch).items():
+        for k, val in holder.pass_batch_through_model(val_batch, eval=True).items():
             if k in ["sim_batch", "gen_batch"]:
                 for e in val.to_data_list():
                     res_d_l[k].append(e)

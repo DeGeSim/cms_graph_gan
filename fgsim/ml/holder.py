@@ -13,6 +13,7 @@ from pathlib import Path
 import torch
 from omegaconf import OmegaConf
 from omegaconf.dictconfig import DictConfig
+from torch.optim.swa_utils import AveragedModel
 
 from fgsim.config import conf
 from fgsim.io.sel_loader import Batch
@@ -50,12 +51,16 @@ class Holder:
         self.train_log = TrainLog(self.state, self.history)
 
         self.models: SubNetworkCollector = SubNetworkCollector(conf.models)
-        self.models = self.models.float()
+        # For SWA the models need to be on the right device before initializing
+        self.models = self.models.float().to(device)
         self.train_log.log_model_graph(self.models)
+        self.swa_models = {
+            k: AveragedModel(v) for k, v in self.models.parts.items()
+        }
 
         if conf.command == "train":
             self.optims: OptimAndSchedulerCol = OptimAndSchedulerCol(
-                conf.models, self.models.get_par_dict(), self.train_log
+                conf.models, self.models, self.swa_models, self.train_log
             )
 
         # try to load a check point
@@ -96,7 +101,11 @@ class Holder:
 
     def to(self, device):
         self.device = device
-        self.models = self.models.to(device)
+        self.models = self.models
+        # self.swa_models = {k: v.to(device) for k, v in self.swa_models.items()}
+        # self.swa_models = {
+        #     k: AveragedModel(v).to(device) for k, v in self.models.parts.items()
+        # }
         if conf.command == "train":
             self.optims.to(device)
 
@@ -155,7 +164,7 @@ class Holder:
         torch.save(
             {
                 "models": self.models.state_dict(),
-                "optims": self.optims.state_dict(),
+                "optims": cylerlr_workaround(self.optims.state_dict()),
                 "best_model": self.best_model_state,
                 "history": self.history,
             },
@@ -175,7 +184,7 @@ class Holder:
         torch.save(
             {
                 "models": self.models.state_dict(),
-                "optims": self.optims.state_dict(),
+                "optims": cylerlr_workaround(self.optims.state_dict()),
                 "best_model": self.best_model_state,
                 "history": self.history,
             },
@@ -205,9 +214,29 @@ class Holder:
             self.save_checkpoint()
 
     def pass_batch_through_model(
-        self, sim_batch, train_gen: bool = False, train_disc: bool = False
+        self,
+        sim_batch,
+        train_gen: bool = False,
+        train_disc: bool = False,
+        eval=False,
     ):
         assert not (train_gen and train_disc)
+        assert not (eval and (train_gen or train_disc))
+        # if eval:
+        #     self.models.eval()
+        # else:
+        #     self.models.train()
+
+        if eval and conf["models"]["gen"]["scheduler"]["name"] == "SWA":
+            gen = self.swa_models["gen"]
+        else:
+            gen = self.models.gen
+
+        if eval and conf["models"]["disc"]["scheduler"]["name"] == "SWA":
+            disc = self.swa_models["disc"]
+        else:
+            disc = self.models.disc
+
         # generate the random vector
         z = torch.randn(
             *self.models.gen.z_shape,
@@ -221,12 +250,13 @@ class Holder:
             )
         else:
             cond = sim_batch.y
+
         with with_grad(train_gen):
-            gen_batch = self.models.gen(z, cond)
+            gen_batch = gen(z, cond)
 
         # In both cases the gradient needs to pass though d_gen
         with with_grad(train_gen or train_disc):
-            d_gen = self.models.disc(gen_batch, cond)
+            d_gen = disc(gen_batch, cond)
             assert d_gen.shape == (conf.loader.batch_size, 1)
 
         res = {
@@ -238,7 +268,7 @@ class Holder:
         # but we need it for the validation
         if train_disc or (train_disc == train_gen):
             with with_grad(train_disc):
-                d_sim = self.models.disc(sim_batch, cond)
+                d_sim = disc(sim_batch, cond)
                 assert d_sim.shape == (conf.loader.batch_size, 1)
             res["d_sim"] = d_sim
         return res
@@ -251,3 +281,9 @@ def with_grad(condition):
             yield
     else:
         yield
+
+
+def cylerlr_workaround(sd):
+    for pname in sd["schedulers"]:
+        if "_scale_fn_ref" in sd["schedulers"][pname]:
+            del sd["schedulers"][pname]["_scale_fn_ref"]
