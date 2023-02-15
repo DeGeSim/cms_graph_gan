@@ -122,7 +122,7 @@ class Trainer:
         self.holder.state.time_train_step_start = time.time()
 
     def validation_step(self):
-        if True:  # not conf.debug:
+        if not conf.debug:
             logger.info("Validating")
             validate(self.holder, self.loader)
         self.holder.state.time_train_step_start = time.time()
