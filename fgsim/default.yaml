@@ -73,6 +73,9 @@ scheduler_options:
 
 
 gan_mode_options:
+    Hinge:
+        gen: [HingeGenLoss]
+        disc: [HingeDiscLoss]
     CE:
         gen: [CEGenLoss]
         disc: [CEDiscLoss]
@@ -274,6 +277,10 @@ loss_options:
     CEDiscLoss:
         factor: 1.0
     CEGenLoss:
+        factor: 1.0
+    HingeDiscLoss:
+        factor: 1.0
+    HingeGenLoss:
         factor: 1.0
     GradientPenalty:
         factor: 1.0
