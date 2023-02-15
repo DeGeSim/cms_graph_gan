@@ -25,6 +25,8 @@ class ModelClass(nn.Module):
         final_layer_scaler: bool,
         connect_all_ancestors: bool,
         dim_red_in_branching: bool,
+        pruning: str,
+        equivar: bool,
         **kwargs,
     ):
         super().__init__()
@@ -35,6 +37,8 @@ class ModelClass(nn.Module):
         self.ancestor_mpl = ancestor_mpl
         self.child_mpl = child_mpl
         self.dim_red_in_branching = dim_red_in_branching
+        self.pruning = pruning
+        self.equivar = equivar
 
         self.features = OmegaConf.to_container(conf.tree.features)
         self.branches = OmegaConf.to_container(conf.tree.branches)
@@ -132,6 +136,7 @@ class ModelClass(nn.Module):
     def forward(self, random_vector: torch.Tensor, cond: torch.Tensor) -> Batch:
         batch_size = self.batch_size
         features = self.features
+        device = random_vector.device
         n_levels = len(self.features)
 
         # Init the graph object
@@ -141,10 +146,11 @@ class ModelClass(nn.Module):
                 batch_size,
                 self.n_global,
                 dtype=torch.float,
-                device=random_vector.device,
+                device=device,
             ),
             tree=self.tree,
         )
+        cond = cond[..., [conf.loader.y_features.index("num_particles")]]
         # overwrite the first features of the reandom vector with the condition
         # cond = (
         #     cond.clone()
@@ -231,7 +237,8 @@ class ModelClass(nn.Module):
         # batch = self.presaved_batch.clone()
         # batch.x = graph_tree.tftx_by_level(-1)[self.presaved_batch_indexing]
 
-        num_vec = cond[..., conf.loader.y_features.index("num_particles")].int()
+        # num_vec = cond[..., conf.loader.y_features.index("num_particles")].int()
+        num_vec = cond.int().reshape(-1)
 
         x = graph_tree.tftx_by_level(-1)
         assert x.shape[0] == self.output_points * batch_size
@@ -240,9 +247,25 @@ class ModelClass(nn.Module):
         ).transpose(0, 1)
 
         batch_list = []
+
         for xe, ne in zip(x, num_vec):
-            xesel = xe[:ne]
-            xenot = xe[ne + 1 :]
+            if self.pruning == "cut":
+                xesel = xe[:ne]
+                xenot = xe[ne:]
+            elif self.pruning == "topk":
+                idxs = (
+                    xe[..., conf.loader.x_ftx_energy_pos]
+                    .topk(k=int(ne), dim=0, largest=True, sorted=False)
+                    .indices
+                )
+                xesel = xe[idxs]
+                true_v = torch.ones(conf.loader.n_points, device=device).bool()
+                true_v[idxs] = False
+                xenot = xe[true_v]
+            else:
+                raise Exception
+
+            assert len(xenot) + len(xesel) == self.output_points
             batch_list.append(Data(x=xesel, xnot=xenot))
 
         batch = Batch.from_data_list(batch_list)
@@ -251,6 +274,7 @@ class ModelClass(nn.Module):
             batch.x = self.ftx_scaling(batch.x)
 
         assert batch_size <= batch.x.shape[0] <= self.output_points * batch_size
+        assert len(batch.x) + len(batch.xnot) == self.output_points * batch_size
         assert batch.x.shape[-1] == features[-1]
         assert batch.num_graphs == batch_size
         return batch

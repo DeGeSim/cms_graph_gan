@@ -17,7 +17,7 @@ models:
             name: Adam
             params: ${optim_options[gen][${models.gen.optim.name}]}
         scheduler:
-            name: SWA
+            name: CyclicLR
             params: ${scheduler_options[${models.gen.scheduler.name}]}
         retain_graph_on_backprop: True
     disc:
@@ -29,7 +29,7 @@ models:
             name: Adam
             params: ${optim_options[disc][${models.gen.optim.name}]}
         scheduler:
-            name: SWA
+            name: NullScheduler
             params: ${scheduler_options[${models.disc.scheduler.name}]}
         retain_graph_on_backprop: False
 
@@ -121,6 +121,8 @@ model_param_options:
         dim_red_in_branching: True
         n_global: 10
         n_cond: ${len:${loader.y_features}}
+        pruning: "cut"
+        equivar: False
         branching_param:
             residual: True
             final_linear: True
@@ -328,7 +330,7 @@ training:
         improvement: 0.05
     checkpoint_minutes: 15
     smoothing: ${mergedefault:${dataset_options},${dataset_name},smoothing}
-    log_interval: 500
+    log_interval: 100
     max_epochs: 10000
     val: ${mergedefault:${dataset_options},${dataset_name},validation}
 
