@@ -287,3 +287,4 @@ def cylerlr_workaround(sd):
     for pname in sd["schedulers"]:
         if "_scale_fn_ref" in sd["schedulers"][pname]:
             del sd["schedulers"][pname]["_scale_fn_ref"]
+    return sd
