@@ -16,6 +16,6 @@ class LossGen:
     ) -> torch.Tensor:
         assert not kwargs["gen_batch"].x.requires_grad
         assert d_sim.requires_grad and d_sim.requires_grad
-        loss = self.hinge_act(d_sim - 1).mean()
-        loss += self.hinge_act(-d_gen - 1).mean()
+        loss = -self.hinge_act(d_sim - 1).mean()
+        loss += -self.hinge_act(-d_gen - 1).mean()
         return loss
