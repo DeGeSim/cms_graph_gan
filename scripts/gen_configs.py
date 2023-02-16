@@ -21,35 +21,43 @@ class ExperimentOption:
 base_config = ExperimentConfig(
     OmegaConf.create(
         """
-comet_project_name: jetnet-scheduler
+comet_project_name: jetnet_uc
 dataset_name: jetnet
 models:
     gen:
+        additional_losses_list: []
+        optim:
+            name: Adam
+        scheduler:
+            name: CyclicLR
+        retain_graph_on_backprop: True
+    disc:
+        name: disc_benno_lin
         optim:
             name: Adam
         scheduler:
             name: NullScheduler
+training:
+    gan_mode: MSE
 optim_options:
+  disc:
     Adam:
-        weight_decay: 1.0e-4
-        lr: 2.e-4
-    SGD:
-        lr: 2.e-4
-    RMSprop:
-        lr: 2.e-4
-scheduler_options:
-    NullScheduler: {}
-    OneCycleLR:
-        max_lr_factor: 100
-        total_steps: ${prod:500, 575}
-    CyclicLR:
-        max_lr_factor: 100
-        base_lr: 1.e-5
-        step_size_up: 2000
-        cycle_momentum: True
-    """,
+      betas: [0.0, 0.9]
+tree:
+  branches: [2,3,5]
+  features: [64,33,20,3]
+dataset_options:
+  jetnet:
+    loader:
+      dataset_glob: "**/q.hdf5"
+model_param_options:
+    gen_deeptree:
+        n_cond: 1
+        pruning: "cut"
+        equivar: False
+    """
     ),
-    ["jn", "sched"],
+    ["uc", "q"],
 )
 
 
@@ -65,67 +73,68 @@ def add_option(option: Callable):
 exp_list: List[ExperimentConfig] = [base_config]
 
 
+# equivar vs regular
+
+
+# MSE vs Hinge
 @add_option
-def option_optim(exp_config: ExperimentConfig) -> Dict[str, DictConfig]:
+def option_ganmode(exp_config: ExperimentConfig) -> Dict[str, DictConfig]:
     res = defaultdict(exp_config.config.copy)
-    res["Adam"]["models"]["gen"]["optim"]["name"] = "Adam"
-    # res["SGD"]["models"]["gen"]["optim"]["name"] = "SGD"
-    # res["RMSprop"]["models"]["gen"]["optim"]["name"] = "RMSprop"
+    res["MSE"]
+    res["Hinge"]["training"]["gan_mode"] = "Hinge"
+    return res
+
+
+def option_ext0(exp_config: ExperimentConfig) -> Dict[str, DictConfig]:
+    res = defaultdict(exp_config.config.copy)
+    res["noext0"]
+    res["ext0"]["models"]["gen"]["additional_losses_list"] = ["extozero"]
     return res
 
 
 @add_option
-def option_lr(exp_config: ExperimentConfig) -> Dict[str, DictConfig]:
-    optimizer = exp_config.config["models"]["gen"]["optim"]["name"]
+def option_swa(exp_config: ExperimentConfig) -> Dict[str, DictConfig]:
     res = defaultdict(exp_config.config.copy)
-    # res["lrm3"]["optim_options"][optimizer]["lr"] = 1.0e-3
-    res["lrm4"]["optim_options"][optimizer]["lr"] = 1e-4
-    res["lrm5"]["optim_options"][optimizer]["lr"] = 1e-5
-    # res["lrm6"]["optim_options"][optimizer]["lr"] = 1.0e-6
+    res["SWA"]["models"]["gen"]["scheduler"]["name"] = "SWA"
+    res["SWA"]["models"]["disc"]["scheduler"]["name"] = "SWA"
+    res["noSWA"]
     return res
 
 
 @add_option
-def option_scheduler(exp_config: ExperimentConfig) -> Dict[str, DictConfig]:
+def option_prune(exp_config: ExperimentConfig) -> Dict[str, DictConfig]:
     res = defaultdict(exp_config.config.copy)
-    # res["NullScheduler"]["models"]["gen"]["scheduler"]["name"] = "NullScheduler"
-    # res["OneCycleLR"]["models"]["gen"]["scheduler"]["name"] = "OneCycleLR"
-    res["CyclicLR"]["models"]["gen"]["scheduler"]["name"] = "CyclicLR"
-    if exp_config.config["models"]["gen"]["optim"]["name"] == "Adam":
-        res["CyclicLR"]["scheduler_options"]["CyclicLR"]["cycle_momentum"] = False
+    res["cut"]["model_param_options"]["gen_deeptree"]["pruning"] = "cut"
+    res["topk"]["model_param_options"]["gen_deeptree"]["pruning"] = "topk"
     return res
 
 
 @add_option
-def option_maxschedlr(exp_config: ExperimentConfig) -> Dict[str, DictConfig]:
-    scheduler = exp_config.config["models"]["gen"]["scheduler"]["name"]
-    if scheduler == "NullScheduler":
-        return {}
+def option_eqv(exp_config: ExperimentConfig) -> Dict[str, DictConfig]:
     res = defaultdict(exp_config.config.copy)
-    res["lrf100"]["scheduler_options"][scheduler]["max_lr_factor"] = 100
-    # res["lrf25"]["scheduler_options"][scheduler]["max_lr_factor"] = 25
-    res["lrf10"]["scheduler_options"][scheduler]["max_lr_factor"] = 10
+    res["eqv"]["model_param_options"]["gen_deeptree"]["equivar"] = True
+    res["noeqv"]["model_param_options"]["gen_deeptree"]["equivar"] = False
     return res
 
 
-@add_option
-def option_schedopt(exp_config: ExperimentConfig) -> Dict[str, DictConfig]:
-    scheduler = exp_config.config["models"]["gen"]["scheduler"]["name"]
-    if scheduler == "NullScheduler":
-        return {}
-    res = defaultdict(exp_config.config.copy)
-    if scheduler == "OneCycleLR":
-        res["ts7"]["scheduler_options"][scheduler]["total_steps"] = int(5e7)
-        # res["ts6"]["scheduler_options"][scheduler]["total_steps"] = 5e6
-        res["ts5"]["scheduler_options"][scheduler]["total_steps"] = int(5e5)
-    elif scheduler == "CyclicLR":
-        res["ssu4"]["scheduler_options"][scheduler]["step_size_up"] = int(1e4)
-        # res["ssu5"]["scheduler_options"][scheduler]["step_size_up"] = 1e5
-        res["ssu6"]["scheduler_options"][scheduler]["step_size_up"] = int(1e6)
-    else:
-        raise NotImplementedError
+# @add_option
+# def option_beta(exp_config: ExperimentConfig) -> Dict[str, DictConfig]:
+#     res = defaultdict(exp_config.config.copy)
+#     res["dbeta1"]["optim_options"]["disc"]["Adam"]["betas"] = [0.9, 0.999]
+#     res["dbeta2"]["optim_options"]["disc"]["Adam"]["betas"] = [0.0, 0.9]
+#     return res
 
-    return res
+
+# @add_option
+# def option_maxschedlr(exp_config: ExperimentConfig) -> Dict[str, DictConfig]:
+#     scheduler = exp_config.config["models"]["gen"]["scheduler"]["name"]
+#     if scheduler == "NullScheduler":
+#         return {}
+#     res = defaultdict(exp_config.config.copy)
+#     res["lrf100"]["scheduler_options"][scheduler]["max_lr_factor"] = 100
+#     # res["lrf25"]["scheduler_options"][scheduler]["max_lr_factor"] = 25
+#     res["lrf10"]["scheduler_options"][scheduler]["max_lr_factor"] = 10
+#     return res
 
 
 if True:
