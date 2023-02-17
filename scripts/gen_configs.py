@@ -49,7 +49,7 @@ tree:
 dataset_options:
   jetnet:
     loader:
-      dataset_glob: "**/q.hdf5"
+      jettype: "q"
 model_param_options:
     gen_deeptree:
         n_cond: 1

@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Callable, Dict, List
+from typing import Callable, Dict, List, Optional
 
 import yaml
 
@@ -9,9 +9,13 @@ from fgsim.config import conf
 # Make sure the readpath takes a path and start and end of the chunk
 # It loads a list of files, and then loads the lengths of those files
 class FileManager:
-    def __init__(self, path_to_len: Callable[[Path], int]) -> None:
+    def __init__(
+        self, path_to_len: Callable[[Path], int], files: Optional[List[Path]] = None
+    ) -> None:
         self._path_to_len = path_to_len
-        self.files: List[Path] = self._get_file_list()
+        self.files = files
+        if self.files is None:
+            self.files: List[Path] = self._get_file_list()
         self.file_len_dict: Dict[Path, int] = self._load_len_dict()
 
     def _get_file_list(self) -> List[Path]:

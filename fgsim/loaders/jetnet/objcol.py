@@ -1,21 +1,31 @@
 from pathlib import Path
 from typing import List, Tuple
 
-import h5py
 import torch
+from jetnet.datasets import JetNet
 from sklearn.preprocessing import PowerTransformer, StandardScaler
 from torch_geometric.data import Data
 
+from fgsim.config import conf
 from fgsim.io import FileManager, ScalerBase
+
+jn_dict = {}
+
+
+def get_jn(fn):
+    fn = str(fn)
+    if fn not in jn_dict:
+        jn_dict[fn] = JetNet.getData(
+            jet_type=fn, data_dir=Path(conf.loader.dataset_path).expanduser()
+        )
+    return jn_dict[fn]
 
 
 def path_to_len(fn: Path) -> int:
-    with h5py.File(fn, "r") as f:
-        res = f["particle_features"].shape[0]
-    return res
+    return get_jn(fn)[0].shape[0]
 
 
-file_manager = FileManager(path_to_len)
+file_manager = FileManager(path_to_len, files=[Path(conf.loader.jettype)])
 
 
 def readpath(
@@ -23,11 +33,12 @@ def readpath(
     start: int,
     end: int,
 ) -> Tuple[torch.Tensor, torch.Tensor]:
-    with h5py.File(fn, "r") as f:
-        res = (
-            torch.tensor(f["jet_features"][start:end]),
-            torch.tensor(f["particle_features"][start:end]),
-        )
+    particle_data, jet_data = get_jn(fn)
+    # with h5py.File(fn, "r") as f:
+    res = (
+        torch.tensor(jet_data[start:end], dtype=torch.float),
+        torch.tensor(particle_data[start:end], dtype=torch.float),
+    )
     return res
 
 

@@ -17,7 +17,7 @@ shared_batch_size = Value("i", int(conf.loader.batch_size))
 # Collect the steps
 def process_seq() -> List[Union[qf.StepBase, Queue]]:
     return [
-        qf.ProcessStep(read_chunks, 4, name="read_chunk"),
+        qf.ProcessStep(read_chunks, 1, name="read_chunk"),
         qf.PoolStep(
             transform_and_scale,
             nworkers=conf.loader.n_workers_transform,
