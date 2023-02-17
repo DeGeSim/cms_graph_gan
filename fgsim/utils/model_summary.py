@@ -1,6 +1,6 @@
 from torchinfo import summary
 
-from fgsim.monitoring.logger import logger
+from fgsim.monitoring import logger
 
 
 def log_model(holder):

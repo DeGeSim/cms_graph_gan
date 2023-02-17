@@ -1,4 +1,4 @@
-from fgsim.monitoring.logger import logger
+from fgsim.monitoring import logger
 
 
 def count_parameters(model):

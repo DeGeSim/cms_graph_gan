@@ -5,7 +5,7 @@ from torch_geometric.nn import EdgeConv, knn_graph
 
 from fgsim.config import conf
 from fgsim.models.common import FFN
-from fgsim.monitoring.logger import logger
+from fgsim.monitoring import logger
 
 
 class ModelClass(nn.Module):
@@ -48,7 +48,6 @@ class ModelClass(nn.Module):
 
     # Random vector to pc
     def forward(self, random_vector: torch.Tensor) -> Batch:
-
         batch = Batch.from_data_list([Data(x=e) for e in random_vector])
 
         batch.edge_index = knn_graph(x=batch.x, k=25, batch=batch.batch)

@@ -2,7 +2,7 @@ import numpy as np
 from sklearn.linear_model import LinearRegression
 
 from fgsim.config import conf
-from fgsim.monitoring.logger import logger
+from fgsim.monitoring import logger
 
 
 def early_stopping(holder) -> bool:

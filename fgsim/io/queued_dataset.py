@@ -21,7 +21,7 @@ from fgsim.io.preprocessed_seq import preprocessed_seq
 #     shared_postprocess_switch,
 #     process_seq,
 # )
-from fgsim.monitoring.logger import logger
+from fgsim.monitoring import logger
 
 chunk_size = conf.loader.chunk_size
 batch_size = conf.loader.batch_size

@@ -9,7 +9,7 @@ from tqdm import tqdm
 from fgsim.config import conf
 from fgsim.io.queued_dataset import QueuedDataset
 from fgsim.io.sel_loader import loader_info
-from fgsim.monitoring.logger import logger
+from fgsim.monitoring import logger
 
 
 def preprocess_procedure() -> None:

@@ -18,8 +18,7 @@ from fgsim.config import conf, device
 from fgsim.io.queued_dataset import QueuedDataset
 from fgsim.io.sel_loader import loader_info, scaler
 from fgsim.ml.holder import Holder
-from fgsim.monitoring.logger import logger
-from fgsim.monitoring.train_log import TrainLog
+from fgsim.monitoring import TrainLog, logger
 from fgsim.plot.validation_plots import validation_plots
 from fgsim.utils.jetnetutils import to_efp
 

@@ -11,8 +11,7 @@ from fgsim.ml.early_stopping import early_stopping
 from fgsim.ml.holder import Holder
 from fgsim.ml.smoothing import smooth_features
 from fgsim.ml.validation import validate
-from fgsim.monitoring.logger import logger
-from fgsim.monitoring.train_log import TrainLog
+from fgsim.monitoring import TrainLog, logger
 from fgsim.utils.model_summary import log_model
 
 

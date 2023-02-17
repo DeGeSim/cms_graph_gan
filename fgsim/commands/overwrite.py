@@ -2,7 +2,7 @@ from pathlib import Path
 from shutil import copytree, rmtree
 
 from fgsim.config import conf
-from fgsim.monitoring.logger import logger
+from fgsim.monitoring import logger
 
 from .setup import filter_paths
 

@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 from matplotlib.figure import Figure
 
 from fgsim.config import conf
-from fgsim.monitoring.logger import logger
+from fgsim.monitoring import logger
 
 
 class FigLogger:

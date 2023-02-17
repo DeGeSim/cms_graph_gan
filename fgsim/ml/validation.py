@@ -8,7 +8,7 @@ from fgsim.io.queued_dataset import QueuedDataset
 from fgsim.io.sel_loader import scaler
 from fgsim.ml.holder import Holder
 from fgsim.ml.smoothing import smooth_features
-from fgsim.monitoring.logger import logger
+from fgsim.monitoring import logger
 from fgsim.plot.validation_plots import validation_plots
 from fgsim.utils.check_for_nans import check_chain_for_nans
 

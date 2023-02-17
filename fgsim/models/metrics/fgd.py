@@ -5,7 +5,7 @@ import numpy as np
 from scipy import linalg
 from scipy.optimize import curve_fit
 
-from fgsim.monitoring.logger import logger
+from fgsim.monitoring import logger
 
 
 def linear(x, intercept, slope):

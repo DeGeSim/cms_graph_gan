@@ -9,8 +9,7 @@ import torch
 from omegaconf import DictConfig
 
 from fgsim.config import conf
-from fgsim.monitoring.metrics_aggr import MetricAggregator
-from fgsim.monitoring.train_log import TrainLog
+from fgsim.monitoring import MetricAggregator, TrainLog, logger
 
 
 class ValidationMetrics:
@@ -63,6 +62,7 @@ class ValidationMetrics:
 
         # Log the validation loss
         self.train_log.log_metrics(up_metrics_d, prefix="val")
+        logger.info(up_metrics_d)
         for metric_name, metric_val in up_metrics_d.items():
             self.train_log.history["val"][metric_name].append(metric_val)
 

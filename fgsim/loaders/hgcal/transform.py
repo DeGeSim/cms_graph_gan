@@ -9,7 +9,7 @@ from torch_geometric.data import Data
 
 from fgsim.config import conf
 from fgsim.geo.geo_lup import geo_lup
-from fgsim.monitoring.logger import logger
+from fgsim.monitoring import logger
 
 
 def transform_hitlist(

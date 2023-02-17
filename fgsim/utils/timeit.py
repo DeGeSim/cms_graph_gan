@@ -1,7 +1,7 @@
 import time
 from collections import namedtuple
 
-# from fgsim.monitoring.logger import logger
+# from fgsim.monitoring import logger
 
 
 def timeit(func, n=1):

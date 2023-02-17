@@ -1,6 +1,6 @@
 import torch
 
-from fgsim.monitoring.logger import logger
+from fgsim.monitoring import logger
 
 
 def is_anormal_tensor(inp: torch.Tensor) -> bool:

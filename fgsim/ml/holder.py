@@ -21,8 +21,7 @@ from fgsim.ml.loss import LossesCol
 from fgsim.ml.network import SubNetworkCollector
 from fgsim.ml.optim import OptimAndSchedulerCol
 from fgsim.ml.val_metrics import ValidationMetrics
-from fgsim.monitoring.logger import logger
-from fgsim.monitoring.train_log import TrainLog
+from fgsim.monitoring import TrainLog, logger
 from fgsim.utils.check_for_nans import contains_nans
 from fgsim.utils.push_to_old import push_to_old
 

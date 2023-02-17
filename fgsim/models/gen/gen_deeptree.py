@@ -9,7 +9,7 @@ from torch_geometric.data import Batch, Data
 from fgsim.config import conf
 from fgsim.models.common import DynHLVsLayer, FtxScaleLayer, MPLSeq
 from fgsim.models.common.deeptree import BranchingLayer, Tree, TreeGraph
-from fgsim.monitoring.logger import logger
+from fgsim.monitoring import logger
 
 # from fgsim.plot.model_plotter import model_plotter
 
