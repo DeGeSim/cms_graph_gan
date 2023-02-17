@@ -30,7 +30,6 @@ models:
             name: Adam
         scheduler:
             name: CyclicLR
-        retain_graph_on_backprop: True
     disc:
         name: disc_benno_lin
         optim:
