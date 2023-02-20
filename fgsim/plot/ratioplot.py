@@ -41,10 +41,44 @@ def ratioplot(
         yerr=[sim_error, gen_error],
         ax=ax,
     )
-
+    # overflow bins
+    delta = (sim_bins[1] - sim_bins[0]) / 2
+    simcolor = ax.containers[1][0]._color
+    gencolor = ax.containers[2][0]._color
+    ax.vlines(
+        x=sim_bins[0] - delta,
+        ymin=0,
+        ymax=(gen < sim_bins[0]).sum(),
+        linestyle="dotted",
+        color=gencolor,
+        lw=2,
+    )
+    ax.vlines(
+        x=sim_bins[0] - 2 * delta,
+        ymin=0,
+        ymax=(sim < sim_bins[0]).sum(),
+        linestyle="dotted",
+        color=simcolor,
+        lw=2,
+    )
+    ax.vlines(
+        x=sim_bins[-1] + delta,
+        ymin=0,
+        ymax=(gen > sim_bins[-1]).sum(),
+        linestyle="dotted",
+        color=gencolor,
+        lw=2,
+    )
+    ax.vlines(
+        x=sim_bins[-1] + 2 * delta,
+        ymin=0,
+        ymax=(sim > sim_bins[-1]).sum(),
+        linestyle="dotted",
+        color=simcolor,
+        lw=2,
+    )
     ax.set_ylabel("Frequency")
     ax.legend()
-
     # ratioplot
     with np.errstate(divide="ignore", invalid="ignore"):
         frac = gen_hist / sim_hist
