@@ -56,15 +56,26 @@ class ValidationMetrics:
         self.metric_aggr.append_dict(mval)
 
     def log_metrics(self, n_grad_steps_per_epoch) -> None:
+        """
+        The function takes the validation metrics and computes the fraction of times that the value of
+        this metric is smaller then the other runs
+
+        @param n_grad_steps_per_epoch The number of gradient steps per epoch.
+        """
         # Call metric_aggr to aggregate the collected metrics over the
         # validation batches.
         up_metrics_d = self.metric_aggr.aggregate()
 
         # Log the validation loss
         self.train_log.log_metrics(up_metrics_d, prefix="val")
-        logger.info(up_metrics_d)
+
         for metric_name, metric_val in up_metrics_d.items():
-            self.train_log.history["val"][metric_name].append(metric_val)
+            val_metric_hist = self.train_log.history["val"][metric_name]
+            val_metric_hist.append(metric_val)
+            logstr = f"Validation: {metric_name} {val_metric_hist[-1]} "
+            if len(val_metric_hist) > 1:
+                logstr += f"(Δ {(1-val_metric_hist[-1]/val_metric_hist[-2])*100}%)"
+            logger.warn(logstr)
 
         # compute the stop_metric
         history = self.train_log.history

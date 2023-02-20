@@ -65,7 +65,10 @@ def validate(holder: Holder, loader: QueuedDataset) -> None:
     for batch in results_d["sim_batch"], results_d["gen_batch"]:
         batch.x = scaler.inverse_transform(batch.x)
 
-    if holder.state.grad_step % conf.training.val.plot_interval == 0:
+    if (
+        holder.state.grad_step % conf.training.val.plot_interval == 0
+        and not conf.debug
+    ):
         validation_plots(
             train_log=holder.train_log,
             res=results_d,
