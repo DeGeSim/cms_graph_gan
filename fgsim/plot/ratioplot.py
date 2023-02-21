@@ -7,7 +7,7 @@ from matplotlib.figure import Figure
 
 from fgsim.utils.torchtonp import wrap_torch_to_np
 
-from .binborders import binborders_by_bounds, binborders_wo_outliers
+from .binborders import binborders_wo_outliers
 
 
 @wrap_torch_to_np
@@ -23,60 +23,45 @@ def ratioplot(
         figsize=(6, 8),
         gridspec_kw={"height_ratios": [2, 1]},
     )
-    if title == "Disc Score":
-        bins = binborders_by_bounds(0, 1)
-    else:
-        bins = binborders_wo_outliers(sim)
+    # if title == "Disc Score":
+    #     bins = binborders_by_bounds(0, 1)
+    # else:
+    bins = binborders_wo_outliers(sim)
     n_bins = len(bins) - 1
 
-    sim_hist, sim_bins = np.histogram(sim, bins=bins)
+    sim_hist, _ = np.histogram(sim, bins=bins)
     gen_hist, _ = np.histogram(gen, bins=bins)
     sim_error = np.sqrt(sim_hist)
     gen_error = np.sqrt(gen_hist)
 
     mplhep.histplot(
         [sim_hist, gen_hist],
-        bins=sim_bins,
+        bins=bins,
         label=["MC", "GAN"],
         yerr=[sim_error, gen_error],
         ax=ax,
     )
     # overflow bins
-    delta = (sim_bins[1] - sim_bins[0]) / 2
+    delta = (bins[1] - bins[0]) / 2
     simcolor = ax.containers[1][0]._color
     gencolor = ax.containers[2][0]._color
-    ax.vlines(
-        x=sim_bins[0] - delta,
-        ymin=0,
-        ymax=(gen < sim_bins[0]).sum(),
-        linestyle="dotted",
-        color=gencolor,
-        lw=2,
-    )
-    ax.vlines(
-        x=sim_bins[0] - 2 * delta,
-        ymin=0,
-        ymax=(sim < sim_bins[0]).sum(),
-        linestyle="dotted",
-        color=simcolor,
-        lw=2,
-    )
-    ax.vlines(
-        x=sim_bins[-1] + delta,
-        ymin=0,
-        ymax=(gen > sim_bins[-1]).sum(),
-        linestyle="dotted",
-        color=gencolor,
-        lw=2,
-    )
-    ax.vlines(
-        x=sim_bins[-1] + 2 * delta,
-        ymin=0,
-        ymax=(sim > sim_bins[-1]).sum(),
-        linestyle="dotted",
-        color=simcolor,
-        lw=2,
-    )
+    kwstyle = dict(linestyle=(0, (0.5, 0.3)), lw=3)
+    for arr, color, factor in zip([gen, sim], [gencolor, simcolor], [1, 2]):
+        ax.vlines(
+            x=bins[0] - factor * delta,
+            ymin=0,
+            ymax=(arr < bins[0]).sum(),
+            color=color,
+            **kwstyle,
+        )
+        ax.vlines(
+            x=bins[-1] + factor * delta,
+            ymin=0,
+            ymax=(arr > bins[-1]).sum(),
+            color=color,
+            **kwstyle,
+        )
+
     ax.set_ylabel("Frequency")
     ax.legend()
     # ratioplot
