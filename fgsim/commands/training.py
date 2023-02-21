@@ -41,11 +41,17 @@ class Trainer:
             // conf.loader.batch_size
             % self.loader.n_grad_steps_per_epoch
         )
+        if conf.debug:
+            miniters = 10
+        elif self.holder.state.epoch < 10:
+            miniters = 200
+        else:
+            miniters = 1000
         for batch in tqdm(
             self.loader.qfseq,
             initial=istep_start,
             total=self.loader.n_grad_steps_per_epoch,
-            miniters=20,
+            miniters=miniters,
             desc=f"Epoch {self.holder.state.epoch}",
         ):
             if self.holder.state.grad_step % conf.training.val.interval == 0:
@@ -121,9 +127,9 @@ class Trainer:
         self.holder.state.time_train_step_start = time.time()
 
     def validation_step(self):
-        if not conf.debug:
-            logger.info("Validating")
-            validate(self.holder, self.loader)
+        # if not conf.debug:
+        #     logger.info("Validating")
+        validate(self.holder, self.loader)
         self.holder.state.time_train_step_start = time.time()
 
     def pre_epoch(self):
