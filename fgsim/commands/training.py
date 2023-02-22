@@ -36,26 +36,11 @@ class Trainer:
 
     def train_epoch(self):
         self.pre_epoch()
-        istep_start = (
-            self.holder.state.processed_events
-            // conf.loader.batch_size
-            % self.loader.n_grad_steps_per_epoch
-        )
-        if conf.debug:
-            miniters = 10
-        elif self.holder.state.epoch < 10:
-            miniters = 200
-        else:
-            miniters = 1000
-        for batch in tqdm(
-            self.loader.qfseq,
-            initial=istep_start,
-            total=self.loader.n_grad_steps_per_epoch,
-            miniters=miniters,
-            desc=f"Epoch {self.holder.state.epoch}",
-        ):
+        tbar = tqdm(self.loader.qfseq, **self.tqdmkw())
+        for batch in tbar:
             if self.holder.state.grad_step % conf.training.val.interval == 0:
                 self.validation_step()
+                tbar.unpause()
             batch = self.pre_training_step(batch)
             self.training_step(batch)
             self.post_training_step()
@@ -143,6 +128,26 @@ class Trainer:
         self.train_log.end()
         if not conf.ray:
             self.holder.save_checkpoint()
+
+    def tqdmkw(self):
+        kws = dict()
+        kws["initial"] = (
+            self.holder.state.processed_events
+            // conf.loader.batch_size
+            % self.loader.n_grad_steps_per_epoch
+        )
+        if conf.debug:
+            kws["miniters"] = 100
+            kws["mininterval"] = 5.0
+        elif self.holder.state.epoch < 10:
+            kws["miniters"] = 200
+            kws["mininterval"] = 10.0
+        else:
+            kws["miniters"] = 1000
+            kws["mininterval"] = 20.0
+        kws["total"] = self.loader.n_grad_steps_per_epoch
+        kws["desc"] = f"Epoch {self.holder.state.epoch}"
+        return kws
 
 
 def training_procedure() -> None:
