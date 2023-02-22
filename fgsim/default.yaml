@@ -21,7 +21,7 @@ models:
             params: ${scheduler_options[${models.gen.scheduler.name}]}
         retain_graph_on_backprop: True
     disc:
-        name: disc_mp
+        name: disc_benno_lin
         params: ${model_param_options[${models.disc.name}]}
         losses: "${optionlist:${loss_options},${models.disc.losses_list}}"
         losses_list: ${gan_mode_options[${training.gan_mode}][disc]}
@@ -49,7 +49,7 @@ optim_options:
         Adam:
             weight_decay: 1.0e-4
             lr: 3.0e-4
-            betas: [0.9, 0.999]
+            betas: [0.0, 0.9]
         SGD:
             lr: 2.e-4
         RMSprop:
@@ -120,7 +120,7 @@ model_param_options:
     gen_deeptree:
         dim_red_in_branching: True
         n_global: 10
-        n_cond: ${len:${loader.y_features}}
+        n_cond: 1 # ${len:${loader.y_features}}
         pruning: "cut"
         equivar: False
         branching_param:
@@ -323,7 +323,7 @@ loss_options:
         pow: 1
 
 training:
-    gan_mode: MSE
+    gan_mode: Hinge
     disc_steps_per_gen_step: 2
     early_stopping:
         validation_steps: 1000
