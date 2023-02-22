@@ -65,23 +65,21 @@ def validate(holder: Holder, loader: QueuedDataset) -> None:
     for batch in results_d["sim_batch"], results_d["gen_batch"]:
         batch.x = scaler.inverse_transform(batch.x)
 
-    if (
-        holder.state.grad_step % conf.training.val.plot_interval == 0
-        and not conf.debug
-    ):
-        validation_plots(
-            train_log=holder.train_log,
-            res=results_d,
-            plot_path=None,
-            best_last_val="val/unscaled",
-            step=holder.state.grad_step,
-        )
+    if not conf.debug:
+        if holder.state.grad_step % conf.training.val.plot_interval == 0:
+            validation_plots(
+                train_log=holder.train_log,
+                res=results_d,
+                plot_path=None,
+                best_last_val="val/unscaled",
+                step=holder.state.grad_step,
+            )
 
-    if len({"kpd", "fgd"} & set(conf.training.val.metrics)):
-        from fgsim.utils.jetnetutils import to_efp
+        if len({"kpd", "fgd"} & set(conf.training.val.metrics)):
+            from fgsim.utils.jetnetutils import to_efp
 
-        results_d["sim_efps"] = to_efp(results_d["sim_batch"])
-        results_d["gen_efps"] = to_efp(results_d["gen_batch"])
+            results_d["sim_efps"] = to_efp(results_d["sim_batch"])
+            results_d["gen_efps"] = to_efp(results_d["gen_batch"])
 
     # evaluate the validation metrics
     with torch.no_grad():
