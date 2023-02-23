@@ -23,34 +23,34 @@ def early_stopping(holder) -> bool:
     # collect at least two values before evaluating the criteria
     # if len(history["stop_crit"]) < 2:
     #     return False
-    loss_arrs = []
-    for k in conf.models.keys():  # iterate the models
-        model_loss_dict = history["losses"][k]
-        if len(model_loss_dict) == 0:
-            break
-        # first we need to find out how many times losses have been recorded for this model
-        for lname, lossd in model_loss_dict.items():
-            if isinstance(lossd, dict):
-                for _, sublossd in lossd.items():
-                    assert isinstance(sublossd, list)
-                    n_recorded_losses = len(sublossd)
-                    break
-            else:
-                assert isinstance(lossd, list)
-                n_recorded_losses = len(lossd)
-                break
-            break
-        # elementwise add the loss history for each of the losses for a model
-        lsum = np.zeros(n_recorded_losses)
-        # sum over the losses for the model
-        for lname in model_loss_dict:
-            lsum += histdict_to_np(model_loss_dict[lname])
-        # apped the summed loss array for the current model to the list
-        loss_arrs.append(lsum)
+    # loss_arrs = []
+    # for k in conf.models.keys():  # iterate the models
+    #     model_loss_dict = history["losses"][k]
+    #     if len(model_loss_dict) == 0:
+    #         break
+    #     # first we need to find out how many times losses have been recorded for this model
+    #     for lname, lossd in model_loss_dict.items():
+    #         if isinstance(lossd, dict):
+    #             for _, sublossd in lossd.items():
+    #                 assert isinstance(sublossd, list)
+    #                 n_recorded_losses = len(sublossd)
+    #                 break
+    #         else:
+    #             assert isinstance(lossd, list)
+    #             n_recorded_losses = len(lossd)
+    #             break
+    #         break
+    #     # elementwise add the loss history for each of the losses for a model
+    #     lsum = np.zeros(n_recorded_losses)
+    #     # sum over the losses for the model
+    #     for lname in model_loss_dict:
+    #         lsum += histdict_to_np(model_loss_dict[lname])
+    #     # apped the summed loss array for the current model to the list
+    #     loss_arrs.append(lsum)
 
     return all(
         [is_minimized(np.array(history["score"]))]
-        + [is_not_dropping(carr) for carr in loss_arrs]
+        # + [is_not_dropping(carr) for carr in loss_arrs]
     )
 
 
