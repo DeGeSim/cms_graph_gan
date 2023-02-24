@@ -7,7 +7,7 @@ from .ffn import FFN
 
 class DynHLVsLayer(nn.Module):
     def __init__(
-        self, n_features, n_global, batch_size: int, n_cond: int, **kwargs
+        self, n_features: int, n_global: int, n_cond: int, batch_size: int
     ):
         super().__init__()
         self.n_features = n_features
@@ -25,7 +25,10 @@ class DynHLVsLayer(nn.Module):
     ) -> torch.Tensor:
         if self.n_global == 0:
             return torch.empty(
-                self.batch_size, self.n_global, dtype=torch.float, device=x.device
+                self.batch_size,
+                self.n_global,
+                dtype=torch.float,
+                device=x.device,
             )
 
         ftx_mtx = self.pre_nn(x)

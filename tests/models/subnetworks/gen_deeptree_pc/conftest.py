@@ -4,6 +4,7 @@ from typing import Dict, List
 
 import pytest
 import torch
+from torch import nn
 
 # install_import_hook("fgsim")
 from fgsim.models.common import FFN, DynHLVsLayer
@@ -85,7 +86,6 @@ def object_gen(props: Dict[str, int]) -> DTColl:
         batch_size=batch_size,
         n_global=n_global,
         n_cond=n_cond,
-        device=device,
     )
 
     ancestor_conv_layer = DeepConv(
@@ -106,29 +106,11 @@ def object_gen(props: Dict[str, int]) -> DTColl:
     # BatchNorm makes the batches dependent
     # If we want to check the gradients for independence,
     # we need to disable batchnorm
-    def overwrite_ffn_without_batchnorm(ow_nn):
-        assert isinstance(ow_nn, FFN)
-        ow_nn = FFN(
-            ow_nn.input_dim,
-            ow_nn.output_dim,
-            norm="none",
-            dropout=False,
-            final_linear=False,
-        )
-        return ow_nn
 
     for brl in branching_layers:
-        brl.proj_nn = overwrite_ffn_without_batchnorm(brl.proj_nn)
-
-    dyn_hlvs_layer.pre_nn = overwrite_ffn_without_batchnorm(dyn_hlvs_layer.pre_nn)
-    dyn_hlvs_layer.post_nn = overwrite_ffn_without_batchnorm(dyn_hlvs_layer.post_nn)
-
-    ancestor_conv_layer.msg_nn = overwrite_ffn_without_batchnorm(
-        ancestor_conv_layer.msg_nn
-    )
-    ancestor_conv_layer.update_nn = overwrite_ffn_without_batchnorm(
-        ancestor_conv_layer.update_nn
-    )
+        recur_remove_ffnorm(brl)
+    recur_remove_ffnorm(dyn_hlvs_layer)
+    recur_remove_ffnorm(ancestor_conv_layer)
 
     return DTColl(
         props=props,
@@ -146,7 +128,7 @@ def static_props():
     props = {
         "n_features": 4,
         "n_branches": 2,
-        "n_global": 6,
+        "n_global": 1,
         "n_cond": 1,
         "batch_size": 3,
         "n_levels": 4,
@@ -187,6 +169,7 @@ def branching_objects(request, static_props):
         ).to(device)
         for level in range(static_props["n_levels"] - 1)
     ]
+    recur_remove_ffnorm(objs.branching_layers)
     return objs
 
 
@@ -198,3 +181,18 @@ def static_objects(static_props):
 @pytest.fixture()
 def dyn_objects(dyn_props):
     return object_gen(dyn_props)
+
+
+# remove batchnorm for testing to avoid grradient contamination
+def recur_remove_ffnorm(m):
+    if isinstance(m, list):
+        for sm in m:
+            recur_remove_ffnorm(sm)
+    if isinstance(m, FFN):
+        m.seq = nn.Sequential(
+            *[sm for sm in m.seq if type(sm) not in [nn.BatchNorm1d, nn.LayerNorm]]
+        )
+    elif isinstance(m, nn.Module):
+        for sm in m.children():
+            recur_remove_ffnorm(sm)
+    return
