@@ -3,9 +3,8 @@ from typing import Optional
 import torch
 from torch_geometric.nn import EdgeConv, GINConv
 
-from fgsim.models.common import GINCConv
+from fgsim.models.common import FFN, GINCConv
 from fgsim.models.common.deeptree import DeepConv
-from fgsim.models.common.ffn import FFN
 
 
 class MPLSeq(torch.nn.Module):
@@ -60,7 +59,7 @@ class MPLSeq(torch.nn.Module):
         if conv_name == "GINCConv":
             return GINCConv(
                 FFN(
-                    in_features,  # + self.n_cond + self.n_global,
+                    in_features + self.n_cond + self.n_global,
                     out_features,
                     **layer_param,
                     hidden_layer_size=self.n_hidden_nodes,
@@ -69,7 +68,7 @@ class MPLSeq(torch.nn.Module):
         if conv_name == "EdgeConv":
             return EdgeConv(
                 FFN(
-                    in_features * 2,  # + self.n_cond + self.n_global,
+                    in_features * 2 + self.n_cond + self.n_global,
                     out_features,
                     **layer_param,
                     hidden_layer_size=self.n_hidden_nodes,
@@ -78,7 +77,7 @@ class MPLSeq(torch.nn.Module):
         elif conv_name == "GINConv":
             return GINConv(
                 FFN(
-                    in_features,  # + self.n_cond + self.n_global,
+                    in_features + self.n_cond + self.n_global,
                     out_features,
                     **layer_param,
                     hidden_layer_size=self.n_hidden_nodes,
@@ -116,8 +115,8 @@ class MPLSeq(torch.nn.Module):
                 torch.hstack(
                     (
                         x,
-                        # cond[batch],
-                        # global_features[batch],
+                        cond[batch],
+                        global_features[batch],
                     )
                 ),
                 edge_index,

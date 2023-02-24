@@ -61,7 +61,7 @@ class LossGen:
         pos_sel = gen_batch.x[
             ..., torch.arange(n_ftx) != conf.loader.x_ftx_energy_pos
         ]
-        batch_unsel = self.get_unselected_batchidx(gen_batch)
+        batch_unsel = gen_batch.batchnot
 
         # Penalize for being far away from the center
         # Get std and mean for the selected points
