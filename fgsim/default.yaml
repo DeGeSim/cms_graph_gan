@@ -2,7 +2,7 @@ tag: jetnet_uc2
 loglevel: 20
 loglevel_qf: 30
 seed: 0
-comet_project_name: "jetnet-disctd"
+comet_project_name: "jetnet_uc2"
 ray: False
 remote: False
 

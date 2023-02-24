@@ -26,6 +26,10 @@ model_param_options:
         n_cond: 1
         pruning: "cut"
         equivar: False
+dataset_options:
+  jetnet:
+    loader:
+      jettype: 'q'
     """
     ),
     ["uc", "q"],
