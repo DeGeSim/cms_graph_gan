@@ -131,7 +131,7 @@ class ModelClass(nn.Module):
             out_features=self.features[ilevel + 1],
             n_cond=self.n_cond,
             n_global=self.n_global,
-            batch_size=self.batch_size,
+            # batch_size=self.batch_size,
             **conv_param,
         )
 
@@ -177,13 +177,13 @@ class ModelClass(nn.Module):
             batchidx = self.tree.tbatch_by_level[ilevel + 1]
 
             # Assign the global features
-            # global_features = self.dyn_hlvs_layers[ilevel](
-            #     x=graph_tree.tftx_by_level(ilevel)[..., : features[-1]],
-            #     cond=cond,
-            #     batch=self.tree.tbatch_by_level[ilevel][
-            #         self.tree.idxs_by_level[ilevel]
-            #     ],
-            # )
+            graph_tree.global_features = self.dyn_hlvs_layers[ilevel](
+                x=graph_tree.tftx_by_level(ilevel)[..., : features[-1]],
+                cond=cond,
+                batch=self.tree.tbatch_by_level[ilevel][
+                    self.tree.idxs_by_level[ilevel]
+                ],
+            )
 
             print_dist("branching", graph_tree.tftx_by_level(ilevel + 1))
             assert (
@@ -205,6 +205,7 @@ class ModelClass(nn.Module):
                     edge_index=edge_index,
                     edge_attr=edge_attr,
                     batch=batchidx,
+                    global_features=graph_tree.global_features,
                 )
                 print_dist("ac", graph_tree.tftx_by_level(ilevel + 1))
                 assert graph_tree.tftx.shape[1] == self.tree.features[ilevel + 1]
