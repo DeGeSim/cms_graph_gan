@@ -222,6 +222,8 @@ class Holder:
         assert not (train_gen and train_disc)
         assert not (eval and (train_gen or train_disc))
         assert not torch.isnan(sim_batch.x).any()
+        assert sim_batch.y.shape[-1] == len(conf.loader.y_features)
+        assert sim_batch.x.shape[-1] == len(conf.loader.x_features)
         # if eval:
         #     self.models.eval()
         # else:
@@ -253,7 +255,8 @@ class Holder:
 
         with with_grad(train_gen):
             gen_batch = gen(z, cond)
-            assert not torch.isnan(gen_batch.x).any()
+        assert not torch.isnan(gen_batch.x).any()
+        assert sim_batch.x.shape[-1] == gen_batch.x.shape[-1]
 
         # In both cases the gradient needs to pass though d_gen
         with with_grad(train_gen or train_disc):
