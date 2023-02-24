@@ -21,34 +21,6 @@ class ExperimentOption:
 base_config = ExperimentConfig(
     OmegaConf.create(
         """
-comet_project_name: jetnet_uc
-dataset_name: jetnet
-models:
-    gen:
-        additional_losses_list: []
-        optim:
-            name: Adam
-        scheduler:
-            name: CyclicLR
-    disc:
-        name: disc_benno_lin
-        optim:
-            name: Adam
-        scheduler:
-            name: NullScheduler
-training:
-    gan_mode: MSE
-optim_options:
-  disc:
-    Adam:
-      betas: [0.0, 0.9]
-tree:
-  branches: [2,3,5]
-  features: [64,33,20,3]
-dataset_options:
-  jetnet:
-    loader:
-      jettype: "q"
 model_param_options:
     gen_deeptree:
         n_cond: 1
@@ -76,12 +48,12 @@ exp_list: List[ExperimentConfig] = [base_config]
 
 
 # MSE vs Hinge
-@add_option
-def option_ganmode(exp_config: ExperimentConfig) -> Dict[str, DictConfig]:
-    res = defaultdict(exp_config.config.copy)
-    res["MSE"]
-    res["Hinge"]["training"]["gan_mode"] = "Hinge"
-    return res
+# @add_option
+# def option_ganmode(exp_config: ExperimentConfig) -> Dict[str, DictConfig]:
+#     res = defaultdict(exp_config.config.copy)
+#     res["MSE"]
+#     res["Hinge"]["training"]["gan_mode"] = "Hinge"
+#     return res
 
 
 def option_ext0(exp_config: ExperimentConfig) -> Dict[str, DictConfig]:
@@ -91,13 +63,13 @@ def option_ext0(exp_config: ExperimentConfig) -> Dict[str, DictConfig]:
     return res
 
 
-@add_option
-def option_swa(exp_config: ExperimentConfig) -> Dict[str, DictConfig]:
-    res = defaultdict(exp_config.config.copy)
-    res["SWA"]["models"]["gen"]["scheduler"]["name"] = "SWA"
-    res["SWA"]["models"]["disc"]["scheduler"]["name"] = "SWA"
-    res["noSWA"]
-    return res
+# @add_option
+# def option_swa(exp_config: ExperimentConfig) -> Dict[str, DictConfig]:
+#     res = defaultdict(exp_config.config.copy)
+#     res["SWA"]["models"]["gen"]["scheduler"]["name"] = "SWA"
+#     res["SWA"]["models"]["disc"]["scheduler"]["name"] = "SWA"
+#     res["noSWA"]
+#     return res
 
 
 @add_option
@@ -170,12 +142,12 @@ for exp in exp_list:
         mkdir(folder)
     OmegaConf.save(exp.config, f"{folder}/conf.yaml")
 print(
-    "./run.sh --tag "
+    "./scripts/run.sh --tag "
     + ",".join(["_".join(exp.tags) for exp in exp_list])
     + " setup"
 )
 print(
-    "./run.sh --tag "
+    "./scripts/run.sh --tag "
     + ",".join(["_".join(exp.tags) for exp in exp_list])
     + " --remote train"
 )

@@ -1,4 +1,4 @@
-tag: default
+tag: jetnet_uc2
 loglevel: 20
 loglevel_qf: 30
 seed: 0
@@ -352,7 +352,7 @@ path:
     comet_exp_key: "${path.run_path}/comet_experiment_key"
 
 loader: ${mergedefault:${dataset_options},${dataset_name},loader}
-dataset_name: default
+dataset_name: jetnet
 
 dataset_options:
     default:
