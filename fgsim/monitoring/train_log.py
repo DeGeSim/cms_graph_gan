@@ -1,5 +1,6 @@
 from typing import Dict, Union
 
+import numpy as np
 import torch
 import wandb
 from omegaconf import DictConfig
@@ -58,7 +59,7 @@ class TrainLog:
 
     def log_metrics(
         self,
-        metrics_dict: dict[str, Union[float, torch.Tensor]],
+        metrics_dict: dict[str, Union[float, torch.Tensor, np.float32]],
         step=None,
         epoch=None,
         prefix=None,
