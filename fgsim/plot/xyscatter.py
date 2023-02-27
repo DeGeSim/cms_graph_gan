@@ -57,7 +57,7 @@ def xyscatter(
         {
             v1name: gen[:, 0],
             v2name: gen[:, 1],
-            "cls": f"GAN",
+            "cls": f"DeepTreeGAN",
         }
     )
     df = pd.concat([sim_df, gen_df], ignore_index=True)
@@ -79,7 +79,7 @@ def xyscatter(
     plt.legend(
         bbox_to_anchor=(1.01, 1),
         borderaxespad=0,
-        labels=["GAN", "MC"],
+        labels=["DeepTreeGAN", "MC"],
     )
 
     return g.figure
@@ -112,7 +112,7 @@ def xyscatter_faint(
         {
             v1name: gen[:, 0],
             v2name: gen[:, 1],
-            "cls": f"GAN",
+            "cls": f"DeepTreeGAN",
         }
     )
     df = pd.concat([sim_df, gen_df], ignore_index=True)
@@ -138,7 +138,7 @@ def xyscatter_faint(
     plt.legend(
         bbox_to_anchor=(1.01, 1),
         borderaxespad=0,
-        labels=["GAN", "MC"],
+        labels=["DeepTreeGAN", "MC"],
     )
 
     return g.figure
@@ -172,7 +172,7 @@ def xy_hist(
         bins=[xedges, yedges],
     )
     axes[0].set_title("MC")
-    axes[1].set_title("GAN")
+    axes[1].set_title("DeepTreeGAN")
     axes[0].set(xlabel=v1name, ylabel=v2name)
     axes[1].set(xlabel=v1name, ylabel=v2name)
 
