@@ -293,14 +293,14 @@ class ModelClass(nn.Module):
 
     def get_sel_idxs(self, x: torch.Tensor, num_vec: torch.Tensor):
         device = x.device
-        gidx = torch.zeros(x.shape[0] * x.shape[1], device=device).bool()
-        shift = 0
+        gidx = torch.zeros(
+            self.output_points * self.batch_size, device=device
+        ).bool()
 
         if self.pruning == "cut":
-            for ne in num_vec:
-                gidx[shift : shift + ne] = True
-                shift += self.output_points
+            return get_cut_idxs(gidx, num_vec, self.output_points)
         elif self.pruning == "topk":
+            shift = 0
             for xe, ne in zip(x, num_vec):
                 idxs = (
                     xe[..., conf.loader.x_ftx_energy_pos]
@@ -309,15 +309,23 @@ class ModelClass(nn.Module):
                 ) + shift
                 gidx[idxs] = True
                 shift += self.output_points
+            return gidx
         else:
             raise Exception
-
-        return gidx
 
     def to(self, device):
         super().to(device)
         self.tree.to(device)
         return self
+
+
+@torch.jit.script
+def get_cut_idxs(gidx: torch.Tensor, num_vec: torch.Tensor, output_points: int):
+    shift = 0
+    for ne in num_vec:
+        gidx[shift : shift + ne] = True
+        shift += output_points
+    return gidx
 
 
 def print_dist(name, x):
