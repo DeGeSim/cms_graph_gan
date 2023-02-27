@@ -40,8 +40,8 @@ class ModelClass(nn.Module):
         self.pruning = pruning
         self.equivar = equivar
 
-        self.features = OmegaConf.to_container(conf.tree.features)
-        self.branches = OmegaConf.to_container(conf.tree.branches)
+        self.features: list[int] = list(OmegaConf.to_container(conf.tree.features))
+        self.branches: list[int] = list(OmegaConf.to_container(conf.tree.branches))
         n_levels = len(self.features)
         self.num_part_idx = conf.loader.y_features.index("num_particles")
 
@@ -67,19 +67,7 @@ class ModelClass(nn.Module):
             features=self.features,
         )
 
-        self.dyn_hlvs_layers = nn.ModuleList(
-            [
-                DynHLVsLayer(
-                    n_features=self.features[-1],
-                    n_cond=self.n_cond,
-                    n_global=n_global,
-                    batch_size=self.batch_size,
-                )
-                for _ in self.features
-            ]
-        )
-
-        self.branching_layers = nn.ModuleList(
+        self.branching_layers: nn.ModuleList[BranchingLayer] = nn.ModuleList(
             [
                 BranchingLayer(
                     tree=self.tree,
@@ -92,6 +80,29 @@ class ModelClass(nn.Module):
                 for level in range(n_levels - 1)
             ]
         )
+
+        self.prebr_hlvs = nn.ModuleList(
+            [
+                DynHLVsLayer(
+                    n_features=nfeatures,
+                    n_cond=self.n_cond,
+                    n_global=self.n_global,
+                    batch_size=self.batch_size,
+                )
+                for nfeatures in self.features[:-1]
+            ]
+        )
+        # self.postbr_hlvs: nn.ModuleList[DynHLVsLayer] = nn.ModuleList(
+        #     [
+        #         DynHLVsLayer(
+        #             n_features=nfeatures,
+        #             n_cond=self.n_cond,
+        #             n_global=self.n_global,
+        #             batch_size=self.batch_size,
+        #         )
+        #         for nfeatures in self.features[1:]
+        #     ]
+        # )
 
         if self.ancestor_mpl["n_mpl"] > 0:
             self.ancestor_conv_layers = nn.ModuleList(
@@ -142,7 +153,7 @@ class ModelClass(nn.Module):
         n_levels = len(self.features)
 
         # Init the graph object
-        graph_tree = TreeGraph(
+        graph_tree: TreeGraph = TreeGraph(
             tftx=random_vector.reshape(batch_size, features[0]),
             global_features=torch.empty(
                 batch_size, self.n_global, dtype=torch.float, device=device
@@ -152,6 +163,13 @@ class ModelClass(nn.Module):
         num_vec = cond[..., self.num_part_idx].int().reshape(-1)
         cond = cond[..., [self.num_part_idx]]
 
+        # Assign the index vectors for the root node tree
+        batchidx = self.tree.tbatch_by_level[0]
+        idxs_level = self.tree.idxs_by_level[0]
+        batch_level = batchidx[idxs_level]
+        edge_index = self.tree.ancestor_ei(0)
+        edge_attr = self.tree.ancestor_ea(0)
+
         # model_plotter.save_tensor("input noise", graph_tree.tftx)
         print_dist("initial", graph_tree.tftx_by_level(0))
         # Do the branching
@@ -160,30 +178,35 @@ class ModelClass(nn.Module):
             # assert graph_tree.tftx.shape[0] == (
             #     self.tree.tree_lists[ilevel][-1].idxs[-1] + 1
             # )
+
             # Assign the global features
-            graph_tree.global_features = self.dyn_hlvs_layers[ilevel](
-                x=graph_tree.tftx_by_level(ilevel)[..., : features[-1]],
-                cond=cond,
-                batch=self.tree.tbatch_by_level[ilevel][
+            assert (
+                batch_level
+                == self.tree.tbatch_by_level[ilevel][
                     self.tree.idxs_by_level[ilevel]
-                ],
+                ]
+            ).all()
+            ftx_level = graph_tree.tftx_by_level(ilevel)
+            graph_tree.global_features = self.prebr_hlvs[ilevel](
+                x=ftx_level, cond=cond, batch=batch_level
             )
 
+            # Branch the leaves
             graph_tree = self.branching_layers[ilevel](graph_tree, cond)
             assert not torch.isnan(graph_tree.tftx).any()
 
+            # Assign the new indices for the updated tree
+            batchidx = self.tree.tbatch_by_level[ilevel + 1]
+            idxs_level = self.tree.idxs_by_level[ilevel + 1]
+            batch_level = batchidx[idxs_level]
             edge_index = self.tree.ancestor_ei(ilevel + 1)
             edge_attr = self.tree.ancestor_ea(ilevel + 1)
-            batchidx = self.tree.tbatch_by_level[ilevel + 1]
 
-            # Assign the global features
-            graph_tree.global_features = self.dyn_hlvs_layers[ilevel](
-                x=graph_tree.tftx_by_level(ilevel)[..., : features[-1]],
-                cond=cond,
-                batch=self.tree.tbatch_by_level[ilevel][
-                    self.tree.idxs_by_level[ilevel]
-                ],
-            )
+            # # Assign the global features
+            # ftx_level = graph_tree.tftx_by_level(ilevel + 1)
+            # graph_tree.global_features = self.postbr_hlvs[ilevel](
+            #     x=ftx_level, cond=cond, batch=batch_level
+            # )
 
             print_dist("branching", graph_tree.tftx_by_level(ilevel + 1))
             assert (
