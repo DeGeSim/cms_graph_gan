@@ -49,8 +49,10 @@ def early_stopping(holder) -> bool:
     #     loss_arrs.append(lsum)
 
     return all(
-        [is_minimized(np.array(history["score"]))]
-        # + [is_not_dropping(carr) for carr in loss_arrs]
+        [
+            is_minimized(np.array(history["val"][metric]))
+            for metric in conf.training.val.use_for_stopping
+        ]
     )
 
 

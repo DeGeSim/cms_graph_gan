@@ -19,19 +19,19 @@ class Trainer:
     def __init__(self, holder: Holder) -> None:
         self.holder = holder
         log_model(self.holder)
-        if early_stopping(self.holder):
-            exit()
         self.train_log: TrainLog = self.holder.train_log
         self.loader: QueuedDataset = QueuedDataset(loader_info)
 
     def training_loop(self):
-        while self.holder.state.epoch < conf.training.max_epochs:
+        max_epochs = conf.training.max_epochs
+        state = self.holder.state
+        while state.epoch < max_epochs and not early_stopping(self.holder):
             self.train_epoch()
-            if early_stopping(self.holder):
+        else:
+            if state.epoch >= max_epochs:
+                logger.warning("Max Epochs surpassed")
+            else:
                 logger.warning("Early Stopping criteria fulfilled")
-                break
-        if self.holder.state.epoch >= conf.training.max_epochs:
-            logger.warning("Max Epochs surpassed")
         self.post_training()
 
     def train_epoch(self):
