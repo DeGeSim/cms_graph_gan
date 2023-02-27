@@ -20,8 +20,8 @@ def ratioplot(
     fig, (ax, axrat) = plt.subplots(
         2,
         1,
-        figsize=(6, 8),
-        gridspec_kw={"height_ratios": [2, 1]},
+        figsize=(6, 7),
+        gridspec_kw={"height_ratios": [2, 0.7]},
     )
     # if title == "Disc Score":
     #     bins = binborders_by_bounds(0, 1)
