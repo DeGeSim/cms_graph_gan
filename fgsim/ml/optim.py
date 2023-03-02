@@ -62,11 +62,6 @@ class OptimAndSchedulerCol:
                     if submodelconf.scheduler.params is not None
                     else {}
                 )
-                if "max_lr_factor" in schedulerparams:
-                    schedulerparams["max_lr"] = (
-                        schedulerparams["max_lr_factor"] * optimparams["lr"]
-                    )
-                    del schedulerparams["max_lr_factor"]
                 scheduler = getattr(
                     torch.optim.lr_scheduler, submodelconf.scheduler.name
                 )(optimizer=optim, **schedulerparams)

@@ -66,10 +66,12 @@ scheduler_options:
     CosineAnnealingWarmRestarts:
         T_0: 10_000
     CyclicLR:
-      max_lr_factor: 10
-      base_lr: 1.0e-05
+      max_lr: 1.0e-4
+      base_lr: 1.0e-5
       step_size_up: 10000
       cycle_momentum: false
+
+
 
 
 gan_mode_options:
