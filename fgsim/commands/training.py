@@ -12,13 +12,11 @@ from fgsim.ml.holder import Holder
 from fgsim.ml.smoothing import smooth_features
 from fgsim.ml.validation import validate
 from fgsim.monitoring import TrainLog, logger
-from fgsim.utils.model_summary import log_model
 
 
 class Trainer:
     def __init__(self, holder: Holder) -> None:
         self.holder = holder
-        log_model(self.holder)
         self.train_log: TrainLog = self.holder.train_log
         self.loader: QueuedDataset = QueuedDataset(loader_info)
 
