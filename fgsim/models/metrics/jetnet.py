@@ -16,13 +16,10 @@ def w1m(gen_batch: Batch, sim_batch: Batch, **kwargs) -> tuple[float, float]:
 
 
 def w1p(gen_batch: Batch, sim_batch: Batch, **kwargs) -> tuple[float, float]:
-    jets1 = (to_stacked_mask(gen_batch)[:10000],)
-    jets2 = (to_stacked_mask(sim_batch)[:10000],)
+    jets1 = to_stacked_mask(gen_batch)[:10000].detach().cpu().numpy()
+    jets2 = to_stacked_mask(sim_batch)[:10000].detach().cpu().numpy()
     score = jetnet.evaluation.gen_metrics.w1p(
-        jets1=jets1[..., :3],
-        jets2=jets2[..., :3],
-        mask1=jets1[..., -1],
-        mask2=jets2[..., -1],
+        jets1=jets1[..., :3], jets2=jets2[..., :3], exclude_zeros=True
     )
     return tuple(min(float(e) * 1e3, 1e5) for e in score)
 
