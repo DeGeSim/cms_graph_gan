@@ -63,6 +63,7 @@ scheduler_options:
     total_steps: ${prod:500, 575}
   CosineAnnealingWarmRestarts:
     T_0: 10_000
+    eta_min: 1.0e-6
   CyclicLR:
     max_lr: 1.0e-4
     base_lr: 1.0e-5
@@ -72,6 +73,9 @@ scheduler_options:
   CosineAnnealingLR:
     eta_min: 1.0e-5
     T_max: 500_000
+  StepLR:
+    step_size: 10_000
+    gamma: 0.5
   MultiStepLR:
     milestones: []
     gamma: 0.1
@@ -397,7 +401,7 @@ dataset_options:
       branches: [2, 3, 5]
       features: [64, 33, 20, 3]
     validation:
-      interval: 2000
+      interval: 10_000
       use_for_stopping: ["w1m", "w1p", "fpnd"]
       metrics: ["w1m", "w1p", "fpnd", "auc", "w1disc"]
     loader:
