@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Dict, Union
 
 import numpy as np
@@ -50,6 +51,13 @@ class TrainLog:
                 data={"other/epoch": self.state["epoch"]},
                 step=self.state["grad_step"],
             )
+        self.log_cmd_time()
+
+    def log_cmd_time(self):
+        if self.use_wandb:
+            self.wandb_run.summary[
+                f"time/{conf.command}"
+            ] = datetime.now().strftime("%y-%m-%d-%H:%M")
 
     def log_model_graph(self, model):
         if self.use_comet:
