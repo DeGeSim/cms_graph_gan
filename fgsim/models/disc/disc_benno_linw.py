@@ -16,7 +16,7 @@ class ModelClass(nn.Module):
     def forward(self, batch, cond):
         x = to_stacked_mask(batch)
         x = self.net(x[..., :3], mask=(1 - x[..., 3]).bool())
-        return x.squeeze(-1)
+        return x
 
 
 class WeightNormalizedLinear(nn.Module):
@@ -99,7 +99,9 @@ class BlockCls(nn.Module):
 
 
 class Disc(nn.Module):
-    def __init__(self, n_dim, l_dim, hidden, num_layers, heads, **kwargs):
+    def __init__(
+        self, n_dim, l_dim, hidden, num_layers, heads, mean_field, **kwargs
+    ):
         super().__init__()
         l_dim = hidden
         self.embbed = WeightNormalizedLinear(n_dim, l_dim)
@@ -113,20 +115,21 @@ class Disc(nn.Module):
         self.cls_token = nn.Parameter(torch.zeros(1, 1, l_dim), requires_grad=True)
         self.act = nn.LeakyReLU()
         self.fc1 = WeightNormalizedLinear(l_dim, hidden)
+        self.mean_field = mean_field
         # self.fc2 = WeightNormalizedLinear(hidden, l_dim)
         self.apply(self._init_weights)
 
-    def forward(self, x, mask=None, mean_field=False):
+    def forward(self, x, mask=None):
         x = self.act(self.embbed(x))
         x_cls = self.cls_token.expand(x.size(0), 1, -1)
         for layer in self.encoder:
             x_cls, x = layer(x, x_cls=x_cls, src_key_padding_mask=mask)
         res = x_cls.clone()
         x_cls = self.act(self.fc1(x_cls))
-        if mean_field:
-            return self.out(x_cls), res
+        if self.mean_field:
+            return self.out(x_cls).squeeze(-1), res
         else:
-            return self.out(x_cls)
+            return self.out(x_cls).squeeze(-1)
 
     def _init_weights(self, m):
         if isinstance(m, nn.Linear):

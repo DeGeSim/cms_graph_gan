@@ -179,7 +179,13 @@ model_param_options:
     activation: gelu
     slope: 0.1
     norm: false
-  disc_benno_linw: ${model_param_options[disc_benno_lin]}
+  disc_benno_linw:
+    n_dim: 3
+    l_dim: 40
+    hidden: 1024
+    num_layers: 8
+    heads: 8
+    mean_field: True
   disc_deeptree: {}
   disc_diffpool: {}
   disc_dt_tsumt2: {}
@@ -308,6 +314,8 @@ loss_options:
     factor: 1.0
     high: 4.0
     low: -4.0
+  feature_matching:
+    factor: 1.0
   mmd:
     factor: 1.0
     kernel: "rbf"

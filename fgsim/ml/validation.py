@@ -28,7 +28,7 @@ def validate(holder: Holder, loader: QueuedDataset) -> None:
             if k in ["sim_batch", "gen_batch"]:
                 for e in val.to_data_list():
                     res_d_l[k].append(e)
-            else:
+            elif k in ["d_sim", "d_gen"]:
                 res_d_l[k].append(val)
     d_sim = torch.vstack(res_d_l["d_sim"])
     d_gen = torch.vstack(res_d_l["d_gen"])

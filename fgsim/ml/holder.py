@@ -260,7 +260,13 @@ class Holder:
 
         # In both cases the gradient needs to pass though d_gen
         with with_grad(train_gen or train_disc):
-            d_gen = disc(gen_batch, cond)
+            d_gen_out = disc(gen_batch, cond)
+        # Save the latent features for the feature matching loss
+        if isinstance(d_gen_out, tuple):
+            d_gen, d_gen_latftx = d_gen_out
+        else:
+            d_gen, d_gen_latftx = d_gen_out, None
+
         assert d_gen.shape == (conf.loader.batch_size, 1)
         assert not torch.isnan(d_gen).any()
 
@@ -268,14 +274,26 @@ class Holder:
             "sim_batch": sim_batch,
             "gen_batch": gen_batch,
             "d_gen": d_gen,
+            "d_gen_latftx": d_gen_latftx,
         }
         # we dont need to compute d_sim if only the generator is trained
         # but we need it for the validation
-        if train_disc or (train_disc == train_gen):
+        # and for the feature matching loss
+        if (
+            train_disc
+            or (train_disc == train_gen)
+            or ("feature_matching" in conf.models.gen.losses and train_gen)
+        ):
             with with_grad(train_disc):
-                d_sim = disc(sim_batch, cond)
-                assert d_sim.shape == (conf.loader.batch_size, 1)
+                d_sim_out = disc(sim_batch, cond)
+            # Save the latent features for the feature matching loss
+            if isinstance(d_sim_out, tuple):
+                d_sim, d_sim_latftx = d_sim_out
+            else:
+                d_sim, d_sim_latftx = d_sim_out, None
+            assert d_sim.shape == (conf.loader.batch_size, 1)
             res["d_sim"] = d_sim
+            res["d_sim_latftx"] = d_sim_latftx
         return res
 
 
