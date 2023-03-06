@@ -261,8 +261,8 @@ class Holder:
         # In both cases the gradient needs to pass though d_gen
         with with_grad(train_gen or train_disc):
             d_gen = disc(gen_batch, cond)
-            assert d_gen.shape == (conf.loader.batch_size, 1)
-            assert not torch.isnan(d_gen).any()
+        assert d_gen.shape == (conf.loader.batch_size, 1)
+        assert not torch.isnan(d_gen).any()
 
         res = {
             "sim_batch": sim_batch,
