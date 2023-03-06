@@ -155,7 +155,7 @@ def training_procedure() -> None:
     trainer = Trainer(Holder(device))
 
     # Regular run
-    if sys.gettrace() is None:
+    if sys.gettrace() is not None:
         trainer.training_loop()
     # Debugger is running
     else:
