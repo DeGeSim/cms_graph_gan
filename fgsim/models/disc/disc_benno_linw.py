@@ -80,21 +80,25 @@ class BlockCls(nn.Module):
         super().__init__()
         self.fc0 = WeightNormalizedLinear(embed_dim, hidden)
         self.fc1_cls = WeightNormalizedLinear(embed_dim, hidden)
-        self.fc2_cls = WeightNormalizedLinear(hidden, embed_dim)
+        # self.fc2_cls = WeightNormalizedLinear(hidden, embed_dim)
         self.attn = nn.MultiheadAttention(
             embed_dim, num_heads, batch_first=True, dropout=0
         )
         self.act = nn.LeakyReLU()
-        # self.bn = nn.BatchNorm1d(embed_dim)
+        self.ln = nn.LayerNorm(hidden)
 
     def forward(self, x, x_cls, src_key_padding_mask=None):
-        res = x_cls.clone()
+        # res = x_cls.clone()
         x = self.act(self.fc0(x))
+        x_cls = self.act(self.fc0(x_cls))
         x_cls = self.attn(x_cls, x, x, key_padding_mask=src_key_padding_mask)[0]
         x = x + x_cls
+
         # x= self.bn(x.reshape(-1,x.shape[-1])).reshape(x.shape)
-        x_cls = self.act(self.fc1_cls(x_cls))  # +x.mean(dim=1).unsqueeze(1)
-        x_cls = self.act(self.fc2_cls(x_cls + res))
+        x_cls = self.act(
+            self.ln(self.fc1_cls(x_cls))
+        )  # +x.mean(dim=1).unsqueeze(1)
+        # x_cls = self.act(self.fc2_cls(x_cls+res))
         return x_cls, x
 
 
@@ -112,7 +116,7 @@ class Disc(nn.Module):
             ]
         )
         self.out = WeightNormalizedLinear(l_dim, 1)
-        self.cls_token = nn.Parameter(torch.zeros(1, 1, l_dim), requires_grad=True)
+        self.cls_token = nn.Parameter(torch.randn(1, 1, l_dim), requires_grad=True)
         self.act = nn.LeakyReLU()
         self.fc1 = WeightNormalizedLinear(l_dim, hidden)
         self.mean_field = mean_field
@@ -127,7 +131,7 @@ class Disc(nn.Module):
         res = x_cls.clone()
         x_cls = self.act(self.fc1(x_cls))
         if self.mean_field:
-            return self.out(x_cls).squeeze(-1), res
+            return self.out(x_cls).squeeze(-1), res.squeeze(1)
         else:
             return self.out(x_cls).squeeze(-1)
 
