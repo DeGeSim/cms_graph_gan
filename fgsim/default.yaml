@@ -343,7 +343,7 @@ training:
   gan_mode: Hinge
   disc_steps_per_gen_step: 2
   early_stopping:
-    validation_steps: 1000
+    validation_steps: 100
     improvement: 0.05
   checkpoint_minutes: 15
   smoothing: ${mergedefault:${dataset_options},${dataset_name},smoothing}
@@ -410,7 +410,7 @@ dataset_options:
       branches: [2, 3, 5]
       features: [64, 33, 20, 3]
     validation:
-      interval: 10_000
+      interval: 2_000
       use_for_stopping: ["w1m", "w1p", "fpnd"]
       metrics: ["w1m", "w1p", "fpnd", "auc", "w1disc"]
     loader:
