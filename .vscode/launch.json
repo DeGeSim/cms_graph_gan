@@ -19,7 +19,7 @@
         {
             "args": [
                 "--tag",
-                "uc_q_cut_eqv",
+                "ddiffpool",
                 "--debug",
                 "train"
             ],
@@ -33,7 +33,7 @@
         {
             "args": [
                 "--tag",
-                "uc_q_cut_eqv",
+                "ddiffpool",
                 "--debug",
                 "test"
             ],
@@ -47,7 +47,7 @@
         {
             "args": [
                 "--tag",
-                "uc_q_cut_eqv",
+                "ddiffpool",
                 "--debug",
                 "preprocess"
             ],
@@ -73,7 +73,7 @@
             "type": "python",
             "args": [
                 "--tag",
-                "uc_q_cut_eqv",
+                "ddiffpool",
                 "--debug",
                 "train"
             ],
@@ -86,7 +86,7 @@
             "type": "python",
             "args": [
                 "--tag",
-                "uc_q_cut_eqv",
+                "ddiffpool",
                 // "--debug",
                 "setup"
             ],
