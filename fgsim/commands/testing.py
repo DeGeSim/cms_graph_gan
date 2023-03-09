@@ -127,10 +127,10 @@ def get_testing_datasets(holder: Holder, best_or_last) -> TestDataset:
             for k, val in holder.pass_batch_through_model(
                 test_batch.to(holder.device), eval=True
             ).items():
-                if "batch" in k:
+                if k in ["sim_batch", "gen_batch"]:
                     for e in val.to_data_list():
                         res_d_l[k].append(e.cpu())
-                else:
+                elif k in ["d_sim", "d_gen"]:
                     res_d_l[k].append(val.cpu())
 
         # aggregate the results over the batches
