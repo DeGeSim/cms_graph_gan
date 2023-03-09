@@ -343,7 +343,7 @@ training:
   gan_mode: Hinge
   disc_steps_per_gen_step: 2
   early_stopping:
-    validation_steps: 100
+    validation_steps: 500
     improvement: 0.05
   checkpoint_minutes: 15
   smoothing: ${mergedefault:${dataset_options},${dataset_name},smoothing}
@@ -385,6 +385,7 @@ dataset_options:
       active: False
     validation:
       interval: "${div:5_000_000,${dataset_options[${dataset_name}][loader][batch_size]}}"
+      debug_interval: 500
       plot_interval: "${div:10_000_000,${dataset_options[${dataset_name}][loader][batch_size]}}"
     loader:
       rootprefix: "treeMaker/tree"

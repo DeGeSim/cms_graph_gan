@@ -69,15 +69,17 @@ class ValidationMetrics:
         # Log the validation loss
         self.train_log.log_metrics(up_metrics_d, prefix="val")
 
+        logstr = "Validation:"
         for metric_name, metric_val in up_metrics_d.items():
             val_metric_hist = self.train_log.history["val"][metric_name]
             val_metric_hist.append(metric_val)
-            logstr = f"Validation: {metric_name} {val_metric_hist[-1]:.3f} "
+
+            logstr += f" {metric_name} {val_metric_hist[-1]:.2f} "
             if len(val_metric_hist) > 1:
                 logstr += (
-                    f"(Δ {(val_metric_hist[-1]/val_metric_hist[-2]-1)*100:.3f}%)"
+                    f"(Δ{(val_metric_hist[-1]/val_metric_hist[-2]-1)*100:+.0f}%)"
                 )
-            logger.warn(logstr)
+        logger.warn(logstr)
 
         # compute the stop_metric
         history = self.train_log.history

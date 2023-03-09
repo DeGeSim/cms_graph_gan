@@ -22,6 +22,11 @@ class Trainer:
         self.holder = holder
         self.train_log: TrainLog = self.holder.train_log
         self.loader: QueuedDataset = QueuedDataset(loader_info)
+        self.val_interval = (
+            conf.training.val.debug_interval
+            if conf.debug
+            else conf.training.val.interval
+        )
 
     def training_loop(self):
         max_epochs = conf.training.max_epochs
@@ -39,7 +44,7 @@ class Trainer:
         self.pre_epoch()
         tbar = tqdm(self.loader.qfseq, **self.tqdmkw())
         for batch in tbar:
-            if self.holder.state.grad_step % conf.training.val.interval == 0:
+            if self.holder.state.grad_step % self.val_interval == 0:
                 self.validation_step()
                 tbar.unpause()
             batch = self.pre_training_step(batch)
