@@ -37,7 +37,6 @@ def validation_plots(
     #         ),
     #         v1name=v1name,
     #         v2name=v2name,
-    #         step=step,
     #     )
     #     fig_logger(figure, f"xyscatter_batch_{cmbname}.pdf")
 
@@ -51,7 +50,6 @@ def validation_plots(
             ),
             v1name=var_to_label(v1),
             v2name=var_to_label(v2),
-            step=step,
         )
         fig_logger(
             figure,
@@ -64,14 +62,12 @@ def validation_plots(
         for title, fig in jet_features(
             res["sim_batch"],
             res["gen_batch"],
-            step=step,
         ).items():
             fig_logger(fig, title)
 
     for title, fig in ftx_marginals(
         res["sim_batch"],
         res["gen_batch"],
-        step=step,
     ).items():
         fig_logger(fig, title)
 
@@ -79,7 +75,6 @@ def validation_plots(
         ratioplot(
             sim=res["d_sim"].flatten(),
             gen=res["d_gen"].flatten(),
-            step=step,
             title="Disc Score",
         ),
         f"disc.pdf",

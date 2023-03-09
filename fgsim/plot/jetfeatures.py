@@ -24,7 +24,6 @@ def jet_features(sim, gen, step=None) -> Dict[str, Figure]:
             sim=sim_features_agr[ftn],
             gen=gen_features_agr[ftn],
             title=var_to_label(ftn),
-            step=step,
         )
 
     return plots_d

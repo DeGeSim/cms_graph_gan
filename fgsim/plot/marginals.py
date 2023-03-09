@@ -30,10 +30,7 @@ def ftx_marginals(
     plots_d: Dict[str, Figure] = {}
     for ftn in conf.loader.x_features:
         plots_d[f"marginal_{ftn}.pdf"] = ratioplot(
-            sim=sim_features[ftn],
-            gen=gen_features[ftn],
-            title=var_to_label(ftn),
-            step=step,
+            sim=sim_features[ftn], gen=gen_features[ftn], title=var_to_label(ftn)
         )
 
     return plots_d

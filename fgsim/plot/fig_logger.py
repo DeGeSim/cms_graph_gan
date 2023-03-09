@@ -21,7 +21,7 @@ class FigLogger:
                 f"#{conf.hash}",
                 horizontalalignment="left",
                 verticalalignment="bottom",
-                fontsize=6,
+                fontsize=5,
             )
         figure.text(
             0.95,
@@ -29,7 +29,15 @@ class FigLogger:
             f"@{conf.tag}",
             horizontalalignment="right",
             verticalalignment="bottom",
-            fontsize=6,
+            fontsize=5,
+        )
+        figure.text(
+            0.5,
+            0,
+            f"\nStep {self.step}",
+            horizontalalignment="center",
+            verticalalignment="bottom",
+            fontsize=5,
         )
 
         if self.plot_path is not None:

@@ -1,5 +1,3 @@
-from typing import Optional
-
 import matplotlib.pyplot as plt
 import mplhep
 import numpy as np
@@ -11,12 +9,7 @@ from .binborders import binborders_wo_outliers
 
 
 @wrap_torch_to_np
-def ratioplot(
-    sim: np.ndarray,
-    gen: np.ndarray,
-    title: str,
-    step: Optional[int] = None,
-) -> Figure:
+def ratioplot(sim: np.ndarray, gen: np.ndarray, title: str) -> Figure:
     fig, (ax, axrat) = plt.subplots(
         2,
         1,
@@ -62,8 +55,11 @@ def ratioplot(
             **kwstyle,
         )
 
-    ax.set_ylabel("Frequency")
+    ax.set_ylabel("Frequency", fontsize=14)
     ax.legend()
+    ax.tick_params(axis="both", which="major", labelsize=12)
+    ax.tick_params(axis="both", which="minor", labelsize=10)
+
     # ratioplot
     with np.errstate(divide="ignore", invalid="ignore"):
         frac = gen_hist / sim_hist
@@ -91,8 +87,6 @@ def ratioplot(
     axrat.set_xticks([])
     axrat.set_xticklabels([])
 
-    if step is not None:
-        title += f"\nStep {step}"
-    fig.suptitle(title)
+    fig.suptitle(title, fontsize=17)
     plt.tight_layout()
     return fig
