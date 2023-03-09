@@ -3,7 +3,7 @@ set -ex
 
 export CONDA_DIR=~/beegfs/conda/miniconda
 export RAMDIR=/dev/shm/${USER}/fgsim
-export TARBALL_PATH=~/fgsim/env.tar
+export TARBALL=~/fgsim/env.tar
 mkdir -p /dev/shm/${USER}
 
 if [[ ! -f  ${CONDA_DIR}/bin/activate ]]; then
@@ -81,4 +81,4 @@ pip install -e ~/fgsim
 [[ -d  ~/queueflow ]] || git clone git@github.com:DeGeSim/queueflow.git ~/queueflow
 pip install -e ~/queueflow
 # save the manipulated tarball
-tar -c -f ${TARBALL_PATH} --directory=${RAMDIR} .
+tar -c -f ${TARBALL} --directory=${RAMDIR} .
