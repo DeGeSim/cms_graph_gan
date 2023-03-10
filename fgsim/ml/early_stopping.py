@@ -17,6 +17,8 @@ def early_stopping(holder) -> bool:
     Returns:
       A boolean value.
     """
+    if conf.debug:
+        return False
     # Make sure some metrics have been recorded
     if len(history["val"].keys()) == 0:
         return False

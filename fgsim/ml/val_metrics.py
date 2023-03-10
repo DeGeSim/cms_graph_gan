@@ -25,7 +25,12 @@ class ValidationMetrics:
         self._lastlosses: Dict[str, List[float]] = {}
         self.metric_aggr = MetricAggregator()
 
-        for metric_name in conf.training.val.metrics:
+        metrics = (
+            conf.training.val.debug_metrics
+            if conf.debug
+            else conf.training.val.metrics
+        )
+        for metric_name in metrics:
             assert metric_name != "parts"
             # params = metric_conf if metric_conf is not None else DictConfig({})
             params = DictConfig({})
@@ -80,6 +85,8 @@ class ValidationMetrics:
                     f"(Δ{(val_metric_hist[-1]/val_metric_hist[-2]-1)*100:+.0f}%)"
                 )
         logger.warn(logstr)
+        if conf.debug:
+            return
 
         # compute the stop_metric
         history = self.train_log.history

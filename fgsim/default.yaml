@@ -414,6 +414,7 @@ dataset_options:
       interval: 2_000
       use_for_stopping: ["w1m", "w1p", "fpnd"]
       metrics: ["w1m", "w1p", "fpnd", "auc", "w1disc"]
+      debug_metrics: ["w1m", "auc", "w1disc"]
     loader:
       dataset_path: "~/fgsim/data/jetnet"
       n_points: 30

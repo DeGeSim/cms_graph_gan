@@ -85,7 +85,8 @@ def validate(holder: Holder, loader: QueuedDataset) -> None:
     with torch.no_grad():
         holder.val_metrics(**results_d)
     holder.val_metrics.log_metrics(loader.n_grad_steps_per_epoch)
-
+    if conf.debug:
+        return
     # save the best model
     if max(holder.history["score"]) == holder.history["score"][-1]:
         holder.state.best_step = holder.state["grad_step"]

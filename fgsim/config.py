@@ -112,9 +112,6 @@ def parse_arg_conf(args=None):
             else:
                 raise FileNotFoundError(f"Tag {args.tag} has no conf.yaml file.")
         conf, hyperparameters = compute_conf(defaultconf, tagconf, vars(args))
-    if conf.debug:
-        conf.training.val.metrics = [conf.training.val.metrics[0]]
-        conf.training.val.use_for_stopping = conf.training.val.metrics
     return conf, hyperparameters
 
 
