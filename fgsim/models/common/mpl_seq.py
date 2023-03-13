@@ -142,7 +142,7 @@ class MPLSeq(torch.nn.Module):
         self,
         *,
         x: torch.Tensor,
-        cond: torch.Tensor,
+        cond: Optional[torch.Tensor],
         edge_index: torch.Tensor,
         batch: torch.Tensor,
         edge_attr: Optional[torch.Tensor] = None,
@@ -153,6 +153,15 @@ class MPLSeq(torch.nn.Module):
             return x[..., : self.out_features]
         if self.skip_connecton:
             x_clone = x.clone()
+        batch_size = batch[-1] + 1
+        if cond is None:
+            assert self.n_cond == 0
+            cond = torch.empty((batch_size, 0), dtype=torch.float, device=x.device)
+        if global_features is None:
+            assert self.n_global == 0
+            global_features = torch.empty(
+                (batch_size, 0), dtype=torch.float, device=x.device
+            )
         for conv in self.mpls:
             x = self.wrap_mpl(
                 layer=conv,
