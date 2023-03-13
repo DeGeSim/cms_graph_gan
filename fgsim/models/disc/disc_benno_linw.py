@@ -19,6 +19,84 @@ class ModelClass(nn.Module):
         return x
 
 
+class BlockCls(nn.Module):
+    def __init__(self, embed_dim, num_heads, hidden):
+        super().__init__()
+        self.fc0 = WeightNormalizedLinear(embed_dim, hidden)
+        self.fc1 = WeightNormalizedLinear(embed_dim, hidden)
+        self.fc1_cls = WeightNormalizedLinear(embed_dim, hidden)
+        self.fc2_cls = WeightNormalizedLinear(hidden, embed_dim)
+        self.attn = nn.MultiheadAttention(
+            embed_dim, num_heads, batch_first=True, dropout=0
+        )
+        self.act = nn.LeakyReLU()
+        self.ln = nn.LayerNorm(hidden)
+        # self.ln2=nn.LayerNorm(2*hidden)
+        # self.bn=nn.BatchNorm1d(hidden)
+
+    def forward(self, x, x_cls, src_key_padding_mask=None):
+        res = x_cls.clone()
+        x = self.act(self.fc0(x))
+        # x_cls = self.act(self.fc0(x_cls))
+        x_cls = self.attn(x_cls, x, x, key_padding_mask=src_key_padding_mask)[0]
+        # x=x+x_cls
+        # x=self.act(self.fc1(x))
+        x_cls = self.act(self.fc1_cls(x_cls))  # +x.mean(dim=1).unsqueeze(1)
+        x_cls = self.act(self.fc2_cls(self.ln(x_cls + res)))
+        # x_cls=self.ln2(torch.cat((x_cls,x.mean(dim=1).unsqueeze(1)),dim=-1))
+        # x_cls=self.act(self.fc2_cls(x_cls)+res)
+        return x_cls  # ,x
+
+
+class Disc(nn.Module):
+    def __init__(
+        self, n_dim, l_dim, hidden, num_layers, heads, mean_field, **kwargs
+    ):
+        super().__init__()
+        l_dim = hidden
+        self.embbed = WeightNormalizedLinear(n_dim, l_dim)
+        self.encoder = nn.ModuleList(
+            [
+                BlockCls(embed_dim=l_dim, num_heads=heads, hidden=hidden)
+                for i in range(num_layers)
+            ]
+        )
+        self.out = WeightNormalizedLinear(l_dim, 1)
+        self.cls_token = nn.Parameter(torch.randn(1, 1, l_dim), requires_grad=True)
+        self.act = nn.LeakyReLU()
+        self.fc1 = WeightNormalizedLinear(l_dim, hidden)
+        self.mean_field = mean_field
+        # self.fc2 = WeightNormalizedLinear(hidden, l_dim)
+        self.apply(self._init_weights)
+
+    def forward(self, x, mask=None):
+        x = self.act(self.embbed(x))
+        x_cls = self.cls_token.expand(x.size(0), 1, -1)
+        for layer in self.encoder:
+            x_cls = layer(x, x_cls=x_cls, src_key_padding_mask=mask)
+        res = x_cls.clone()
+        x_cls = self.act(self.fc1(x_cls))
+        if self.mean_field:
+            return self.out(x_cls).squeeze(-1), res.squeeze(1)
+        else:
+            return self.out(x_cls).squeeze(-1)
+
+    def _init_weights(self, m):
+        if isinstance(m, nn.Linear):
+            nn.init.kaiming_normal_(
+                m.weight,
+            )
+            m.bias.data.fill_(0.01)
+        if isinstance(m, nn.MultiheadAttention):
+            nn.init.kaiming_normal_(m.in_proj_weight)
+        torch.nn.init.kaiming_normal_(
+            self.embbed.weight,
+        )
+        torch.nn.init.kaiming_normal_(
+            self.out.weight,
+        )
+
+
 class WeightNormalizedLinear(nn.Module):
     def __init__(
         self,
@@ -72,80 +150,4 @@ class WeightNormalizedLinear(nn.Module):
             + " -> "
             + str(self.out_features)
             + ")"
-        )
-
-
-class BlockCls(nn.Module):
-    def __init__(self, embed_dim, num_heads, hidden):
-        super().__init__()
-        self.fc0 = WeightNormalizedLinear(embed_dim, hidden)
-        self.fc1_cls = WeightNormalizedLinear(embed_dim, hidden)
-        # self.fc2_cls = WeightNormalizedLinear(hidden, embed_dim)
-        self.attn = nn.MultiheadAttention(
-            embed_dim, num_heads, batch_first=True, dropout=0
-        )
-        self.act = nn.LeakyReLU()
-        self.ln = nn.LayerNorm(hidden)
-
-    def forward(self, x, x_cls, src_key_padding_mask=None):
-        # res = x_cls.clone()
-        x = self.act(self.fc0(x))
-        x_cls = self.act(self.fc0(x_cls))
-        x_cls = self.attn(x_cls, x, x, key_padding_mask=src_key_padding_mask)[0]
-        x = x + x_cls
-
-        # x= self.bn(x.reshape(-1,x.shape[-1])).reshape(x.shape)
-        x_cls = self.act(
-            self.ln(self.fc1_cls(x_cls))
-        )  # +x.mean(dim=1).unsqueeze(1)
-        # x_cls = self.act(self.fc2_cls(x_cls+res))
-        return x_cls, x
-
-
-class Disc(nn.Module):
-    def __init__(
-        self, n_dim, l_dim, hidden, num_layers, heads, mean_field, **kwargs
-    ):
-        super().__init__()
-        l_dim = hidden
-        self.embbed = WeightNormalizedLinear(n_dim, l_dim)
-        self.encoder = nn.ModuleList(
-            [
-                BlockCls(embed_dim=l_dim, num_heads=heads, hidden=hidden)
-                for i in range(num_layers)
-            ]
-        )
-        self.out = WeightNormalizedLinear(l_dim, 1)
-        self.cls_token = nn.Parameter(torch.randn(1, 1, l_dim), requires_grad=True)
-        self.act = nn.LeakyReLU()
-        self.fc1 = WeightNormalizedLinear(l_dim, hidden)
-        self.mean_field = mean_field
-        # self.fc2 = WeightNormalizedLinear(hidden, l_dim)
-        self.apply(self._init_weights)
-
-    def forward(self, x, mask=None):
-        x = self.act(self.embbed(x))
-        x_cls = self.cls_token.expand(x.size(0), 1, -1)
-        for layer in self.encoder:
-            x_cls, x = layer(x, x_cls=x_cls, src_key_padding_mask=mask)
-        res = x_cls.clone()
-        x_cls = self.act(self.fc1(x_cls))
-        if self.mean_field:
-            return self.out(x_cls).squeeze(-1), res.squeeze(1)
-        else:
-            return self.out(x_cls).squeeze(-1)
-
-    def _init_weights(self, m):
-        if isinstance(m, nn.Linear):
-            nn.init.kaiming_normal_(
-                m.weight,
-            )
-            m.bias.data.fill_(0.01)
-        if isinstance(m, nn.MultiheadAttention):
-            nn.init.kaiming_normal_(m.in_proj_weight)
-        torch.nn.init.kaiming_normal_(
-            self.embbed.weight,
-        )
-        torch.nn.init.kaiming_normal_(
-            self.out.weight,
         )

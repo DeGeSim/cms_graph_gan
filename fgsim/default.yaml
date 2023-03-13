@@ -181,10 +181,10 @@ model_param_options:
     norm: false
   disc_benno_linw:
     n_dim: 3
-    l_dim: 40
-    hidden: 1024
-    num_layers: 8
-    heads: 8
+    l_dim: 128
+    hidden: 128
+    num_layers: 4
+    heads: 4
     mean_field: True
   disc_deeptree: {}
   disc_diffpool: {}

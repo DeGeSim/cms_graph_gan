@@ -17,7 +17,7 @@ class ModelClass(nn.Module):
         return x
 
 
-class Block(nn.Module):
+class BlockCls(nn.Module):
     def __init__(
         self, embed_dim, num_heads, hidden, dropout, activation, slope, norm
     ):
@@ -103,7 +103,7 @@ class Disc(nn.Module):
         self.slope = slope
         self.encoder = nn.ModuleList(
             [
-                Block(
+                BlockCls(
                     embed_dim=l_dim,
                     num_heads=heads,
                     hidden=int(hidden),
