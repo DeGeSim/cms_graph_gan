@@ -1,51 +1,18 @@
 import torch
 from torch import nn
+
+# from torch_geometric.nn.pool import TopKPooling
 from torch_geometric.nn import global_add_pool, knn_graph
 
 from fgsim.models.common import FFN, MPLSeq
 
-# from torch_geometric.nn.pool import TopKPooling
-
-
-ffn_param = {"bias": False, "n_layers": 2, "hidden_layer_size": 40, "dropout": 0.0}
-
-
-class TSumTDisc(nn.Module):
-    """Classifies PC via FNN -> Add -> FNN"""
-
-    def __init__(self, n_ftx_out) -> None:
-        super().__init__()
-        self.disc_emb = nn.ModuleList(
-            [
-                EPiC(n_in=n_ftx_out, n_latent=5, n_global=4, n_out=n_ftx_out)
-                for _ in range(4)
-            ]
-        )
-        self.disc = FFN(n_ftx_out, 1, **ffn_param, final_linear=True)
-
-    def forward(self, x, batch):
-        for layer in self.disc_emb:
-            x = layer(x, batch)
-        x = global_add_pool(x, batch)
-        x = self.disc(x)
-        return x
-
-
-class EPiC(nn.Module):
-    """update with global vector"""
-
-    def __init__(self, n_in, n_latent, n_global, n_out) -> None:
-        super().__init__()
-        self.emb_nn = FFN(n_in, n_latent, **ffn_param)
-        self.global_nn = FFN(n_latent, n_global, **ffn_param)
-        self.out_nn = FFN(n_latent + n_global, n_out, **ffn_param)
-
-    def forward(self, x, batch):
-        x = self.emb_nn(x)
-        x_aggr = global_add_pool(x, batch)
-        x_global = self.global_nn(x_aggr)
-        x = self.out_nn(torch.hstack([x, x_global[batch]]))
-        return x
+ffn_param = {
+    "bias": False,
+    "n_layers": 2,
+    "hidden_layer_size": 40,
+    "dropout": 0.0,
+    # "norm": "spectral",
+}
 
 
 class ModelClass(nn.Module):
@@ -62,7 +29,7 @@ class ModelClass(nn.Module):
         self.pools = nn.ModuleList()
         self.pcdiscs = nn.ModuleList()
 
-        for ilevel in range(self.n_levels - 1):
+        for ilevel in range(1):  # self.n_levels - 1):
             self.embeddings.append(
                 Embedding(
                     n_ftx_in=self.features[ilevel],
@@ -99,6 +66,48 @@ class ModelClass(nn.Module):
         return x_disc
 
 
+class TSumTDisc(nn.Module):
+    """Classifies PC via FNN -> Add -> FNN"""
+
+    def __init__(self, n_ftx_out) -> None:
+        super().__init__()
+        self.disc_emb = nn.ModuleList(
+            [
+                EPiC(n_in=n_ftx_out, n_latent=5, n_global=4, n_out=n_ftx_out)
+                for _ in range(4)
+            ]
+        )
+        self.disc = FFN(n_ftx_out, 1, **ffn_param, final_linear=True)
+
+    def forward(self, x, batch):
+        for layer in self.disc_emb:
+            x = layer(x, batch)
+        x = global_add_pool(x, batch)
+        x = self.disc(x)
+        return x
+
+
+class EPiC(nn.Module):
+    """update with global vector"""
+
+    def __init__(self, n_in, n_latent, n_global, n_out) -> None:
+        super().__init__()
+        self.emb_nn = FFN(n_in, n_latent, **(ffn_param | {"norm": "spectral"}))
+        self.global_nn = FFN(
+            n_latent, n_global, **(ffn_param | {"norm": "spectral"})
+        )
+        self.out_nn = FFN(
+            n_latent + n_global, n_out, **(ffn_param | {"norm": "spectral"})
+        )
+
+    def forward(self, x, batch):
+        x = self.emb_nn(x)
+        x_aggr = global_add_pool(x, batch)
+        x_global = self.global_nn(x_aggr)
+        x = self.out_nn(torch.hstack([x, x_global[batch]]))
+        return x
+
+
 def signsqrt(x: torch.Tensor):
     return torch.sign(x) * torch.sqrt(torch.abs(x))
 
@@ -129,8 +138,8 @@ class Embedding(nn.Module):
                 k: v for k, v in ffn_param.items() if k != "hidden_layer_size"
             },
             n_global=0,
-            n_cond=0,
-            n_mpl=2,
+            n_cond=5,
+            n_mpl=1,
         )
         self.out_emb = FFN(self.n_ftx_latent, self.n_ftx_out, **ffn_param)
 
