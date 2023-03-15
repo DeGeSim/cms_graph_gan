@@ -19,7 +19,7 @@
         {
             "args": [
                 "--tag",
-                "ddiffpool",
+                "ddt",
                 "--debug",
                 "train"
             ],
@@ -33,7 +33,7 @@
         {
             "args": [
                 "--tag",
-                "ddiffpool",
+                "ddt",
                 "--debug",
                 "test"
             ],
@@ -47,7 +47,7 @@
         {
             "args": [
                 "--tag",
-                "ddiffpool",
+                "ddt",
                 "--debug",
                 "preprocess"
             ],
@@ -73,7 +73,7 @@
             "type": "python",
             "args": [
                 "--tag",
-                "ddiffpool",
+                "ddt",
                 "--debug",
                 "train"
             ],
@@ -86,7 +86,7 @@
             "type": "python",
             "args": [
                 "--tag",
-                "ddiffpool",
+                "ddt",
                 // "--debug",
                 "setup"
             ],

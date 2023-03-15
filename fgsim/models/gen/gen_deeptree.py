@@ -127,6 +127,17 @@ class ModelClass(nn.Module):
         self.presaved_batch: Optional[Batch] = None
         self.presaved_batch_indexing: Optional[torch.Tensor] = None
 
+        # self.ancestor_conv_layers[-1].mpls[-1].nn.seq[-1].register_backward_hook(
+        #     lambda m, go, gi: logger.debug(
+        #         f"grad: ac abs mean {gi[0].abs().mean():.0e} std {gi[0].std():.0e}"
+        #     )
+        # )
+        # self.branching_layers[0].proj_nn.seq[-1].register_backward_hook(
+        #     lambda m, go, gi: logger.debug(
+        #         f"grad: br abs mean {gi[0].abs().mean():.0e} std {gi[0].std():.0e}"
+        #     )
+        # )
+
     def wrap_layer_init(self, ilevel, type: str):
         if type == "ac":
             conv_param = self.ancestor_mpl
