@@ -16,6 +16,7 @@ exclude = [
   ".tox",
   "docs",
   "__pycache__",
+  "fgsim/models/disc/disc_deeptree.py",
 ]
 ignore = "E203,E302,W503,F541,"
 max-line-length = 84

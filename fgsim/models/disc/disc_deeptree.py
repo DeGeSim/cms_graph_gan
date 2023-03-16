@@ -1,10 +1,8 @@
+# noqa: F401
 import torch
 from torch import nn
 from torch_geometric.nn import global_add_pool, knn_graph
-from torch_geometric.nn.pool import (  # TopKPooling,; global_add_pool,
-    SAGPooling,
-    global_max_pool,
-)
+from torch_geometric.nn.pool import SAGPooling, TopKPooling, global_max_pool
 
 from fgsim.models.common import FFN, MPLSeq
 
@@ -41,14 +39,14 @@ class ModelClass(nn.Module):
                 )
             )
             self.pools.append(
-                # TopKPooling(
-                #     in_channels=self.features[ilevel + 1],
-                #     ratio=self.nodes[ilevel + 1],
-                # )
-                SAGPooling(
-                    self.features[ilevel + 1],
+                TopKPooling(
+                    in_channels=self.features[ilevel + 1],
                     ratio=self.nodes[ilevel + 1],
                 )
+                # SAGPooling(
+                #     self.features[ilevel + 1],
+                #     ratio=self.nodes[ilevel + 1],
+                # )
             )
             self.pcdiscs.append(TSumTDisc(self.features[ilevel + 1]))
         self.last_level_disc = TSumTDisc(self.features[-1])
