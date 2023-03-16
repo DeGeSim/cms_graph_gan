@@ -46,6 +46,7 @@ class TrainLog:
                 dir=conf.path.run_path,
                 project=conf.comet_project_name,
                 job_type=conf.command,
+                settings={"quiet": True},
             )
             wandb.log(
                 data={"other/epoch": self.state["epoch"]},

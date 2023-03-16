@@ -95,5 +95,6 @@ def setup_experiment() -> None:
         dir=conf.path.run_path,
         job_type=conf.command,
         resume=False,
+        settings={"quiet": True, "disable_job_creation": True},
     )
     exp_orga_wandb[conf["hash"]] = run.id
