@@ -24,7 +24,8 @@ models:
     name: disc_benno_lin
     params: ${model_param_options[${models.disc.name}]}
     losses: "${optionlist:${loss_options},${models.disc.losses_list}}"
-    losses_list: ${gan_mode_options[${training.gan_mode}][disc]}
+    losses_list: ${listadd:${gan_mode_options[${training.gan_mode}][disc]},${models.disc.additional_losses_list}}
+    additional_losses_list: []
     optim:
       name: Adam
       params: ${optim_options[disc][${models.gen.optim.name}]}
@@ -316,6 +317,10 @@ loss_options:
     low: -4.0
   feature_matching:
     factor: 1.0
+  histd:
+    factor: 1.0e-02
+  histg:
+    factor: 1.0e-02
   mmd:
     factor: 1.0
     kernel: "rbf"

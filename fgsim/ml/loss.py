@@ -1,6 +1,6 @@
 """Dynamically import the losses"""
 import importlib
-from typing import Dict, Protocol
+from typing import Dict, Optional, Protocol
 
 import torch
 from omegaconf import DictConfig, OmegaConf
@@ -52,10 +52,11 @@ class SubNetworkLoss:
         return self.parts[lossname]
 
     def __call__(self, holder, **res):
-        losses_dict: Dict[str, torch.Tensor] = {
-            lossname: loss(holder=holder, **res) * self.pconf[lossname]["factor"]
-            for lossname, loss in self.parts.items()
-        }
+        losses_dict: Dict[str, Optional[torch.Tensor]] = {}
+        for lossname, loss in self.parts.items():
+            loss_value = loss(holder=holder, **res)
+            if loss_value is not None:
+                losses_dict[lossname] = loss_value * self.pconf[lossname]["factor"]
 
         partloss: torch.Tensor = sum(losses_dict.values())
         if conf.models[self.name].retain_graph_on_backprop:
