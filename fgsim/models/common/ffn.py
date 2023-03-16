@@ -1,7 +1,6 @@
 from typing import List, Optional
 
 from torch import nn
-from torch.nn.utils.parametrizations import spectral_norm, weight_norm
 
 from fgsim.config import conf
 
@@ -59,9 +58,9 @@ class FFN(nn.Module):
         for ilayer in range(n_layers):
             m = nn.Linear(features[ilayer], features[ilayer + 1], bias=bias)
             if norm == "spectral":
-                m = spectral_norm(m)
+                m = nn.utils.parametrizations.spectral_norm(m)
             elif norm == "weight":
-                m = weight_norm(m)
+                m = nn.utils.weight_norm(m)
             self.seq.append(m)
             if ilayer == n_layers - 1 and final_linear:
                 continue
