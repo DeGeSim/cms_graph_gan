@@ -13,7 +13,6 @@ from pathlib import Path
 import torch
 from omegaconf import OmegaConf
 from omegaconf.dictconfig import DictConfig
-from torch.optim.swa_utils import AveragedModel
 
 from fgsim.config import conf
 from fgsim.io.sel_loader import Batch
@@ -24,6 +23,8 @@ from fgsim.ml.val_metrics import ValidationMetrics
 from fgsim.monitoring import TrainLog, logger
 from fgsim.utils.check_for_nans import contains_nans
 from fgsim.utils.push_to_old import push_to_old
+
+# from torch.optim.swa_utils import AveragedModel
 
 
 class Holder:
@@ -54,7 +55,7 @@ class Holder:
         self.models = self.models.float().to(device)
         self.train_log.log_model_graph(self.models)
         self.swa_models = {
-            k: AveragedModel(v) for k, v in self.models.parts.items()
+            # k: AveragedModel(v) for k, v in self.models.parts.items()
         }
 
         if conf.command == "train":
