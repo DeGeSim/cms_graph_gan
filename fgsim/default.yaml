@@ -17,7 +17,7 @@ models:
       name: Adam
       params: ${optim_options[gen][${models.gen.optim.name}]}
     scheduler:
-      name: NullScheduler
+      name: CyclicLR
       params: ${scheduler_options[${models.gen.scheduler.name}]}
     retain_graph_on_backprop: True
   disc:
@@ -67,9 +67,9 @@ scheduler_options:
   CyclicLR:
     max_lr: 1.0e-4
     base_lr: 1.0e-5
-    step_size_up: 10000
+    step_size_up: 100_000
     cycle_momentum: False
-    mode: "triangular"
+    mode: "triangular2"
   CosineAnnealingLR:
     eta_min: 1.0e-5
     T_max: 500_000
