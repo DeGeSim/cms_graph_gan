@@ -1,7 +1,7 @@
 from typing import Optional
 
 import torch
-from torch_geometric.nn import EdgeConv, GINConv
+from torch_geometric.nn import EdgeConv, GINConv, GravNetConv
 
 from fgsim.models.common import FFN, GINCConv
 from fgsim.models.common.deeptree import DeepConv
@@ -91,14 +91,19 @@ class MPLSeq(torch.nn.Module):
                 n_global=self.n_global,
                 **layer_param,
             )
+        elif conv_name == "GravNetConv":
+            return GravNetConv(
+                in_channels=in_features + self.n_cond + self.n_global,
+                out_channels=out_features,
+                **layer_param,
+            )
+
         else:
             raise Exception
 
     def wrap_mpl(
         self, *, layer, x, cond, edge_index, edge_attr, batch, global_features
     ):
-        if edge_attr is None:
-            edge_attr = torch.ones_like(edge_index[0]).reshape(-1, 1)
         if isinstance(layer, GINCConv):
             return layer(
                 x,
@@ -127,6 +132,8 @@ class MPLSeq(torch.nn.Module):
                 edge_index,
             )
         elif isinstance(layer, DeepConv):
+            if edge_attr is None:
+                edge_attr = torch.ones_like(edge_index[0]).reshape(-1, 1)
             return layer(
                 x=x,
                 cond=cond,
@@ -135,6 +142,17 @@ class MPLSeq(torch.nn.Module):
                 batch=batch,
                 global_features=global_features,
             )
+        elif isinstance(layer, GravNetConv):
+            return layer(
+                torch.hstack(
+                    (
+                        x,
+                        cond[batch],
+                        global_features[batch],
+                    )
+                ),
+                # edge_index,
+            )
         else:
             raise Exception
 
@@ -142,9 +160,9 @@ class MPLSeq(torch.nn.Module):
         self,
         *,
         x: torch.Tensor,
-        cond: Optional[torch.Tensor],
-        edge_index: torch.Tensor,
         batch: torch.Tensor,
+        cond: Optional[torch.Tensor] = None,
+        edge_index: Optional[torch.Tensor] = None,
         edge_attr: Optional[torch.Tensor] = None,
         global_features: Optional[torch.Tensor] = None,
     ) -> torch.Tensor:
