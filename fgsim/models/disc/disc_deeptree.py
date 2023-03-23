@@ -148,7 +148,7 @@ class TSumTDisc(nn.Module):
         super().__init__()
         self.disc_emb = nn.ModuleList(
             [
-                CentralNodeUpdate(n_in=n_ftx_out, n_latent=4, n_global=5)
+                CentralNodeUpdate(n_ftx_in=n_ftx_out, n_ftx_latent=4, n_global=5)
                 for _ in range(2)
             ]
         )
@@ -168,15 +168,17 @@ class TSumTDisc(nn.Module):
 class CentralNodeUpdate(nn.Module):
     """update with global vector"""
 
-    def __init__(self, n_in, n_latent, n_global) -> None:
+    def __init__(self, n_ftx_in, n_ftx_latent, n_global) -> None:
         super().__init__()
-        self.emb_nn = FFN(n_in, n_latent, **(ffn_param | {"norm": "spectral"}))
+        self.emb_nn = FFN(
+            n_ftx_in, n_ftx_latent, **(ffn_param | {"norm": "spectral"})
+        )
         self.global_nn = FFN(
-            n_latent, n_global, **(ffn_param | {"norm": "spectral"})
+            n_ftx_latent, n_global, **(ffn_param | {"norm": "spectral"})
         )
         self.out_nn = FFN(
-            n_latent + n_global,
-            n_in,
+            n_ftx_latent + n_global,
+            n_ftx_in,
             **(ffn_param | {"norm": "spectral"}),
             final_linear=True,
         )
