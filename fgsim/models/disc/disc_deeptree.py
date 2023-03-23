@@ -156,10 +156,10 @@ class TSumTDisc(nn.Module):
 
     def forward(self, x, batch):
         for ilayer, layer in enumerate(self.disc_emb):
-            # if ilayer == 0:
-            #     x = layer(x, batch)
-            # else:
-            x = x.clone() + layer(x, batch)
+            if ilayer == 0:
+                x = layer(x, batch)
+            else:
+                x = x.clone() + layer(x, batch)
         x = global_add_pool(x, batch)
         x = self.disc(x)
         return x
