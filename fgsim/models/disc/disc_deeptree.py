@@ -22,7 +22,7 @@ class ModelClass(nn.Module):
     def __init__(self):
         super().__init__()
         self.nodes = [30, 6, 1]
-        self.features = [3, 12, 18]
+        self.features = [3, 20, 40]
         self.n_levels = len(self.nodes)
         self.n_ftx_space = 2
         self.n_ftx_disc = 5
@@ -215,19 +215,25 @@ class Embedding(nn.Module):
         #     n_cond=5,
         #     n_mpl=2,
         # )
-        self.out_emb = FFN(
+        self.inp_emb = FFN(
             self.n_ftx_in,
             self.n_ftx_out,
             **(ffn_param | {"bias": True, "norm": "batchnorm"}),
             final_linear=True,
+        )
+        self.cnu = CentralNodeUpdate(
+            n_ftx_in=self.n_ftx_out,
+            n_ftx_latent=self.n_ftx_latent,
+            n_global=self.n_ftx_latent,
         )
 
     def forward(self, x, batch, condition):
         # x = self.space_emb(x)
         # ei = knn_graph(x[..., : self.n_ftx_space], batch=batch, k=5)
         # x = self.mpls(x=x, edge_index=ei, batch=batch, cond=condition)
-        x_emb = self.out_emb(x)
-        return x_emb
+        x = self.inp_emb(x)
+        x = self.cnu(x.clone(), batch)
+        return x
 
 
 def signsqrt(x: torch.Tensor):
