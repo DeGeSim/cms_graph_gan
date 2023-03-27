@@ -91,13 +91,7 @@ class BipartPool(nn.Module):
         self.xcent_base = nn.Parameter(
             torch.normal(0, 1, size=(self.ratio, self.in_channels))
         )
-        # self.cent_emb_nn = torch.nn.Sequential(
-        #     nn.Linear(in_channels, in_channels, bias=False),
-        #     nn.BatchNorm1d(in_channels),
-        #     nn.LeakyReLU(0.1),
-        #     nn.Linear(in_channels, in_channels, bias=False),
-        #     nn.BatchNorm1d(in_channels),
-        # )
+
         self.mpl = conv.GATv2Conv(
             in_channels=in_channels,
             out_channels=in_channels,
@@ -174,7 +168,7 @@ class CentralNodeUpdate(nn.Module):
             n_ftx_in, n_ftx_latent, **(ffn_param | {"norm": "spectral"})
         )
         self.global_nn = FFN(
-            n_ftx_latent * 2, n_global, **(ffn_param | {"norm": "spectral"})
+            n_ftx_latent, n_global, **(ffn_param | {"norm": "spectral"})
         )
         self.out_nn = FFN(
             n_ftx_latent + n_global,
@@ -186,9 +180,7 @@ class CentralNodeUpdate(nn.Module):
     def forward(self, x, batch):
         x_in = x.clone()
         x = self.emb_nn(x)
-        x_aggr = torch.hstack(
-            [global_add_pool(x, batch), global_max_pool(x, batch)]
-        )
+        x_aggr = global_add_pool(x, batch)
         x_global = self.global_nn(x_aggr)
         x = x_in + self.out_nn(torch.hstack([x, x_global[batch]]))
         return x
