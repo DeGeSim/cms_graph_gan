@@ -36,10 +36,8 @@ def validate(holder: Holder, loader: QueuedDataset) -> None:
     sim_batch = Batch.from_data_list(res_d_l["sim_batch"])
     gen_batch = Batch.from_data_list(res_d_l["gen_batch"])
 
-    max_points = conf.loader.n_points * conf.loader.validation_set_size
-    assert sim_batch.x.shape[-1] == gen_batch.x.shape[-1]
-    assert max_points * 0.7 <= sim_batch.x.shape[0] <= max_points
-    assert max_points * 0.7 <= gen_batch.x.shape[0] <= max_points
+    # max_points = conf.loader.n_points * conf.loader.validation_set_size
+    assert sim_batch.x.shape == gen_batch.x.shape
 
     for batch in sim_batch, gen_batch:
         if conf.training.smoothing.active:

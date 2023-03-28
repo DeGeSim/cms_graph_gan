@@ -14,9 +14,12 @@ jn_dict = {}
 
 def get_jn(fn):
     fn = str(fn)
+
     if fn not in jn_dict:
         jn_dict[fn] = JetNet.getData(
-            jet_type=fn, data_dir=Path(conf.loader.dataset_path).expanduser()
+            jet_type=fn,
+            data_dir=Path(conf.loader.dataset_path).expanduser(),
+            num_particles=conf.loader.n_points,
         )
     return jn_dict[fn]
 

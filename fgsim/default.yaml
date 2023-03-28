@@ -2,7 +2,7 @@ tag: default
 loglevel: 20
 loglevel_qf: 30
 seed: 0
-comet_project_name: "jetnet_uc2"
+comet_project_name: "jetnet150_ddt"
 ray: False
 remote: False
 
@@ -12,7 +12,7 @@ models:
     params: ${model_param_options[${models.gen.name}]}
     losses: "${optionlist:${loss_options},${models.gen.losses_list}}"
     losses_list: ${listadd:${gan_mode_options[${training.gan_mode}][gen]},${models.gen.additional_losses_list}}
-    additional_losses_list: []
+    additional_losses_list: ["feature_matching", "histg"]
     optim:
       name: Adam
       params: ${optim_options[gen][${models.gen.optim.name}]}
@@ -21,11 +21,11 @@ models:
       params: ${scheduler_options[${models.gen.scheduler.name}]}
     retain_graph_on_backprop: True
   disc:
-    name: disc_benno_lin
+    name: disc_deeptree
     params: ${model_param_options[${models.disc.name}]}
     losses: "${optionlist:${loss_options},${models.disc.losses_list}}"
     losses_list: ${listadd:${gan_mode_options[${training.gan_mode}][disc]},${models.disc.additional_losses_list}}
-    additional_losses_list: []
+    additional_losses_list: ["histd"]
     optim:
       name: Adam
       params: ${optim_options[disc][${models.gen.optim.name}]}
@@ -413,8 +413,10 @@ dataset_options:
       y_features: ["num_particles"]
   jetnet:
     tree:
-      branches: [2, 3, 5]
-      features: [64, 33, 20, 3]
+      # branches: [2, 3, 5]
+      # features: [64, 33, 20, 3]
+      branches: [2, 3, 5, 5]
+      features: [64, 33, 20, 10, 3]
     validation:
       interval: 2_000
       use_for_stopping: ["w1m", "w1p", "fpnd"]
@@ -422,7 +424,7 @@ dataset_options:
       debug_metrics: ["w1m", "auc", "w1disc"]
     loader:
       dataset_path: "~/fgsim/data/jetnet"
-      n_points: 30
+      n_points: 150
       x_features: ["etarel", "phirel", "ptrel"]
       x_ftx_energy_pos: 2
       y_features: ["type", "pt", "eta", "mass", "num_particles"]

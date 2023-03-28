@@ -1,4 +1,5 @@
 import jetnet
+import torch
 from torch_geometric.data import Batch
 
 from fgsim.config import conf
@@ -34,9 +35,24 @@ def w1efp(gen_batch: Batch, sim_batch: Batch, **kwargs) -> tuple[float, float]:
 
 
 def fpnd(gen_batch: Batch, **kwargs) -> float:
+    jets = to_stacked_mask(gen_batch)[:, :, :3]
+    if conf.loader.n_points != 30:
+        pts = jets[..., conf.loader.x_ftx_energy_pos]
+        topidxs = pts.topk(
+            k=30,
+            dim=1,
+            largest=True,
+            # sorted=True,
+        ).indices
+
+        highptjets = torch.stack([jet[idx] for jet, idx in zip(jets, topidxs)])
+
+    else:
+        highptjets = jets
+
     try:
         score = jetnet.evaluation.gen_metrics.fpnd(
-            jets=to_stacked_mask(gen_batch)[..., :3],
+            jets=highptjets,
             jet_type=jet_type,
             use_tqdm=False,
         )
