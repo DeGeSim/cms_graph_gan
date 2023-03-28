@@ -4,6 +4,7 @@ import sys
 import time
 import traceback
 
+import torch
 from tqdm import tqdm
 
 from fgsim.config import conf, device
@@ -27,6 +28,7 @@ class Trainer:
             if conf.debug
             else conf.training.val.interval
         )
+        logger.info(f"Device: {torch.cuda.get_device_name()}")
 
     def training_loop(self):
         max_epochs = conf.training.max_epochs
