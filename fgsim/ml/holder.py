@@ -253,9 +253,15 @@ class Holder:
             )
         else:
             cond = sim_batch.y
+        assert (cond[:, -1] == (sim_batch.ptr[1:] - sim_batch.ptr[:-1])).all()
 
         with with_grad(train_gen):
             gen_batch = gen(z, cond)
+            # make sure the number of points is the same
+            assert (gen_batch.ptr == sim_batch.ptr).all()
+            assert (gen_batch.batch == sim_batch.batch).all()
+            assert gen_batch.x.shape == sim_batch.x.shape
+
         assert not torch.isnan(gen_batch.x).any()
         assert sim_batch.x.shape[-1] == gen_batch.x.shape[-1]
 

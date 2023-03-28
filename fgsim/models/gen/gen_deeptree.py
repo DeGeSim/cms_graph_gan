@@ -314,6 +314,9 @@ class ModelClass(nn.Module):
         )
         batch._inc_dict["x"] = torch.zeros(self.batch_size, device=device)
         batch._inc_dict["xnot"] = torch.zeros(self.batch_size, device=device)
+        batch.ptr = torch.hstack(
+            [torch.zeros(1, device=device, dtype=torch.long), num_vec.cumsum(0)]
+        )
         batch.num_nodes = len(batch.x)
 
         assert (

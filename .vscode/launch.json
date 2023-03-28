@@ -19,7 +19,7 @@
         {
             "args": [
                 "--tag",
-                "ddt",
+                "ddt_t_bl2",
                 "--debug",
                 "train"
             ],
@@ -33,7 +33,7 @@
         {
             "args": [
                 "--tag",
-                "ddt",
+                "ddt_t_bl2_t_bl2",
                 "--debug",
                 "test"
             ],
@@ -73,7 +73,7 @@
             "type": "python",
             "args": [
                 "--tag",
-                "ddt",
+                "ddt_t_bl2",
                 "--debug",
                 "train"
             ],
@@ -86,7 +86,7 @@
             "type": "python",
             "args": [
                 "--tag",
-                "ddt",
+                "ddt_t_bl2",
                 // "--debug",
                 "setup"
             ],
