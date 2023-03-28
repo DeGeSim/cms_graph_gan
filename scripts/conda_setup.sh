@@ -57,7 +57,7 @@ mamba install --yes omegaconf typeguard tqdm uproot awkward tensorboard tblib py
 mamba install cryptography==38.0.4
 
 # dev tools
-mamba install --yes black isort flake8 mypy pytest pre-commit ipykernel jupyter notebook openai icecream
+mamba install --yes black isort flake8 mypy pytest pre-commit ipykernel jupyter notebook openai icecream ruff
 
 ## PyG
 mamba install --yes pyg -c pyg

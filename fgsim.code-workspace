@@ -15,7 +15,8 @@
     "settings": {
         "[python]": {
             "editor.codeActionsOnSave": {
-                "source.organizeImports": false
+                "source.organizeImports": true,
+                "source.fixAll": true
             },
             "editor.formatOnSave": true
         },
@@ -67,7 +68,7 @@
             "wd/**"
         ],
         "python.linting.lintOnSave": true,
-        "python.linting.mypyEnabled": true,
+        "python.linting.mypyEnabled": false,
         "python.linting.mypyPath": "/dev/shm/mscham/fgsim/bin/mypy",
         "python.linting.pylintArgs": [
             "--generated-members=numpy.* ,torch.*",

@@ -149,12 +149,9 @@ class TSumTDisc(nn.Module):
         self.disc = FFN(n_ftx_out, 1, **ffn_param, final_linear=True)
 
     def forward(self, x, batch):
-        for ilayer, layer in enumerate(self.disc_emb):
-            if ilayer == 0:
-                x = layer(x, batch)
-            else:
-                x = x.clone() + layer(x, batch)
-        x = global_add_pool(x, batch)
+        for layer in self.disc_emb:
+            x = x.clone() + layer(x.clone(), batch)
+        x = global_add_pool(x.clone(), batch)
         x = self.disc(x)
         return x
 
@@ -178,11 +175,10 @@ class CentralNodeUpdate(nn.Module):
         )
 
     def forward(self, x, batch):
-        x_in = x.clone()
         x = self.emb_nn(x)
         x_aggr = global_add_pool(x, batch)
         x_global = self.global_nn(x_aggr)
-        x = x_in + self.out_nn(torch.hstack([x, x_global[batch]]))
+        x = self.out_nn(torch.hstack([x, x_global[batch]]))
         return x
 
 
@@ -226,7 +222,7 @@ class Embedding(nn.Module):
         # ei = knn_graph(x[..., : self.n_ftx_space], batch=batch, k=5)
         # x = self.mpls(x=x, edge_index=ei, batch=batch, cond=condition)
         x = self.inp_emb(x)
-        x = self.cnu(x.clone(), batch)
+        x = self.cnu(x.clone(), batch) + x.clone()
         return x
 
 
