@@ -1,32 +1,29 @@
 # noqa: F401
 import torch
-import torch.nn.functional as F
 from torch import Tensor, nn
-from torch_geometric.nn import conv, global_add_pool, knn_graph
-from torch_geometric.nn.pool import SAGPooling, TopKPooling, global_max_pool
-from torch_geometric.utils import to_dense_adj, to_dense_batch
+from torch_geometric.nn import conv, global_add_pool
+from torch_geometric.nn.pool import global_max_pool
 
 from fgsim.config import conf
-from fgsim.models.common import FFN, MPLSeq
-
-ffn_param = {
-    "bias": False,
-    "n_layers": 2,
-    "hidden_layer_size": 40,
-    "dropout": 0.0,
-    "norm": "spectral",
-}
+from fgsim.models.common import FFN
 
 
 class ModelClass(nn.Module):
-    def __init__(self):
+    def __init__(
+        self,
+        nodes,
+        features,
+        ffn_param,
+        bipart_param,
+        emb_param,
+        critics_param,
+    ):
         super().__init__()
-        self.nodes = [30, 6, 1]
-        self.features = [3, 20, 40]
+        self.nodes = nodes
+        self.features = features
+        self.ffn_param = ffn_param
+
         self.n_levels = len(self.nodes)
-        self.n_ftx_space = 2
-        self.n_ftx_disc = 5
-        self.n_ftx_latent = 10
 
         self.embeddings = nn.ModuleList()
         self.pools = nn.ModuleList()
@@ -37,18 +34,23 @@ class ModelClass(nn.Module):
                 Embedding(
                     n_ftx_in=self.features[ilevel],
                     n_ftx_out=self.features[ilevel + 1],
-                    n_ftx_space=self.n_ftx_space,
-                    n_ftx_latent=self.n_ftx_latent,
+                    ffn_param=ffn_param,
+                    **emb_param,
                 )
             )
             self.pools.append(
                 BipartPool(
                     in_channels=self.features[ilevel + 1],
                     ratio=self.nodes[ilevel + 1],
+                    **bipart_param,
                 )
             )
         for ilevel in range(self.n_levels):
-            self.pcdiscs.append(TSumTDisc(self.features[ilevel]))
+            self.pcdiscs.append(
+                TSumTDisc(
+                    self.features[ilevel], ffn_param=ffn_param, **critics_param
+                )
+            )
 
     def forward(self, batch, condition):
         x: torch.Tensor
@@ -82,11 +84,11 @@ class ModelClass(nn.Module):
 
 
 class BipartPool(nn.Module):
-    def __init__(self, in_channels, ratio) -> None:
+    def __init__(self, in_channels, ratio, n_heads) -> None:
         super().__init__()
         self.in_channels = in_channels
         self.ratio = ratio
-        self.heads = 4
+        self.n_heads = n_heads
 
         self.xcent_base = nn.Parameter(
             torch.normal(0, 1, size=(self.ratio, self.in_channels))
@@ -95,13 +97,12 @@ class BipartPool(nn.Module):
         self.mpl = conv.GATv2Conv(
             in_channels=in_channels,
             out_channels=in_channels,
-            heads=self.heads,
+            heads=self.n_heads,
             concat=False,
         )
 
     def forward(self, x: Tensor, edge_index: Tensor, batch: Tensor):
-        batch_size = batch[-1] + 1
-        target_graph_size = batch_size * self.ratio
+        batch_size = int(batch[-1] + 1)
         source_graph_size = len(x)
 
         source = torch.arange(
@@ -138,15 +139,22 @@ class BipartPool(nn.Module):
 class TSumTDisc(nn.Module):
     """Classifies PC via FNN -> Add -> FNN"""
 
-    def __init__(self, n_ftx_out) -> None:
+    def __init__(
+        self, n_ftx, n_ftx_latent, n_ftx_global, n_updates, ffn_param
+    ) -> None:
         super().__init__()
         self.disc_emb = nn.ModuleList(
             [
-                CentralNodeUpdate(n_ftx_in=n_ftx_out, n_ftx_latent=4, n_global=5)
-                for _ in range(2)
+                CentralNodeUpdate(
+                    n_ftx_in=n_ftx,
+                    n_ftx_latent=n_ftx_latent,
+                    n_global=n_ftx_global,
+                    ffn_param=ffn_param,
+                )
+                for _ in range(n_updates)
             ]
         )
-        self.disc = FFN(n_ftx_out, 1, **ffn_param, final_linear=True)
+        self.disc = FFN(n_ftx, 1, **ffn_param, final_linear=True)
 
     def forward(self, x, batch):
         for layer in self.disc_emb:
@@ -159,7 +167,7 @@ class TSumTDisc(nn.Module):
 class CentralNodeUpdate(nn.Module):
     """update with global vector"""
 
-    def __init__(self, n_ftx_in, n_ftx_latent, n_global) -> None:
+    def __init__(self, n_ftx_in, n_ftx_latent, n_global, ffn_param) -> None:
         super().__init__()
         self.emb_nn = FFN(
             n_ftx_in, n_ftx_latent, **(ffn_param | {"norm": "spectral"})
@@ -183,10 +191,9 @@ class CentralNodeUpdate(nn.Module):
 
 
 class Embedding(nn.Module):
-    def __init__(self, n_ftx_in, n_ftx_out, n_ftx_space, n_ftx_latent) -> None:
+    def __init__(self, n_ftx_in, n_ftx_out, n_ftx_latent, ffn_param) -> None:
         super().__init__()
         self.n_ftx_in = n_ftx_in
-        self.n_ftx_space = n_ftx_space
         self.n_ftx_latent = n_ftx_latent
         self.n_ftx_out = n_ftx_out
 
@@ -215,6 +222,7 @@ class Embedding(nn.Module):
             n_ftx_in=self.n_ftx_out,
             n_ftx_latent=self.n_ftx_latent,
             n_global=self.n_ftx_latent,
+            ffn_param=ffn_param,
         )
 
     def forward(self, x, batch, condition):

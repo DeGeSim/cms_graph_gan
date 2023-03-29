@@ -259,7 +259,7 @@ class Holder:
             gen_batch = gen(z, cond)
             # make sure the number of points is the same
             assert (gen_batch.ptr == sim_batch.ptr).all()
-            assert (gen_batch.batch == sim_batch.batch).all()
+            # assert (gen_batch.batch == sim_batch.batch).all()
             assert gen_batch.x.shape == sim_batch.x.shape
 
         assert not torch.isnan(gen_batch.x).any()

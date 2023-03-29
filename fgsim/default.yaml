@@ -187,7 +187,23 @@ model_param_options:
     num_layers: 4
     heads: 4
     mean_field: True
-  disc_deeptree: {}
+  disc_deeptree:
+    nodes: [30, 6, 1]
+    features: [3, 20, 40]
+    ffn_param:
+      bias: False
+      n_layers: 2
+      hidden_layer_size: 40
+      dropout: 0.0
+      norm: "spectral"
+    emb_param:
+      n_ftx_latent: 10
+    bipart_param:
+      n_heads: 4
+    critics_param:
+      n_ftx_latent: 4
+      n_ftx_global: 5
+      n_updates: 2
   disc_diffpool: {}
   disc_dt_tsumt2: {}
   disc_dt_wlevels: {}
