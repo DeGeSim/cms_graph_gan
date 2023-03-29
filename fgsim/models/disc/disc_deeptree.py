@@ -29,7 +29,7 @@ class ModelClass(nn.Module):
         self.pools = nn.ModuleList()
         self.pcdiscs = nn.ModuleList()
 
-        for ilevel in range(self.n_levels - 1):
+        for ilevel in range(self.n_levels):
             self.embeddings.append(
                 Embedding(
                     n_ftx_in=self.features[ilevel],
@@ -41,11 +41,11 @@ class ModelClass(nn.Module):
             self.pools.append(
                 BipartPool(
                     in_channels=self.features[ilevel + 1],
-                    ratio=self.nodes[ilevel + 1],
+                    ratio=self.nodes[ilevel],
                     **bipart_param,
                 )
             )
-        for ilevel in range(self.n_levels):
+        for ilevel in range(self.n_levels + 1):
             self.pcdiscs.append(
                 TSumTDisc(
                     self.features[ilevel], ffn_param=ffn_param, **critics_param
@@ -59,14 +59,14 @@ class ModelClass(nn.Module):
 
         x_lat_list = []
 
-        for ilevel in range(self.n_levels):
+        for ilevel in range(self.n_levels + 1):
             # aggregate latent space features
             x_lat_list.append(global_add_pool(x, batchidx))
             x_lat_list.append(global_max_pool(x, batchidx))
 
             x_disc += self.pcdiscs[ilevel](x, batchidx)
 
-            if ilevel == self.n_levels - 1:
+            if ilevel == self.n_levels:
                 break
             x = self.embeddings[ilevel](x, batchidx, condition)
 
