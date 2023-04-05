@@ -178,8 +178,6 @@ function _logandrun() {
         tmpfile=$(mktemp)
         echo -e "🖥$(hostname)\n 🕜$( date +'%y-%m-%d %R' )\n $return_code: $@" >> $tmpfile
         cat $logfile |\
-            grep -v "COMET INFO:" |\
-            grep -v "COMET WARNING:" |\
             tail -n 15 |\
             sed -r 's@\x1b\[43m\[RUN\]\x1b\[0m@▶@' |\
             sed -r 's@\x1b\[42m\[COMPLETE\]\x1b\[0m@🏁@' |\

@@ -26,7 +26,7 @@ for trial in best_trials:
     config["path"] = {"run_path": trial.logdir}
     config["command"] = "train"
     config["debug"] = False
-    config["comet_project_name"] = Path(trial.logdir).parts[-2]
+    config["project_name"] = Path(trial.logdir).parts[-2]
     config["ray"] = True
     fgsim.config.conf, _ = fgsim.config.compute_conf(
         fgsim.config.defaultconf, config

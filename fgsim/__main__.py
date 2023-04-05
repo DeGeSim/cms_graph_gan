@@ -51,7 +51,6 @@ def main():
     args = get_args()
 
     if args.command not in ["setup", "dump", "overwrite"]:
-        import comet_ml  # noqa
         import pretty_errors  # noqa
 
     import fgsim.config

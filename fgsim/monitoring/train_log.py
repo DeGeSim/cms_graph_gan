@@ -8,28 +8,21 @@ from omegaconf import DictConfig
 from torch.utils.tensorboard import SummaryWriter
 
 from fgsim.config import conf
-from fgsim.monitoring.monitor import exp_orga_wandb, get_experiment
-
-if not conf.ray:
-    from comet_ml.experiment import BaseExperiment
+from fgsim.monitoring.monitor import exp_orga_wandb
 
 
 class TrainLog:
-    """Initialized with the `holder`, provides the logging with cometml/tensorboard.
+    """Initialized with the `holder`, provides the logging with wandb/tensorboard.
     """
 
     def __init__(self, state, history):
         self.state: DictConfig = state
         self.history: Dict = history
         self.use_tb = not conf.debug or conf.command == "test"
-        self.use_comet = False
         # (not conf.debug or conf.command == "test") and not conf.ray
         self.use_wandb = (not conf.debug or conf.command == "test") and not conf.ray
         if self.use_tb:
             self.writer: SummaryWriter = SummaryWriter(conf.path.tensorboard)
-
-        if self.use_comet:
-            self.experiment: BaseExperiment = get_experiment(self.state)
 
         if self.use_tb:
             self.writer.add_scalar(
@@ -44,7 +37,7 @@ class TrainLog:
                 id=exp_orga_wandb[conf["hash"]],
                 resume="must",
                 dir=conf.path.run_path,
-                project=conf.comet_project_name,
+                project=conf.project_name,
                 job_type=conf.command,
                 settings={"quiet": True},
             )
@@ -61,8 +54,6 @@ class TrainLog:
             ] = datetime.now().strftime("%y-%m-%d-%H:%M")
 
     def log_model_graph(self, model):
-        if self.use_comet:
-            self.experiment.set_model_graph(str(model))
         if self.use_wandb:
             wandb.watch(model)
 
@@ -84,17 +75,8 @@ class TrainLog:
         if prefix is not None:
             metrics_dict = {f"{prefix}/{k}": v for k, v in metrics_dict.items()}
 
-        self._log_metrics_comet(metrics_dict, step, epoch)
         self._log_metrics_tb(metrics_dict, step, epoch)
         self._log_metrics_wandb(metrics_dict, step, epoch)
-
-    def _log_metrics_comet(self, md: dict, step: int, epoch: int):
-        if self.use_comet:
-            self.experiment.log_metrics(
-                md,
-                step=step,
-                epoch=epoch,
-            )
 
     def _log_metrics_tb(self, md: dict, step: int, epoch: int):
         if self.use_tb:
@@ -116,13 +98,6 @@ class TrainLog:
             step = self.state["grad_step"]
         if self.use_tb:
             self.writer.add_figure(tag=figure_name, figure=figure, global_step=step)
-        if self.use_comet:
-            self.experiment.log_figure(
-                figure_name=figure_name,
-                figure=figure,
-                overwrite=overwrite,
-                step=step,
-            )
         if self.use_wandb:
             wandb.log(data={figure_name: wandb.Image(figure)}, step=step)
 
@@ -134,7 +109,6 @@ class TrainLog:
         prefix: str,
     ):
         metrics_dict = {f"{prefix}/{k}": v for k, v in metrics_dict.items()}
-        self._log_metrics_comet(metrics_dict, step, epoch)
         self._log_metrics_tb(metrics_dict, step, epoch)
         self._log_metrics_wandb(metrics_dict, step, epoch)
         if self.use_wandb:
@@ -170,11 +144,6 @@ class TrainLog:
 
     def next_epoch(self) -> None:
         self.state["epoch"] += 1
-        if self.use_comet:
-            self.experiment.log_epoch_end(
-                self.state["epoch"],
-                step=self.state["grad_step"],
-            )
 
         if self.use_tb:
             self.writer.add_scalar(
@@ -195,6 +164,4 @@ class TrainLog:
             self.writer.close()
 
     def end(self) -> None:
-        if self.use_comet:
-            self.experiment.log_other("ended", True)
-            self.experiment.end()
+        pass

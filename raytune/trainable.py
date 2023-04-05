@@ -16,7 +16,7 @@ class Trainable(tune.Trainable):
         self.exp_config["path"] = {"run_path": self._logdir}
         self.exp_config["command"] = "train"
         self.exp_config["debug"] = False
-        self.exp_config["comet_project_name"] = Path(self.logdir).parts[-2]
+        self.exp_config["project_name"] = Path(self.logdir).parts[-2]
         self.exp_config["ray"] = True
         fgsim.config.conf, _ = fgsim.config.compute_conf(
             fgsim.config.defaultconf, rayconf, self.exp_config

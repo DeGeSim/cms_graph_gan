@@ -2,7 +2,7 @@ tag: default
 loglevel: 20
 loglevel_qf: 30
 seed: 0
-comet_project_name: "jetnet150_ddt"
+project_name: "jetnet150_ddt"
 ray: False
 remote: False
 
@@ -387,7 +387,6 @@ path:
   checkpoint_old: "${path.run_path}/checkpoint_old.torch"
   state: "${path.run_path}/state.yaml"
   state_old: "${path.run_path}/state_old.yaml"
-  comet_exp_key: "${path.run_path}/comet_experiment_key"
 
 loader: ${mergedefault:${dataset_options},${dataset_name},loader}
 dataset_name: jetnet

@@ -35,16 +35,3 @@ class ExperimentOrganizer:
         ) as db:
             keys = list(db.keys())
         return keys
-
-    # def recreate(self):
-    #     workspace = comet_conf.workspace
-    #     experiments = []
-    #     for project in comet_api.get_projects(workspace):
-    #         experiments = experiments + comet_api.get(workspace, project)
-    #     with SqliteDict(
-    #         self.fn, encode=json.dumps, decode=json.loads, autocommit=True
-    #     ) as db:
-    #         for key in db.keys():
-    #             del db[key]
-    #         for exp in experiments:
-    #             db[exp.name] = exp.id
