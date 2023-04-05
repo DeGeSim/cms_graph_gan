@@ -2,63 +2,45 @@ from ray import tune
 
 hyperpars = {
     "models": {
-        "gen": {
-            "optim": {"params": {"lr": tune.loguniform(1e-7, 1e-3)}},
-        },
         "disc": {
-            "optim": {"params": {"lr": tune.loguniform(1e-7, 1e-3)}},
-            "name": tune.choice(["disc_mp", "disc_benno"]),
+            "optim": {
+                "params": {
+                    "lr": tune.loguniform(1e-6, 1e-3),
+                    "betas": tune.choice([[0.9, 0.999], [0.0, 0.9]]),
+                }
+            },
         },
     },
     "training": {
-        "gan_mode": tune.choice(["CE", "W", "MSE"]),
-        "disc_steps_per_gen_step": tune.randint(1, 10),
-    },
-    "layer_options": {
-        "GINConv": {
-            "final_linear": tune.choice([True, False]),
-        },
-        "GINCConv": {
-            "final_linear": tune.choice([True, False]),
-        },
-        "DeepConv": {
-            "add_self_loops": tune.choice([True, False]),
-            "nns": tune.choice(["msg", "upd", "both"]),
-            "msg_nn_include_edge_attr": tune.choice([True, False]),
-            "msg_nn_include_global": tune.choice([True, False]),
-            "msg_nn_final_linear": tune.choice([True, False]),
-            "upd_nn_include_global": tune.choice([True, False]),
-            "upd_nn_final_linear": tune.choice([True, False]),
-            "residual": tune.choice([True, False]),
-        },
+        "disc_steps_per_gen_step": tune.randint(1, 6),
     },
     "model_param_options": {
+        "disc_deeptree": {
+            "nodes": [30, 6, 1],
+            "features": [3, 3, 20, 40],
+            "ffn_param": {
+                "n_layers": tune.randint(2, 5),
+                "hidden_layer_size": tune.randint(30, 100),
+                "norm": tune.choice(
+                    ["batchnorm", "layernorm", "spectral", "weight"]
+                ),
+            },
+            "emb_param": {"n_ftx_latent": tune.randint(3, 30)},
+            "bipart_param": {"n_heads": tune.randint(1, 20)},
+            "critics_param": {
+                "n_ftx_latent": tune.randint(3, 30),
+                "n_ftx_global": tune.randint(3, 30),
+                "n_updates": tune.randint(1, 10),
+            },
+        },
         "gen_deeptree": {
             "n_global": tune.randint(0, 10),
-            "branching_param": {"residual": tune.choice([True, False])},
-            "connect_all_ancestors": tune.choice([True, False]),
-            "ancestor_mpl": {
-                "n_mpl": tune.randint(1, 3),
-                "n_hidden_nodes": tune.randint(20, 2048),
-                "conv_name": tune.choice(["GINConv", "GINCConv", "DeepConv"]),
-                "skip_connecton": tune.choice([True, False]),
-            },
-            "child_mpl": {
-                "n_mpl": tune.randint(0, 3),
-                "n_hidden_nodes": tune.randint(20, 2048),
-                "conv_name": tune.choice(["GINConv", "GINCConv", "DeepConv"]),
-                "skip_connecton": tune.choice([True, False]),
-            },
-            "final_layer_scaler": tune.choice([True, False]),
-        }
+            "pruning": tune.choice(["cut", "topk"]),
+            "equivar": tune.choice([True, False]),
+        },
     },
-    "ffn": {
-        "hidden_layer_size": tune.randint(20, 2048),
-        "n_layers": tune.randint(1, 12),
-        "norm": tune.choice(["batchnorm", "layernorm", "none"]),
-    },
-    "tree_width": tune.choice(["wide", "slim"]),
-    "root_node_size": tune.randint(24, 1024),
+    # "tree_width": tune.choice(["wide", "slim"]),
+    # "root_node_size": tune.randint(24, 1024),
 }
 
 # "tree": tune.choice(

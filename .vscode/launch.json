@@ -62,6 +62,7 @@
             "cwd": "/home/mscham/fgsim",
             "name": "ray",
             "request": "launch",
+            "justMyCode": false,
             "program": "raytune/tune.py",
             "type": "python",
         },

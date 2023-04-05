@@ -37,8 +37,8 @@ models:
 optim_options:
   gen:
     Adam:
-      weight_decay: 1.0e-4
       lr: 1.0e-05
+      weight_decay: 1.0e-4
       betas: [0.9, 0.999]
     SGD:
       lr: 1.0e-05
@@ -47,8 +47,8 @@ optim_options:
     FakeOptimizer: {}
   disc:
     Adam:
-      weight_decay: 1.0e-4
       lr: 3.0e-4
+      weight_decay: 1.0e-4
       betas: [0.0, 0.9]
     SGD:
       lr: 2.e-4
