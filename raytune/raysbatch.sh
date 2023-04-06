@@ -58,7 +58,7 @@ for ((i = 1; i <= 35; i++)); do
 #SBATCH --job-name=rayworker
 #SBATCH --nodes=1
 #SBATCH --time=24:00:00
-#SBATCH --constraint='P100|V100|A100'
+#SBATCH --constraint='A100|V100'
 #SBATCH --ntasks-per-node=1
 #SBATCH --output=/home/mscham/slurm/rayworker-%j.log
 source ${HOME}/fgsim/ramenv.sh

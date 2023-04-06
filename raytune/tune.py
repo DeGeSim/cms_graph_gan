@@ -1,27 +1,28 @@
 import ray
 from hyperpars import hyperpars
 from omegaconf import OmegaConf
-from ray import tune
+from ray import air, tune
+from ray.air.integrations.wandb import WandbLoggerCallback
 from ray.tune.schedulers import MedianStoppingRule
+from ray.tune.search.hyperopt import HyperOptSearch
 from ray.tune.stopper import ExperimentPlateauStopper
-from ray.tune.suggest.hyperopt import HyperOptSearch
+from runconf import process_exp_config, rayconf, run_name
+from trainable import MyTrainable
 
 import fgsim.config
-from raytune.runconf import process_tree_conf, rayconf, run_name
-from raytune.trainable import Trainable
 
 
 def trial_name_id(trial):
     comconf, _ = fgsim.config.compute_conf(
         fgsim.config.defaultconf,
         rayconf,
-        process_tree_conf(OmegaConf.create(trial.config)),
+        process_exp_config(OmegaConf.create(trial.config)),
     )
     return comconf.hash
 
 
 def trial_dirname_creator(trial):
-    return trial
+    return str(trial)
 
 
 # local = False
@@ -32,32 +33,44 @@ if local:
     ray.init(local_mode=True)
 else:
     ray.init("auto")
-analysis = tune.run(
-    Trainable,
-    config=hyperpars,
-    mode="min",
-    metric="fpnd",
-    scheduler=MedianStoppingRule(
-        time_attr="training_iteration", grace_period=110.0
+tuner = tune.Tuner(
+    tune.with_resources(MyTrainable, {"gpu": 1}),
+    param_space=hyperpars,
+    run_config=air.RunConfig(
+        callbacks=[WandbLoggerCallback(project=run_name)],
+        log_to_file=True,
+        name=run_name,
+        local_dir="~/fgsim/wd/ray/",
+        stop=ExperimentPlateauStopper(metric="fpnd"),
+        failure_config=air.FailureConfig(fail_fast="raise" if local else False),
+        checkpoint_config=air.CheckpointConfig(
+            num_to_keep=2,
+            checkpoint_score_attribute="fpnd",
+            checkpoint_frequency=5,
+            checkpoint_at_end=True,
+            checkpoint_score_order="min",
+        ),
+        sync_config=tune.SyncConfig(syncer=None),  # Disable syncing
     ),
-    search_alg=HyperOptSearch(),
-    num_samples=-1,
-    keep_checkpoints_num=2,
-    checkpoint_score_attr="fpnd",
-    checkpoint_freq=5,
-    checkpoint_at_end=True,
-    log_to_file=True,
-    resources_per_trial={"cpu": 15, "gpu": 1},
-    fail_fast="raise" if local else False,
-    raise_on_failed_trial=not local,
-    name=run_name,
-    local_dir="~/fgsim/wd/ray/",
-    stop=ExperimentPlateauStopper(metric="fpnd"),
-    trial_name_creator=trial_name_id,
-    trial_dirname_creator=trial_name_id,
-    resume="AUTO",
-    # sync_config=tune.SyncConfig(syncer=None),  # Disable syncing
+    tune_config=tune.TuneConfig(
+        mode="min",
+        metric="fpnd",
+        scheduler=MedianStoppingRule(
+            time_attr="training_iteration", grace_period=110.0
+        ),
+        search_alg=HyperOptSearch(),
+        num_samples=-1,
+        trial_name_creator=trial_name_id,
+        trial_dirname_creator=trial_dirname_creator,
+        chdir_to_trial_dir=False,
+    ),
 )
+# try:
+#     tuner = tuner.restore(f"~/fgsim/wd/ray/{run_name}")
+# except:
+#     pass
+
+analysis = tuner.fit()
 
 best_trial = analysis.best_trial  # Get best trial
 best_config = analysis.best_config  # Get best trial's hyperparameters

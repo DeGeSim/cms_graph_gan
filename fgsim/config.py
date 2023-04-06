@@ -59,6 +59,8 @@ def compute_conf(default, *confs):
             "loglevel_qf",
             "remote",
             "path",
+            "project_name",
+            "ray",
         ]
         + [key for key in conf.keys() if key.endswith("_options")],
     )

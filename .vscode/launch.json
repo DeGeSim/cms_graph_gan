@@ -4,7 +4,7 @@
         {
             "args": [
                 "--hash",
-                "d6fb855",
+                "1e831c5",
                 // "--ray",
                 // "--debug",
                 "train"
@@ -65,6 +65,7 @@
             "justMyCode": false,
             "program": "raytune/tune.py",
             "type": "python",
+            "envFile": "${workspaceFolder}/.env"
         },
         {
             "cwd": "/home/mscham/fgsim",

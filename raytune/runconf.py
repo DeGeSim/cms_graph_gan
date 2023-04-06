@@ -6,7 +6,7 @@ run_name = "jn150-ddt-tune1"
 rayconf = OmegaConf.load(Path(f"~/fgsim/wd/ray/{run_name}/conf.yaml").expanduser())
 
 
-def process_tree_conf(exp_config):
+def process_exp_config(exp_config):
     # manipulate the config for the tree
     # wide = exp_config["tree_width"] == "wide"
     # root_size = exp_config["root_node_size"]
@@ -28,4 +28,5 @@ def process_tree_conf(exp_config):
 
     # del exp_config["tree_width"]
     # del exp_config["root_node_size"]
+
     return exp_config

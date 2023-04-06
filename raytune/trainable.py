@@ -2,28 +2,38 @@ from pathlib import Path
 
 from omegaconf import OmegaConf
 from ray import tune
+from ray.air.integrations.wandb import setup_wandb
+from runconf import process_exp_config, rayconf, run_name
 
 import fgsim.config
 
-from .runconf import process_tree_conf, rayconf
 
-
-class Trainable(tune.Trainable):
+class MyTrainable(tune.Trainable):
     def setup(self, exp_config):
-        self.exp_config = process_tree_conf(OmegaConf.create(exp_config))
+        self.exp_config = process_exp_config(OmegaConf.create(exp_config))
 
         OmegaConf.save(self.exp_config, Path(self.logdir) / "exp.yaml")
         self.exp_config["path"] = {"run_path": self._logdir}
         self.exp_config["command"] = "train"
-        self.exp_config["debug"] = False
-        self.exp_config["project_name"] = Path(self.logdir).parts[-2]
+        self.exp_config["project_name"] = run_name
         self.exp_config["ray"] = True
+        self.exp_config["debug"] = False
         fgsim.config.conf, _ = fgsim.config.compute_conf(
             fgsim.config.defaultconf, rayconf, self.exp_config
         )
         assert fgsim.config.conf.hash in self.logdir
-        assert self.trial_id == fgsim.config.conf.hash
+        # self.trial_id = fgsim.config.conf.hash
         OmegaConf.save(fgsim.config.conf, Path(self.logdir) / "conf.yaml")
+
+        self.wandb = setup_wandb(
+            config=dict(fgsim.config.conf),
+            trial_id=self.trial_id,
+            trial_name=self.trial_name,
+            project=run_name,
+            name=self.trial_name,
+            dir=self.exp_config["path"]["run_path"],
+        )
+
         fgsim.config.device = fgsim.config.get_device()
         from fgsim.monitoring.logger import init_logger
 

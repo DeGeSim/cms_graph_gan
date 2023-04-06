@@ -45,3 +45,5 @@ source ${CONDA_DIR}/etc/profile.d/mamba.sh
 mamba activate fgsim
 # save ram env
 alias ramenv_save="tar -c -f ${TARBALL} --directory=${RAMPATH} ."
+
+export GRPC_ENABLE_FORK_SUPPORT=false
