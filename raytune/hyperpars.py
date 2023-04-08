@@ -1,40 +1,40 @@
 from ray import tune
 
 hyperpars = {
-    "models": {
-        "disc": {
-            "optim": {
-                "params": {
-                    "lr": tune.loguniform(1e-6, 1e-3),
-                    "betas": tune.choice([[0.9, 0.999], [0.0, 0.9]]),
-                }
-            },
-        },
-    },
-    "training": {
-        "disc_steps_per_gen_step": tune.randint(1, 6),
-    },
+    # "models": {
+    #     "disc": {
+    #         "optim": {
+    #             "params": {
+    #                 "lr": tune.loguniform(1e-6, 1e-3),
+    #                 "betas": tune.choice([[0.9, 0.999], [0.0, 0.9]]),
+    #             }
+    #         },
+    #     },
+    # },
+    # "training": {
+    #     "disc_steps_per_gen_step": tune.randint(1, 2),
+    # },
     "model_param_options": {
         "disc_deeptree": {
             "nodes": [30, 6, 1],
             "features": [3, 3, 20, 40],
-            "ffn_param": {
-                "n_layers": tune.randint(2, 5),
-                "hidden_layer_size": tune.randint(30, 100),
-                "norm": tune.choice(
-                    ["batchnorm", "layernorm", "spectral", "weight"]
-                ),
-            },
+            # "ffn_param": {
+            # "n_layers": tune.randint(2, 5),
+            # "hidden_layer_size": tune.randint(30, 100),
+            # "norm": tune.choice(
+            #     ["batchnorm", "layernorm", "spectral", "weight"]
+            # ),
+            # },
             "emb_param": {"n_ftx_latent": tune.randint(3, 30)},
             "bipart_param": {"n_heads": tune.randint(1, 20)},
-            "critics_param": {
-                "n_ftx_latent": tune.randint(3, 30),
-                "n_ftx_global": tune.randint(3, 30),
-                "n_updates": tune.randint(1, 10),
-            },
+            # "critics_param": {
+            #     "n_ftx_latent": tune.randint(3, 30),
+            #     "n_ftx_global": tune.randint(3, 30),
+            #     "n_updates": tune.randint(1, 10),
+            # },
         },
         "gen_deeptree": {
-            "n_global": tune.randint(0, 10),
+            # "n_global": tune.randint(0, 10),
             "pruning": tune.choice(["cut", "topk"]),
             "equivar": tune.choice([True, False]),
         },

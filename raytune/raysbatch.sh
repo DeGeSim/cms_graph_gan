@@ -54,7 +54,7 @@ srun \
 for ((i = 1; i <= 25; i++)); do
     sbatch << EOF
 #!/bin/bash
-#SBATCH --partition=maxgpu,allgpu
+#SBATCH --partition=maxgpu
 #SBATCH --job-name=rayworker
 #SBATCH --nodes=1
 #SBATCH --time=24:00:00
@@ -62,6 +62,7 @@ for ((i = 1; i <= 25; i++)); do
 #SBATCH --ntasks-per-node=1
 #SBATCH --output=/home/mscham/slurm/rayworker-%j.log
 source ${HOME}/fgsim/scripts/ramenv.sh
+set -x
 ray start --address "$ip_head" --redis-password="$redis_password" --block
 EOF
 done

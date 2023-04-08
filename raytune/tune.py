@@ -38,6 +38,8 @@ try:
         path=f"~/fgsim/wd/ray/{run_name}",
         trainable=tune.with_resources(MyTrainable, {"gpu": 1}),
         param_space=hyperpars,
+        resume_unfinished=True,
+        resume_errored=True,
     )
 except Exception:
     tuner = tune.Tuner(
@@ -48,11 +50,11 @@ except Exception:
             log_to_file=True,
             name=run_name,
             local_dir="~/fgsim/wd/ray/",
-            stop=ExperimentPlateauStopper(metric="fpnd"),
+            stop=ExperimentPlateauStopper(metric="w1m"),
             failure_config=air.FailureConfig(fail_fast="raise" if local else False),
             checkpoint_config=air.CheckpointConfig(
-                num_to_keep=2,
-                checkpoint_score_attribute="fpnd",
+                num_to_keep=1,
+                checkpoint_score_attribute="w1m",
                 checkpoint_frequency=5,
                 checkpoint_at_end=True,
                 checkpoint_score_order="min",
@@ -61,9 +63,9 @@ except Exception:
         ),
         tune_config=tune.TuneConfig(
             mode="min",
-            metric="fpnd",
+            metric="w1m",
             scheduler=MedianStoppingRule(
-                time_attr="training_iteration", grace_period=110.0
+                time_attr="training_iteration", grace_period=100.0
             ),
             search_alg=HyperOptSearch(),
             num_samples=-1,
@@ -72,10 +74,6 @@ except Exception:
             chdir_to_trial_dir=False,
         ),
     )
-# try:
-#     tuner = tuner.restore(f"~/fgsim/wd/ray/{run_name}")
-# except:
-#     pass
 
 analysis = tuner.fit()
 

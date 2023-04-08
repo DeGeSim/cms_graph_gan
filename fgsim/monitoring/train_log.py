@@ -3,10 +3,10 @@ from typing import Dict, Union
 
 import numpy as np
 import torch
-import wandb
 from omegaconf import DictConfig
 from torch.utils.tensorboard import SummaryWriter
 
+import wandb
 from fgsim.config import conf
 from fgsim.monitoring.monitor import exp_orga_wandb
 
@@ -19,8 +19,8 @@ class TrainLog:
         self.state: DictConfig = state
         self.history: Dict = history
         self.use_tb = not conf.debug or conf.command == "test"
-        # (not conf.debug or conf.command == "test") and not conf.ray
-        self.use_wandb = (not conf.debug or conf.command == "test") and not conf.ray
+
+        self.use_wandb = not conf.debug or conf.command == "test"
         if self.use_tb:
             self.writer: SummaryWriter = SummaryWriter(conf.path.tensorboard)
 
@@ -33,14 +33,17 @@ class TrainLog:
             )
 
         if self.use_wandb:
-            self.wandb_run = wandb.init(
-                id=exp_orga_wandb[conf["hash"]],
-                resume="must",
-                dir=conf.path.run_path,
-                project=conf.project_name,
-                job_type=conf.command,
-                settings={"quiet": True},
-            )
+            if not conf.ray:
+                self.wandb_run = wandb.init(
+                    id=exp_orga_wandb[conf["hash"]],
+                    resume="must",
+                    dir=conf.path.run_path,
+                    project=conf.project_name,
+                    job_type=conf.command,
+                    settings={"quiet": True},
+                )
+            else:
+                self.wandb_run = wandb.run
             wandb.log(
                 data={"other/epoch": self.state["epoch"]},
                 step=self.state["grad_step"],
