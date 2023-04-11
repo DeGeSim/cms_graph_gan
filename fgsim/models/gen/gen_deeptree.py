@@ -147,9 +147,11 @@ class ModelClass(nn.Module):
             raise Exception
 
         return MPLSeq(
-            in_features=self.features[ilevel + int(self.dim_red_in_branching)]
-            if type == "ac"
-            else self.features[ilevel + 1],
+            in_features=(
+                self.features[ilevel + int(self.dim_red_in_branching)]
+                if type == "ac"
+                else self.features[ilevel + 1]
+            ),
             out_features=self.features[ilevel + 1],
             n_cond=self.n_cond,
             n_global=self.n_global,

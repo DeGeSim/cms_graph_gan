@@ -1,6 +1,7 @@
 """This modules manages all objects that need to be available for the training:
 Subnetworks, losses and optimizers. The Subnetworks and losses are dynamically imported,
-depending on the config. Contains the code for checkpointing of model and optimzer status."""
+depending on the config. Contains the code for checkpointing of model
+and optimzer status."""
 
 
 import os
@@ -261,6 +262,7 @@ class Holder:
             assert (gen_batch.ptr == sim_batch.ptr).all()
             # assert (gen_batch.batch == sim_batch.batch).all()
             assert gen_batch.x.shape == sim_batch.x.shape
+            gen_batch = self.postprocess(gen_batch)
 
         assert not torch.isnan(gen_batch.x).any()
         assert sim_batch.x.shape[-1] == gen_batch.x.shape[-1]
@@ -302,6 +304,40 @@ class Holder:
             res["d_sim"] = d_sim
             res["d_sim_latftx"] = d_sim_latftx
         return res
+
+    def postprocess(self, gen_batch):
+        if conf.dataset_name == "jetnet" and conf.loader.n_points == 150:
+            from fgsim.loaders.jetnet.objcol import norm_pt_sum
+
+            pt_pos = conf.loader.x_ftx_energy_pos
+            pts = gen_batch.x[..., pt_pos].clone()
+            gen_batch.x[..., pt_pos] = norm_pt_sum(pts, gen_batch.batch).clone()
+
+            # from fgsim.loaders.jetnet.objcol import scaler
+            # from torch_scatter import scatter_add
+
+            # pt_scaler = scaler.transfs[2]
+            # pt_pos = conf.loader.x_ftx_energy_pos
+
+            # pts = gen_batch.x[..., pt_pos].clone()
+            # pts_backtransf_gen = torch.tensor(
+            #     pt_scaler.inverse_transform(
+            #         pts.cpu().detach().numpy().reshape(-1, 1)
+            #     ).reshape(-1)
+            # ).to(gen_batch.x.device)
+            # pts_sum_gen = scatter_add(pts_backtransf_gen, gen_batch.batch, dim=-1)
+            # assert torch.allclose(pts_sum_gen, torch.ones_like(pts_sum_gen))
+
+            # pt_sim = sim_batch.x[..., pt_pos]
+            # pts_backtransf_sim = torch.tensor(
+            #     pt_scaler.inverse_transform(
+            #         pt_sim.cpu().detach().numpy().reshape(-1, 1)
+            #     ).reshape(-1)
+            # ).to(gen_batch.x.device)
+            # pts_sum_sim = scatter_add(pts_backtransf_sim, sim_batch.batch, dim=-1)
+            # assert (pts_sum_sim - 1).abs().max() < 0.05
+            # assert torch.allclose(pts_sum_gen, torch.ones_like(pts_sum_gen))
+        return gen_batch
 
 
 @contextmanager

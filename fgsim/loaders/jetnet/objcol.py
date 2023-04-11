@@ -5,6 +5,7 @@ import torch
 from jetnet.datasets import JetNet
 from sklearn.preprocessing import PowerTransformer, StandardScaler
 from torch_geometric.data import Data
+from torch_scatter import scatter_add
 
 from fgsim.config import conf
 from fgsim.io import FileManager, ScalerBase
@@ -78,3 +79,34 @@ scaler = ScalerBase(
     read_chunk=read_chunks,
     transform_wo_scaling=contruct_graph_from_row,
 )
+
+
+def norm_pt_sum(pts, batchidx):
+    pt_scaler = scaler.transfs[2]
+
+    assert pt_scaler.method == "box-cox"
+    assert pt_scaler.standardize
+    # get parameters for the backward tranformation
+    lmbd = pt_scaler.lambdas_[0]
+    mean = pt_scaler._scaler.mean_[0]
+    scale = pt_scaler._scaler.scale_[0]
+
+    # Backwards transform
+    pts = pts.clone() * scale + mean
+    if lmbd == 0:
+        pts = torch.exp(pts.clone())
+    else:
+        pts = torch.pow(pts.clone() * lmbd + 1, 1 / lmbd)
+
+    # Norm
+    ptsum_per_batch = scatter_add(pts, batchidx, dim=-1)
+    pts = pts / ptsum_per_batch[batchidx]
+
+    # Forward transform
+    if lmbd == 0:
+        pts = torch.log(pts.clone())
+    else:
+        pts = (torch.pow(pts.clone(), lmbd) - 1) / lmbd
+
+    pts = (pts.clone() - mean) / scale
+    return pts
