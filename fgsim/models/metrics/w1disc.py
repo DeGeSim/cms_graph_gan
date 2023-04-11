@@ -8,12 +8,14 @@ class Metric:
     ):
         pass
 
-    def __call__(self, d_gen: torch.Tensor, d_sim: torch.Tensor, **kwargs) -> float:
-        assert d_sim.shape == d_gen.shape
-        assert d_sim.dim() == 2 and d_sim.shape[1] == 1
+    def __call__(
+        self, gen_crit: torch.Tensor, sim_crit: torch.Tensor, **kwargs
+    ) -> float:
+        assert sim_crit.shape == gen_crit.shape
+        assert sim_crit.dim() == 2 and sim_crit.shape[1] == 1
         return wasserstein_distance(
-            d_gen.detach().cpu().numpy().reshape(-1)[:2000],
-            d_sim.detach().cpu().numpy().reshape(-1)[:2000],
+            gen_crit.detach().cpu().numpy().reshape(-1)[:2000],
+            sim_crit.detach().cpu().numpy().reshape(-1)[:2000],
         )
 
 

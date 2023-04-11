@@ -10,12 +10,12 @@ class LossGen:
 
     def __call__(
         self,
-        d_sim: torch.Tensor,
-        d_gen: torch.Tensor,
+        sim_crit: torch.Tensor,
+        gen_crit: torch.Tensor,
         **kwargs,
     ) -> torch.Tensor:
         assert not kwargs["gen_batch"].x.requires_grad
-        assert d_sim.requires_grad and d_sim.requires_grad
-        loss = -self.hinge_act(d_sim - 1).mean()
-        loss += -self.hinge_act(-d_gen - 1).mean()
+        assert sim_crit.requires_grad and sim_crit.requires_grad
+        loss = -self.hinge_act(sim_crit - 1).mean()
+        loss += -self.hinge_act(-gen_crit - 1).mean()
         return loss

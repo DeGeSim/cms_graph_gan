@@ -241,6 +241,10 @@ class Holder:
         else:
             disc = self.models.disc
 
+        res = {
+            "sim_batch": sim_batch,
+        }
+
         # generate the random vector
         z = torch.randn(
             *self.models.gen.z_shape,
@@ -266,26 +270,16 @@ class Holder:
 
         assert not torch.isnan(gen_batch.x).any()
         assert sim_batch.x.shape[-1] == gen_batch.x.shape[-1]
+        res["gen_batch"] = gen_batch
 
-        # In both cases the gradient needs to pass though d_gen
+        # In both cases the gradient needs to pass though gen_crit
         with with_grad(train_gen or train_disc):
-            d_gen_out = disc(gen_batch, cond)
-        # Save the latent features for the feature matching loss
-        if isinstance(d_gen_out, tuple):
-            d_gen, d_gen_latftx = d_gen_out
-        else:
-            d_gen, d_gen_latftx = d_gen_out, None
+            res |= prepend_to_key(disc(gen_batch, cond), "gen_")
 
-        assert d_gen.shape == (conf.loader.batch_size, 1)
-        assert not torch.isnan(d_gen).any()
+        assert res["gen_crit"].shape == (conf.loader.batch_size, 1)
+        assert not torch.isnan(res["gen_crit"]).any()
 
-        res = {
-            "sim_batch": sim_batch,
-            "gen_batch": gen_batch,
-            "d_gen": d_gen,
-            "d_gen_latftx": d_gen_latftx,
-        }
-        # we dont need to compute d_sim if only the generator is trained
+        # we dont need to compute sim_crit if only the generator is trained
         # but we need it for the validation
         # and for the feature matching loss
         if (
@@ -294,15 +288,7 @@ class Holder:
             or ("feature_matching" in conf.models.gen.losses and train_gen)
         ):
             with with_grad(train_disc):
-                d_sim_out = disc(sim_batch, cond)
-            # Save the latent features for the feature matching loss
-            if isinstance(d_sim_out, tuple):
-                d_sim, d_sim_latftx = d_sim_out
-            else:
-                d_sim, d_sim_latftx = d_sim_out, None
-            assert d_sim.shape == (conf.loader.batch_size, 1)
-            res["d_sim"] = d_sim
-            res["d_sim_latftx"] = d_sim_latftx
+                res |= prepend_to_key(disc(sim_batch, cond), "sim_")
         return res
 
     def postprocess(self, gen_batch):
@@ -338,6 +324,10 @@ class Holder:
             # assert (pts_sum_sim - 1).abs().max() < 0.05
             # assert torch.allclose(pts_sum_gen, torch.ones_like(pts_sum_gen))
         return gen_batch
+
+
+def prepend_to_key(d: dict, s: str) -> dict:
+    return {s + k: v for k, v in d.items()}
 
 
 @contextmanager

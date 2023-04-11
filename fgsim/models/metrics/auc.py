@@ -8,11 +8,13 @@ class Metric:
     ):
         pass
 
-    def __call__(self, d_gen: torch.Tensor, d_sim: torch.Tensor, **kwargs) -> float:
-        assert d_sim.shape == d_gen.shape
-        assert d_sim.dim() == 2 and d_sim.shape[1] == 1
-        sim_mean_disc = d_sim.detach().cpu().reshape(-1)[:2000]
-        gen_mean_disc = d_gen.detach().cpu().reshape(-1)[:2000]
+    def __call__(
+        self, gen_crit: torch.Tensor, sim_crit: torch.Tensor, **kwargs
+    ) -> float:
+        assert sim_crit.shape == gen_crit.shape
+        assert sim_crit.dim() == 2 and sim_crit.shape[1] == 1
+        sim_mean_disc = sim_crit.detach().cpu().reshape(-1)[:2000]
+        gen_mean_disc = gen_crit.detach().cpu().reshape(-1)[:2000]
 
         y_pred = torch.sigmoid(torch.hstack([sim_mean_disc, gen_mean_disc])).numpy()
         y_true = torch.hstack(

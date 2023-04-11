@@ -20,18 +20,18 @@ def validate(holder: Holder, loader: QueuedDataset) -> None:
     res_d_l = {
         "sim_batch": [],
         "gen_batch": [],
-        "d_sim": [],
-        "d_gen": [],
+        "sim_crit": [],
+        "gen_crit": [],
     }
     for val_batch in loader.validation_batches:
         for k, val in holder.pass_batch_through_model(val_batch, eval=True).items():
             if k in ["sim_batch", "gen_batch"]:
                 for e in val.to_data_list():
                     res_d_l[k].append(e)
-            elif k in ["d_sim", "d_gen"]:
+            elif k in ["sim_crit", "gen_crit"]:
                 res_d_l[k].append(val)
-    d_sim = torch.vstack(res_d_l["d_sim"])
-    d_gen = torch.vstack(res_d_l["d_gen"])
+    sim_crit = torch.vstack(res_d_l["sim_crit"])
+    gen_crit = torch.vstack(res_d_l["gen_crit"])
 
     sim_batch = Batch.from_data_list(res_d_l["sim_batch"])
     gen_batch = Batch.from_data_list(res_d_l["gen_batch"])
@@ -46,8 +46,8 @@ def validate(holder: Holder, loader: QueuedDataset) -> None:
     results_d = {
         "sim_batch": sim_batch,
         "gen_batch": gen_batch,
-        "d_gen": d_gen,
-        "d_sim": d_sim,
+        "gen_crit": gen_crit,
+        "sim_crit": sim_crit,
     }
 
     # if holder.state.grad_step % conf.training.val.plot_interval == 0:

@@ -7,10 +7,10 @@ class LossGen:
 
     def __call__(
         self,
-        d_gen: torch.Tensor,
+        gen_crit: torch.Tensor,
         **kwargs,
     ):
         assert kwargs["gen_batch"].x.requires_grad
-        assert d_gen.requires_grad
-        loss = -1 * d_gen.mean()
+        assert gen_crit.requires_grad
+        loss = -1 * gen_crit.mean()
         return loss

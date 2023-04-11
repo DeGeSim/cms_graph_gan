@@ -119,8 +119,8 @@ def get_testing_datasets(holder: Holder, best_or_last) -> TestDataset:
         res_d_l = {
             "sim_batch": [],
             "gen_batch": [],
-            "d_sim": [],
-            "d_gen": [],
+            "sim_crit": [],
+            "gen_crit": [],
         }
 
         for test_batch in tqdm(qds.testing_batches, desc=best_or_last, miniters=20):
@@ -130,7 +130,7 @@ def get_testing_datasets(holder: Holder, best_or_last) -> TestDataset:
                 if k in ["sim_batch", "gen_batch"]:
                     for e in val.to_data_list():
                         res_d_l[k].append(e.cpu())
-                elif k in ["d_sim", "d_gen"]:
+                elif k in ["sim_crit", "gen_crit"]:
                     res_d_l[k].append(val.cpu())
 
         # aggregate the results over the batches
@@ -138,7 +138,7 @@ def get_testing_datasets(holder: Holder, best_or_last) -> TestDataset:
             batch = Batch.from_data_list(res_d_l[k])
             batch.x = scaler.inverse_transform(batch.x)
             res_d_l[k] = batch
-        for k in ["d_sim", "d_gen"]:
+        for k in ["sim_crit", "gen_crit"]:
             res_d_l[k] = torch.hstack(res_d_l[k])
 
         res_d_l["sim_efps"] = to_efp(res_d_l["sim_batch"])

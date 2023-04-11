@@ -9,18 +9,17 @@ class LossGen:
 
     def __call__(
         self,
-        gen_latftx: torch.Tensor,
-        sim_latftx: torch.Tensor,
+        gen_condreg: torch.Tensor,
+        sim_batch: torch.Tensor,
         **kwargs,
     ):
         assert kwargs["gen_batch"].x.requires_grad
-        assert gen_latftx.requires_grad
-        assert not sim_latftx.requires_grad
+        assert gen_condreg.requires_grad
         if not hasattr(self, "norm"):
-            self.norm = InstanceNorm1d(gen_latftx.shape[-1])
+            self.norm = InstanceNorm1d(gen_condreg.shape[-1])
         l_gen_normed, l_sim_normed = (
             self.norm(e.mean(0).unsqueeze(0))
-            for e in (gen_latftx, sim_latftx.detach())
+            for e in (gen_condreg, sim_batch.y.detach())
         )
         loss = self.lossf(l_gen_normed, l_sim_normed)
 

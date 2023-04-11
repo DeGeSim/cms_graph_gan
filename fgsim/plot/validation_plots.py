@@ -21,8 +21,12 @@ def validation_plots(
 ):
     fig_logger = FigLogger(train_log, plot_path, best_last_val, step)
 
-    # res["sim_batch"]_small = Batch.from_data_list(res["sim_batch"][: conf.loader.batch_size])
-    # res["gen_batch"]_small = Batch.from_data_list(res["gen_batch"][: conf.loader.batch_size])
+    # res["sim_batch"]._small = Batch.from_data_list(
+    #     res["sim_batch"][: conf.loader.batch_size]
+    # )
+    # res["gen_batch"]._small = Batch.from_data_list(
+    #     res["gen_batch"][: conf.loader.batch_size]
+    # )
     # for v1, v2 in combinations(list(range(conf.loader.n_features)), 2):
     #     v1name = conf.loader.x_features[v1]
     #     v2name = conf.loader.x_features[v2]
@@ -73,9 +77,9 @@ def validation_plots(
 
     fig_logger(
         ratioplot(
-            sim=res["d_sim"].flatten(),
-            gen=res["d_gen"].flatten(),
+            sim=res["sim_crit"].flatten(),
+            gen=res["gen_crit"].flatten(),
             title="Disc Score",
         ),
-        f"disc.pdf",
+        "disc.pdf",
     )

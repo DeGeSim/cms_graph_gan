@@ -14,10 +14,10 @@ class LossGen:
 
     def __call__(
         self,
-        d_gen: torch.Tensor,
+        gen_crit: torch.Tensor,
         **kwargs,
     ) -> torch.Tensor:
         assert kwargs["gen_batch"].x.requires_grad
-        assert d_gen.requires_grad
-        errG = self.criterion(d_gen, torch.ones_like(d_gen))
+        assert gen_crit.requires_grad
+        errG = self.criterion(gen_crit, torch.ones_like(gen_crit))
         return errG
