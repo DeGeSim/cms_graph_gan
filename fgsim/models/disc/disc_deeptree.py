@@ -11,8 +11,10 @@ from fgsim.models.common import FFN
 class ModelClass(nn.Module):
     def __init__(
         self,
+        *,
         nodes,
         features,
+        n_cond,
         ffn_param,
         bipart_param,
         emb_param,
@@ -22,6 +24,7 @@ class ModelClass(nn.Module):
         self.nodes = nodes
         self.features = features
         self.ffn_param = ffn_param
+        self.n_cond = n_cond
 
         self.n_levels = len(self.nodes)
 
@@ -48,7 +51,10 @@ class ModelClass(nn.Module):
         for ilevel in range(self.n_levels + 1):
             self.pcdiscs.append(
                 TSumTDisc(
-                    self.features[ilevel], ffn_param=ffn_param, **critics_param
+                    n_ftx=self.features[ilevel],
+                    n_cond=n_cond,
+                    ffn_param=ffn_param,
+                    **critics_param,
                 )
             )
 
@@ -58,17 +64,20 @@ class ModelClass(nn.Module):
         x_disc = torch.zeros((batch.num_graphs, 1), dtype=x.dtype, device=x.device)
 
         x_lat_list = []
+        cond_reg_list = []
 
         for ilevel in range(self.n_levels + 1):
             # aggregate latent space features
             x_lat_list.append(global_add_pool(x, batchidx))
             x_lat_list.append(global_max_pool(x, batchidx))
 
-            x_disc += self.pcdiscs[ilevel](x, batchidx)
+            d, cond_reg = self.pcdiscs[ilevel](x, batchidx)
+            x_disc += d
+            cond_reg_list.append(cond_reg)
 
             if ilevel == self.n_levels:
                 break
-            x = self.embeddings[ilevel](x, batchidx, condition)
+            x = self.embeddings[ilevel](x, batchidx)
 
             x, _, _, batchidx, _, _ = self.pools[ilevel](
                 x=x.clone(),
@@ -80,11 +89,15 @@ class ModelClass(nn.Module):
                 self.features[ilevel + 1],
             )
 
-        return x_disc, torch.hstack(x_lat_list)
+        return {
+            "crit": x_disc,
+            "latftx": torch.hstack(x_lat_list),
+            "condreg": torch.stack(cond_reg_list).mean(dim=0),
+        }
 
 
 class BipartPool(nn.Module):
-    def __init__(self, in_channels, ratio, n_heads) -> None:
+    def __init__(self, *, in_channels, ratio, n_heads) -> None:
         super().__init__()
         self.in_channels = in_channels
         self.ratio = ratio
@@ -140,7 +153,14 @@ class TSumTDisc(nn.Module):
     """Classifies PC via FNN -> Add -> FNN"""
 
     def __init__(
-        self, n_ftx, n_ftx_latent, n_ftx_global, n_updates, ffn_param
+        self,
+        *,
+        n_ftx,
+        n_ftx_latent,
+        n_cond,
+        n_ftx_global,
+        n_updates,
+        ffn_param,
     ) -> None:
         super().__init__()
         self.disc_emb = nn.ModuleList(
@@ -154,14 +174,17 @@ class TSumTDisc(nn.Module):
                 for _ in range(n_updates)
             ]
         )
-        self.disc = FFN(n_ftx, 1, **ffn_param, final_linear=True)
+        self.disc = FFN(n_ftx, 1 + n_cond, **ffn_param, final_linear=True)
 
     def forward(self, x, batch):
         for layer in self.disc_emb:
             x = x.clone() + layer(x.clone(), batch)
         x = global_add_pool(x.clone(), batch)
         x = self.disc(x)
-        return x
+        return (
+            x[:, :1],
+            x[:, 1:],
+        )
 
 
 class CentralNodeUpdate(nn.Module):
@@ -191,7 +214,7 @@ class CentralNodeUpdate(nn.Module):
 
 
 class Embedding(nn.Module):
-    def __init__(self, n_ftx_in, n_ftx_out, n_ftx_latent, ffn_param) -> None:
+    def __init__(self, *, n_ftx_in, n_ftx_out, n_ftx_latent, ffn_param) -> None:
         super().__init__()
         self.n_ftx_in = n_ftx_in
         self.n_ftx_latent = n_ftx_latent
@@ -225,7 +248,7 @@ class Embedding(nn.Module):
             ffn_param=ffn_param,
         )
 
-    def forward(self, x, batch, condition):
+    def forward(self, x, batch):
         # x = self.space_emb(x)
         # ei = knn_graph(x[..., : self.n_ftx_space], batch=batch, k=5)
         # x = self.mpls(x=x, edge_index=ei, batch=batch, cond=condition)
