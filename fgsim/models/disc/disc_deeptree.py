@@ -142,6 +142,8 @@ class BipartPool(nn.Module):
         xcent = self.mpl(
             x=(x.clone(), self.xcent_base.repeat(batch_size, 1)),
             edge_index=ei_o2c,
+            # edge_attr=torch.ones_like(source).reshape(-1, 1),
+            # size=(x.shape[0], self.xcent_base.shape[0] * batch_size),
         )
         self.batchcent = torch.arange(
             batch_size, device=x.device, dtype=torch.long
