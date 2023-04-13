@@ -120,9 +120,9 @@ class Trainer:
         self.holder.state.time_train_step_start = time.time()
 
     def validation_step(self):
-        # if not conf.debug:
-        #     logger.info("Validating")
-        validate(self.holder, self.loader)
+        if not conf.debug:
+            logger.info("Validating")
+            validate(self.holder, self.loader)
         self.holder.state.time_train_step_start = time.time()
 
     def pre_epoch(self):
