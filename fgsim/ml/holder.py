@@ -241,10 +241,6 @@ class Holder:
         else:
             disc = self.models.disc
 
-        res = {
-            "sim_batch": sim_batch,
-        }
-
         # generate the random vector
         z = torch.randn(
             *self.models.gen.z_shape,
@@ -266,11 +262,13 @@ class Holder:
             assert (gen_batch.ptr == sim_batch.ptr).all()
             # assert (gen_batch.batch == sim_batch.batch).all()
             assert gen_batch.x.shape == sim_batch.x.shape
-            gen_batch = self.postprocess(gen_batch)
 
         assert not torch.isnan(gen_batch.x).any()
         assert sim_batch.x.shape[-1] == gen_batch.x.shape[-1]
-        res["gen_batch"] = gen_batch
+        if train_gen or train_disc:
+            gen_batch = self.postprocess(gen_batch)
+            # sim_batch = self.postprocess(sim_batch)
+        res = {"sim_batch": sim_batch, "gen_batch": gen_batch}
 
         # In both cases the gradient needs to pass though gen_crit
         with with_grad(train_gen or train_disc):
@@ -291,13 +289,13 @@ class Holder:
                 res |= prepend_to_key(disc(sim_batch, cond), "sim_")
         return res
 
-    def postprocess(self, gen_batch):
+    def postprocess(self, batch):
         if conf.dataset_name == "jetnet" and conf.loader.n_points == 150:
             from fgsim.loaders.jetnet.objcol import norm_pt_sum
 
             pt_pos = conf.loader.x_ftx_energy_pos
-            pts = gen_batch.x[..., pt_pos].clone()
-            gen_batch.x[..., pt_pos] = norm_pt_sum(pts, gen_batch.batch).clone()
+            pts = batch.x[..., pt_pos].clone()
+            batch.x[..., pt_pos] = norm_pt_sum(pts, batch.batch).clone()
 
             # from fgsim.loaders.jetnet.objcol import scaler
             # from torch_scatter import scatter_add
@@ -305,13 +303,13 @@ class Holder:
             # pt_scaler = scaler.transfs[2]
             # pt_pos = conf.loader.x_ftx_energy_pos
 
-            # pts = gen_batch.x[..., pt_pos].clone()
+            # pts = batch.x[..., pt_pos].clone()
             # pts_backtransf_gen = torch.tensor(
             #     pt_scaler.inverse_transform(
             #         pts.cpu().detach().numpy().reshape(-1, 1)
             #     ).reshape(-1)
-            # ).to(gen_batch.x.device)
-            # pts_sum_gen = scatter_add(pts_backtransf_gen, gen_batch.batch, dim=-1)
+            # ).to(batch.x.device)
+            # pts_sum_gen = scatter_add(pts_backtransf_gen, batch.batch, dim=-1)
             # assert torch.allclose(pts_sum_gen, torch.ones_like(pts_sum_gen))
 
             # pt_sim = sim_batch.x[..., pt_pos]
@@ -319,11 +317,11 @@ class Holder:
             #     pt_scaler.inverse_transform(
             #         pt_sim.cpu().detach().numpy().reshape(-1, 1)
             #     ).reshape(-1)
-            # ).to(gen_batch.x.device)
+            # ).to(batch.x.device)
             # pts_sum_sim = scatter_add(pts_backtransf_sim, sim_batch.batch, dim=-1)
             # assert (pts_sum_sim - 1).abs().max() < 0.05
             # assert torch.allclose(pts_sum_gen, torch.ones_like(pts_sum_gen))
-        return gen_batch
+        return batch
 
 
 def prepend_to_key(d: dict, s: str) -> dict:
