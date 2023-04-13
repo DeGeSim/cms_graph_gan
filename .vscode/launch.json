@@ -19,7 +19,7 @@
         {
             "args": [
                 "--tag",
-                "ddt_t_bl2",
+                "ddt_t150_pnorm_condreg_",
                 "--debug",
                 "train"
             ],
@@ -33,7 +33,7 @@
         {
             "args": [
                 "--tag",
-                "ddt_t_bl2_t_bl2",
+                "ddt_t150_pnorm_condreg_",
                 "--debug",
                 "test"
             ],
@@ -75,7 +75,7 @@
             "type": "python",
             "args": [
                 "--tag",
-                "ddt_t_bl2",
+                "ddt_t150_pnorm_condreg_",
                 "--debug",
                 "train"
             ],
@@ -88,7 +88,7 @@
             "type": "python",
             "args": [
                 "--tag",
-                "ddt_t_bl2",
+                "ddt_t150_pnorm_condreg_",
                 // "--debug",
                 "setup"
             ],
