@@ -93,10 +93,13 @@ class FFN(nn.Module):
         self.reset_parameters()
 
     def forward(self, x):
-        return self.seq(x)
+        return self.seq(x.clone())
 
     def __repr__(self):
-        return f"FFN({self.input_dim}->{self.output_dim},n_layers={self.n_layers},hidden_nodes={self.hidden_layer_size},activation={self.activation})"
+        return (
+            f"FFN({self.input_dim}->{self.output_dim},n_layers={self.n_layers},"
+            "hidden_nodes={self.hidden_layer_size},activation={self.activation})"
+        )
 
     def reset_parameters(self):
         self.seq.apply(self.init_weights)

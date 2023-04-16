@@ -1,34 +1,42 @@
-from typing import Optional
-
+import torch
+import torch_geometric
 from torch import Tensor
-from torch_scatter import scatter_std
+
+# def global_std_pool(x: Tensor, batch: Tensor, size: Optional[int] = None) -> Tensor:
+#     dim = -1 if x.dim() == 1 else -2
+#     size = int(batch.max().item() + 1) if size is None else size
+#     return torch_scatter.scatter_std(x, batch, dim=dim, dim_size=size)
 
 
-def global_std_pool(
-    x: Tensor, batch: Optional[Tensor], size: Optional[int] = None
-) -> Tensor:
-    r"""Returns batch-wise graph-level-outputs by taking the channel-wise
-    maximum across the node dimension, so that for a single graph
-    :math:`\mathcal{G}_i` its output is computed by
+def global_mad_pool(x: Tensor, batchidx: Tensor) -> Tensor:
+    means = torch_geometric.nn.global_mean_pool(x, batchidx)
+    deltas = (means[batchidx] - x).abs()
+    return torch_geometric.nn.global_mean_pool(deltas, batchidx)
 
-    .. math::
-        \mathbf{r}_i = \mathrm{max}_{n=1}^{N_i} \, \mathbf{x}_n.
 
-    Functional method of the
-    :class:`~torch_geometric.nn.aggr.MaxAggregation` module.
+def global_var_pool(x: Tensor, batchidx: Tensor) -> Tensor:
+    means = torch_geometric.nn.global_mean_pool(x, batchidx)
+    deltas = torch.pow(means[batchidx] - x, 2)
+    return torch_geometric.nn.global_mean_pool(deltas, batchidx)
 
-    Args:
-        x (torch.Tensor): Node feature matrix
-            :math:`\mathbf{X} \in \mathbb{R}^{(N_1 + \ldots + N_B) \times F}`.
-        batch (torch.Tensor, optional): The batch vector
-            :math:`\mathbf{b} \in {\{ 0, \ldots, B-1\}}^N`, which assigns
-            each element to a specific example.
-        size (int, optional): The number of examples :math:`B`.
-            Automatically calculated if not given. (default: :obj:`None`)
-    """
-    dim = -1 if x.dim() == 1 else -2
 
-    if batch is None:
-        return x.max(dim=dim, keepdim=x.dim() <= 2)[0]
-    size = int(batch.max().item() + 1) if size is None else size
-    return scatter_std(x, batch, dim=dim, dim_size=size)
+def global_std_pool(x: Tensor, batchidx: Tensor) -> Tensor:
+    return torch.sqrt(global_var_pool(x, batchidx))
+
+
+global_width_pool = global_mad_pool
+# from torch_scatter import scatter_sum
+# import torch
+
+# x = torch.normal(0, 1, (200,), requires_grad=False)
+# width = torch.tensor(2.0, requires_grad=True)
+# shift = torch.tensor(4.0, requires_grad=True)
+
+# xprime = x * width + shift
+# aggr = scatter_std(
+#     xprime.reshape(-1, 1),
+#     torch.zeros(200, dtype=torch.long),
+#     dim=-2,
+# ).sum()
+# aggr.backward()
+# print(width.grad, shift.grad)

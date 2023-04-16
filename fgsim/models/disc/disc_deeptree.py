@@ -1,11 +1,11 @@
 # noqa: F401
 import torch
 from torch import Tensor, nn
-from torch_geometric.nn import conv, global_add_pool
-from torch_geometric.nn.pool import global_max_pool
+from torch_geometric.nn import conv, global_add_pool, global_max_pool
 
 from fgsim.config import conf
 from fgsim.models.common import FFN
+from fgsim.utils.std_pool import global_width_pool
 
 
 class ModelClass(nn.Module):
@@ -67,23 +67,31 @@ class ModelClass(nn.Module):
         cond_reg_list = []
 
         for ilevel in range(self.n_levels + 1):
-            # aggregate latent space features
-            x_lat_list.append(global_add_pool(x, batchidx))
-            x_lat_list.append(global_max_pool(x, batchidx))
+            assert not x.isnan().any()
 
-            d, cond_reg = self.pcdiscs[ilevel](x, batchidx)
+            # aggregate latent space features
+            for f in [global_add_pool, global_max_pool, global_width_pool]:
+                lat_aggr = f(x.clone(), batchidx)
+                # assert not lat_aggr.isnan().any()
+                x_lat_list.append(lat_aggr)
+
+            d, cond_reg = self.pcdiscs[ilevel](x.clone(), batchidx)
+            # assert not d.isnan().any()
+            # assert not cond_reg.isnan().any()
             x_disc += d
             cond_reg_list.append(cond_reg)
 
             if ilevel == self.n_levels:
                 break
-            x = self.embeddings[ilevel](x, batchidx)
+            x = self.embeddings[ilevel](x.clone(), batchidx)
+            # assert not x.isnan().any()
 
             x, _, _, batchidx, _, _ = self.pools[ilevel](
                 x=x.clone(),
                 edge_index=torch.empty(2, 0, dtype=torch.long, device=x.device),
                 batch=batchidx,
             )
+            # assert not x.isnan().any()
             assert x.shape == (
                 conf.loader.batch_size * self.pools[ilevel].ratio,
                 self.features[ilevel + 1],
@@ -176,13 +184,15 @@ class TSumTDisc(nn.Module):
                 for _ in range(n_updates)
             ]
         )
-        self.disc = FFN(n_ftx, 1 + n_cond, **ffn_param, final_linear=True)
+        self.aggrs = [global_max_pool, global_add_pool]
+        self.disc = FFN(
+            n_ftx * len(self.aggrs), 1 + n_cond, **ffn_param, final_linear=True
+        )
 
     def forward(self, x, batch):
         for layer in self.disc_emb:
             x = x.clone() + layer(x.clone(), batch)
-        x = global_add_pool(x.clone(), batch)
-        x = self.disc(x)
+        x = self.disc(torch.hstack([f(x.clone(), batch) for f in self.aggrs]))
         return (
             x[:, :1],
             x[:, 1:],
@@ -197,9 +207,13 @@ class CentralNodeUpdate(nn.Module):
         self.emb_nn = FFN(
             n_ftx_in, n_ftx_latent, **(ffn_param | {"norm": "spectral"})
         )
+        self.aggrs = [global_max_pool, global_add_pool]
         self.global_nn = FFN(
-            n_ftx_latent, n_global, **(ffn_param | {"norm": "spectral"})
+            len(self.aggrs) * n_ftx_latent,
+            n_global,
+            **(ffn_param | {"norm": "spectral"}),
         )
+
         self.out_nn = FFN(
             n_ftx_latent + n_global,
             n_ftx_in,
@@ -209,9 +223,12 @@ class CentralNodeUpdate(nn.Module):
 
     def forward(self, x, batch):
         x = self.emb_nn(x)
-        x_aggr = global_add_pool(x, batch)
+        # assert not x.isnan().any()
+        x_aggr = torch.hstack([f(x.clone(), batch) for f in self.aggrs])
+        # assert not x_aggr.isnan().any()
         x_global = self.global_nn(x_aggr)
         x = self.out_nn(torch.hstack([x, x_global[batch]]))
+        # assert not x.isnan().any()
         return x
 
 
@@ -254,8 +271,11 @@ class Embedding(nn.Module):
         # x = self.space_emb(x)
         # ei = knn_graph(x[..., : self.n_ftx_space], batch=batch, k=5)
         # x = self.mpls(x=x, edge_index=ei, batch=batch, cond=condition)
-        x = self.inp_emb(x)
-        x = self.cnu(x.clone(), batch) + x.clone()
+        # assert not x.isnan().any()
+        x_post = self.inp_emb(x)
+        # assert not x_post.isnan().any()
+        x = self.cnu(x_post.clone(), batch) + x_post.clone()
+        # assert not x.isnan().any()
         return x
 
 
