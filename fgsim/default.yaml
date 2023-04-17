@@ -19,7 +19,7 @@ models:
     scheduler:
       name: CyclicLR
       params: ${scheduler_options[${models.gen.scheduler.name}]}
-    retain_graph_on_backprop: True
+    retain_graph_on_backprop: False
   disc:
     name: disc_deeptree
     params: ${model_param_options[${models.disc.name}]}
