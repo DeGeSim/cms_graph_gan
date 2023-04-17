@@ -3,9 +3,6 @@ import random
 from glob import glob
 from pathlib import Path
 
-import numpy as np
-import torch
-from matplotlib import pyplot as plt
 from omegaconf import DictConfig, OmegaConf
 
 from fgsim.utils.cli import get_args
@@ -114,26 +111,31 @@ def parse_arg_conf(args=None):
             else:
                 raise FileNotFoundError(f"Tag {args.tag} has no conf.yaml file.")
         conf, hyperparameters = compute_conf(defaultconf, tagconf, vars(args))
+    if conf.command in ["train", "test"]:
+        setup_ml()
     return conf, hyperparameters
 
 
-torch.manual_seed(conf.seed)
-np.random.seed(conf.seed)
-random.seed(conf.seed)
+device = None
 
 
-def get_device():
+def setup_ml():
+    import numpy as np
+    import torch
+    from matplotlib import pyplot as plt
+
+    torch.manual_seed(conf.seed)
+    np.random.seed(conf.seed)
+    random.seed(conf.seed)
+
     # Select the CPU/GPU
+    global device
     if torch.cuda.is_available():
         device = torch.device("cuda:" + str(torch.cuda.device_count() - 1))
     else:
         device = torch.device("cpu")
-    return device
 
-
-device = get_device()
-
-plt.rcParams["savefig.bbox"] = "tight"
-# plt.rcParams["backend"] = "Agg"
-plt.rcParams["figure.dpi"] = 150
-np.set_printoptions(formatter={"float_kind": "{:.3g}".format})
+    plt.rcParams["savefig.bbox"] = "tight"
+    # plt.rcParams["backend"] = "Agg"
+    plt.rcParams["figure.dpi"] = 150
+    np.set_printoptions(formatter={"float_kind": "{:.3g}".format})
