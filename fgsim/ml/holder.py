@@ -265,9 +265,9 @@ class Holder:
 
         assert not torch.isnan(gen_batch.x).any()
         assert sim_batch.x.shape[-1] == gen_batch.x.shape[-1]
-        if train_gen or train_disc:
-            gen_batch = self.postprocess(gen_batch)
-            # sim_batch = self.postprocess(sim_batch)
+        # if train_gen or train_disc:
+        gen_batch = self.postprocess(gen_batch)
+        # sim_batch = self.postprocess(sim_batch)
         res = {"sim_batch": sim_batch, "gen_batch": gen_batch}
 
         # In both cases the gradient needs to pass though gen_crit
