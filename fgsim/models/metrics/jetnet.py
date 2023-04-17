@@ -78,3 +78,21 @@ def cov_mmd(gen_batch: Batch, sim_batch: Batch, **kwargs):
         return min(float(score_cov), 1e5), min(float(score_mmd), 1e5)
     except ValueError:
         return (1e5, 1e5)
+
+
+def kpd(
+    sim_efps: torch.Tensor, gen_efps: torch.Tensor, **kwargs
+) -> tuple[float, float]:
+    score = jetnet.evaluation.gen_metrics.kpd(
+        real_features=sim_efps, gen_features=gen_efps, num_threads=10
+    )
+    return tuple(min(float(e) * 1e5, 1e5) for e in score)
+
+
+def fpd(
+    sim_efps: torch.Tensor, gen_efps: torch.Tensor, **kwargs
+) -> tuple[float, float]:
+    score = jetnet.evaluation.gen_metrics.fpd(
+        real_features=sim_efps, gen_features=gen_efps
+    )
+    return tuple(min(float(e) * 1e5, 1e5) for e in score)

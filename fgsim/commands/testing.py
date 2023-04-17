@@ -188,7 +188,7 @@ def test_metrics(test_info: TestInfo):
 
 
 def jetnet_metrics(**res_d) -> Dict[str, float]:
-    from fgsim.models.metrics import cov_mmd, fgd, fpnd, kpd, w1efp, w1m, w1p
+    from fgsim.models.metrics import cov_mmd, fpd, fpnd, kpd, w1efp, w1m, w1p
 
     assert fpnd(res_d["sim_batch"]) < 10
     metrics_dict = {}
@@ -198,7 +198,7 @@ def jetnet_metrics(**res_d) -> Dict[str, float]:
     metrics_dict["w1p"], metrics_dict["w1p_delta"] = w1p(**res_d)
     metrics_dict["w1efp"], metrics_dict["w1efp_delta"] = w1efp(**res_d)
     metrics_dict["cov"], metrics_dict["mmd"] = cov_mmd(**res_d)
-    metrics_dict["fgd"], metrics_dict["fgd_delta"] = fgd(**res_d)
+    metrics_dict["fpd"], metrics_dict["fpd_delta"] = fpd(**res_d)
     metrics_dict["kpd"], metrics_dict["kpd_delta"] = kpd(**res_d)
 
     return metrics_dict

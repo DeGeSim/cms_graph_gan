@@ -73,11 +73,11 @@ def validate(holder: Holder, loader: QueuedDataset) -> None:
                 step=holder.state.grad_step,
             )
 
-        if len({"kpd", "fgd"} & set(conf.training.val.metrics)):
-            from fgsim.utils.jetnetutils import to_efp
+    if len({"kpd", "fgd"} & set(conf.training.val.metrics)):
+        from fgsim.utils.jetnetutils import to_efp
 
-            results_d["sim_efps"] = to_efp(results_d["sim_batch"])
-            results_d["gen_efps"] = to_efp(results_d["gen_batch"])
+        results_d["sim_efps"] = to_efp(results_d["sim_batch"])
+        results_d["gen_efps"] = to_efp(results_d["gen_batch"])
 
     # evaluate the validation metrics
     with torch.no_grad():
