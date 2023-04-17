@@ -5,7 +5,8 @@ from torch_geometric.nn import conv, global_add_pool, global_max_pool
 
 from fgsim.config import conf
 from fgsim.models.common import FFN
-from fgsim.utils.std_pool import global_width_pool
+
+# from fgsim.utils.std_pool import global_width_pool
 
 
 class ModelClass(nn.Module):
@@ -64,34 +65,27 @@ class ModelClass(nn.Module):
         x_disc = torch.zeros((batch.num_graphs, 1), dtype=x.dtype, device=x.device)
 
         x_lat_list = []
-        cond_reg_list = []
 
         for ilevel in range(self.n_levels + 1):
+            # aggregate latent space features
             assert not x.isnan().any()
 
             # aggregate latent space features
-            for f in [global_add_pool, global_max_pool, global_width_pool]:
-                lat_aggr = f(x.clone(), batchidx)
-                # assert not lat_aggr.isnan().any()
+            for f in [global_add_pool, global_max_pool]:
+                lat_aggr = f(x, batchidx)
                 x_lat_list.append(lat_aggr)
 
-            d, cond_reg = self.pcdiscs[ilevel](x.clone(), batchidx)
-            # assert not d.isnan().any()
-            # assert not cond_reg.isnan().any()
-            x_disc += d
-            cond_reg_list.append(cond_reg)
+            x_disc += self.pcdiscs[ilevel](x, batchidx, condition)
 
             if ilevel == self.n_levels:
                 break
-            x = self.embeddings[ilevel](x.clone(), batchidx)
-            # assert not x.isnan().any()
+            x = self.embeddings[ilevel](x, batchidx)
 
             x, _, _, batchidx, _, _ = self.pools[ilevel](
                 x=x.clone(),
                 edge_index=torch.empty(2, 0, dtype=torch.long, device=x.device),
                 batch=batchidx,
             )
-            # assert not x.isnan().any()
             assert x.shape == (
                 conf.loader.batch_size * self.pools[ilevel].ratio,
                 self.features[ilevel + 1],
@@ -100,7 +94,6 @@ class ModelClass(nn.Module):
         return {
             "crit": x_disc,
             "latftx": torch.hstack(x_lat_list),
-            "condreg": torch.stack(cond_reg_list).mean(dim=0),
         }
 
 
@@ -163,14 +156,7 @@ class TSumTDisc(nn.Module):
     """Classifies PC via FNN -> Add -> FNN"""
 
     def __init__(
-        self,
-        *,
-        n_ftx,
-        n_ftx_latent,
-        n_cond,
-        n_ftx_global,
-        n_updates,
-        ffn_param,
+        self, *, n_ftx, n_ftx_latent, n_cond, n_ftx_global, n_updates, ffn_param
     ) -> None:
         super().__init__()
         self.disc_emb = nn.ModuleList(
@@ -184,19 +170,14 @@ class TSumTDisc(nn.Module):
                 for _ in range(n_updates)
             ]
         )
-        self.aggrs = [global_max_pool, global_add_pool]
-        self.disc = FFN(
-            n_ftx * len(self.aggrs), 1 + n_cond, **ffn_param, final_linear=True
-        )
+        self.disc = FFN(n_ftx + n_cond, 1, **ffn_param, final_linear=True)
 
-    def forward(self, x, batch):
+    def forward(self, x, batch, condition):
         for layer in self.disc_emb:
             x = x.clone() + layer(x.clone(), batch)
-        x = self.disc(torch.hstack([f(x.clone(), batch) for f in self.aggrs]))
-        return (
-            x[:, :1],
-            x[:, 1:],
-        )
+        x = global_add_pool(x.clone(), batch)
+        x = self.disc(torch.hstack([x, condition]))
+        return x
 
 
 class CentralNodeUpdate(nn.Module):
@@ -207,13 +188,9 @@ class CentralNodeUpdate(nn.Module):
         self.emb_nn = FFN(
             n_ftx_in, n_ftx_latent, **(ffn_param | {"norm": "spectral"})
         )
-        self.aggrs = [global_max_pool, global_add_pool]
         self.global_nn = FFN(
-            len(self.aggrs) * n_ftx_latent,
-            n_global,
-            **(ffn_param | {"norm": "spectral"}),
+            n_ftx_latent, n_global, **(ffn_param | {"norm": "spectral"})
         )
-
         self.out_nn = FFN(
             n_ftx_latent + n_global,
             n_ftx_in,
@@ -223,12 +200,9 @@ class CentralNodeUpdate(nn.Module):
 
     def forward(self, x, batch):
         x = self.emb_nn(x)
-        # assert not x.isnan().any()
-        x_aggr = torch.hstack([f(x.clone(), batch) for f in self.aggrs])
-        # assert not x_aggr.isnan().any()
+        x_aggr = global_add_pool(x, batch)
         x_global = self.global_nn(x_aggr)
         x = self.out_nn(torch.hstack([x, x_global[batch]]))
-        # assert not x.isnan().any()
         return x
 
 
@@ -271,11 +245,8 @@ class Embedding(nn.Module):
         # x = self.space_emb(x)
         # ei = knn_graph(x[..., : self.n_ftx_space], batch=batch, k=5)
         # x = self.mpls(x=x, edge_index=ei, batch=batch, cond=condition)
-        # assert not x.isnan().any()
-        x_post = self.inp_emb(x)
-        # assert not x_post.isnan().any()
-        x = self.cnu(x_post.clone(), batch) + x_post.clone()
-        # assert not x.isnan().any()
+        x = self.inp_emb(x)
+        x = self.cnu(x.clone(), batch) + x.clone()
         return x
 
 

@@ -1,9 +1,11 @@
 import torch
+from torch.nn import InstanceNorm1d, MSELoss
 
 
 class LossGen:
     def __init__(self) -> None:
-        pass
+        self.lossf = MSELoss()
+        #
 
     def __call__(
         self,
@@ -14,12 +16,12 @@ class LossGen:
         assert kwargs["gen_batch"].x.requires_grad
         assert gen_latftx.requires_grad
         assert not sim_latftx.requires_grad
-        y = sim_latftx.detach()
-        mean, std = y.mean(0), y.std(0)
-        std[std == 0] = 1
-        yp = (y - mean) / (std + 1e-3)
+        if not hasattr(self, "norm"):
+            self.norm = InstanceNorm1d(gen_latftx.shape[-1])
+        l_gen_normed, l_sim_normed = (
+            self.norm(e.mean(0).unsqueeze(0))
+            for e in (gen_latftx, sim_latftx.detach())
+        )
+        loss = self.lossf(l_gen_normed, l_sim_normed)
 
-        yhat = gen_latftx
-        yphat = (yhat - mean) / (std + 1e-3)
-        loss = (yp - yphat).abs().mean()
         return loss
