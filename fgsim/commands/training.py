@@ -145,8 +145,8 @@ class Trainer:
             % self.loader.n_grad_steps_per_epoch
         )
         if conf.debug:
-            kws["miniters"] = 100
-            kws["mininterval"] = 5.0
+            kws["miniters"] = 5
+            kws["mininterval"] = 1.0
         elif self.holder.state.epoch < 10:
             kws["miniters"] = 200
             kws["mininterval"] = 10.0
