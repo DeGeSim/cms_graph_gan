@@ -436,8 +436,8 @@ dataset_options:
       branches: [2, 3, 5, 5]
       features: [64, 33, 20, 10, 3]
     validation:
-      interval: 2_000
-      plot_interval: 10_000
+      interval: "${div:400_000,${dataset_options[${dataset_name}][loader][batch_size]}}"
+      plot_interval: "${div:8_000_000,${dataset_options[${dataset_name}][loader][batch_size]}}"
       use_for_stopping: ["w1m", "w1p", "fpnd"]
       metrics: ["w1m", "w1p", "fpnd", "auc", "w1disc"]
       debug_metrics: ["w1m", "auc", "w1disc"]
@@ -449,7 +449,7 @@ dataset_options:
       y_features: ["type", "pt", "eta", "mass", "num_particles"]
       jettype: "t"
       chunk_size: 5000
-      batch_size: 200
+      batch_size: 5000
   hgcal_graph:
     validation:
       use_for_stopping: ["w1E", "w1x", "w1y", "w1layer"]
