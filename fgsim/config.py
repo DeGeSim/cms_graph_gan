@@ -131,7 +131,7 @@ def setup_ml():
     # Select the CPU/GPU
     global device
     if torch.cuda.is_available():
-        device = torch.device("cuda:" + str(torch.cuda.device_count() - 1))
+        device = torch.device("cuda:0")
     else:
         device = torch.device("cpu")
 
