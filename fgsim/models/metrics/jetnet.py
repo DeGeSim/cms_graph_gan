@@ -1,4 +1,5 @@
 import jetnet
+import numpy as np
 import torch
 from torch_geometric.data import Batch
 
@@ -34,7 +35,7 @@ def w1efp(gen_batch: Batch, sim_batch: Batch, **kwargs) -> tuple[float, float]:
         jets2=to_stacked_mask(sim_batch)[..., :3].cpu(),
         efp_jobs=12,
     )
-    return tuple(min(float(e) * 1e5, 1e5) for e in score)
+    return tuple(min(float(np.mean(e)) * 1e5, 1e5) for e in score)
 
 
 def fpnd(gen_batch: Batch, **kwargs) -> float:
