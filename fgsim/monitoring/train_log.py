@@ -34,14 +34,26 @@ class TrainLog:
 
         if self.use_wandb:
             if not conf.ray:
-                self.wandb_run = wandb.init(
-                    id=exp_orga_wandb[conf["hash"]],
-                    resume="must",
-                    dir=conf.path.run_path,
-                    project=conf.project_name,
-                    job_type=conf.command,
-                    settings={"quiet": True},
-                )
+                if conf.command == "train":
+                    self.wandb_run = wandb.init(
+                        id=exp_orga_wandb[conf["hash"]],
+                        resume="must",
+                        name=conf["hash"],
+                        group=conf["hash"],
+                        dir=conf.path.run_path,
+                        project=conf.project_name,
+                        job_type=conf.command,
+                        settings={"quiet": True},
+                    )
+                else:
+                    self.wandb_run = wandb.init(
+                        name=conf["hash"],
+                        group=conf["hash"],
+                        dir=conf.path.run_path,
+                        project=conf.project_name,
+                        job_type=conf.command,
+                        settings={"quiet": True},
+                    )
             else:
                 self.wandb_run = wandb.run
             wandb.log(

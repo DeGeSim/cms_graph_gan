@@ -1,5 +1,4 @@
 import wandb
-
 from fgsim.utils.oc_utils import dict_to_kv
 
 from .experiment_organizer import ExperimentOrganizer
@@ -29,6 +28,7 @@ def setup_experiment() -> None:
     run = wandb.init(
         project=conf.project_name,
         name=conf["hash"],
+        group=conf["hash"],
         tags=tags_list,
         config=hyperparameters_keyval_list,
         dir=conf.path.run_path,

@@ -1,12 +1,15 @@
 """Contain the training procedure, access point from __main__"""
 
+import signal
 import sys
 import time
 import traceback
 
 import torch
+from queueflow import Sequence
 from tqdm import tqdm
 
+import wandb
 from fgsim.config import conf, device
 from fgsim.io.queued_dataset import QueuedDataset
 from fgsim.io.sel_loader import loader_info
@@ -159,8 +162,9 @@ class Trainer:
 
 
 def training_procedure() -> None:
-    trainer = Trainer(Holder(device))
-
+    holder = Holder(device)
+    trainer = Trainer(holder)
+    term_handler = SigTermHander(holder, trainer.loader.qfseq)
     # Regular run
     if sys.gettrace() is not None:
         trainer.training_loop()
@@ -179,3 +183,21 @@ def training_procedure() -> None:
             if trainer.loader.qfseq.started:
                 trainer.loader.qfseq.stop()
             exit(exitcode)
+    del term_handler
+
+
+class SigTermHander:
+    def __init__(self, holder: Holder, qfseq: Sequence) -> None:
+        self.qfseq = qfseq
+        self.holder = holder
+        signal.signal(signal.SIGTERM, self.handle)
+        signal.signal(signal.SIGINT, self.handle)
+
+    def handle(self, _signo, _stack_frame):
+        print("SIGTERM detected, stopping qfseq")
+        #  self.holder.save_checkpoint()
+        self.qfseq.stop()
+        self.holder.save_checkpoint()
+        wandb.mark_preempting()
+
+        exit()
