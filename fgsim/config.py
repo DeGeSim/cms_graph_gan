@@ -99,8 +99,6 @@ def parse_arg_conf(args=None):
         hyperparameters = OmegaConf.load(folder / "hyperparameters.yaml")
 
         conf["command"] = str(args.command)
-
-        return conf, hyperparameters
     else:
         fn = f"wd/{args.tag}/conf.yaml"
         if os.path.isfile(fn):
