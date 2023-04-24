@@ -16,6 +16,8 @@ class TrainLog:
     """
 
     def __init__(self, state, history):
+        # This code block is formatting the hyperparameters
+        # for the experiment and creating a list of tags.
         self.state: DictConfig = state
         self.history: Dict = history
         self.use_tb = not conf.debug or conf.command == "test"
@@ -46,11 +48,21 @@ class TrainLog:
                         settings={"quiet": True},
                     )
                 else:
+                    from fgsim.config import hyperparameters
+                    from fgsim.utils.oc_utils import dict_to_kv
+
+                    assert len(hyperparameters) > 0
+                    hyperparameters_keyval_list = dict(dict_to_kv(hyperparameters))
+                    hyperparameters_keyval_list["hash"] = conf["hash"]
+                    hyperparameters_keyval_list["loader_hash"] = conf["loader_hash"]
+                    tags_list = list(set(conf.tag.split("_")))
                     self.wandb_run = wandb.init(
                         name=conf["hash"],
                         group=conf["hash"],
                         dir=conf.path.run_path,
                         project=conf.project_name,
+                        tags=tags_list,
+                        config=hyperparameters_keyval_list,
                         job_type=conf.command,
                         settings={"quiet": True},
                     )
