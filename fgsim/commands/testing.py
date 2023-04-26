@@ -49,8 +49,13 @@ def test_procedure() -> None:
     holder: Holder = Holder(device)
     train_log: TrainLog = holder.train_log
 
+    ds_dict = {
+        best_or_last: get_testing_datasets(holder, best_or_last)
+        for best_or_last in ["last", "best"]
+    }
+
     for best_or_last in ["last", "best"]:
-        test_data: TestDataset = get_testing_datasets(holder, best_or_last)
+        test_data: TestDataset = ds_dict[best_or_last]
         plot_path = Path(f"{conf.path.run_path}/plots_{best_or_last}/")
         plot_path.mkdir(exist_ok=True)
 

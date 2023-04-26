@@ -30,7 +30,7 @@ def ratioplot(sim: np.ndarray, gen: np.ndarray, title: str) -> Figure:
     mplhep.histplot(
         [sim_hist, gen_hist],
         bins=bins,
-        label=["MC", "DeepTreeGAN"],
+        label=["Simulation", "DeepTree"],
         yerr=[sim_error, gen_error],
         ax=ax,
     )
@@ -55,8 +55,10 @@ def ratioplot(sim: np.ndarray, gen: np.ndarray, title: str) -> Figure:
             **kwstyle,
         )
 
-    ax.set_ylabel("Frequency", fontsize=14)
-    ax.legend()
+    ax.set_ylabel("Frequency", fontsize=16)
+    ax.get_yaxis().set_ticks([])
+
+    ax.legend(fontsize=16, loc="upper left")
     ax.tick_params(axis="both", which="major", labelsize=12)
     ax.tick_params(axis="both", which="minor", labelsize=10)
 
@@ -87,6 +89,6 @@ def ratioplot(sim: np.ndarray, gen: np.ndarray, title: str) -> Figure:
     axrat.set_xticks([])
     axrat.set_xticklabels([])
 
-    fig.suptitle(title, fontsize=17)
+    fig.suptitle(title, fontsize=30)
     plt.tight_layout()
     return fig
