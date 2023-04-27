@@ -274,7 +274,7 @@ class Holder:
         with with_grad(train_gen or train_disc):
             res |= prepend_to_key(disc(gen_batch, cond), "gen_")
 
-        assert res["gen_crit"].shape == (conf.loader.batch_size, 1)
+        # assert res["gen_crit"].shape == (conf.loader.batch_size, 1)
         assert not torch.isnan(res["gen_crit"]).any()
 
         # we dont need to compute sim_crit if only the generator is trained

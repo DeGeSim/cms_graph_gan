@@ -5,8 +5,7 @@ from torch_geometric.nn import conv, global_add_pool, global_max_pool
 
 from fgsim.config import conf
 from fgsim.models.common import FFN
-
-# from fgsim.utils.std_pool import global_width_pool
+from fgsim.utils.std_pool import global_width_pool
 
 
 class ModelClass(nn.Module):
@@ -62,9 +61,9 @@ class ModelClass(nn.Module):
     def forward(self, batch, condition):
         x: torch.Tensor
         x, batchidx = batch.x, batch.batch
-        x_disc = torch.zeros((batch.num_graphs, 1), dtype=x.dtype, device=x.device)
 
         x_lat_list = []
+        score_List = []
 
         for ilevel in range(self.n_levels + 1):
             # aggregate latent space features
@@ -75,7 +74,7 @@ class ModelClass(nn.Module):
                 lat_aggr = f(x, batchidx)
                 x_lat_list.append(lat_aggr)
 
-            x_disc += self.pcdiscs[ilevel](x, batchidx, condition)
+            score_List.append(self.pcdiscs[ilevel](x, batchidx, condition).clone())
 
             if ilevel == self.n_levels:
                 break
@@ -92,7 +91,7 @@ class ModelClass(nn.Module):
             )
 
         return {
-            "crit": x_disc,
+            "crit": torch.vstack(score_List),
             "latftx": torch.hstack(x_lat_list),
         }
 
@@ -189,7 +188,7 @@ class CentralNodeUpdate(nn.Module):
             n_ftx_in, n_ftx_latent, **(ffn_param | {"norm": "spectral"})
         )
         self.global_nn = FFN(
-            n_ftx_latent, n_global, **(ffn_param | {"norm": "spectral"})
+            n_ftx_latent * 2, n_global, **(ffn_param | {"norm": "spectral"})
         )
         self.out_nn = FFN(
             n_ftx_latent + n_global,
@@ -200,8 +199,9 @@ class CentralNodeUpdate(nn.Module):
 
     def forward(self, x, batch):
         x = self.emb_nn(x)
-        x_aggr = global_add_pool(x, batch)
-        x_global = self.global_nn(x_aggr)
+        x_sum = global_add_pool(x, batch)
+        x_width = global_width_pool(x, batch)
+        x_global = self.global_nn(torch.hstack([x_sum, x_width]))
         x = self.out_nn(torch.hstack([x, x_global[batch]]))
         return x
 

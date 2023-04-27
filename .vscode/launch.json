@@ -19,7 +19,7 @@
         {
             "args": [
                 "--tag",
-                "ddt_t150_dcond_multipool_fmlstd",
+                "ddt_t150_bl4",
                 "--debug",
                 "train"
             ],
@@ -33,7 +33,7 @@
         {
             "args": [
                 "--tag",
-                "ddt_t150_dcond_multipool_fmlstd",
+                "ddt_t150_bl4",
                 "--debug",
                 "test"
             ],
@@ -75,7 +75,7 @@
             "type": "python",
             "args": [
                 "--tag",
-                "ddt_t150_dcond_multipool_fmlstd",
+                "ddt_t150_bl4",
                 "--debug",
                 "train"
             ],
@@ -88,7 +88,7 @@
             "type": "python",
             "args": [
                 "--tag",
-                "ddt_t150_dcond_multipool_fmlstd",
+                "ddt_t150_bl4",
                 // "--debug",
                 "setup"
             ],
