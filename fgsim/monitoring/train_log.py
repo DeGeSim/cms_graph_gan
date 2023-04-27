@@ -39,31 +39,25 @@ class TrainLog:
                 if conf.command == "train":
                     self.wandb_run = wandb.init(
                         id=exp_orga_wandb[conf["hash"]],
-                        resume="must",
-                        name=conf["hash"],
-                        group=conf["hash"],
-                        dir=conf.path.run_path,
-                        project=conf.project_name,
+                        # resume="must",
+                        # name=conf["hash"],
+                        # group=conf["hash"],
+                        # dir=conf.path.run_path,
+                        # project=conf.project_name,
                         job_type=conf.command,
                         settings={"quiet": True},
                     )
                 else:
-                    from fgsim.config import hyperparameters
-                    from fgsim.utils.oc_utils import dict_to_kv
-
-                    assert len(hyperparameters) > 0
-                    hyperparameters_keyval_list = dict(dict_to_kv(hyperparameters))
-                    hyperparameters_keyval_list["hash"] = conf["hash"]
-                    hyperparameters_keyval_list["loader_hash"] = conf["loader_hash"]
-                    tags_list = list(set(conf.tag.split("_")))
                     self.wandb_run = wandb.init(
-                        name=conf["hash"],
-                        group=conf["hash"],
-                        dir=conf.path.run_path,
-                        project=conf.project_name,
-                        tags=tags_list,
-                        config=hyperparameters_keyval_list,
-                        job_type=conf.command,
+                        id=f"{conf['hash']}_test",
+                        resume="must",
+                        # name=f"{conf['hash']}_test",
+                        # group=conf["hash"],
+                        # dir=conf.path.run_path,
+                        # project=conf.project_name,
+                        # tags=tags_list,
+                        # config=hyperparameters_keyval_list,
+                        job_type="test",
                         settings={"quiet": True},
                     )
             else:
