@@ -39,11 +39,11 @@ class TrainLog:
                 if conf.command == "train":
                     self.wandb_run = wandb.init(
                         id=exp_orga_wandb[conf["hash"]],
-                        # resume="must",
-                        # name=conf["hash"],
-                        # group=conf["hash"],
-                        # dir=conf.path.run_path,
-                        # project=conf.project_name,
+                        resume="must",
+                        name=conf["hash"],
+                        group=conf["hash"],
+                        dir=conf.path.run_path,
+                        project=conf.project_name,
                         job_type=conf.command,
                         settings={"quiet": True},
                     )
@@ -51,12 +51,10 @@ class TrainLog:
                     self.wandb_run = wandb.init(
                         id=f"{conf['hash']}_test",
                         resume="must",
-                        # name=f"{conf['hash']}_test",
-                        # group=conf["hash"],
-                        # dir=conf.path.run_path,
-                        # project=conf.project_name,
-                        # tags=tags_list,
-                        # config=hyperparameters_keyval_list,
+                        name=f"{conf['hash']}_test",
+                        group=conf["hash"],
+                        dir=conf.path.run_path,
+                        project=conf.project_name,
                         job_type="test",
                         settings={"quiet": True},
                     )
