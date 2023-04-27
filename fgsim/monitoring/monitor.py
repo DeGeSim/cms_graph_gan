@@ -34,6 +34,7 @@ def setup_experiment() -> None:
         dir=conf.path.run_path,
         job_type="train",
         resume=False,
+        reinit=True,
         settings={"quiet": True, "disable_job_creation": True},
     )
     exp_orga_wandb[conf["hash"]] = run_train.id
@@ -46,6 +47,7 @@ def setup_experiment() -> None:
         config=hyperparameters_keyval_list,
         dir=conf.path.run_path,
         job_type="test",
+        reinit=True,
         resume=False,
         settings={"quiet": True, "disable_job_creation": True},
     )
