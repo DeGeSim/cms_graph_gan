@@ -36,30 +36,25 @@ class TrainLog:
 
         if self.use_wandb:
             if not conf.ray:
+                wandb_name = f"{conf['hash']}_{conf.command}"
                 if conf.command == "train":
-                    self.wandb_run = wandb.init(
-                        id=exp_orga_wandb[conf["hash"]],
-                        resume="must",
-                        name=conf["hash"],
-                        group=conf["hash"],
-                        dir=conf.path.run_path,
-                        project=conf.project_name,
-                        job_type=conf.command,
-                        settings={"quiet": True},
-                    )
+                    wandb_id = exp_orga_wandb[conf["hash"]]
+                elif conf.command == "test":
+                    wandb_id = exp_orga_wandb[wandb_name]
                 else:
-                    self.wandb_run = wandb.init(
-                        id=f"{conf['hash']}_test",
-                        resume="must",
-                        name=f"{conf['hash']}_test",
-                        group=conf["hash"],
-                        dir=conf.path.run_path,
-                        project=conf.project_name,
-                        job_type="test",
-                        settings={"quiet": True},
-                    )
-            else:
-                self.wandb_run = wandb.run
+                    raise NotImplementedError
+
+                self.wandb_run = wandb.init(
+                    id=wandb_id,
+                    resume="must",
+                    name=wandb_name,
+                    group=conf["hash"],
+                    dir=conf.path.run_path,
+                    project=conf.project_name,
+                    job_type=conf.command,
+                    settings={"quiet": True},
+                )
+
             wandb.log(
                 data={"other/epoch": self.state["epoch"]},
                 step=self.state["grad_step"],
