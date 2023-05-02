@@ -3,7 +3,6 @@ import shutil
 from glob import glob
 
 import wandb
-
 from fgsim.monitoring.monitor import exp_orga_wandb
 from fgsim.utils.cli import get_args
 
@@ -15,9 +14,14 @@ def dump_procedure():
     from fgsim.config import conf
 
     api = wandb.Api()
-    run = api.run(f"{conf.project_name}/{exp_orga_wandb[conf.hash]}")
-    run.delete()
-    del exp_orga_wandb[args.hash]
+    for s in [conf.hash, f"{conf.hash}_train", f"{conf.hash}_test"]:
+        try:
+            run = api.run(f"{conf.project_name}/{exp_orga_wandb[s]}")
+            run.delete()
+        except Exception:
+            pass
+        if s in exp_orga_wandb:
+            del exp_orga_wandb[s]
 
     # local
     paths = glob(f"wd/*/{args.hash}")
