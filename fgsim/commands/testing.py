@@ -176,6 +176,7 @@ def test_metrics(test_info: TestInfo):
 
     for k, v in jetnet_metrics(**test_info.res_d).items():
         metrics_dict[k] = v
+        logger.info(f"Logging metric {k}: {v}")
 
     # KS tests
     # from scipy.stats import kstest

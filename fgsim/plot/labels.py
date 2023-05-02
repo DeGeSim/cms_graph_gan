@@ -8,7 +8,7 @@ labels_dict: Dict[str, str] = {
     "ptrel": "$p^\\mathrm{T}_\\mathrm{rel}$",
     "mass": "$m_{rel}$",
     "phi": "$Σ ϕ_{rel}$",
-    "pt": "$Σp_{T,rel}$",
+    "pt": "$Σp_{T}^{rel}$",
     "eta": "$Ση_{rel}$",
 }
 
