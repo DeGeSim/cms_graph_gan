@@ -5,23 +5,24 @@ from torch.nn import InstanceNorm1d, MSELoss
 class LossGen:
     def __init__(self) -> None:
         self.lossf = MSELoss()
-        #
+        self.norms = []
 
     def __call__(
         self,
-        gen_latftx: torch.Tensor,
-        sim_latftx: torch.Tensor,
+        gen_latftx: list[torch.Tensor],
+        sim_latftx: list[torch.Tensor],
         **kwargs,
     ):
         assert kwargs["gen_batch"].x.requires_grad
-        assert gen_latftx.requires_grad
-        assert not sim_latftx.requires_grad
-        if not hasattr(self, "norm"):
-            self.norm = InstanceNorm1d(gen_latftx.shape[-1])
-        l_gen_normed, l_sim_normed = (
-            self.norm(e.mean(0).unsqueeze(0))
-            for e in (gen_latftx, sim_latftx.detach())
-        )
-        loss = self.lossf(l_gen_normed, l_sim_normed)
+        loss_list = []
+        for ifeature, (g, s) in enumerate(zip(gen_latftx, sim_latftx)):
+            assert g.requires_grad
+            assert not s.requires_grad
+            if ifeature == len(self.norms):
+                self.norms.append(InstanceNorm1d(g.shape[-1]))
+            l_gen_normed, l_sim_normed = (
+                self.norms[ifeature](e) for e in (g, s.detach())
+            )
+            loss_list.append(self.lossf(l_gen_normed, l_sim_normed))
 
-        return loss
+        return sum(loss_list)

@@ -5,7 +5,7 @@ from torch_geometric.nn import conv, global_add_pool, global_max_pool
 
 from fgsim.config import conf
 from fgsim.models.common import FFN
-from fgsim.utils.std_pool import global_width_pool
+from fgsim.utils.std_pool import global_mean_width_pool
 
 
 class ModelClass(nn.Module):
@@ -70,9 +70,13 @@ class ModelClass(nn.Module):
             assert not x.isnan().any()
 
             # aggregate latent space features
-            for f in [global_add_pool, global_max_pool]:
-                lat_aggr = f(x, batchidx)
-                x_lat_list.append(lat_aggr)
+            if ilevel == 0:
+                for f in [global_add_pool, global_max_pool]:
+                    lat_aggr = f(x, batchidx)
+                    x_lat_list.append(lat_aggr)
+            else:
+                x_lat_list.append(x.sum(1))
+                x_lat_list.append(x.max(1).values)
 
             score_List.append(self.pcdiscs[ilevel](x, batchidx, condition).clone())
 
@@ -86,13 +90,14 @@ class ModelClass(nn.Module):
                 batch=batchidx,
             )
             assert x.shape == (
-                conf.loader.batch_size * self.pools[ilevel].ratio,
+                conf.loader.batch_size,
+                self.pools[ilevel].ratio,
                 self.features[ilevel + 1],
             )
 
         return {
             "crit": torch.vstack(score_List),
-            "latftx": torch.hstack(x_lat_list),
+            "latftx": x_lat_list,
         }
 
 
@@ -116,6 +121,9 @@ class BipartPool(nn.Module):
 
     def forward(self, x: Tensor, edge_index: Tensor, batch: Tensor):
         batch_size = int(batch[-1] + 1)
+        n_features = x.shape[-1]
+        if x.dim() == 3:
+            x = x.reshape(x.shape[0] * x.shape[1], x.shape[-1])
         source_graph_size = len(x)
 
         source = torch.arange(
@@ -140,7 +148,7 @@ class BipartPool(nn.Module):
         ei_o2c = torch.vstack([source, target])
 
         xcent = self.mpl(
-            x=(x.clone(), self.xcent_base.repeat(batch_size, 1)),
+            x=(x, self.xcent_base.repeat(batch_size, 1)),
             edge_index=ei_o2c,
             # edge_attr=torch.ones_like(source).reshape(-1, 1),
             # size=(x.shape[0], self.xcent_base.shape[0] * batch_size),
@@ -148,7 +156,14 @@ class BipartPool(nn.Module):
         self.batchcent = torch.arange(
             batch_size, device=x.device, dtype=torch.long
         ).repeat_interleave(self.ratio)
-        return xcent, None, None, self.batchcent, None, None
+        return (
+            xcent.reshape(batch_size, self.ratio, n_features),
+            None,
+            None,
+            self.batchcent,
+            None,
+            None,
+        )
 
 
 class TSumTDisc(nn.Module):
@@ -174,7 +189,10 @@ class TSumTDisc(nn.Module):
     def forward(self, x, batch, condition):
         for layer in self.disc_emb:
             x = x.clone() + layer(x.clone(), batch)
-        x = global_add_pool(x.clone(), batch)
+        if x.dim() == 2:
+            x = global_add_pool(x.clone(), batch)
+        else:
+            x = x.clone().sum(1)
         x = self.disc(torch.hstack([x, condition]))
         return x
 
@@ -197,12 +215,23 @@ class CentralNodeUpdate(nn.Module):
             final_linear=True,
         )
 
-    def forward(self, x, batch):
+    def forward(self, x, batch=None):
         x = self.emb_nn(x)
-        x_sum = global_add_pool(x, batch)
-        x_width = global_width_pool(x, batch)
-        x_global = self.global_nn(torch.hstack([x_sum, x_width]))
-        x = self.out_nn(torch.hstack([x, x_global[batch]]))
+        if x.dim() == 2:
+            x_glob = torch.hstack(global_mean_width_pool(x, batch)[1:])
+        else:
+            x_sum = x.sum(1)
+            x_mean = x_sum.unsqueeze(1).repeat(1, x.shape[1], 1) / len(x)
+            x_width = (x - x_mean).abs().mean(1)
+            x_glob = torch.hstack([x_sum, x_width])
+
+        x_global = self.global_nn(x_glob)
+        if x.dim() == 2:
+            ten_l = [x, x_global[batch]]
+        else:
+            ten_l = [x, x_global[batch].reshape(x.shape[0], x.shape[1], -1)]
+
+        x = self.out_nn(torch.concat(ten_l, dim=-1))
         return x
 
 

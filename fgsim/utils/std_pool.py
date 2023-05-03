@@ -9,9 +9,12 @@ from torch import Tensor
 
 
 def global_mad_pool(x: Tensor, batchidx: Tensor) -> Tensor:
-    means = torch_geometric.nn.global_mean_pool(x, batchidx)
+    counts = batchidx.unique(sorted=True, return_counts=True)[1].reshape(-1, 1)
+    sums = torch_geometric.nn.global_add_pool(x, batchidx)
+    means = sums / counts
     deltas = (means[batchidx] - x).abs()
-    return torch_geometric.nn.global_mean_pool(deltas, batchidx)
+    widths = torch_geometric.nn.global_mean_pool(deltas, batchidx)
+    return counts, sums, widths
 
 
 def global_var_pool(x: Tensor, batchidx: Tensor) -> Tensor:
@@ -24,7 +27,7 @@ def global_std_pool(x: Tensor, batchidx: Tensor) -> Tensor:
     return torch.sqrt(global_var_pool(x, batchidx))
 
 
-global_width_pool = global_mad_pool
+global_mean_width_pool = global_mad_pool
 # from torch_scatter import scatter_sum
 # import torch
 
