@@ -5,7 +5,7 @@ from torch_geometric.nn import conv, global_add_pool, global_max_pool
 
 from fgsim.config import conf
 from fgsim.models.common import FFN
-from fgsim.utils.std_pool import global_mean_width_pool
+from fgsim.models.pool.std_pool import global_mean_width_pool
 
 
 class ModelClass(nn.Module):
