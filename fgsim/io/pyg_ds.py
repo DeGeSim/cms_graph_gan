@@ -155,7 +155,7 @@ class PyGLoader:
     def __init__(self) -> None:
         ds = PyGDS()
         val_size = conf.loader.validation_set_size
-        test_size = conf.loader.validation_set_size
+        test_size = conf.loader.test_set_size
         train_size = len(ds) - val_size - test_size
 
         self.ds_train = ds[:train_size]
