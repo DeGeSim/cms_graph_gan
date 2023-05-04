@@ -168,7 +168,8 @@ class PyGLoader:
             pin_memory=True,
             persistent_workers=True,
             prefetch_factor=100,
-            num_workers=5,
+            num_workers=10,
+            drop_last=True,
         )
 
     def __iter__(self):
@@ -187,7 +188,7 @@ class PyGLoader:
         return len(self.dl_train)
 
     def stop(self):
-        pass
+        del self.dl_train
 
     def queue_epoch(self, *args, **kwargs):
         pass
