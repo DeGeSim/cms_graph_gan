@@ -7,7 +7,7 @@ import traceback
 from queueflow import Sequence
 
 import wandb
-from fgsim.config import device
+from fgsim.config import conf, device
 from fgsim.ml import Holder, Trainer
 from fgsim.monitoring import logger
 from fgsim.utils.senderror import send_error
@@ -50,6 +50,7 @@ class SigTermHander:
         #  self.holder.save_checkpoint()
         self.qfseq.stop()
         self.holder.save_checkpoint()
-        wandb.mark_preempting()
+        if not conf.debug:
+            wandb.mark_preempting()
 
         exit()
