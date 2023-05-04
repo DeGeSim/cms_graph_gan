@@ -3,7 +3,7 @@ from copy import deepcopy
 import torch
 from torch_geometric.data import Batch
 
-from fgsim.config import conf
+from fgsim.config import conf, device
 from fgsim.io.queued_dataset import QueuedDataset
 from fgsim.io.sel_loader import scaler
 from fgsim.ml.holder import Holder
@@ -24,6 +24,7 @@ def validate(holder: Holder, loader: QueuedDataset) -> None:
         "gen_crit": [],
     }
     for val_batch in loader.validation_batches:
+        val_batch = val_batch.to(device)
         for k, val in holder.pass_batch_through_model(val_batch, eval=True).items():
             if k in ["sim_batch", "gen_batch"]:
                 for e in val.to_data_list():
