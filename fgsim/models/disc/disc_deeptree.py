@@ -1,7 +1,6 @@
 # noqa: F401
 import torch
 from torch import Tensor, nn
-from torch_geometric.nn import global_add_pool
 
 from fgsim.config import conf
 from fgsim.models.common import FFN
@@ -182,16 +181,13 @@ class TSumTDisc(nn.Module):
                 for _ in range(n_updates)
             ]
         )
-        self.disc = FFN(n_ftx + n_cond, 1, **ffn_param, final_linear=True)
+        self.disc = FFN(1 + 2 * n_ftx + n_cond, 1, **ffn_param, final_linear=True)
 
     def forward(self, x, batch, condition):
         for layer in self.disc_emb:
             x = x.clone() + layer(x.clone(), batch)
-        if x.dim() == 2:
-            x = global_add_pool(x.clone(), batch)
-        else:
-            x = x.clone().sum(1)
-        x = self.disc(torch.hstack([x, condition]))
+        x = global_mad_pool(x.clone(), batch)
+        x = self.disc(torch.hstack([*x, condition]))
         return x
 
 
