@@ -4,8 +4,10 @@ import torch
 from tqdm import tqdm
 
 from fgsim.config import conf, device
-from fgsim.io.queued_dataset import QueuedDataset
-from fgsim.io.sel_loader import loader_info
+from fgsim.io.pyg_ds import PyGLoader
+
+# from fgsim.io.queued_dataset import QueuedDataset
+# from fgsim.io.sel_loader import loader_info
 from fgsim.ml.early_stopping import early_stopping
 from fgsim.ml.holder import Holder
 from fgsim.ml.smoothing import smooth_features
@@ -17,7 +19,9 @@ class Trainer:
     def __init__(self, holder: Holder) -> None:
         self.holder = holder
         self.train_log: TrainLog = self.holder.train_log
-        self.loader: QueuedDataset = QueuedDataset(loader_info)
+
+        self.loader = PyGLoader()
+        # self.loader: QueuedDataset = QueuedDataset(loader_info)
         self.val_interval = (
             conf.training.val.debug_interval
             if conf.debug
