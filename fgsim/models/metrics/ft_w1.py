@@ -1,9 +1,9 @@
 from typing import Dict
 
 from scipy.stats import wasserstein_distance
+from torch_geometric.data import Batch
 
 from fgsim.config import conf
-from fgsim.io.sel_loader import Batch
 
 
 class Metric:

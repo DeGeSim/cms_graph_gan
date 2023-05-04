@@ -4,9 +4,9 @@ from typing import Dict, Optional, Protocol
 
 import torch
 from omegaconf import DictConfig, OmegaConf
+from torch_geometric.data import Batch
 
 from fgsim.config import conf, device
-from fgsim.io.sel_loader import Batch
 from fgsim.monitoring.metrics_aggr import MetricAggregator
 from fgsim.monitoring.train_log import TrainLog
 

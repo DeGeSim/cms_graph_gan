@@ -4,15 +4,16 @@ from dataclasses import dataclass
 import numpy as np
 import torch
 from scipy.linalg import sqrtm
+from torch_geometric.data import Batch
 from tqdm import tqdm
 
 from fgsim.config import conf, device
-from fgsim.io.sel_loader import Batch
 from fgsim.ml.holder import Holder
 from fgsim.models.subnetworks.pointnet import PointNetCls
 
 """Calculate Frechet Pointcloud Distance referened by Frechet Inception Distance."
-    [ref] GANs Trained by a Two Time-Scale Update Rule Converge to a Local Nash Equilibrium
+    [ref] GANs Trained by a Two Time-Scale Update Rule Converge to a
+    Local Nash Equilibrium
     github code  : (https://github.com/bioinf-jku/TTUR)
     paper        : (https://arxiv.org/abs/1706.08500)
 """
@@ -125,8 +126,7 @@ class LossGen:
         if not np.isfinite(covmean).all():
             msg = (
                 "fid calculation produces singular product; "
-                "adding %s to diagonal of cov estimates"
-                % eps
+                "adding %s to diagonal of cov estimates" % eps
             )
             print(msg)
             offset = np.eye(sigma1.shape[0]) * eps

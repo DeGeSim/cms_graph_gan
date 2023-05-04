@@ -10,7 +10,8 @@ and returns the loss.
 import torch
 
 # from fgsim.config import conf
-from fgsim.io.sel_loader import Batch
+from torch_geometric.data import Batch
+
 from fgsim.ml.holder import Holder
 
 # from torch_scatter import scatter_mean

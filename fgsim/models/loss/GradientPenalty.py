@@ -2,16 +2,16 @@ from dataclasses import dataclass
 
 import torch
 from torch.autograd import grad
-from torch_geometric.data import Data
+from torch_geometric.data import Batch, Data
 
 from fgsim.config import device
-from fgsim.io.sel_loader import Batch
 from fgsim.ml.holder import Holder
 
 
 @dataclass
 class LossGen:
-    """Computes the gradient penalty as defined in "Improved Training of Wasserstein GANs
+    """Computes the gradient penalty as defined in "Improved Training
+      of Wasserstein GANs
     (https://arxiv.org/abs/1704.00028)
     Args:
         gamma (float): regularization term of the gradient penalty

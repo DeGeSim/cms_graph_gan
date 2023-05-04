@@ -1,6 +1,6 @@
 import torch
+from torch_geometric.data import Batch
 
-from fgsim.io.sel_loader import Batch
 from fgsim.ml.holder import Holder
 
 
@@ -13,7 +13,7 @@ class LossGen:
         x = pc[..., 1]
         y = pc[..., 2]
         z = pc[..., 3]
-        r = torch.sqrt(x ** 2 + y ** 2)
+        r = torch.sqrt(x**2 + y**2)
         # Penalty for negative Energies
         e_lt_zero = torch.sum(-energy * (energy < 0))
         # Penalty for super high values > 100keV

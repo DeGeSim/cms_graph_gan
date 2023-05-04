@@ -14,9 +14,9 @@ from pathlib import Path
 import torch
 from omegaconf import OmegaConf
 from omegaconf.dictconfig import DictConfig
+from torch_geometric.data import Batch
 
 from fgsim.config import conf
-from fgsim.io.sel_loader import Batch
 from fgsim.ml.loss import LossesCol
 from fgsim.ml.network import SubNetworkCollector
 from fgsim.ml.optim import OptimAndSchedulerCol

@@ -1,8 +1,8 @@
 from typing import Dict
 
 from scipy.stats import wasserstein_distance
+from torch_geometric.data import Batch
 
-from fgsim.io.sel_loader import Batch
 from fgsim.ml.holder import Holder
 
 

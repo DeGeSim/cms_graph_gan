@@ -1,9 +1,9 @@
 from typing import List
 
 import torch
+from torch_geometric.data import Batch
 
 from fgsim.config import conf, device
-from fgsim.io.sel_loader import Batch
 from fgsim.ml.holder import Holder
 
 
@@ -53,9 +53,9 @@ def MMD(x, y, bandwidth, kernel):
 
     for a in bandwidth:
         if kernel == "multiscale":
-            XX += a ** 2 * (a ** 2 + dxx) ** -1
-            YY += a ** 2 * (a ** 2 + dyy) ** -1
-            XY += a ** 2 * (a ** 2 + dxy) ** -1
+            XX += a**2 * (a**2 + dxx) ** -1
+            YY += a**2 * (a**2 + dyy) ** -1
+            XY += a**2 * (a**2 + dxy) ** -1
         elif kernel == "rbf":
             XX += torch.exp(-0.5 * dxx / a)
             YY += torch.exp(-0.5 * dyy / a)
