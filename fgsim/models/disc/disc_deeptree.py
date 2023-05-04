@@ -1,12 +1,12 @@
 # noqa: F401
 import torch
 from torch import Tensor, nn
-from torch_geometric.nn import global_add_pool, global_max_pool
+from torch_geometric.nn import global_add_pool
 
 from fgsim.config import conf
 from fgsim.models.common import FFN
 from fgsim.models.mpl.gatmin import GATv2MinConv
-from fgsim.models.pool.std_pool import global_mean_width_pool
+from fgsim.models.pool.std_pool import global_mad_pool
 
 
 class ModelClass(nn.Module):
@@ -72,9 +72,7 @@ class ModelClass(nn.Module):
 
             # aggregate latent space features
             if ilevel == 0:
-                for f in [global_add_pool, global_max_pool]:
-                    lat_aggr = f(x, batchidx)
-                    x_lat_list.append(lat_aggr)
+                x_lat_list.append(torch.hstack(global_mad_pool(x, batchidx)[1:]))
             else:
                 x_lat_list.append(x)
 
@@ -206,7 +204,7 @@ class CentralNodeUpdate(nn.Module):
             n_ftx_in, n_ftx_latent, **(ffn_param | {"norm": "spectral"})
         )
         self.global_nn = FFN(
-            n_ftx_latent * 2, n_global, **(ffn_param | {"norm": "spectral"})
+            1 + n_ftx_latent * 2, n_global, **(ffn_param | {"norm": "spectral"})
         )
         self.out_nn = FFN(
             n_ftx_latent + n_global,
@@ -217,13 +215,8 @@ class CentralNodeUpdate(nn.Module):
 
     def forward(self, x, batch=None):
         x = self.emb_nn(x)
-        if x.dim() == 2:
-            x_glob = torch.hstack(global_mean_width_pool(x, batch)[1:])
-        else:
-            x_sum = x.sum(1)
-            x_mean = x_sum.unsqueeze(1).repeat(1, x.shape[1], 1) / len(x)
-            x_width = (x - x_mean).abs().mean(1)
-            x_glob = torch.hstack([x_sum, x_width])
+
+        x_glob = torch.hstack(global_mad_pool(x, batch))
 
         x_global = self.global_nn(x_glob)
         if x.dim() == 2:
