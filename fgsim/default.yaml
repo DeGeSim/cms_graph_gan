@@ -436,8 +436,6 @@ dataset_options:
       branches: [2, 3, 5, 5]
       features: [64, 33, 20, 10, 3]
     validation:
-      validation_set_size: 50_000
-      test_set_size: 50_000
       interval: 3_000
       plot_interval: 9_000
       use_for_stopping: ["w1m", "w1p", "fpnd"]
@@ -452,6 +450,8 @@ dataset_options:
       jettype: "t"
       chunk_size: 5000
       batch_size: 5000
+      validation_set_size: 50_000
+      test_set_size: 50_000
   hgcal_graph:
     validation:
       use_for_stopping: ["w1E", "w1x", "w1y", "w1layer"]
