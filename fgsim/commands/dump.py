@@ -15,12 +15,12 @@ def dump_procedure():
 
     api = wandb.Api()
     for s in [conf.hash, f"{conf.hash}_train", f"{conf.hash}_test"]:
-        try:
-            run = api.run(f"{conf.project_name}/{exp_orga_wandb[s]}")
-            run.delete()
-        except Exception:
-            pass
         if s in exp_orga_wandb:
+            try:
+                run = api.run(f"{conf.project_name}/{exp_orga_wandb[s]}")
+                run.delete()
+            except Exception:
+                pass
             del exp_orga_wandb[s]
 
     # local

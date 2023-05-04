@@ -17,6 +17,9 @@ class ExperimentOrganizer:
             value = db[key]
         return value
 
+    def __contains__(self, k):
+        return k in self.keys()
+
     def __setitem__(self, key: str, value: str):
         with SqliteDict(
             self.fn, encode=json.dumps, decode=json.loads, autocommit=True
