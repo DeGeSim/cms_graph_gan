@@ -76,8 +76,7 @@ class ModelClass(nn.Module):
                     lat_aggr = f(x, batchidx)
                     x_lat_list.append(lat_aggr)
             else:
-                x_lat_list.append(x.sum(1))
-                x_lat_list.append(x.max(1).values)
+                x_lat_list.append(x)
 
             score_List.append(self.pcdiscs[ilevel](x, batchidx, condition).clone())
 
