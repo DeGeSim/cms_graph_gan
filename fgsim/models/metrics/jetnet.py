@@ -87,7 +87,7 @@ def kpd(
     score = jetnet.evaluation.gen_metrics.kpd(
         real_features=sim_efps, gen_features=gen_efps, num_threads=10
     )
-    return tuple(min(float(e) * 1e5, 1e5) for e in score)
+    return tuple(min(float(e) * 1e3, 1e5) for e in score)
 
 
 def fpd(
@@ -96,4 +96,4 @@ def fpd(
     score = jetnet.evaluation.gen_metrics.fpd(
         real_features=sim_efps, gen_features=gen_efps
     )
-    return tuple(min(float(e) * 1e5, 1e5) for e in score)
+    return tuple(min(float(e) * 1e3, 1e5) for e in score)
