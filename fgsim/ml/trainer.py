@@ -4,10 +4,8 @@ import torch
 from tqdm import tqdm
 
 from fgsim.config import conf, device
-from fgsim.io.pyg_ds import PyGLoader
-
-# from fgsim.io.queued_dataset import QueuedDataset
-# from fgsim.io.sel_loader import loader_info
+from fgsim.io.queued_dataset import QueuedDataset
+from fgsim.io.sel_loader import loader_info
 from fgsim.ml.early_stopping import early_stopping
 from fgsim.ml.holder import Holder
 from fgsim.ml.smoothing import smooth_features
@@ -20,8 +18,7 @@ class Trainer:
         self.holder = holder
         self.train_log: TrainLog = self.holder.train_log
 
-        self.loader = PyGLoader()
-        # self.loader: QueuedDataset = QueuedDataset(loader_info)
+        self.loader: QueuedDataset = QueuedDataset(loader_info)
         self.val_interval = (
             conf.training.val.debug_interval
             if conf.debug
@@ -138,12 +135,11 @@ class Trainer:
 
     def tqdmkw(self):
         kws = dict()
-        # kws["initial"] = (
-        #     self.holder.state.processed_events
-        #     // conf.loader.batch_size
-        #     % self.loader.n_grad_steps_per_epoch
-        # )
-        kws["initial"] = 0
+        kws["initial"] = (
+            self.holder.state.processed_events
+            // conf.loader.batch_size
+            % self.loader.n_grad_steps_per_epoch
+        )
         if conf.debug:
             kws["miniters"] = 5
             kws["mininterval"] = 1.0

@@ -15,10 +15,8 @@ from torch_scatter import scatter_mean
 from tqdm import tqdm
 
 from fgsim.config import conf, device
-
-# from fgsim.io.queued_dataset import QueuedDataset
-# from fgsim.io.sel_loader import loader_info, scaler
-from fgsim.io.pyg_ds import PyGLoader
+from fgsim.io.queued_dataset import QueuedDataset
+from fgsim.io.sel_loader import loader_info, scaler
 from fgsim.ml.holder import Holder
 from fgsim.monitoring import TrainLog, logger
 from fgsim.plot.validation_plots import validation_plots
@@ -113,8 +111,7 @@ def get_testing_datasets(holder: Holder, best_or_last) -> TestDataset:
         # reprocess
         logger.warning(f"Reprocessing {best_or_last} Dataset")
         # Make sure the batches are loaded
-        # qds: QueuedDataset = QueuedDataset(loader_info)
-        loader = PyGLoader()
+        loader = QueuedDataset(loader_info)
         # Sample at least 2k events
         # n_batches = int(conf.testing.n_events / batch_size)
         # assert n_batches <= len(loader.testing_batches)
@@ -146,7 +143,7 @@ def get_testing_datasets(holder: Holder, best_or_last) -> TestDataset:
         # aggregate the results over the batches
         for k in ["sim_batch", "gen_batch"]:
             batch = Batch.from_data_list(res_d_l[k])
-            batch.x = loader.scaler.inverse_transform(batch.x)
+            batch.x = scaler.inverse_transform(batch.x)
             res_d_l[k] = batch
         for k in ["sim_crit", "gen_crit"]:
             res_d_l[k] = torch.hstack(res_d_l[k])
