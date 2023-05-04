@@ -138,16 +138,17 @@ class Trainer:
 
     def tqdmkw(self):
         kws = dict()
-        kws["initial"] = (
-            self.holder.state.processed_events
-            // conf.loader.batch_size
-            % self.loader.n_grad_steps_per_epoch
-        )
+        # kws["initial"] = (
+        #     self.holder.state.processed_events
+        #     // conf.loader.batch_size
+        #     % self.loader.n_grad_steps_per_epoch
+        # )
+        kws["initial"] = 0
         if conf.debug:
             kws["miniters"] = 5
             kws["mininterval"] = 1.0
         elif self.holder.state.epoch < 10:
-            kws["miniters"] = 200
+            kws["miniters"] = 300
             kws["mininterval"] = 10.0
         else:
             kws["miniters"] = 1000
