@@ -64,7 +64,6 @@ def fpnd(gen_batch: Batch, **kwargs) -> float:
             jets=highptjets,
             jet_type=jet_type,
             use_tqdm=False,
-            num_batches=1 if conf.command == "train" else 5,
         )
         return min(float(score), 1e5)
     except ValueError:
