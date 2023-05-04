@@ -10,7 +10,7 @@ import wandb
 from fgsim.config import conf, device
 from fgsim.ml import Holder, Trainer
 from fgsim.monitoring import logger
-from fgsim.utils.senderror import send_error
+from fgsim.utils.senderror import send_error, send_exit
 
 
 def training_procedure() -> None:
@@ -18,13 +18,14 @@ def training_procedure() -> None:
     trainer = Trainer(holder)
     term_handler = SigTermHander(holder, trainer.loader.qfseq)
     # Regular run
-    if sys.gettrace() is not None:
+    if sys.gettrace() is not None or conf.debug:
         trainer.training_loop()
     # Debugger is running
     else:
         exitcode = 0
         try:
             trainer.training_loop()
+            send_exit()
         except Exception:
             exitcode = 1
             tb = traceback.format_exc()
