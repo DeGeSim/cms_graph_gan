@@ -1,10 +1,11 @@
 # noqa: F401
 import torch
 from torch import Tensor, nn
-from torch_geometric.nn import conv, global_add_pool, global_max_pool
+from torch_geometric.nn import global_add_pool, global_max_pool
 
 from fgsim.config import conf
 from fgsim.models.common import FFN
+from fgsim.models.mpl.gatmin import GATv2MinConv
 from fgsim.models.pool.std_pool import global_mean_width_pool
 
 
@@ -112,7 +113,7 @@ class BipartPool(nn.Module):
             torch.normal(0, 1, size=(self.ratio, self.in_channels))
         )
 
-        self.mpl = conv.GATv2Conv(
+        self.mpl = GATv2MinConv(
             in_channels=in_channels,
             out_channels=in_channels,
             heads=self.n_heads,
