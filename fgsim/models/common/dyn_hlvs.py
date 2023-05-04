@@ -1,3 +1,5 @@
+from statistics import harmonic_mean
+
 import torch
 import torch.nn as nn
 from torch_geometric.nn import global_add_pool
@@ -17,8 +19,9 @@ class DynHLVsLayer(nn.Module):
         if self.n_global == 0:
             return
 
-        self.pre_nn: nn.Module = FFN(self.n_features, self.n_features)
-        self.post_nn: nn.Module = FFN(self.n_features + n_cond, self.n_global)
+        n_intermediate = int(harmonic_mean((self.n_features, self.n_global)))
+        self.pre_nn: nn.Module = FFN(self.n_features, n_intermediate)
+        self.post_nn: nn.Module = FFN(n_intermediate + n_cond, self.n_global)
 
     def forward(
         self, x: torch.Tensor, cond: torch.Tensor, batch: torch.Tensor
