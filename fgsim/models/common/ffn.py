@@ -93,7 +93,13 @@ class FFN(nn.Module):
         self.reset_parameters()
 
     def forward(self, x):
-        return self.seq(x.clone())
+        oldshape = x.shape
+        if len(oldshape) == 3:
+            x = x.reshape(oldshape[0] * oldshape[1], oldshape[2])
+        x = self.seq(x.clone())
+        if len(oldshape) == 3:
+            x = x.reshape(oldshape[0], oldshape[1], self.output_dim)
+        return x
 
     def __repr__(self):
         return (
