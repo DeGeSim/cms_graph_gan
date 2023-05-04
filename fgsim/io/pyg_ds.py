@@ -154,13 +154,21 @@ class PyGScaler:
 class PyGLoader:
     def __init__(self) -> None:
         ds = PyGDS()
-        val_size = conf.loader.validation_set_size
-        test_size = conf.loader.test_set_size
-        train_size = len(ds) - val_size - test_size
+        self.use_train_for_val = True
+        if self.use_train_for_val:
+            test_size = conf.loader.test_set_size
+            train_size = len(ds) - test_size
 
-        self.ds_train = ds[:train_size]
-        self.ds_val = ds[train_size : train_size + val_size]
-        self.ds_test = ds[train_size + val_size :]
+            self.ds_train = ds[:train_size]
+            self.ds_test = ds[train_size:]
+        else:
+            val_size = conf.loader.validation_set_size
+            test_size = conf.loader.test_set_size
+            train_size = len(ds) - val_size - test_size
+
+            self.ds_train = ds[:train_size]
+            self.ds_val = ds[train_size : train_size + val_size]
+            self.ds_test = ds[train_size + val_size :]
 
         self.dl_train = DataLoader(
             self.ds_train,
@@ -195,11 +203,23 @@ class PyGLoader:
 
     @property
     def validation_batches(self):
-        return DataLoader(
-            self.ds_val,
-            batch_size=conf.loader.batch_size,
-            pin_memory=True,
-            persistent_workers=True,
-            prefetch_factor=100,
-            num_workers=5,
-        )
+        if self.use_train_for_val:
+            self.ds_train.shuffle()
+            return DataLoader(
+                self.ds_train[: conf.loader.validation_set_size],
+                batch_size=conf.loader.batch_size,
+                pin_memory=True,
+                persistent_workers=True,
+                prefetch_factor=100,
+                num_workers=5,
+            )
+
+        else:
+            return DataLoader(
+                self.ds_val,
+                batch_size=conf.loader.batch_size,
+                pin_memory=True,
+                persistent_workers=True,
+                prefetch_factor=100,
+                num_workers=5,
+            )
