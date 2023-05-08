@@ -450,6 +450,19 @@ dataset_options:
       jettype: "t"
       chunk_size: 5000
       batch_size: 5000
+  calochallange:
+    tree:
+      branches: [2, 3, 4, 5, 5, 10]
+      features: [64, 25, 15, 10, 8, 6, 4]
+    loader:
+      dataset_path: "~/fgsim/data/calochallange2"
+      dataset_glob: "**/dataset_2_*.hdf5"
+      n_points: 6000 # 2, 3, 2,5 , 2,5 , 10
+      x_features: ["E", "r", "alpha", "z"]
+      x_ftx_energy_pos: 0
+      y_features: ["E"]
+      chunk_size: 5000
+      batch_size: 50
   hgcal_graph:
     validation:
       use_for_stopping: ["w1E", "w1x", "w1y", "w1layer"]

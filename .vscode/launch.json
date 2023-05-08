@@ -19,7 +19,7 @@
         {
             "args": [
                 "--tag",
-                "ddt_t150_bl4",
+                "cc",
                 "--debug",
                 "train"
             ],
@@ -33,7 +33,7 @@
         {
             "args": [
                 "--tag",
-                "ddt_t150_bl4",
+                "cc",
                 "--debug",
                 "test"
             ],
@@ -47,7 +47,7 @@
         {
             "args": [
                 "--tag",
-                "pp_t_150",
+                "cc",
                 "--debug",
                 "preprocess"
             ],
@@ -75,7 +75,7 @@
             "type": "python",
             "args": [
                 "--tag",
-                "ddt_t150_bl4",
+                "cc",
                 "--debug",
                 "train"
             ],
@@ -88,7 +88,7 @@
             "type": "python",
             "args": [
                 "--tag",
-                "ddt_t150_bl4",
+                "cc",
                 // "--debug",
                 "setup"
             ],
