@@ -463,6 +463,12 @@ dataset_options:
       y_features: ["E", "num_particles"]
       chunk_size: 1000
       batch_size: 50
+    validation:
+      interval: 3_000
+      plot_interval: 9_000
+      use_for_stopping: []
+      metrics: []
+      debug_metrics: []
   hgcal_graph:
     validation:
       use_for_stopping: ["w1E", "w1x", "w1y", "w1layer"]

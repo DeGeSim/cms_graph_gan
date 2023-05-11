@@ -65,7 +65,7 @@ def contruct_graph_from_row(chk: Tuple[torch.Tensor, torch.Tensor]) -> Data:
     pc = torch.stack([h_energy, z, alpha, r]).T
     assert not pc.isnan().any()
     num_hits = torch.tensor(idxs[0].shape).float()
-    res = Data(x=pc, y=torch.concat([E, num_hits]))
+    res = Data(x=pc, y=torch.concat([E, num_hits]).reshape(1, 2))
     return res
 
 
