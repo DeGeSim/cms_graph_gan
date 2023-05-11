@@ -460,8 +460,8 @@ dataset_options:
       n_points: 6000 # 2, 3, 2,5 , 2,5 , 10
       x_features: ["E", "r", "alpha", "z"]
       x_ftx_energy_pos: 0
-      y_features: ["E"]
-      chunk_size: 5000
+      y_features: ["E", "num_particles"]
+      chunk_size: 1000
       batch_size: 50
   hgcal_graph:
     validation:

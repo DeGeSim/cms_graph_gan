@@ -3,17 +3,16 @@ from typing import List, Tuple
 
 import h5py
 import numpy as np
+import scipy
 import torch
 from sklearn.pipeline import make_pipeline
-from sklearn.preprocessing import (
-    FunctionTransformer,
-    MinMaxScaler,
-    PowerTransformer,
-)
+from sklearn.preprocessing import FunctionTransformer, PowerTransformer
 from torch_geometric.data import Data
 
 from fgsim.config import conf
 from fgsim.io import FileManager, ScalerBase
+
+from .idxscale import IdxToScale
 
 
 def path_to_len(fn: Path) -> int:
@@ -65,7 +64,8 @@ def contruct_graph_from_row(chk: Tuple[torch.Tensor, torch.Tensor]) -> Data:
 
     pc = torch.stack([h_energy, z, alpha, r]).T
     assert not pc.isnan().any()
-    res = Data(x=pc, y=E)
+    num_hits = torch.tensor(idxs[0].shape).float()
+    res = Data(x=pc, y=torch.concat([E, num_hits]))
     return res
 
 
@@ -81,7 +81,10 @@ def requant(x):
 def dequant_stdscale():
     return make_pipeline(
         FunctionTransformer(dequant, requant, check_inverse=True),
-        MinMaxScaler((-1, 1)),
+        IdxToScale((0, 1)),
+        FunctionTransformer(
+            scipy.special.logit, scipy.special.expit, check_inverse=True
+        ),
     )
 
 
