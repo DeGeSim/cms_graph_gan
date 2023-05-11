@@ -39,7 +39,7 @@ class ScalerBase:
 
         # The features need to be converted to numpy immediatly
         # otherwise the queuflow afterwards doesnt work
-        pcs = np.vstack([e.x.clone().numpy() for e in event_list])
+        pcs = np.vstack([e.x.clone().numpy() for e in event_list]).astype("float64")
         if hasattr(event_list[0], "mask"):
             mask = np.hstack([e.mask.clone().numpy() for e in event_list])
             pcs = pcs[mask]
@@ -62,7 +62,7 @@ class ScalerBase:
         assert pcs.shape[1] == conf.loader.n_features
         return np.hstack(
             [
-                transf.transform(arr.reshape(-1, 1))
+                transf.transform(arr.reshape(-1, 1).astype("float64"))
                 for arr, transf in zip(pcs.T, self.transfs)
             ]
         )
@@ -71,7 +71,13 @@ class ScalerBase:
         assert pcs.shape[-1] == conf.loader.n_features
         orgshape = pcs.shape
         dev = pcs.device
-        pcs = pcs.to("cpu").detach().reshape(-1, conf.loader.n_features).numpy()
+        pcs = (
+            pcs.to("cpu")
+            .detach()
+            .reshape(-1, conf.loader.n_features)
+            .numpy()
+            .astype("float64")
+        )
 
         t_stacked = np.hstack(
             [

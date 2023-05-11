@@ -3,6 +3,8 @@ import random
 from glob import glob
 from pathlib import Path
 
+import numpy as np
+from matplotlib import pyplot as plt
 from omegaconf import DictConfig, OmegaConf
 
 from fgsim.utils.cli import get_args
@@ -117,10 +119,15 @@ def parse_arg_conf(args=None):
 device = None
 
 
+np.set_printoptions(formatter={"float_kind": "{:.3g}".format})
+np.seterr(all="raise")
+plt.rcParams["savefig.bbox"] = "tight"
+# plt.rcParams["backend"] = "Agg"
+plt.rcParams["figure.dpi"] = 150
+
+
 def setup_ml():
-    import numpy as np
     import torch
-    from matplotlib import pyplot as plt
 
     torch.manual_seed(conf.seed)
     np.random.seed(conf.seed)
@@ -132,8 +139,3 @@ def setup_ml():
         device = torch.device("cuda:0")
     else:
         device = torch.device("cpu")
-
-    plt.rcParams["savefig.bbox"] = "tight"
-    # plt.rcParams["backend"] = "Agg"
-    plt.rcParams["figure.dpi"] = 150
-    np.set_printoptions(formatter={"float_kind": "{:.3g}".format})
