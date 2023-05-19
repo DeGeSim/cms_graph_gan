@@ -69,14 +69,13 @@ class ModelClass(nn.Module):
             # aggregate latent space features
             assert not x.isnan().any()
 
-            score, lat, xmad = self.pcdiscs[ilevel](x.clone(), batchidx, condition)
-            score_List.append(score)
-
             # aggregate latent space features
             if ilevel == 0:
-                x_lat_list.append(torch.hstack(xmad[1:]))
+                x_lat_list.append(torch.hstack(global_mad_pool(x, batchidx)[1:]))
             else:
-                x_lat_list.append(lat)
+                x_lat_list.append(x)
+
+            score_List.append(self.pcdiscs[ilevel](x, batchidx, condition).clone())
 
             if ilevel == self.n_levels:
                 break
@@ -187,9 +186,9 @@ class TSumTDisc(nn.Module):
     def forward(self, x, batch, condition):
         for layer in self.disc_emb:
             x = x.clone() + layer(x.clone(), batch)
-        xmad = global_mad_pool(x.clone(), batch)
-        score = self.disc(torch.hstack([*xmad, condition]))
-        return score, x.clone(), [e.clone() for e in xmad]
+        x = global_mad_pool(x.clone(), batch)
+        x = self.disc(torch.hstack([*x, condition]))
+        return x
 
 
 class CentralNodeUpdate(nn.Module):
