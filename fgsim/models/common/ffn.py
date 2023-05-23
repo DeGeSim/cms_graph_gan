@@ -3,6 +3,7 @@ from typing import List, Optional
 from torch import nn
 
 from fgsim.config import conf
+from fgsim.models.common.benno import WeightNormalizedLinear
 
 
 class FFN(nn.Module):
@@ -56,11 +57,17 @@ class FFN(nn.Module):
 
         self.seq = nn.Sequential()
         for ilayer in range(n_layers):
-            m = nn.Linear(features[ilayer], features[ilayer + 1], bias=bias)
-            if norm == "spectral":
-                m = nn.utils.parametrizations.spectral_norm(m)
-            elif norm == "weight":
-                m = nn.utils.weight_norm(m)
+            if norm == "bwn":
+                m = WeightNormalizedLinear(
+                    features[ilayer], features[ilayer + 1], bias=bias
+                )
+            else:
+                m = nn.Linear(features[ilayer], features[ilayer + 1], bias=bias)
+                if norm == "spectral":
+                    m = nn.utils.parametrizations.spectral_norm(m)
+                elif norm == "weight":
+                    m = nn.utils.weight_norm(m)
+
             self.seq.append(m)
             if ilayer == n_layers - 1 and final_linear:
                 continue
@@ -77,7 +84,7 @@ class FFN(nn.Module):
                     )
                 elif norm == "layernorm":
                     self.seq.append(nn.LayerNorm(features[ilayer + 1]))
-                elif norm in ("none", "spectral", "weight"):
+                elif norm in ("none", "spectral", "weight", "bwn"):
                     pass
                 else:
                     raise Exception
