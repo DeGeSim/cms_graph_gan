@@ -19,7 +19,7 @@ class ModelClass(nn.Module):
     def forward(self, batch, cond):
         x = to_stacked_mask(batch)
         x, x_cls = self.net(
-            x[..., :3], mask=(1 - x[..., 3]).bool(), cond=cond[:, [-1]]
+            x[..., :-1], mask=(1 - x[..., -1]).bool(), cond=cond[:, [-1]]
         )
         assert not torch.isnan(x).any()
         assert not torch.isnan(x_cls).any()
