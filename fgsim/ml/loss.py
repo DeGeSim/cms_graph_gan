@@ -55,6 +55,8 @@ class SubNetworkLoss:
         losses_dict: Dict[str, Optional[torch.Tensor]] = {}
         for lossname, loss in self.parts.items():
             loss_value = loss(holder=holder, **res)
+            if loss_value.isnan():
+                raise RuntimeError("Loss contains Nan")
             if loss_value is not None:
                 losses_dict[lossname] = loss_value * self.pconf[lossname]["factor"]
 
