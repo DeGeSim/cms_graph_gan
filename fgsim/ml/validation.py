@@ -17,6 +17,7 @@ def validate(holder: Holder, loader: QueuedDataset) -> None:
     check_chain_for_nans((holder.models,))
 
     # generate the batches
+    logger.debug("Val: Running Generator and Critic")
     res_d_l = {
         "sim_batch": [],
         "gen_batch": [],
@@ -60,9 +61,11 @@ def validate(holder: Holder, loader: QueuedDataset) -> None:
     #         step=holder.state.grad_step,
     #     )
 
+    logger.debug("Start scaling")
     # scale all the samples
     for batch in results_d["sim_batch"], results_d["gen_batch"]:
         batch.x = scaler.inverse_transform(batch.x)
+    logger.debug("End scaling")
 
     if not conf.debug:
         if holder.state.grad_step % conf.training.val.plot_interval == 0:
@@ -79,6 +82,12 @@ def validate(holder: Holder, loader: QueuedDataset) -> None:
 
         results_d["sim_efps"] = to_efp(results_d["sim_batch"])
         results_d["gen_efps"] = to_efp(results_d["gen_batch"])
+
+    if conf.dataset_name == "calochallange":
+        from fgsim.loaders.calochallange.convcoord import batch_to_Exyz
+
+        results_d["sim_batch"] = batch_to_Exyz(results_d["sim_batch"])
+        results_d["gen_batch"] = batch_to_Exyz(results_d["gen_batch"])
 
     # evaluate the validation metrics
     with torch.no_grad():

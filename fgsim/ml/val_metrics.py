@@ -51,7 +51,7 @@ class ValidationMetrics:
                     # If the loss is processed for each hlv
                     # the return type is Dict[str,float]
                     for var, lossval in comp_metrics.items():
-                        mval[var] = float(lossval)
+                        mval[f"{metric_name}_{var}"] = float(lossval)
                 else:
                     mval[metric_name] = comp_metrics
                 # print(
@@ -62,8 +62,8 @@ class ValidationMetrics:
 
     def log_metrics(self, n_grad_steps_per_epoch) -> None:
         """
-        The function takes the validation metrics and computes the fraction of times that the value of
-        this metric is smaller then the other runs
+        The function takes the validation metrics and computes the fraction
+        of times that the value of this metric is smaller then the other runs
 
         @param n_grad_steps_per_epoch The number of gradient steps per epoch.
         """
@@ -118,7 +118,7 @@ class ValidationMetrics:
 
 def import_metric(metric_name: str, params: DictConfig) -> Callable:
     try:
-        metrics = importlib.import_module(f"fgsim.models.metrics")
+        metrics = importlib.import_module("fgsim.models.metrics")
         fct = getattr(metrics, metric_name)
         return fct
     except AttributeError:

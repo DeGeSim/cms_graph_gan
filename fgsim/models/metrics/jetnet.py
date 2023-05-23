@@ -6,8 +6,6 @@ from torch_geometric.data import Batch
 from fgsim.config import conf
 from fgsim.utils.jetnetutils import to_stacked_mask
 
-jet_type = conf.loader.jettype
-
 
 def w1m(gen_batch: Batch, sim_batch: Batch, **kwargs) -> tuple[float, float]:
     score = jetnet.evaluation.gen_metrics.w1m(
@@ -62,7 +60,7 @@ def fpnd(gen_batch: Batch, **kwargs) -> float:
     try:
         score = jetnet.evaluation.gen_metrics.fpnd(
             jets=highptjets,
-            jet_type=jet_type,
+            jet_type=conf.loader.jettype,
             use_tqdm=False,
         )
         return min(float(score), 1e5)
