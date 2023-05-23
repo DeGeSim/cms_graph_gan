@@ -466,9 +466,9 @@ dataset_options:
     validation:
       interval: 3_000
       plot_interval: 9_000
-      use_for_stopping: ["w1z", "cdfdist", "w1fpc", "w1cr"]
-      metrics: ["w1z", "cdfdist", "w1fpc", "w1cr"]
-      debug_metrics: ["w1z"]
+      use_for_stopping: ["w1mar", "w1z", "cdfdist", "w1fpc", "w1cr"]
+      metrics: ["w1mar", "w1z", "cdfdist", "w1fpc", "w1cr"]
+      debug_metrics: ["w1mar"]
   hgcal_graph:
     validation:
       use_for_stopping: ["w1E", "w1x", "w1y", "w1layer"]

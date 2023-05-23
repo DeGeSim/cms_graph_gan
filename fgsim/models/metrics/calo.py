@@ -189,3 +189,11 @@ def w1z(gen_batch: Batch, sim_batch: Batch, **kwargs) -> dict[str, float]:
 
     w1s = {k: scaled_w1(sim_psr[k], gen_psr[k]) for k in sim_psr}
     return w1s
+
+
+def w1mar(gen_batch: Batch, sim_batch: Batch, **kwargs) -> dict[str, float]:
+    w1s = {
+        k: scaled_w1(s, g)
+        for s, g, k in zip(sim_batch.x.T, gen_batch.x.T, conf.loader.x_features)
+    }
+    return w1s
