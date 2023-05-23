@@ -91,9 +91,16 @@ class ValidationMetrics:
         # compute the stop_metric
         history = self.train_log.history
         val_metrics = history["val"]
+        # check which of the metrics should be used for the early stopping
+        # If a metric returns a dict, use all
+        val_metrics_names = [
+            k
+            for k in val_metrics.keys()
+            if any([k.startswith(mn) for mn in conf.training.val.use_for_stopping])
+        ]
         # collect all metrics for all validation runs in a 2d array
         loss_history = np.stack(
-            [val_metrics[metric] for metric in conf.training.val.use_for_stopping]
+            [val_metrics[metric] for metric in val_metrics_names]
         )
         # for a given metric and validation run,
         # count the fraction of times that the value of this metric
