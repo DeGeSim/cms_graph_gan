@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Dict, Union
+from typing import Union
 
 import numpy as np
 import torch
@@ -15,11 +15,10 @@ class TrainLog:
     """Initialized with the `holder`, provides the logging with wandb/tensorboard.
     """
 
-    def __init__(self, state, history):
+    def __init__(self, state):
         # This code block is formatting the hyperparameters
         # for the experiment and creating a list of tags.
         self.state: DictConfig = state
-        self.history: Dict = history
         self.use_tb = not conf.debug or conf.command == "test"
 
         self.use_wandb = not conf.debug or conf.command == "test"

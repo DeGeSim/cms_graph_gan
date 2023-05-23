@@ -19,11 +19,12 @@ class ValidationMetrics:
     and a score is calculated.
     """
 
-    def __init__(self, train_log: TrainLog) -> None:
+    def __init__(self, train_log: TrainLog, history) -> None:
         self.train_log = train_log
         self.parts: Dict[str, Callable] = {}
         self._lastlosses: Dict[str, List[float]] = {}
         self.metric_aggr = MetricAggregator()
+        self.history = history
 
         metrics = (
             conf.training.val.debug_metrics
@@ -76,7 +77,7 @@ class ValidationMetrics:
 
         logstr = "Validation:"
         for metric_name, metric_val in up_metrics_d.items():
-            val_metric_hist = self.train_log.history["val"][metric_name]
+            val_metric_hist = self.history["val"][metric_name]
             val_metric_hist.append(metric_val)
 
             logstr += f" {metric_name} {val_metric_hist[-1]:.2f} "
@@ -89,13 +90,12 @@ class ValidationMetrics:
             return
 
         # compute the stop_metric
-        history = self.train_log.history
-        val_metrics = history["val"]
+        val_metrics = self.history["val"]
         # check which of the metrics should be used for the early stopping
         # If a metric returns a dict, use all
         val_metrics_names = [
             k
-            for k in val_metrics.keys()
+            for k in up_metrics_d.keys()
             if any([k.startswith(mn) for mn in conf.training.val.use_for_stopping])
         ]
         # collect all metrics for all validation runs in a 2d array
@@ -109,7 +109,7 @@ class ValidationMetrics:
             lambda row: np.array([np.mean(row >= e) for e in row]), 1, loss_history
         ).mean(0)
         score = [float(val) for val in score]
-        history["score"] = list(score)
+        self.history["score"] = list(score)
         # overwrite the recorded score for each
         for ivalstep in range(len(score)):
             self.train_log.log_metrics(

@@ -30,7 +30,6 @@ class SubNetworkLoss:
         self.train_log = train_log
         self.parts: Dict[str, LossFunction] = {}
         self.metric_aggr = MetricAggregator()
-        # (train_log.history["losses"][self.name])
 
         for lossname, lossconf in pconf.items():
             assert lossname != "parts"

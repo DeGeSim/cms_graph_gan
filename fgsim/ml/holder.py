@@ -1,6 +1,6 @@
 """This modules manages all objects that need to be available for the training:
-Subnetworks, losses and optimizers. The Subnetworks and losses are dynamically imported,
-depending on the config. Contains the code for checkpointing of model
+Subnetworks, losses and optimizers. The Subnetworks and losses are dynamically
+imported, depending on the config. Contains the code for checkpointing of model
 and optimzer status."""
 
 
@@ -49,7 +49,7 @@ class Holder:
             "losses": {snwname: defaultdict(list) for snwname in conf.models},
             "val": defaultdict(list),
         }
-        self.train_log = TrainLog(self.state, self.history)
+        self.train_log = TrainLog(self.state)
 
         self.models: SubNetworkCollector = SubNetworkCollector(conf.models)
         # For SWA the models need to be on the right device before initializing
@@ -96,7 +96,9 @@ class Holder:
         #     # torcheck.add_module_nan_check(model, module_name=partname)
 
         self.losses: LossesCol = LossesCol(self.train_log)
-        self.val_metrics: ValidationMetrics = ValidationMetrics(self.train_log)
+        self.val_metrics: ValidationMetrics = ValidationMetrics(
+            self.train_log, self.history
+        )
 
         self.to(self.device)
 
