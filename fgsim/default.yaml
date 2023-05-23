@@ -187,6 +187,13 @@ model_param_options:
     num_layers: 4
     heads: 4
     mean_field: True
+  disc_benno_cc:
+    n_dim: ${loader.n_features}
+    l_dim: 16
+    hidden: 32
+    num_layers: 2
+    heads: 2
+    dropout: 0.1
   disc_deeptree:
     nodes: [30, 6, 1]
     features: [3, 3, 20, 40]
