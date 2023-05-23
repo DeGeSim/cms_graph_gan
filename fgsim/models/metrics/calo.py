@@ -52,8 +52,8 @@ def w1cr(gen_batch: Batch, sim_batch: Batch, **kwargs) -> dict[float]:
 
 def fpc_from_batch(batch: Batch) -> torch.Tensor:
     """Get the first principal component from a PC"""
-    batchidx = batch.batch
-    xyz = batch.xyz
+    batchidx = batch.batch.detach().cpu()
+    xyz = batch.xyz.detach().cpu()
     means = global_mean_pool(xyz, batchidx)
     stds = global_std_pool(xyz, batchidx)
     deltas = (xyz - means[batchidx]) / stds[batchidx]
