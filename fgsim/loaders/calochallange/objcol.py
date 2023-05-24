@@ -6,7 +6,11 @@ import numpy as np
 import scipy
 import torch
 from sklearn.pipeline import make_pipeline
-from sklearn.preprocessing import FunctionTransformer, PowerTransformer
+from sklearn.preprocessing import (
+    FunctionTransformer,
+    PowerTransformer,
+    StandardScaler,
+)
 from torch_geometric.data import Data
 
 from fgsim.config import conf
@@ -85,6 +89,7 @@ def dequant_stdscale():
         FunctionTransformer(
             scipy.special.logit, scipy.special.expit, check_inverse=True
         ),
+        StandardScaler(),
     )
 
 
