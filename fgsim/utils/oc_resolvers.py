@@ -22,6 +22,10 @@ def merge(*configs):
     return OmegaConf.merge(*configs)
 
 
+def oc_sum(*configs):
+    return sum(*configs)
+
+
 def mergedefault(config: DictConfig, sel: str, key: str) -> DictConfig:
     assert "default" in config
     assert key in config["default"]
@@ -41,6 +45,7 @@ def listadd(*configs):
 def register_resolvers():
     OmegaConf.register_new_resolver("div", divide, replace=True)
     OmegaConf.register_new_resolver("prod", prod, replace=True)
+    OmegaConf.register_new_resolver("sum", oc_sum, replace=True)
     OmegaConf.register_new_resolver("optionlist", optionlist, replace=True)
     OmegaConf.register_new_resolver("mergedefault", mergedefault, replace=True)
     OmegaConf.register_new_resolver("merge", merge, replace=True)

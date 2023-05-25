@@ -256,7 +256,9 @@ class Holder:
             )
         else:
             cond = sim_batch.y[..., conf.loader.cond_features]
-        assert (cond[:, -1] == (sim_batch.ptr[1:] - sim_batch.ptr[:-1])).all()
+        assert (
+            sim_batch.n_pointsv == (sim_batch.ptr[1:] - sim_batch.ptr[:-1])
+        ).all()
 
         with with_grad(train_gen):
             gen_batch = gen(z, cond, sim_batch.n_pointsv)

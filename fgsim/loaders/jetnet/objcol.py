@@ -90,7 +90,7 @@ scaler = ScalerBase(
 
 
 def norm_pt_sum(pts, batchidx):
-    pt_scaler = scaler.transfs[2]
+    pt_scaler = scaler.transfs_x[2]
 
     assert pt_scaler.method == "box-cox"
     assert pt_scaler.standardize

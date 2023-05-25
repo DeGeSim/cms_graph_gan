@@ -279,7 +279,7 @@ class ModelClass(nn.Module):
         return batch
 
     def construct_batch(self, graph_tree: TreeGraph, n_pointsv: torch.Tensor):
-        device = graph_tree.device
+        device = graph_tree.tftx.device
         batch_size = self.batch_size
         n_features = self.features[-1]
         if self.presaved_batch is None:

@@ -130,7 +130,7 @@ model_param_options:
   gen_deeptree:
     dim_red_in_branching: True
     n_global: 10
-    n_cond: 1 # ${len:${loader.y_features}}
+    n_cond: ${sum:${loader.cond_features}}
     pruning: "cut"
     equivar: False
     branching_param:
@@ -198,7 +198,7 @@ model_param_options:
   disc_deeptree:
     nodes: [6, 1]
     features: [3, 20, 40]
-    n_cond: ${len:${loader.y_features}}
+    n_cond: ${sum:${loader.cond_features}}
     ffn_param:
       bias: False
       n_layers: 2
@@ -221,7 +221,7 @@ model_param_options:
   disc_gat:
     n_features: ${loader[n_features]}
     n_points: ${loader[n_points]}
-    n_cond: ${len:${loader.y_features}}
+    n_cond: ${sum:${loader.cond_features}}
   disc_clic:
     n_features: ${loader[n_features]}
     n_prop: 20
