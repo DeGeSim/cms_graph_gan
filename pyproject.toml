@@ -60,7 +60,7 @@ warn_unused_configs = true
 warn_unused_ignores = true
 
 [tool.ruff]
-line-length = 84
+line-length = 85
 exclude = [
     "fgsim/old/*",
     ".tox",

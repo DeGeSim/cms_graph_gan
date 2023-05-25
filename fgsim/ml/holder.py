@@ -250,16 +250,16 @@ class Holder:
             dtype=torch.float,
             device=self.device,
         )
-        if len(conf.loader.y_features) == 0:
+        if sum(conf.loader.cond_features) == 0:
             cond = torch.empty(
                 (conf.loader.batch_size, 0), dtype=torch.float, device=self.device
             )
         else:
-            cond = sim_batch.y
+            cond = sim_batch.y[..., conf.loader.cond_features]
         assert (cond[:, -1] == (sim_batch.ptr[1:] - sim_batch.ptr[:-1])).all()
 
         with with_grad(train_gen):
-            gen_batch = gen(z, cond)
+            gen_batch = gen(z, cond, sim_batch.n_pointsv)
             # make sure the number of points is the same
             assert (gen_batch.ptr == sim_batch.ptr).all()
             # assert (gen_batch.batch == sim_batch.batch).all()

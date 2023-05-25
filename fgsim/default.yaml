@@ -104,6 +104,7 @@ ffn:
       negative_slope: 0.1
     ReLU: {}
     SELU: {}
+    GELU: {}
     Tanh: {}
   weight_init_method: default
   norm: batchnorm
@@ -454,6 +455,7 @@ dataset_options:
       x_features: ["etarel", "phirel", "ptrel"]
       x_ftx_energy_pos: 2
       y_features: ["type", "pt", "eta", "mass", "num_particles"]
+      cond_features: [False, False, False, False, True]
       jettype: "t"
       chunk_size: 5000
       batch_size: 200

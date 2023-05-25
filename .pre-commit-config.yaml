@@ -10,6 +10,14 @@ repos:
       - id: check-added-large-files
       - id: check-merge-conflict
       - id: check-merge-conflict
+  - repo: https://github.com/PyCQA/isort
+    rev: 5.12.0
+    hooks:
+      - id: isort
+  - repo: https://github.com/psf/black
+    rev: 22.6.0
+    hooks:
+      - id: black
   - repo: https://github.com/charliermarsh/ruff-pre-commit
     # Ruff version.
     rev: "v0.0.260"
@@ -20,10 +28,6 @@ repos:
     rev: v1.0.0
     hooks:
       - id: check-json5
-  - repo: https://github.com/PyCQA/isort
-    rev: 5.12.0
-    hooks:
-      - id: isort
   # - repo: https://github.com/pycqa/flake8
   #   rev: 3.9.2
   #   hooks:
@@ -31,10 +35,6 @@ repos:
   #       entry: pflake8
   #       additional_dependencies: [pyproject-flake8]
   #       args: ["--extend-ignore", "E501"]
-  - repo: https://github.com/psf/black
-    rev: 22.6.0
-    hooks:
-      - id: black
 
 exclude: \..*
   _build

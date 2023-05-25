@@ -43,7 +43,6 @@ class ModelClass(nn.Module):
         self.features: list[int] = list(OmegaConf.to_container(conf.tree.features))
         self.branches: list[int] = list(OmegaConf.to_container(conf.tree.branches))
         n_levels = len(self.features)
-        self.num_part_idx = conf.loader.y_features.index("num_particles")
 
         # Shape of the random vector
         self.z_shape = conf.loader.batch_size, 1, self.features[0]
@@ -159,7 +158,9 @@ class ModelClass(nn.Module):
             **conv_param,
         )
 
-    def forward(self, random_vector: torch.Tensor, cond: torch.Tensor) -> Batch:
+    def forward(
+        self, random_vector: torch.Tensor, cond: torch.Tensor, n_pointsv
+    ) -> Batch:
         batch_size = self.batch_size
         features = self.features
         device = random_vector.device
@@ -173,8 +174,6 @@ class ModelClass(nn.Module):
             ),
             tree=self.tree,
         )
-        num_vec = cond[..., self.num_part_idx].int().reshape(-1)
-        cond = cond[..., [self.num_part_idx]]
 
         # Assign the index vectors for the root node tree
         batchidx = self.tree.tbatch_by_level[0]
@@ -272,15 +271,15 @@ class ModelClass(nn.Module):
                 # )
             assert not torch.isnan(graph_tree.tftx).any()
 
-        batch = self.construct_batch(graph_tree, num_vec)
+        batch = self.construct_batch(graph_tree, n_pointsv)
 
         if self.final_layer_scaler:
             batch.x = self.ftx_scaling(batch.x)
 
         return batch
 
-    def construct_batch(self, graph_tree: TreeGraph, num_vec: torch.Tensor):
-        device = num_vec.device
+    def construct_batch(self, graph_tree: TreeGraph, n_pointsv: torch.Tensor):
+        device = graph_tree.device
         batch_size = self.batch_size
         n_features = self.features[-1]
         if self.presaved_batch is None:
@@ -296,7 +295,7 @@ class ModelClass(nn.Module):
             0, 1
         )
 
-        sel_point_idx = self.get_sel_idxs(x, num_vec)
+        sel_point_idx = self.get_sel_idxs(x, n_pointsv)
 
         batch.x, batch.xnot = batch.x[sel_point_idx], batch.x[~sel_point_idx]
         batch.batch, batch.batchnot = (
@@ -306,18 +305,18 @@ class ModelClass(nn.Module):
 
         # Set the slice_dict to allow splitting the batch again
         batch._slice_dict["x"] = torch.concat(
-            [torch.zeros(1, device=device), num_vec.cumsum(0)]
+            [torch.zeros(1, device=device), n_pointsv.cumsum(0)]
         )
         batch._slice_dict["xnot"] = torch.concat(
             [
                 torch.zeros(1, device=device),
-                (self.output_points - num_vec).cumsum(0),
+                (self.output_points - n_pointsv).cumsum(0),
             ]
         )
         batch._inc_dict["x"] = torch.zeros(self.batch_size, device=device)
         batch._inc_dict["xnot"] = torch.zeros(self.batch_size, device=device)
         batch.ptr = torch.hstack(
-            [torch.zeros(1, device=device, dtype=torch.long), num_vec.cumsum(0)]
+            [torch.zeros(1, device=device, dtype=torch.long), n_pointsv.cumsum(0)]
         )
         batch.num_nodes = len(batch.x)
 
@@ -330,17 +329,17 @@ class ModelClass(nn.Module):
 
         return batch
 
-    def get_sel_idxs(self, x: torch.Tensor, num_vec: torch.Tensor):
+    def get_sel_idxs(self, x: torch.Tensor, n_pointsv: torch.Tensor):
         device = x.device
         gidx = torch.zeros(
             self.output_points * self.batch_size, device=device
         ).bool()
 
         if self.pruning == "cut":
-            return get_cut_idxs(gidx, num_vec, self.output_points)
+            return get_cut_idxs(gidx, n_pointsv, self.output_points)
         elif self.pruning == "topk":
             shift = 0
-            for xe, ne in zip(x, num_vec):
+            for xe, ne in zip(x, n_pointsv):
                 idxs = (
                     xe[..., conf.loader.x_ftx_energy_pos]
                     .topk(k=int(ne), dim=0, largest=True, sorted=False)
@@ -359,9 +358,9 @@ class ModelClass(nn.Module):
 
 
 @torch.jit.script
-def get_cut_idxs(gidx: torch.Tensor, num_vec: torch.Tensor, output_points: int):
+def get_cut_idxs(gidx: torch.Tensor, n_pointsv: torch.Tensor, output_points: int):
     shift = 0
-    for ne in num_vec:
+    for ne in n_pointsv:
         gidx[shift : shift + ne] = True
         shift += output_points
     return gidx

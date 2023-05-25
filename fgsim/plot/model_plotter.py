@@ -2,14 +2,13 @@ from itertools import combinations
 
 import torch
 
-from fgsim.config import conf
 from fgsim.plot.binborders import binborders_wo_outliers, chip_to_binborders
 
 
 class ModelPlotter:
     def __init__(self) -> None:
         self.arrlist = []
-        self.n_features = conf.loader.n_features
+        self.n_features = 3  # conf.loader.n_features
         self.combinations = list(combinations(list(range(self.n_features)), 2))
         self.active: bool = False
 
@@ -23,7 +22,7 @@ class ModelPlotter:
     def plot_model_outputs(self):
         if not self.active:
             raise Exception
-        self.arrlist = self.arrlist[: (len(self.arrlist) // 2)]
+        # self.arrlist = self.arrlist[: (len(self.arrlist) // 2)]
         from matplotlib import pyplot as plt
 
         plt.cla()
@@ -40,8 +39,10 @@ class ModelPlotter:
                 x = arr[:, self.combinations[icomb][0]]
                 y = arr[:, self.combinations[icomb][1]]
 
-                x_name = conf.loader.x_features[self.combinations[icomb][0]]
-                y_name = conf.loader.x_features[self.combinations[icomb][1]]
+                # x_name = conf.loader.x_features[self.combinations[icomb][0]]
+                # y_name = conf.loader.x_features[self.combinations[icomb][1]]
+                x_name = f"feature # {self.combinations[icomb][0]}"
+                y_name = f"feature # {self.combinations[icomb][1]}"
 
                 xedges = binborders_wo_outliers(x)
                 yedges = binborders_wo_outliers(y)

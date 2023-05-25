@@ -1,7 +1,6 @@
 from typing import List, Union
 
 import queueflow as qf
-import torch
 from torch.multiprocessing import Queue, Value
 from torch_geometric.data import Batch, Data
 
@@ -41,7 +40,13 @@ def process_seq() -> List[Union[qf.StepBase, Queue]]:
 
 def transform_and_scale(pc) -> Data:
     graph = contruct_graph_from_row(pc)
-    graph.x = torch.from_numpy(scaler.transform(graph.x.numpy())).float()
+    graph.n_pointsv = (
+        graph.y[..., conf.loader.y_features.index("num_particles")]
+        .int()
+        .reshape(-1)
+    )
+    graph.x = scaler.transform(graph.x, "x")
+    graph.y = scaler.transform(graph.y, "y")
     return graph
 
 

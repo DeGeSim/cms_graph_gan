@@ -3,12 +3,13 @@ from typing import List, Tuple
 
 import torch
 from jetnet.datasets import JetNet
-from sklearn.preprocessing import PowerTransformer, StandardScaler
+from sklearn.preprocessing import MinMaxScaler, PowerTransformer, StandardScaler
 from torch_geometric.data import Data
 from torch_scatter import scatter_add
 
 from fgsim.config import conf
 from fgsim.io import FileManager, ScalerBase
+from fgsim.io.dequantscaler import dequant_stdscale
 
 jn_dict = {}
 
@@ -71,10 +72,17 @@ def contruct_graph_from_row(chk: Tuple[torch.Tensor, torch.Tensor]) -> Data:
 scaler = ScalerBase(
     files=file_manager.files,
     len_dict=file_manager.file_len_dict,
-    transfs=[
+    transfs_x=[
         StandardScaler(),
         StandardScaler(),
         PowerTransformer(method="box-cox", standardize=True),
+    ],
+    transfs_y=[
+        MinMaxScaler((-1, 1)),  # type
+        StandardScaler(),  # pt
+        StandardScaler(),  # eta
+        StandardScaler(),  # mass
+        dequant_stdscale(),  # num_particles
     ],
     read_chunk=read_chunks,
     transform_wo_scaling=contruct_graph_from_row,

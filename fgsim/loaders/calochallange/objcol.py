@@ -2,21 +2,13 @@ from pathlib import Path
 from typing import List, Tuple
 
 import h5py
-import numpy as np
-import scipy
 import torch
-from sklearn.pipeline import make_pipeline
-from sklearn.preprocessing import (
-    FunctionTransformer,
-    PowerTransformer,
-    StandardScaler,
-)
+from sklearn.preprocessing import PowerTransformer
 from torch_geometric.data import Data
 
 from fgsim.config import conf
 from fgsim.io import FileManager, ScalerBase
-
-from .idxscale import IdxToScale
+from fgsim.io.dequantscaler import dequant_stdscale
 
 
 def path_to_len(fn: Path) -> int:
@@ -71,26 +63,6 @@ def contruct_graph_from_row(chk: Tuple[torch.Tensor, torch.Tensor]) -> Data:
     num_hits = torch.tensor(idxs[0].shape).float()
     res = Data(x=pc, y=torch.concat([E, num_hits]).reshape(1, 2))
     return res
-
-
-def dequant(x):
-    noise = np.random.rand(*x.shape)
-    return x + noise
-
-
-def requant(x):
-    return np.floor(x)
-
-
-def dequant_stdscale():
-    return make_pipeline(
-        FunctionTransformer(dequant, requant, check_inverse=True),
-        IdxToScale((0, 1)),
-        FunctionTransformer(
-            scipy.special.logit, scipy.special.expit, check_inverse=True
-        ),
-        StandardScaler(),
-    )
 
 
 scaler = ScalerBase(
