@@ -111,7 +111,7 @@ class FFN(nn.Module):
     def __repr__(self):
         return (
             f"FFN({self.input_dim}->{self.output_dim},n_layers={self.n_layers},"
-            "hidden_nodes={self.hidden_layer_size},activation={self.activation})"
+            f"hidden_nodes={self.hidden_layer_size},activation={self.activation})"
         )
 
     def reset_parameters(self):

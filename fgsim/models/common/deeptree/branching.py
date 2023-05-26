@@ -5,6 +5,7 @@ import torch.nn as nn
 
 from fgsim.config import conf
 from fgsim.models.common import FFN
+from fgsim.utils import check_tensor
 
 from .graph_tree import TreeGraph
 from .tree import Tree
@@ -93,7 +94,8 @@ if not conf.models.gen.params.equivar:
                     final_linear=self.final_linear or lastlayer,
                 )
 
-        # Split each of the leafs in the the graph.tree into n_branches and connect them
+        # Split each of the leafs in the the graph.tree
+        # into n_branches and connect them
         def forward(self, graph: TreeGraph, cond) -> TreeGraph:
             batch_size = self.batch_size
             n_branches = self.n_branches
@@ -121,6 +123,7 @@ if not conf.models.gen.params.equivar:
             proj_ftx = self.proj_nn(
                 torch.hstack([parents_ftxs, cond_global, parent_global])
             )
+            check_tensor(proj_ftx)
             foo("br proj_ftx", proj_ftx)
             assert parents_ftxs.shape[-1] == self.n_features_source
             assert proj_ftx.shape[-1] == self.n_features_source * self.n_branches
@@ -144,13 +147,14 @@ if not conf.models.gen.params.equivar:
             )
             # assert (
             #     children_ftxs[batch_size]
-            #     == proj_ftx[0, self.n_features_source : (self.n_features_source * 2)]
+            #     == proj_ftx[0, self.n_features_source
+            # : (self.n_features_source * 2)]
             # ).all()
             del proj_ftx
 
             foo("br children_ftxs pre skip", children_ftxs)
-            # If this branching layer reduces the dimensionality, we need to slice the
-            # parent_ftxs for the residual connection
+            # If this branching layer reduces the dimensionality,
+            # we need to slice the parent_ftxs for the residual connection
             if not self.dim_red:
                 parents_ftxs = parents_ftxs[..., :n_features_target]
             # If residual, add the features of the parent to the children
@@ -168,7 +172,7 @@ if not conf.models.gen.params.equivar:
             foo("br post skip", children_ftxs)
             if self.dim_red:
                 children_ftxs = self.reduction_nn(children_ftxs)
-
+            check_tensor(children_ftxs)
             graph.tftx = torch.vstack(
                 [graph.tftx[..., :n_features_target], children_ftxs]
             )
@@ -268,7 +272,8 @@ else:
                     final_linear=self.final_linear or lastlayer,
                 )
 
-        # Split each of the leafs in the the graph.tree into n_branches and connect them
+        # Split each of the leafs in the the graph.tree
+        # into n_branches and connect them
         def forward(self, graph: TreeGraph, cond) -> TreeGraph:
             batch_size = self.batch_size
             n_branches = self.n_branches
@@ -338,8 +343,8 @@ else:
             children_ftxs = self.proj_cat(torch.cat([proj_single, proj_single], -1))
 
             foo("br children_ftxs pre skip", children_ftxs)
-            # If this branching layer reduces the dimensionality, we need to slice the
-            # parent_ftxs for the residual connection
+            # If this branching layer reduces the dimensionality,
+            # we need to slice the parent_ftxs for the residual connection
             if not self.dim_red:
                 parents_ftxs = parents_ftxs[..., :n_features_target]
             # If residual, add the features of the parent to the children

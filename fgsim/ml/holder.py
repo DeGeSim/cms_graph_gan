@@ -22,6 +22,7 @@ from fgsim.ml.network import SubNetworkCollector
 from fgsim.ml.optim import OptimAndSchedulerCol
 from fgsim.ml.val_metrics import ValidationMetrics
 from fgsim.monitoring import TrainLog, logger
+from fgsim.utils import check_tensor
 from fgsim.utils.check_for_nans import contains_nans
 from fgsim.utils.push_to_old import push_to_old
 
@@ -228,6 +229,10 @@ class Holder:
         assert not torch.isnan(sim_batch.x).any()
         assert sim_batch.y.shape[-1] == len(conf.loader.y_features)
         assert sim_batch.x.shape[-1] == len(conf.loader.x_features)
+        check_tensor(sim_batch.x, sim_batch.y)
+        batch_size = conf.loader.batch_size
+        cond_gen_features = conf.loader.cond_gen_features
+        cond_critic_features = conf.loader.cond_critic_features
         # if eval:
         #     self.models.eval()
         # else:
@@ -250,18 +255,20 @@ class Holder:
             dtype=torch.float,
             device=self.device,
         )
-        if sum(conf.loader.cond_features) == 0:
-            cond = torch.empty(
-                (conf.loader.batch_size, 0), dtype=torch.float, device=self.device
-            )
-        else:
-            cond = sim_batch.y[..., conf.loader.cond_features]
+
+        cond_gen = torch.empty((batch_size, 0)).float().to(self.device)
+        cond_critic = torch.empty((batch_size, 0)).float().to(self.device)
+        if sum(cond_gen_features) > 0:
+            cond_gen = sim_batch.y[..., cond_gen_features]
+        if sum(cond_critic_features) > 0:
+            cond_critic = sim_batch.y[..., cond_critic_features]
+
         assert (
             sim_batch.n_pointsv == (sim_batch.ptr[1:] - sim_batch.ptr[:-1])
         ).all()
 
         with with_grad(train_gen):
-            gen_batch = gen(z, cond, sim_batch.n_pointsv)
+            gen_batch = gen(z, cond_gen, sim_batch.n_pointsv)
             # make sure the number of points is the same
             assert (gen_batch.ptr == sim_batch.ptr).all()
             # assert (gen_batch.batch == sim_batch.batch).all()
@@ -276,7 +283,7 @@ class Holder:
 
         # In both cases the gradient needs to pass though gen_crit
         with with_grad(train_gen or train_disc):
-            res |= prepend_to_key(disc(gen_batch, cond), "gen_")
+            res |= prepend_to_key(disc(gen_batch, cond_critic), "gen_")
 
         # assert res["gen_crit"].shape == (conf.loader.batch_size, 1)
         assert not torch.isnan(res["gen_crit"]).any()
@@ -290,7 +297,7 @@ class Holder:
             or ("feature_matching" in conf.models.gen.losses and train_gen)
         ):
             with with_grad(train_disc):
-                res |= prepend_to_key(disc(sim_batch, cond), "sim_")
+                res |= prepend_to_key(disc(sim_batch, cond_critic), "sim_")
         return res
 
     def postprocess(self, batch):

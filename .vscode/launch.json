@@ -19,7 +19,7 @@
         {
             "args": [
                 "--tag",
-                "cc",
+                "t150_cfix_ddt_bl5",
                 "--debug",
                 "train"
             ],
@@ -33,7 +33,7 @@
         {
             "args": [
                 "--tag",
-                "cc",
+                "t150_cfix_ddt_bl5",
                 "--debug",
                 "test"
             ],
@@ -47,7 +47,7 @@
         {
             "args": [
                 "--tag",
-                "cc",
+                "t150_cfix_ddt_bl5",
                 "--debug",
                 "preprocess"
             ],
@@ -75,7 +75,7 @@
             "type": "python",
             "args": [
                 "--tag",
-                "cc",
+                "t150_cfix_ddt_bl5",
                 "--debug",
                 "train"
             ],
@@ -88,7 +88,7 @@
             "type": "python",
             "args": [
                 "--tag",
-                "cc",
+                "t150_cfix_ddt_bl5",
                 // "--debug",
                 "setup"
             ],

@@ -10,6 +10,7 @@ from fgsim.config import conf
 from fgsim.models.common import DynHLVsLayer, FtxScaleLayer, MPLSeq
 from fgsim.models.common.deeptree import BranchingLayer, Tree, TreeGraph
 from fgsim.monitoring import logger
+from fgsim.utils import check_tensor
 
 # from fgsim.plot.model_plotter import model_plotter
 
@@ -205,7 +206,7 @@ class ModelClass(nn.Module):
 
             # Branch the leaves
             graph_tree = self.branching_layers[ilevel](graph_tree, cond)
-            assert not torch.isnan(graph_tree.tftx).any()
+            check_tensor(graph_tree.tftx)
 
             # Assign the new indices for the updated tree
             batchidx = self.tree.tbatch_by_level[ilevel + 1]
@@ -269,7 +270,7 @@ class ModelClass(nn.Module):
                 #     f"child conv output level{ilevel+1}",
                 #     graph_tree.tftx_by_level(ilevel + 1),
                 # )
-            assert not torch.isnan(graph_tree.tftx).any()
+            check_tensor(graph_tree.tftx)
 
         batch = self.construct_batch(graph_tree, n_pointsv)
 
@@ -325,7 +326,7 @@ class ModelClass(nn.Module):
         )
         assert batch.x.shape[-1] == self.features[-1]
         assert batch.num_graphs == self.batch_size
-        assert not torch.isnan(batch.x).any()
+        check_tensor(batch.x)
 
         return batch
 
