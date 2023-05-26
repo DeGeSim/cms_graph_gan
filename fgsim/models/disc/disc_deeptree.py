@@ -15,6 +15,7 @@ class ModelClass(nn.Module):
         nodes,
         features,
         n_cond,
+        cnu_param,
         ffn_param,
         bipart_param,
         emb_param,
@@ -24,6 +25,7 @@ class ModelClass(nn.Module):
         self.nodes = nodes
         self.features = features
         self.ffn_param = ffn_param
+        self.cnu_param = cnu_param
         self.n_cond = n_cond
 
         self.n_levels = len(self.nodes)
@@ -38,6 +40,7 @@ class ModelClass(nn.Module):
                     n_ftx_in=self.features[ilevel],
                     n_ftx_out=self.features[ilevel + 1],
                     ffn_param=ffn_param,
+                    cnu_param=cnu_param,
                     **emb_param,
                 )
             )
@@ -54,6 +57,7 @@ class ModelClass(nn.Module):
                     n_ftx=self.features[ilevel],
                     n_cond=n_cond,
                     ffn_param=ffn_param,
+                    cnu_param=cnu_param,
                     **critics_param,
                 )
             )
@@ -167,7 +171,15 @@ class TSumTDisc(nn.Module):
     """Classifies PC via FNN -> Add -> FNN"""
 
     def __init__(
-        self, *, n_ftx, n_ftx_latent, n_cond, n_ftx_global, n_updates, ffn_param
+        self,
+        *,
+        n_ftx,
+        n_ftx_latent,
+        n_cond,
+        n_ftx_global,
+        n_updates,
+        cnu_param,
+        ffn_param,
     ) -> None:
         super().__init__()
         self.disc_emb = nn.ModuleList(
@@ -176,6 +188,7 @@ class TSumTDisc(nn.Module):
                     n_ftx_in=n_ftx,
                     n_ftx_latent=n_ftx_latent,
                     n_global=n_ftx_global,
+                    **cnu_param,
                     ffn_param=ffn_param,
                 )
                 for _ in range(n_updates)
@@ -194,19 +207,13 @@ class TSumTDisc(nn.Module):
 class CentralNodeUpdate(nn.Module):
     """update with global vector"""
 
-    def __init__(self, n_ftx_in, n_ftx_latent, n_global, ffn_param) -> None:
+    def __init__(self, n_ftx_in, n_ftx_latent, norm, n_global, ffn_param) -> None:
         super().__init__()
-        self.emb_nn = FFN(
-            n_ftx_in, n_ftx_latent, **(ffn_param | {"norm": "spectral"})
-        )
-        self.global_nn = FFN(
-            1 + n_ftx_latent * 2, n_global, **(ffn_param | {"norm": "spectral"})
-        )
+        ffn_param = ffn_param | {"norm": norm}
+        self.emb_nn = FFN(n_ftx_in, n_ftx_latent, **ffn_param)
+        self.global_nn = FFN(1 + n_ftx_latent * 2, n_global, **ffn_param)
         self.out_nn = FFN(
-            n_ftx_latent + n_global,
-            n_ftx_in,
-            **(ffn_param | {"norm": "spectral"}),
-            final_linear=True,
+            n_ftx_latent + n_global, n_ftx_in, final_linear=True, **ffn_param
         )
 
     def forward(self, x, batch=None):
@@ -225,7 +232,9 @@ class CentralNodeUpdate(nn.Module):
 
 
 class Embedding(nn.Module):
-    def __init__(self, *, n_ftx_in, n_ftx_out, n_ftx_latent, ffn_param) -> None:
+    def __init__(
+        self, *, n_ftx_in, n_ftx_out, n_ftx_latent, norm, cnu_param, ffn_param
+    ) -> None:
         super().__init__()
         self.n_ftx_in = n_ftx_in
         self.n_ftx_latent = n_ftx_latent
@@ -249,13 +258,14 @@ class Embedding(nn.Module):
         self.inp_emb = FFN(
             self.n_ftx_in,
             self.n_ftx_out,
-            **(ffn_param | {"bias": True, "norm": "batchnorm"}),
+            **(ffn_param | {"bias": True, "norm": norm}),
             final_linear=True,
         )
         self.cnu = CentralNodeUpdate(
             n_ftx_in=self.n_ftx_out,
             n_ftx_latent=self.n_ftx_latent,
             n_global=self.n_ftx_latent,
+            **cnu_param,
             ffn_param=ffn_param,
         )
 

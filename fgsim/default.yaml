@@ -205,8 +205,11 @@ model_param_options:
       hidden_layer_size: 40
       dropout: 0.0
       norm: "spectral"
+    cnu_param:
+      norm: "spectral"
     emb_param:
       n_ftx_latent: 10
+      norm: "batchnorm"
     bipart_param:
       n_heads: 4
     critics_param:
