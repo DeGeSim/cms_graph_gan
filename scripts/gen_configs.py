@@ -21,18 +21,27 @@ class ExperimentOption:
 base_config = ExperimentConfig(
     OmegaConf.create(
         """
+project_name: jetnet150_ddt
+models:
+  disc:
+    name: disc_deeptree
 model_param_options:
-    gen_deeptree:
-        n_cond: 1
-        pruning: "cut"
-        equivar: False
-dataset_options:
-  jetnet:
-    loader:
-      jettype: 'q'
+  gen_deeptree:
+    n_global: 0
+    ancestor_mpl:
+      n_mpl: 0
+  disc_deeptree:
+    ffn_param:
+      norm: "spectral"
+    cnu_param:
+      norm: "spectral"
+    emb_param:
+      norm: "batchnorm"
+ffn:
+  norm: batchnorm
     """
     ),
-    ["uc", "q"],
+    ["t150", "ddt", "bl6"],
 )
 
 
@@ -60,10 +69,37 @@ exp_list: List[ExperimentConfig] = [base_config]
 #     return res
 
 
-def option_ext0(exp_config: ExperimentConfig) -> Dict[str, DictConfig]:
+@add_option
+def option_gnorm(exp_config: ExperimentConfig) -> Dict[str, DictConfig]:
     res = defaultdict(exp_config.config.copy)
-    res["noext0"]
-    res["ext0"]["models"]["gen"]["additional_losses_list"] = ["extozero"]
+    res["gbwn"]["ffn"]["norm"] = "bwn"
+    res["gwn"]["ffn"]["norm"] = "weight"
+    res["gln"]["ffn"]["norm"] = "layernorm"
+    res["gsn"]["ffn"]["norm"] = "spectral"
+    return res
+
+
+@add_option
+def option_cnorm(exp_config: ExperimentConfig) -> Dict[str, DictConfig]:
+    res = defaultdict(exp_config.config.copy)
+
+    res["cbn"]["model_param_options"]["disc_deeptree"]["ffn_param"] = "batchnorm"
+    res["cbn"]["model_param_options"]["disc_deeptree"]["cnu_param"][
+        "norm"
+    ] = "batchnorm"
+
+    res["cbwn"]["model_param_options"]["disc_deeptree"]["ffn_param"] = "bwn"
+    res["cbwn"]["model_param_options"]["disc_deeptree"]["cnu_param"]["norm"] = "bwn"
+
+    res["cln"]["model_param_options"]["disc_deeptree"]["ffn_param"] = "layernorm"
+    res["cln"]["model_param_options"]["disc_deeptree"]["cnu_param"][
+        "norm"
+    ] = "layernorm"
+
+    res["cfsn"]["model_param_options"]["disc_deeptree"]["emb_param"][
+        "norm"
+    ] = "spectral"
+
     return res
 
 
@@ -76,20 +112,20 @@ def option_ext0(exp_config: ExperimentConfig) -> Dict[str, DictConfig]:
 #     return res
 
 
-@add_option
-def option_prune(exp_config: ExperimentConfig) -> Dict[str, DictConfig]:
-    res = defaultdict(exp_config.config.copy)
-    res["cut"]["model_param_options"]["gen_deeptree"]["pruning"] = "cut"
-    res["topk"]["model_param_options"]["gen_deeptree"]["pruning"] = "topk"
-    return res
+# @add_option
+# def option_prune(exp_config: ExperimentConfig) -> Dict[str, DictConfig]:
+#     res = defaultdict(exp_config.config.copy)
+#     res["cut"]["model_param_options"]["gen_deeptree"]["pruning"] = "cut"
+#     res["topk"]["model_param_options"]["gen_deeptree"]["pruning"] = "topk"
+#     return res
 
 
-@add_option
-def option_eqv(exp_config: ExperimentConfig) -> Dict[str, DictConfig]:
-    res = defaultdict(exp_config.config.copy)
-    res["eqv"]["model_param_options"]["gen_deeptree"]["equivar"] = True
-    res["noeqv"]["model_param_options"]["gen_deeptree"]["equivar"] = False
-    return res
+# @add_option
+# def option_eqv(exp_config: ExperimentConfig) -> Dict[str, DictConfig]:
+#     res = defaultdict(exp_config.config.copy)
+#     res["eqv"]["model_param_options"]["gen_deeptree"]["equivar"] = True
+#     res["noeqv"]["model_param_options"]["gen_deeptree"]["equivar"] = False
+#     return res
 
 
 # @add_option
@@ -112,7 +148,7 @@ def option_eqv(exp_config: ExperimentConfig) -> Dict[str, DictConfig]:
 #     return res
 
 
-if True:
+if False:
     # factorize all options
     for option in optionslist:
         new_exp_list = []
