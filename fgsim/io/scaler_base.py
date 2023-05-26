@@ -65,15 +65,16 @@ class ScalerBase:
         joblib.dump((self.transfs_x, self.transfs_y), self.scalerpath)
 
     def transform(self, pcs: torch.Tensor, x_or_y: str):
-        assert len(pcs.shape) == 2
-        assert pcs.shape[1] == len(conf.loader[x_or_y + "_features"])
+        assert pcs.dim() == 2
+        n_features = len(conf.loader[x_or_y + "_features"])
+        assert pcs.shape[1] == n_features
         dev = pcs.device
-        pcs = pcs.cpu().numpy()
+        pcs = pcs.cpu().numpy().astype("float64")
 
         transfs = self.transfs_x if x_or_y == "x" else self.transfs_y
         res = np.hstack(
             [
-                transf.transform(arr.reshape(-1, 1).astype("float64"))
+                transf.transform(arr.reshape(-1, 1))
                 for arr, transf in zip(pcs.T, transfs)
             ]
         )
@@ -82,18 +83,13 @@ class ScalerBase:
         return torch.Tensor(res).float().to(dev)
 
     def inverse_transform(self, pcs: torch.Tensor, x_or_y: str):
-        assert pcs.shape[-1] == conf.loader.n_features
+        assert pcs.dim() == 2
+        n_features = len(conf.loader[x_or_y + "_features"])
+        assert pcs.shape[1] == n_features
+        dev = pcs.device
+        pcs = pcs.cpu().numpy().astype("float64")
 
         transfs = self.transfs_x if x_or_y == "x" else self.transfs_y
-        orgshape = pcs.shape
-        dev = pcs.device
-        pcs = (
-            pcs.to("cpu")
-            .detach()
-            .reshape(-1, conf.loader.n_features)
-            .numpy()
-            .astype("float64")
-        )
         res = np.hstack(
             [
                 transf.inverse_transform(arr.reshape(-1, 1))
@@ -102,7 +98,7 @@ class ScalerBase:
         )
         if not np.isfinite(res).all():
             raise RuntimeError("Result not finite")
-        return torch.from_numpy(res.reshape(*orgshape)).float().to(dev)
+        return torch.from_numpy(res).float().to(dev)
 
     def plot_scaling(self, pcs, x_or_y: str, post: bool = False):
         if x_or_y == "x":

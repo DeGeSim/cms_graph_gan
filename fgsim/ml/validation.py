@@ -64,7 +64,10 @@ def validate(holder: Holder, loader: QueuedDataset) -> None:
     logger.debug("Start scaling")
     # scale all the samples
     for batch in results_d["sim_batch"], results_d["gen_batch"]:
-        batch.x = scaler.inverse_transform(batch.x)
+        batch.x = scaler.inverse_transform(batch.x, "x")
+    results_d["sim_batch"].y = scaler.inverse_transform(
+        results_d["sim_batch"].y, "y"
+    )
     logger.debug("End scaling")
 
     if not conf.debug:
