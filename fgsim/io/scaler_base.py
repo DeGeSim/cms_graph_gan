@@ -52,13 +52,15 @@ class ScalerBase:
             self.plot_scaling(pcs, x_or_y)
             assert pcs.shape[1] == len(conf.loader[x_or_y + "_features"])
             transfs = self.transfs_x if x_or_y == "x" else self.transfs_y
-            pcs = np.hstack(
+            res = np.hstack(
                 [
                     transf.fit_transform(arr.reshape(-1, 1))
                     for arr, transf in zip(pcs.T, transfs)
                 ]
             )
-            self.plot_scaling(pcs, x_or_y, True)
+            if not np.isfinite(res).all():
+                raise RuntimeError("Result not finite")
+            self.plot_scaling(res, x_or_y, True)
 
         joblib.dump((self.transfs_x, self.transfs_y), self.scalerpath)
 
@@ -75,6 +77,8 @@ class ScalerBase:
                 for arr, transf in zip(pcs.T, transfs)
             ]
         )
+        if not np.isfinite(res).all():
+            raise RuntimeError("Result not finite")
         return torch.Tensor(res).float().to(dev)
 
     def inverse_transform(self, pcs: torch.Tensor, x_or_y: str):
@@ -90,13 +94,15 @@ class ScalerBase:
             .numpy()
             .astype("float64")
         )
-        t_stacked = np.hstack(
+        res = np.hstack(
             [
                 transf.inverse_transform(arr.reshape(-1, 1))
                 for arr, transf in zip(pcs.T, transfs)
             ]
         )
-        return torch.from_numpy(t_stacked.reshape(*orgshape)).float().to(dev)
+        if not np.isfinite(res).all():
+            raise RuntimeError("Result not finite")
+        return torch.from_numpy(res.reshape(*orgshape)).float().to(dev)
 
     def plot_scaling(self, pcs, x_or_y: str, post: bool = False):
         if x_or_y == "x":

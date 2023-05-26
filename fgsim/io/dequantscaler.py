@@ -1,3 +1,5 @@
+from functools import partial
+
 import numpy as np
 import scipy
 from sklearn.pipeline import make_pipeline
@@ -8,19 +10,43 @@ from .idxscale import IdxToScale
 
 def dequant(x):
     noise = np.random.rand(*x.shape)
-    return x + noise
+    return x.astype("float") + noise
 
 
 def requant(x):
     return np.floor(x)
 
 
-def dequant_stdscale():
-    return make_pipeline(
-        FunctionTransformer(dequant, requant, check_inverse=True),
-        IdxToScale((0, 1)),
+def forward(x, lower, dist):
+    return (x - lower) / dist
+
+
+def backward(x, lower, dist):
+    return x * dist + lower
+
+
+def dequant_stdscale(inputrange=None):
+    if inputrange is None:
+        scaletf = IdxToScale((0, 1))
+    else:
+        lower, upper = inputrange
+        dist = upper - lower
+
+        scaletf = FunctionTransformer(
+            partial(forward, lower=lower, dist=dist),
+            partial(backward, lower=lower, dist=dist),
+            check_inverse=True,
+            validate=True,
+        )
+    tfseq = [
+        FunctionTransformer(dequant, requant, check_inverse=True, validate=True),
+        scaletf,
         FunctionTransformer(
-            scipy.special.logit, scipy.special.expit, check_inverse=True
+            scipy.special.logit,
+            scipy.special.expit,
+            check_inverse=True,
+            validate=True,
         ),
         StandardScaler(),
-    )
+    ]
+    return make_pipeline(*tfseq)

@@ -82,7 +82,7 @@ scaler = ScalerBase(
         StandardScaler(),  # pt
         StandardScaler(),  # eta
         StandardScaler(),  # mass
-        dequant_stdscale(),  # num_particles
+        dequant_stdscale((0, conf.loader.n_points + 1)),  # num_particles
     ],
     read_chunk=read_chunks,
     transform_wo_scaling=contruct_graph_from_row,
