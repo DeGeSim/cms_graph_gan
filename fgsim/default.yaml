@@ -188,7 +188,7 @@ model_param_options:
     num_layers: 4
     heads: 4
     mean_field: True
-  disc_benno_cc:
+  disc_mdma:
     n_dim: ${loader.n_features}
     l_dim: 16
     hidden: 32
