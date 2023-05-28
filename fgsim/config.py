@@ -120,7 +120,7 @@ device = None
 
 
 np.set_printoptions(formatter={"float_kind": "{:.3g}".format})
-np.seterr(all="raise")
+#  np.seterr(all="raise")
 plt.rcParams["savefig.bbox"] = "tight"
 # plt.rcParams["backend"] = "Agg"
 plt.rcParams["figure.dpi"] = 150
