@@ -16,8 +16,8 @@ class FFN(nn.Module):
         norm: Optional[str] = None,
         dropout: Optional[float] = None,
         n_layers: Optional[int] = None,
-        final_linear: Optional[bool] = False,
-        bias: Optional[bool] = False,
+        final_linear: bool = False,
+        bias: bool = False,
         hidden_layer_size: Optional[int] = None,
     ) -> None:
         if norm is None:
@@ -59,7 +59,12 @@ class FFN(nn.Module):
         for ilayer in range(n_layers):
             if norm == "bwn":
                 m = WeightNormalizedLinear(
-                    features[ilayer], features[ilayer + 1], bias=bias
+                    features[ilayer],
+                    features[ilayer + 1],
+                    bias=bias,
+                    scale=True,
+                    init_scale=0.5,
+                    init_factor=0.5,
                 )
             else:
                 m = nn.Linear(features[ilayer], features[ilayer + 1], bias=bias)
