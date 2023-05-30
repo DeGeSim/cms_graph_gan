@@ -26,10 +26,6 @@ models:
   disc:
     name: disc_deeptree
 model_param_options:
-  gen_deeptree:
-    n_global: 0
-    ancestor_mpl:
-      n_mpl: 0
   disc_deeptree:
     ffn_param:
       norm: "spectral"
@@ -41,7 +37,7 @@ ffn:
   norm: batchnorm
     """
     ),
-    ["t150", "ddt", "bl6"],
+    ["t150", "ddt", "bl6", "acdlvs"],
 )
 
 
@@ -83,15 +79,19 @@ def option_gnorm(exp_config: ExperimentConfig) -> Dict[str, DictConfig]:
 def option_cnorm(exp_config: ExperimentConfig) -> Dict[str, DictConfig]:
     res = defaultdict(exp_config.config.copy)
 
-    res["cbn"]["model_param_options"]["disc_deeptree"]["ffn_param"] = "batchnorm"
+    res["cbn"]["model_param_options"]["disc_deeptree"]["ffn_param"][
+        "norm"
+    ] = "batchnorm"
     res["cbn"]["model_param_options"]["disc_deeptree"]["cnu_param"][
         "norm"
     ] = "batchnorm"
 
-    res["cbwn"]["model_param_options"]["disc_deeptree"]["ffn_param"] = "bwn"
+    res["cbwn"]["model_param_options"]["disc_deeptree"]["ffn_param"]["norm"] = "bwn"
     res["cbwn"]["model_param_options"]["disc_deeptree"]["cnu_param"]["norm"] = "bwn"
 
-    res["cln"]["model_param_options"]["disc_deeptree"]["ffn_param"] = "layernorm"
+    res["cln"]["model_param_options"]["disc_deeptree"]["ffn_param"][
+        "norm"
+    ] = "layernorm"
     res["cln"]["model_param_options"]["disc_deeptree"]["cnu_param"][
         "norm"
     ] = "layernorm"
