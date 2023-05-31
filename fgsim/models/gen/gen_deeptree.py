@@ -27,7 +27,6 @@ class ModelClass(nn.Module):
         connect_all_ancestors: bool,
         dim_red_in_branching: bool,
         pruning: str,
-        equivar: bool,
         **kwargs,
     ):
         super().__init__()
@@ -39,7 +38,6 @@ class ModelClass(nn.Module):
         self.child_mpl = child_mpl
         self.dim_red_in_branching = dim_red_in_branching
         self.pruning = pruning
-        self.equivar = equivar
 
         self.features: list[int] = list(OmegaConf.to_container(conf.tree.features))
         self.branches: list[int] = list(OmegaConf.to_container(conf.tree.branches))
