@@ -143,8 +143,11 @@ def get_testing_datasets(holder: Holder, best_or_last) -> TestDataset:
         # aggregate the results over the batches
         for k in ["sim_batch", "gen_batch"]:
             batch = Batch.from_data_list(res_d_l[k])
-            batch.x = scaler.inverse_transform(batch.x)
+            batch.x = scaler.inverse_transform(batch.x, "x")
             res_d_l[k] = batch
+        res_d_l["sim_batch"].y = scaler.inverse_transform(
+            res_d_l["sim_batch"].y, "y"
+        )
         for k in ["sim_crit", "gen_crit"]:
             res_d_l[k] = torch.hstack(res_d_l[k])
 
