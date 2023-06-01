@@ -152,10 +152,10 @@ def dyn_props(request):
 
 
 @pytest.fixture(
-    params=product([True, False], [True, False], ["mat", "equivar", "noise"])
+    params=product(["mat", "equivar", "noise"], [True, False], [True, False])
 )
 def branching_objects(request, static_props):
-    dim_red, residual, mode = request.param
+    (mode, dim_red, residual) = request.param
     objs = object_gen(static_props)
     objs.branching_layers = [
         BranchingLayer(

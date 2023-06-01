@@ -32,39 +32,80 @@ def test_BranchingLayer_compute_graph(branching_objects: DTColl):
     graph = branching_objects.graph
     branching_layers = branching_objects.branching_layers
     tree = branching_objects.tree
+    batch_size = len(graph.tftx)
 
     tftx_copy = graph.tftx.requires_grad_()
     new_graph1 = branching_layers[0](graph, cond)
-    tree = branching_layers[0].tree
+    # tree = branching_layers[0].tree
     assert torch.all(
         new_graph1.tftx[tree.idxs_by_level[1]]
         == new_graph1.tftx[torch.hstack([e.idxs for e in tree.tree_lists[1]])]
     )
-    leaf = tree.tree_lists[1][0]
 
-    pc_leaf_point = new_graph1.tftx[leaf.idxs[2]].sum()
-    pc_leaf_point.backward(retain_graph=True)
+    level = 1
+    for leaf in tree.tree_lists[level]:
+        ancestor = leaf.parent
+        for ievent in range(batch_size):
+            leafidx = leaf.idxs[ievent]
+            ancestoridx = ancestor.idxs[ievent]
 
-    zero_feature = torch.zeros_like(graph.tftx[0])
-    assert tftx_copy.grad is not None
-    assert torch.all(tftx_copy.grad[0] == zero_feature)
-    assert torch.all(tftx_copy.grad[1] == zero_feature)
-    assert torch.any(tftx_copy.grad[2] != zero_feature)
+            pc_leaf_point = new_graph1.tftx[leafidx].sum()
+            pc_leaf_point.backward(retain_graph=True)
 
+            assert tftx_copy.grad is not None
+            assert tftx_copy.grad[ancestoridx].abs().sum() != 0
+            for iel, el in enumerate(tftx_copy.grad):
+                if iel != ancestoridx:
+                    assert torch.all(el == 0)
+            tftx_copy.grad.data.zero_()
+
+    # for sel_idx in range(batch_size):
+    #     pc_leaf_point = new_graph1.tftx[leaf.idxs[sel_idx]].sum()
+    #     pc_leaf_point.backward(retain_graph=True)
+
+    #     zero_feature = torch.zeros_like(graph.tftx[0])
+    #     assert tftx_copy.grad is not None
+    #     assert tftx_copy.grad[sel_idx].abs().sum() != 0
+    #     for iel, el in enumerate(tftx_copy.grad):
+    #         if iel != sel_idx:
+    #             assert torch.all(el == zero_feature)
+    #     tftx_copy.grad.data.zero_()
+    tftx_copy2 = new_graph1.tftx.requires_grad_()
+    tftx_copy2.retain_grad()
     new_graph2 = branching_layers[1](new_graph1, cond)
     assert torch.all(
         new_graph2.tftx[tree.idxs_by_level[2]]
         == new_graph2.tftx[torch.hstack([e.idxs for e in tree.tree_lists[2]])]
     )
 
-    leaf = branching_layers[1].tree.tree_lists[2][0]
-    pc_leaf_point = new_graph2.tftx[leaf.idxs[2]]
-    sum(pc_leaf_point).backward()
+    # for sel_idx in range(batch_size):
+    #     pc_leaf_point = new_graph2.tftx[leaf.idxs[sel_idx]]
+    #     sum(pc_leaf_point).backward(retain_graph=True)
 
-    assert tftx_copy.grad is not None
-    assert torch.all(tftx_copy.grad[0] == zero_feature)
-    assert torch.all(tftx_copy.grad[1] == zero_feature)
-    assert torch.any(tftx_copy.grad[2] != zero_feature)
+    #     assert tftx_copy.grad is not None
+    #     assert tftx_copy.grad[sel_idx].abs().sum() != 0
+    #     for iel, el in enumerate(tftx_copy.grad):
+    #         if iel != sel_idx:
+    #             assert torch.all(el == zero_feature)
+    #     tftx_copy.grad.data.zero_()
+    level = 2
+    for leaf in tree.tree_lists[level]:
+        for ancestor, actftx in zip(leaf.get_ancestors(), [tftx_copy2, tftx_copy]):
+            for ievent in range(batch_size):
+                leafidx = leaf.idxs[ievent]
+                ancestoridx = ancestor.idxs[ievent]
+
+                pc_leaf_point = new_graph2.tftx[leafidx].sum()
+                pc_leaf_point.backward(retain_graph=True)
+
+                grad = actftx.grad
+                assert grad is not None
+                assert grad[ancestoridx].abs().sum() != 0
+                for iel, el in enumerate(grad):
+                    if iel != ancestoridx:
+                        assert (el == 0).all()
+                tftx_copy.grad.data.zero_()
+                tftx_copy2.grad.data.zero_()
 
 
 def test_tree_ancestor_connectivity_static(static_objects: DTColl):
