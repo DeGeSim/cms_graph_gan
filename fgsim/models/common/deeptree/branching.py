@@ -280,11 +280,23 @@ class BranchingLayer(nn.Module):
         if self.residual and (
             self.res_final_layer or self.level + 1 != self.tree.n_levels - 1
         ):
-            children_ftxs += (
-                parents_ftxs.reshape(batch_size, n_parents, n_features_source)
-                .repeat(n_branches, 1, 1)
-                .reshape(batch_size, n_parents * n_branches, n_features_source)
+            # this skip connection breaks the equivariance
+            # but otherwise we dont have enough feature
+            parents_ftxs_full = parents_ftxs.repeat(1, n_branches).reshape(
+                batch_size * n_parents, n_branches, n_features_source
             )
+            parents_ftxs_full = reshape_features(
+                parents_ftxs_full,
+                n_parents=n_parents,
+                batch_size=batch_size,
+                n_branches=n_branches,
+                n_features=self.n_features_source,
+            ).reshape(batch_size, n_parents * n_branches, self.n_features_source)
+            children_ftxs += parents_ftxs_full
+            # parents_ftxs.reshape(batch_size, n_parents, n_features_source).repeat(
+            #     n_branches, 1, 1
+            # ).reshape(batch_size, n_parents * n_branches, n_features_source)
+
             if self.res_mean:
                 children_ftxs /= 2
 
