@@ -43,7 +43,7 @@ def object_gen(props: Dict[str, int]) -> DTColl:
         batch_size=batch_size,
         connect_all_ancestors=True,
     )
-    global_features = torch.empty(
+    global_features = torch.randn(
         batch_size, n_global, dtype=torch.float, device=device
     )
     cond = torch.randn(
@@ -77,6 +77,7 @@ def object_gen(props: Dict[str, int]) -> DTColl:
             residual=False,
             res_final_layer=False,
             res_mean=False,
+            mode="mat",
         ).to(device)
         for level in range(n_levels - 1)
     ]
@@ -150,9 +151,11 @@ def dyn_props(request):
     return props
 
 
-@pytest.fixture(params=product([True, False], [True, False]))
+@pytest.fixture(
+    params=product([True, False], [True, False], ["mat", "equivar", "noise"])
+)
 def branching_objects(request, static_props):
-    dim_red, residual = request.param
+    dim_red, residual, mode = request.param
     objs = object_gen(static_props)
     objs.branching_layers = [
         BranchingLayer(
@@ -166,6 +169,7 @@ def branching_objects(request, static_props):
             residual=residual,
             res_final_layer=False,
             res_mean=False,
+            mode=mode,
         ).to(device)
         for level in range(static_props["n_levels"] - 1)
     ]

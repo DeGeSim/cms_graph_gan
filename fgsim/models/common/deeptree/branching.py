@@ -43,7 +43,7 @@ class BranchingLayer(nn.Module):
         dim_red: bool,
         res_mean: bool,
         res_final_layer: bool,
-        equivar: bool,
+        mode: bool,
     ):
         super().__init__()
         assert 0 <= level < len(tree.features)
@@ -57,7 +57,7 @@ class BranchingLayer(nn.Module):
         self.norm = norm
         self.dim_red = dim_red
         self.res_mean = res_mean
-        self.equivar = equivar
+        self.mode = mode
         self.res_final_layer = res_final_layer
         self.n_branches = self.tree.branches[level]
         self.n_features_source = self.tree.features[level]
@@ -77,17 +77,23 @@ class BranchingLayer(nn.Module):
         else:
             assert self.n_features_source == self.n_features_target
 
-        if self.equivar:
+        if self.mode == "equivar":
             assert self.n_features_source % self.n_branches == 0
 
         lastlayer = level + 1 == len(tree.features) - 1
 
-        if self.equivar:
+        if self.mode == "equivar":
             proj_in = self.n_features_source // self.n_branches + n_global + n_cond
             proj_out = self.n_features_source
-        else:
+        elif self.mode == "mat":
             proj_in = self.n_features_source + n_global + n_cond
             proj_out = self.n_features_source * self.n_branches
+        elif self.mode == "noise":
+            self.n_noise = min(max(self.n_features_source, 5), 15)
+            proj_in = self.n_features_source + n_global + n_cond + self.n_noise
+            proj_out = self.n_features_source
+        else:
+            raise NotImplementedError
 
         self.proj_nn = FFN(
             proj_in,
@@ -96,7 +102,7 @@ class BranchingLayer(nn.Module):
             bias=False,
             final_linear=self.final_linear or (not self.dim_red and lastlayer),
         )
-        if self.equivar:
+        if self.mode == "equivar":
             self.proj_cat = FFN(
                 self.n_features_source * 2,
                 self.n_features_source,
@@ -281,6 +287,81 @@ class BranchingLayer(nn.Module):
             )
             if self.res_mean:
                 children_ftxs /= 2
+
+        # model_plotter.save_tensor(
+        #     f"branching output level{self.level}",
+        #     children_ftxs,
+        # )
+
+        # Do the down projection to the desired dimension
+        children_ftxs = children_ftxs.reshape(
+            batch_size * n_parents * n_branches, n_features_source
+        )
+        foo("br post skip", children_ftxs)
+        if self.dim_red:
+            children_ftxs = self.reduction_nn(children_ftxs)
+        check_tensor(children_ftxs)
+        graph.tftx = torch.vstack(
+            [graph.tftx[..., :n_features_target], children_ftxs]
+        )
+
+        graph.cur_level = graph.cur_level + 1
+        graph.global_features = graph.global_features
+        return graph
+
+    def forward_noise(self, graph: TreeGraph, cond) -> TreeGraph:
+        batch_size = self.batch_size
+        n_branches = self.n_branches
+        n_features_source = self.n_features_source
+        n_features_target = self.n_features_target
+        parents = self.tree.tree_lists[self.level]
+        n_parents = len(parents)
+
+        assert graph.cur_level == self.level
+
+        parents_ftxs = graph.tftx[self.tree.idxs_by_level[self.level]]
+        parents_ftxs_split = parents_ftxs.repeat(1, n_branches).reshape(
+            batch_size * n_parents, n_branches, n_features_source
+        )
+        parents_ftxs_split = reshape_features(
+            parents_ftxs_split,
+            n_parents=n_parents,
+            batch_size=batch_size,
+            n_branches=n_branches,
+            n_features=self.n_features_source,
+        )
+
+        parent_global = graph.global_features.repeat(
+            n_parents * n_branches, 1
+        ).reshape(batch_size * n_parents * n_branches, -1)
+        cond_global = cond.repeat(n_parents * n_branches, 1).reshape(
+            batch_size * n_parents * n_branches, -1
+        )
+        noise = torch.rand(
+            batch_size * n_parents * n_branches,
+            self.n_noise,
+            device=graph.tftx.device,
+        )
+
+        # Project each particle by itself, together with the global and condition
+        proj_ftx = self.proj_nn(
+            torch.cat([parents_ftxs_split, cond_global, parent_global, noise], -1)
+        )
+        children_ftxs = proj_ftx
+
+        foo("br children_ftxs pre skip", children_ftxs)
+        # If this branching layer reduces the dimensionality,
+        # we need to slice the parent_ftxs for the residual connection
+        if not self.dim_red:
+            parents_ftxs_split = parents_ftxs_split[..., :n_features_target]
+        # If residual, add the features of the parent to the children
+        if self.residual and (
+            self.res_final_layer or self.level + 1 != self.tree.n_levels - 1
+        ):
+            children_ftxs += parents_ftxs_split
+            if self.res_mean:
+                children_ftxs /= 2
+
         # model_plotter.save_tensor(
         #     f"branching output level{self.level}",
         #     children_ftxs,
@@ -302,10 +383,14 @@ class BranchingLayer(nn.Module):
         return graph
 
     def forward(self, *args, **kwargs):
-        if self.equivar:
+        if self.mode == "equivar":
             return self.forward_eqv(*args, **kwargs)
-        else:
+        elif self.mode == "mat":
             return self.forward_mat(*args, **kwargs)
+        elif self.mode == "noise":
+            return self.forward_noise(*args, **kwargs)
+        else:
+            raise NotImplementedError
 
 
 @torch.jit.script

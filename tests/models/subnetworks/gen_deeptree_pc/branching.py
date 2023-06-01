@@ -252,7 +252,8 @@ def test_BranchingLayer_shapes(dyn_objects: DTColl):
             [
                 n_branches**i * i for i in range(ilevel + 2)
             ]  # with connect_all_ancestors
-            # [n_branches**i for i in range(ilevel + 2)] # withput connect_all_ancestors
+            # [n_branches**i for i in range(ilevel + 2)]
+            # withput connect_all_ancestors
         )
 
         conlist = tree.ancestor_ei(ilevel + 1).T.cpu().numpy().tolist()

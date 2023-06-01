@@ -153,14 +153,14 @@ def test_full_modelparts_grad():
     z = torch.randn(*model.z_shape, requires_grad=True, device=device)
     cond = torch.randn(
         defaultconf.loader.batch_size,
-        len(defaultconf.loader.y_features),
+        sum(defaultconf.loader.cond_gen_features),
         requires_grad=True,
         device=device,
     )
 
     def check_z():
-        assert torch.all(z.grad[torch.arange(len(z)) != 1] == 0), "Tainted gradient"
         assert torch.any(z.grad[1] != 0), "Grad not propagated"
+        assert torch.all(z.grad[torch.arange(len(z)) != 1] == 0), "Tainted gradient"
         z.grad = None
 
     def check_cond():
@@ -177,13 +177,13 @@ def test_full_modelparts_grad():
 
     # Init the graph object
     graph_tree = TreeGraph(
+        tftx=z.reshape(batch_size, features[0]),
         global_features=torch.empty(
             batch_size,
             model.n_global,
             dtype=torch.float,
             device=device,
         ),
-        tftx=z.reshape(batch_size, features[0]),
         tree=model.tree,
     )
     # check
@@ -193,14 +193,20 @@ def test_full_modelparts_grad():
         retain_graph=True
     )
     check_z()
+    batchidx = model.tree.tbatch_by_level[0]
+    idxs_level = model.tree.idxs_by_level[0]
+    batch_level = batchidx[idxs_level]
+    edge_index = model.tree.ancestor_ei(0)
+    edge_attr = model.tree.ancestor_ea(0)
 
     # Do the branching
     for ilevel in range(n_levels - 1):
         # Assign the global features
-        graph_tree.global_features = model.dyn_hlvs_layers[ilevel](
-            x=graph_tree.tftx_by_level(ilevel)[..., : features[-1]],
+        ftx_level = graph_tree.tftx_by_level(ilevel)
+        graph_tree.global_features = model.prebr_hlvs[ilevel](
+            x=ftx_level,
             cond=cond,
-            batch=tree.tbatch_by_level[ilevel][tree.idxs_by_level[ilevel]],
+            batch=batch_level,
         )
         if graph_tree.global_features.numel():
             graph_tree.global_features[1, :].sum().backward(retain_graph=True)
@@ -213,13 +219,19 @@ def test_full_modelparts_grad():
             retain_graph=True
         )
         check_z()
+        # Assign the new indices for the updated tree
+        batchidx = model.tree.tbatch_by_level[ilevel + 1]
+        idxs_level = model.tree.idxs_by_level[ilevel + 1]
+        batch_level = batchidx[idxs_level]
+        edge_index = model.tree.ancestor_ei(ilevel + 1)
+        edge_attr = model.tree.ancestor_ea(ilevel + 1)
 
         graph_tree.tftx = model.ancestor_conv_layers[ilevel](
             x=graph_tree.tftx,
             cond=cond,
-            edge_index=model.tree.ancestor_ei(ilevel + 1),
-            edge_attr=model.tree.ancestor_ea(ilevel + 1),
-            batch=tree.tbatch_by_level[ilevel + 1],
+            edge_index=edge_index,
+            edge_attr=edge_attr,
+            batch=batchidx,
             global_features=graph_tree.global_features,
         )
         graph_tree.tftx[[tree.tbatch_by_level[ilevel + 1] == 1]].sum().backward(
@@ -231,9 +243,9 @@ def test_full_modelparts_grad():
             graph_tree.tftx = model.child_conv_layers[ilevel](
                 x=graph_tree.tftx,
                 cond=cond,
-                edge_index=model.tree.children_ei(ilevel + 1),
-                batch=tree.tbatch_by_level[ilevel + 1],
-                global_features=graph_tree.global_features,
+                edge_index=edge_index,
+                edge_attr=edge_attr,
+                batch=batchidx,
             )
             graph_tree.tftx[[tree.tbatch_by_level[ilevel + 1] == 1]].sum().backward(
                 retain_graph=True
@@ -266,19 +278,26 @@ def test_full_model_grad():
     conf.tree.features[-1] = conf.loader.n_features
 
     device = torch.device("cpu")
+    defaultconf.ffn.norm = "none"
     defaultconf.model_param_options.gen_deeptree.branching_param.norm = "none"
     model = ModelClass(**defaultconf.model_param_options.gen_deeptree).to(device)
 
     z = torch.randn(*model.z_shape, device=device).requires_grad_()
     cond = (
         torch.ones(
-            (defaultconf.loader.batch_size, len(defaultconf.loader.y_features)),
+            (
+                defaultconf.loader.batch_size,
+                sum(defaultconf.loader.cond_gen_features),
+            ),
             device=device,
         )
         * conf.loader.n_points
     )
     tftx_copy = z
-    batch = model(z, cond)
+    n_pointsv = torch.tensor(
+        [defaultconf.loader.n_points] * defaultconf.loader.batch_size
+    )
+    batch = model(z, cond, n_pointsv)
     sum_of_features = batch.x[batch.batch == 1].sum()
     sum_of_features.backward(retain_graph=True)
     zero_feature = torch.zeros_like(tftx_copy[0])
