@@ -133,7 +133,7 @@ model_param_options:
     n_cond: ${sum:${loader.cond_gen_features}}
     pruning: "cut"
     branching_param:
-      equivar: False
+      mode: "mat"
       residual: True
       final_linear: True
       norm: batchnorm
