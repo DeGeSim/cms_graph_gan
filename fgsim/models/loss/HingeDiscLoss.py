@@ -13,9 +13,18 @@ class LossGen:
         sim_crit: torch.Tensor,
         gen_crit: torch.Tensor,
         **kwargs,
-    ) -> torch.Tensor:
+    ) -> dict[torch.Tensor]:
         assert not kwargs["gen_batch"].x.requires_grad
         assert sim_crit.requires_grad and sim_crit.requires_grad
-        loss = -self.hinge_act(sim_crit - 1).mean()
-        loss += -self.hinge_act(-gen_crit - 1).mean()
-        return loss
+        batch_size = kwargs["gen_batch"].num_graphs
+        assert len(gen_crit) % batch_size == 0
+        n_discs = len(gen_crit) // batch_size
+
+        loss = -self.hinge_act(sim_crit - 1)
+        loss += -self.hinge_act(-gen_crit - 1)
+        loss_d = {
+            icrit: loss[icrit * batch_size : (icrit + 1) * batch_size].mean()
+            for icrit in range(n_discs)
+        }
+
+        return loss_d

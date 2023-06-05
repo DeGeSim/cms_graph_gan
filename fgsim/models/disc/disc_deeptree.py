@@ -5,7 +5,7 @@ from torch import Tensor, nn
 from fgsim.config import conf
 from fgsim.models.common import FFN
 from fgsim.models.mpl.gatmin import GATv2MinConv
-from fgsim.models.pool.std_pool import global_mad_pool
+from fgsim.models.pool.std_pool import global_mad_pool2 as global_mad_pool
 
 
 class ModelClass(nn.Module):
@@ -194,7 +194,7 @@ class TSumTDisc(nn.Module):
                 for _ in range(n_updates)
             ]
         )
-        self.disc = FFN(1 + 2 * n_ftx + n_cond, 1, **ffn_param, final_linear=True)
+        self.disc = FFN(1 + 3 * n_ftx + n_cond, 1, **ffn_param, final_linear=True)
 
     def forward(self, x, batch, condition):
         for layer in self.disc_emb:
@@ -211,7 +211,7 @@ class CentralNodeUpdate(nn.Module):
         super().__init__()
         ffn_param = ffn_param | {"norm": norm}
         self.emb_nn = FFN(n_ftx_in, n_ftx_latent, **ffn_param)
-        self.global_nn = FFN(1 + n_ftx_latent * 2, n_global, **ffn_param)
+        self.global_nn = FFN(1 + n_ftx_latent * 3, n_global, **ffn_param)
         self.out_nn = FFN(
             n_ftx_latent + n_global, n_ftx_in, final_linear=True, **ffn_param
         )

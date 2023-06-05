@@ -9,6 +9,7 @@ from torch_geometric.data import Batch
 from fgsim.config import conf, device
 from fgsim.monitoring.metrics_aggr import MetricAggregator
 from fgsim.monitoring.train_log import TrainLog
+from fgsim.utils.check_for_nans import contains_nans
 
 
 class LossFunction(Protocol):
@@ -52,12 +53,21 @@ class SubNetworkLoss:
 
     def __call__(self, holder, **res):
         losses_dict: Dict[str, Optional[torch.Tensor]] = {}
+        # Iterate over the lossed for the model
         for lossname, loss in self.parts.items():
             loss_value = loss(holder=holder, **res)
-            if loss_value is not None:
-                if loss_value.isnan():
-                    raise RuntimeError("Loss contains Nan")
+            if loss_value is None:
+                pass
+            elif isinstance(loss_value, torch.Tensor):
                 losses_dict[lossname] = loss_value * self.pconf[lossname]["factor"]
+            elif isinstance(loss_value, dict):
+                for sublossname, sublossval in loss_value.items():
+                    losses_dict[f"{lossname}/{sublossname}"] = (
+                        sublossval * self.pconf[lossname]["factor"]
+                    )
+            else:
+                raise Exception
+        contains_nans(losses_dict)
 
         partloss: torch.Tensor = sum(losses_dict.values())
         if conf.models[self.name].retain_graph_on_backprop:
