@@ -35,7 +35,11 @@ def setup_experiment() -> None:
         job_type="train",
         resume=False,
         reinit=True,
-        settings={"quiet": True, "disable_job_creation": True},
+        settings={
+            "quiet": True,
+            "disable_job_creation": True,
+            "code_dir": f"./{conf.path.run_path}/fgsim/models",
+        },
     )
     exp_orga_wandb[conf["hash"]] = run_train.id
 
