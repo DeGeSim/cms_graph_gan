@@ -12,7 +12,7 @@ models:
     params: ${model_param_options[${models.gen.name}]}
     losses: "${optionlist:${loss_options},${models.gen.losses_list}}"
     losses_list: ${listadd:${gan_mode_options[${training.gan_mode}][gen]},${models.gen.additional_losses_list}}
-    additional_losses_list: ["feature_matching"]
+    additional_losses_list: ["feature_matching", "histg"]
     optim:
       name: Adam
       params: ${optim_options[gen][${models.gen.optim.name}]}
@@ -25,7 +25,7 @@ models:
     params: ${model_param_options[${models.disc.name}]}
     losses: "${optionlist:${loss_options},${models.disc.losses_list}}"
     losses_list: ${listadd:${gan_mode_options[${training.gan_mode}][disc]},${models.disc.additional_losses_list}}
-    additional_losses_list: []
+    additional_losses_list: ["histd"]
     optim:
       name: Adam
       params: ${optim_options[disc][${models.gen.optim.name}]}
@@ -51,7 +51,7 @@ optim_options:
       weight_decay: 1.0e-4
       betas: [0.9, 0.999]
     SGD:
-      lr: 2.e-4
+      lr: 3.0e-5
     RMSprop:
       lr: 2.e-4
     FakeOptimizer: {}
@@ -196,8 +196,8 @@ model_param_options:
     heads: 2
     dropout: 0.1
   disc_deeptree:
-    nodes: [6, 1]
-    features: [3, 20, 40]
+    nodes: [30, 6, 1]
+    features: [3, 3, 20, 40]
     n_cond: ${sum:${loader.cond_critic_features}}
     ffn_param:
       bias: False
