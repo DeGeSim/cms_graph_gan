@@ -21,23 +21,61 @@ class ExperimentOption:
 base_config = ExperimentConfig(
     OmegaConf.create(
         """
-project_name: jetnet150_ddt
 models:
   disc:
     name: disc_deeptree
+    additional_losses_list: ["histd"]
+    optim:
+      name: Adam
+    scheduler:
+      name: NullScheduler
+  gen:
+    additional_losses_list: ["feature_matching", "histg"]
+    scheduler:
+      name: NullScheduler
 model_param_options:
+  gen_deeptree:
+    pruning: cut
+    branching_param:
+      mode: "mat"
   disc_deeptree:
-    ffn_param:
-      norm: "spectral"
-    cnu_param:
-      norm: "spectral"
-    emb_param:
-      norm: "batchnorm"
-ffn:
-  norm: batchnorm
+      ffn_param:
+        bias: false
+        n_layers: 2
+        hidden_layer_size: 40
+        dropout: 0.0
+        norm: spectral
+      emb_param:
+        n_ftx_latent: 10
+      bipart_param:
+        n_heads: 4
+      critics_param:
+        n_ftx_latent: 4
+        n_ftx_global: 5
+        n_updates: 2
+training:
+  gan_mode: Hinge
+optim_options:
+  gen:
+    Adam:
+      lr: 1.0e-05
+      weight_decay: 1.0e-4
+      betas: [0.9, 0.999]
+  disc:
+    Adam:
+      lr: 3.0e-5
+      weight_decay: 1.0e-4
+      betas: [0.9, 0.999]
+loss_options:
+  feature_matching:
+    factor: 1.0e-1
+  histd:
+    factor: 1.0e-01
+  histg:
+    factor: 1.0e-01
     """
     ),
-    ["t150", "ddt", "bl6", "acdlvs"],
+    ["mad2scan"],
 )
 
 
@@ -57,83 +95,120 @@ exp_list: List[ExperimentConfig] = [base_config]
 
 
 # MSE vs Hinge
-# @add_option
-# def option_ganmode(exp_config: ExperimentConfig) -> Dict[str, DictConfig]:
-#     res = defaultdict(exp_config.config.copy)
-#     res["MSE"]
-#     res["Hinge"]["training"]["gan_mode"] = "Hinge"
-#     return res
-
-
 @add_option
-def option_gnorm(exp_config: ExperimentConfig) -> Dict[str, DictConfig]:
+def option_ganmode(exp_config: ExperimentConfig) -> Dict[str, DictConfig]:
     res = defaultdict(exp_config.config.copy)
-    res["gbwn"]["ffn"]["norm"] = "bwn"
-    res["gwn"]["ffn"]["norm"] = "weight"
-    res["gln"]["ffn"]["norm"] = "layernorm"
-    res["gsn"]["ffn"]["norm"] = "spectral"
+    res["W"]["training"]["gan_mode"] = "W"
     return res
 
 
 @add_option
-def option_cnorm(exp_config: ExperimentConfig) -> Dict[str, DictConfig]:
+def option_hist(exp_config: ExperimentConfig) -> Dict[str, DictConfig]:
     res = defaultdict(exp_config.config.copy)
-
-    res["cbn"]["model_param_options"]["disc_deeptree"]["ffn_param"][
-        "norm"
-    ] = "batchnorm"
-    res["cbn"]["model_param_options"]["disc_deeptree"]["cnu_param"][
-        "norm"
-    ] = "batchnorm"
-
-    res["cbwn"]["model_param_options"]["disc_deeptree"]["ffn_param"]["norm"] = "bwn"
-    res["cbwn"]["model_param_options"]["disc_deeptree"]["cnu_param"]["norm"] = "bwn"
-
-    res["cln"]["model_param_options"]["disc_deeptree"]["ffn_param"][
-        "norm"
-    ] = "layernorm"
-    res["cln"]["model_param_options"]["disc_deeptree"]["cnu_param"][
-        "norm"
-    ] = "layernorm"
-
-    res["cfsn"]["model_param_options"]["disc_deeptree"]["emb_param"][
-        "norm"
-    ] = "spectral"
-
+    res["gnoh"]["models"]["gen"]["additional_losses_list"] = ["feature_matching"]
+    res["dnoh"]["models"]["disc"]["additional_losses_list"] = []
+    res["noh"]["models"]["gen"]["additional_losses_list"] = ["feature_matching"]
+    res["noh"]["models"]["disc"]["additional_losses_list"] = []
     return res
 
 
 # @add_option
-# def option_swa(exp_config: ExperimentConfig) -> Dict[str, DictConfig]:
+# def option_gnorm(exp_config: ExperimentConfig) -> Dict[str, DictConfig]:
 #     res = defaultdict(exp_config.config.copy)
-#     res["SWA"]["models"]["gen"]["scheduler"]["name"] = "SWA"
-#     res["SWA"]["models"]["disc"]["scheduler"]["name"] = "SWA"
-#     res["noSWA"]
+#     res["gbwn"]["ffn"]["norm"] = "bwn"
+#     res["gwn"]["ffn"]["norm"] = "weight"
+#     res["gln"]["ffn"]["norm"] = "layernorm"
+#     res["gsn"]["ffn"]["norm"] = "spectral"
 #     return res
 
 
 # @add_option
-# def option_prune(exp_config: ExperimentConfig) -> Dict[str, DictConfig]:
+# def option_cnorm(exp_config: ExperimentConfig) -> Dict[str, DictConfig]:
 #     res = defaultdict(exp_config.config.copy)
-#     res["cut"]["model_param_options"]["gen_deeptree"]["pruning"] = "cut"
-#     res["topk"]["model_param_options"]["gen_deeptree"]["pruning"] = "topk"
+
+#     res["cbn"]["model_param_options"]["disc_deeptree"]["ffn_param"][
+#         "norm"
+#     ] = "batchnorm"
+#     res["cbn"]["model_param_options"]["disc_deeptree"]["cnu_param"][
+#         "norm"
+#     ] = "batchnorm"
+
+#     res["cbwn"]["model_param_options"]["disc_deeptree"]["ffn_param"]["norm"] = "bwn"
+#     res["cbwn"]["model_param_options"]["disc_deeptree"]["cnu_param"]["norm"] = "bwn"
+
+#     res["cln"]["model_param_options"]["disc_deeptree"]["ffn_param"][
+#         "norm"
+#     ] = "layernorm"
+#     res["cln"]["model_param_options"]["disc_deeptree"]["cnu_param"][
+#         "norm"
+#     ] = "layernorm"
+
+#     res["cfsn"]["model_param_options"]["disc_deeptree"]["emb_param"][
+#         "norm"
+#     ] = "spectral"
+
 #     return res
 
 
-# @add_option
-# def option_eqv(exp_config: ExperimentConfig) -> Dict[str, DictConfig]:
-#     res = defaultdict(exp_config.config.copy)
-#     res["eqv"]["model_param_options"]["gen_deeptree"]["equivar"] = True
-#     res["noeqv"]["model_param_options"]["gen_deeptree"]["equivar"] = False
-#     return res
+@add_option
+def option_branching(exp_config: ExperimentConfig) -> Dict[str, DictConfig]:
+    res = defaultdict(exp_config.config.copy)
+
+    # topk
+    res["tkmat"]["model_param_options"]["gen_deeptree"]["pruning"] = "topk"
+    res["tkmat"]["model_param_options"]["gen_deeptree"]["branching_param"][
+        "mode"
+    ] = "mat"
+
+    res["tkeqv"]["model_param_options"]["gen_deeptree"]["pruning"] = "topk"
+    res["tkeqv"]["model_param_options"]["gen_deeptree"]["branching_param"][
+        "mode"
+    ] = "equivar"
+
+    res["tknoise"]["model_param_options"]["gen_deeptree"]["pruning"] = "topk"
+    res["tknoise"]["model_param_options"]["gen_deeptree"]["branching_param"][
+        "mode"
+    ] = "noise"
+
+    # cut
+
+    res["cuteqv"]["model_param_options"]["gen_deeptree"]["branching_param"][
+        "mode"
+    ] = "equivar"
+
+    res["cutnoise"]["model_param_options"]["gen_deeptree"]["branching_param"][
+        "mode"
+    ] = "noise"
+
+    return res
 
 
-# @add_option
-# def option_beta(exp_config: ExperimentConfig) -> Dict[str, DictConfig]:
-#     res = defaultdict(exp_config.config.copy)
-#     res["dbeta1"]["optim_options"]["disc"]["Adam"]["betas"] = [0.9, 0.999]
-#     res["dbeta2"]["optim_options"]["disc"]["Adam"]["betas"] = [0.0, 0.9]
-#     return res
+@add_option
+def option_beta(exp_config: ExperimentConfig) -> Dict[str, DictConfig]:
+    res = defaultdict(exp_config.config.copy)
+    res["dnomom"]["optim_options"]["disc"]["Adam"]["betas"] = [0.0, 0.9]
+    res["dSGD"]["models"]["disc"]["optim"]["name"] = "SGD"
+    return res
+
+
+@add_option
+def option_swa(exp_config: ExperimentConfig) -> Dict[str, DictConfig]:
+    res = defaultdict(exp_config.config.copy)
+    res["gCyclicLR"]["models"]["gen"]["scheduler"]["name"] = "CyclicLR"
+    res["gSWA"]["models"]["gen"]["scheduler"]["name"] = "SWA"
+    return res
+
+
+@add_option
+def option_glr(exp_config: ExperimentConfig) -> Dict[str, DictConfig]:
+    res = defaultdict(exp_config.config.copy)
+
+    res["glrhigh"]["optim_options"]["gen"]["Adam"]["lr"] *= 5
+    res["glrlow"]["optim_options"]["gen"]["Adam"]["lr"] /= 5
+
+    res["dlrhigh"]["optim_options"]["disc"]["Adam"]["lr"] *= 5
+    res["dlrlow"]["optim_options"]["disc"]["Adam"]["lr"] /= 5
+    return res
 
 
 # @add_option
