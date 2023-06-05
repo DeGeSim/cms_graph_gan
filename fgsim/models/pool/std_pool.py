@@ -1,13 +1,8 @@
 from typing import Optional
 
 import torch
-import torch_geometric
 from torch import Tensor
-
-# def global_std_pool(x: Tensor, batch: Tensor, size: Optional[int] = None) -> Tensor:
-#     dim = -1 if x.dim() == 1 else -2
-#     size = int(batch.max().item() + 1) if size is None else size
-#     return torch_scatter.scatter_std(x, batch, dim=dim, dim_size=size)
+from torch_geometric.nn import pool
 
 
 def global_mad_pool(x: Tensor, batchidx: Optional[Tensor] = None) -> tuple[Tensor]:
@@ -17,9 +12,9 @@ def global_mad_pool(x: Tensor, batchidx: Optional[Tensor] = None) -> tuple[Tenso
         if batchidx is None:
             raise Exception
         counts = batchidx.unique(sorted=True, return_counts=True)[1].reshape(-1, 1)
-        means = torch_geometric.nn.global_mean_pool(x, batchidx)
+        means = pool.global_mean_pool(x, batchidx)
         deltas = (means[batchidx] - x).abs()
-        widths = torch_geometric.nn.global_mean_pool(deltas, batchidx)
+        widths = pool.global_mean_pool(deltas, batchidx)
     else:
         means = x.mean(1)
         counts = torch.ones_like(means[..., [0]]) * len(means)
@@ -28,10 +23,36 @@ def global_mad_pool(x: Tensor, batchidx: Optional[Tensor] = None) -> tuple[Tenso
     return counts, means, widths
 
 
+def global_mad_pool2(x: Tensor, batchidx: Optional[Tensor] = None) -> tuple[Tensor]:
+    if x.dim() not in (2, 3):
+        raise Exception
+    if x.dim() == 2:
+        if batchidx is None:
+            raise Exception
+
+        sums = pool.global_add_pool(x, batchidx)
+        maxs = pool.global_max_pool(x, batchidx)
+        counts = batchidx.unique(sorted=True, return_counts=True)[1].reshape(-1, 1)
+
+        # MAE
+        means = sums / counts
+        deltas = (means[batchidx] - x).abs()
+        widths = pool.global_mean_pool(deltas, batchidx)
+    else:
+        sums = x.sum(1)
+        maxs = x.max(1).values
+        counts = torch.ones_like(sums[..., [0]]) * len(sums)
+
+        # MAE
+        means = sums / counts
+        widths = (x - means.unsqueeze(1).repeat(1, x.shape[1], 1)).abs().mean(1)
+    return counts, sums, widths, maxs
+
+
 def global_var_pool(x: Tensor, batchidx: Tensor) -> Tensor:
-    means = torch_geometric.nn.global_mean_pool(x, batchidx)
+    means = pool.global_mean_pool(x, batchidx)
     deltas = torch.pow(means[batchidx] - x, 2)
-    return torch_geometric.nn.global_mean_pool(deltas, batchidx)
+    return pool.global_mean_pool(deltas, batchidx)
 
 
 def global_std_pool(x: Tensor, batchidx: Tensor) -> Tensor:
