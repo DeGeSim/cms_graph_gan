@@ -23,6 +23,6 @@ class LossGen:
 
             yhat = g
             yphat = (yhat - mean) / (std + 1e-4)
-            loss = (yp - yphat).square().mean()
+            loss = (yp - yphat).abs().mean()
             loss_list.append(loss.clone())
         return sum(loss_list)
