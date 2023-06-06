@@ -2,9 +2,9 @@ from dataclasses import dataclass
 
 import torch
 from torch.autograd import grad
-from torch_geometric.data import Batch, Data
+from torch_geometric.data import Batch
 
-from fgsim.config import device
+from fgsim.config import conf, device
 from fgsim.ml.holder import Holder
 
 
@@ -22,20 +22,29 @@ class LossGen:
     def __call__(
         self, holder: Holder, sim_batch: Batch, gen_batch: Batch, **kwargs
     ) -> torch.float:
-        interpol_events = [
-            Data(x=interpol_pcs(gen_batch[ievent].x, sim_batch[ievent].x))
-            for ievent in range(sim_batch.num_graphs)
-        ]
+        # interpolate
+        # interpol_events = [
+        #     Data(x=interpol_pcs(gen_batch[ievent].x, sim_batch[ievent].x))
+        #     for ievent in range(sim_batch.num_graphs)
+        # ]
+        # interpol_batch = Batch.from_data_list(interpol_events)
+        alpha = torch.rand_like(sim_batch.x, requires_grad=True)
+        interpol_batch = gen_batch.clone()
+        interpol_batch.x = gen_batch.x * alpha + sim_batch.x * alpha
 
-        interpol_batch = Batch.from_data_list(interpol_events)
+        cond_critic_features = conf.loader.cond_critic_features
+        batch_size = sim_batch.num_graphs
+        cond_critic = torch.empty((batch_size, 0)).float().to(device)
+        if sum(cond_critic_features) > 0:
+            cond_critic = sim_batch.y[..., cond_critic_features]
 
         # compute output of D for interpolated input
-        disc_interpolates = holder.models.disc(interpol_batch, sim_batch.y)
+        disc_interpolates = holder.models.disc(interpol_batch, cond_critic)["crit"]
         # compute gradients w.r.t the interpolated outputs
-        inputs = [e.x for e in interpol_events]
+        # inputs = [e.x for e in interpol_batch.to_data_list()]
         grads = grad(
             outputs=disc_interpolates,  # disc output
-            inputs=inputs,
+            inputs=interpol_batch.x,
             grad_outputs=torch.ones(
                 disc_interpolates.size(), device=device
             ),  # I dont understand this
@@ -43,7 +52,7 @@ class LossGen:
             create_graph=True,
             allow_unused=False,
         )
-        assert grads[0].shape == inputs[0].shape
+        assert grads[0].shape == interpol_batch.x.shape
         l2s = torch.stack([g.norm(2) for g in grads])
 
         gradient_penalty = (((l2s - self.gamma) / self.gamma) ** 2).mean()
