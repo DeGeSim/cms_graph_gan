@@ -12,8 +12,10 @@ class LossGen:
         **kwargs,
     ):
         assert kwargs["gen_batch"].x.requires_grad
-        loss_list = []
-        for ifeature, (g, s) in enumerate(zip(gen_latftx, sim_latftx)):
+        loss_d = {}
+        for key_ftx in gen_latftx:
+            g = gen_latftx[key_ftx]
+            s = sim_latftx[key_ftx]
             assert g.requires_grad
             assert not s.requires_grad
             y = s.detach()
@@ -24,5 +26,6 @@ class LossGen:
             yhat = g
             yphat = (yhat - mean) / (std + 1e-4)
             loss = (yp - yphat).abs().mean()
-            loss_list.append(loss.clone())
-        return sum(loss_list)
+            loss_d[key_ftx] = loss.clone()
+
+        return loss_d
