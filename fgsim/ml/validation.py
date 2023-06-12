@@ -29,9 +29,10 @@ def validate(holder: Holder, loader: QueuedDataset) -> None:
         for k, val in holder.pass_batch_through_model(val_batch, eval=True).items():
             if k in ["sim_batch", "gen_batch"]:
                 for e in val.to_data_list():
-                    res_d_l[k].append(e)
+                    res_d_l[k].append(e.detach().cpu())
             elif k in ["sim_crit", "gen_crit"]:
-                res_d_l[k].append(val)
+                res_d_l[k].append(val.detach().cpu())
+    logger.debug("Validation batches created")
     sim_crit = torch.vstack(res_d_l["sim_crit"])
     gen_crit = torch.vstack(res_d_l["gen_crit"])
 
