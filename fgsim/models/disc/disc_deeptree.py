@@ -66,30 +66,27 @@ class ModelClass(nn.Module):
         x: torch.Tensor
         x, batchidx = batch.x, batch.batch
 
-        x_lat_list = []
+        x_lat_dict = {"input": torch.hstack(global_mad_pool(x, batchidx)[1:])}
         score_List = []
 
         for ilevel in range(self.n_levels + 1):
-            # aggregate latent space features
             assert not x.isnan().any()
-
-            # aggregate latent space features
-            if ilevel == 0:
-                x_lat_list.append(torch.hstack(global_mad_pool(x, batchidx)[1:]))
-            else:
-                x_lat_list.append(x)
 
             score_List.append(self.pcdiscs[ilevel](x, batchidx, condition).clone())
 
             if ilevel == self.n_levels:
                 break
             x = self.embeddings[ilevel](x, batchidx)
+            # aggregate latent space features
+            x_lat_dict[f"lvl{ilevel}_emb"] = x
 
             x, _, _, batchidx, _, _ = self.pools[ilevel](
                 x=x.clone(),
                 edge_index=torch.empty(2, 0, dtype=torch.long, device=x.device),
                 batch=batchidx,
             )
+            x_lat_dict[f"lvl{ilevel}_pool"] = x
+
             assert x.shape == (
                 conf.loader.batch_size,
                 self.pools[ilevel].ratio,
@@ -98,7 +95,7 @@ class ModelClass(nn.Module):
 
         return {
             "crit": torch.vstack(score_List),
-            "latftx": x_lat_list,
+            "latftx": x_lat_dict,
         }
 
 
