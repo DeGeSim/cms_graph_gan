@@ -29,7 +29,7 @@ class ModelClass(nn.Module):
         self.n_cond = n_cond
 
         self.n_levels = len(self.nodes)
-
+        self.n_heads = bipart_param["n_heads"]
         self.embeddings = nn.ModuleList()
         self.pools = nn.ModuleList()
         self.pcdiscs = nn.ModuleList()
@@ -37,8 +37,12 @@ class ModelClass(nn.Module):
         for ilevel in range(self.n_levels):
             self.embeddings.append(
                 Embedding(
-                    n_ftx_in=self.features[ilevel],
-                    n_ftx_out=self.features[ilevel + 1],
+                    n_ftx_in=(
+                        self.features[ilevel] * self.n_heads
+                        if ilevel != 0
+                        else self.features[ilevel]
+                    ),
+                    n_ftx_out=self.features[ilevel + 1] * self.n_heads,
                     ffn_param=ffn_param,
                     cnu_param=cnu_param,
                     **emb_param,
@@ -54,7 +58,11 @@ class ModelClass(nn.Module):
         for ilevel in range(self.n_levels + 1):
             self.pcdiscs.append(
                 TSumTDisc(
-                    n_ftx=self.features[ilevel],
+                    n_ftx=(
+                        self.features[ilevel] * self.n_heads
+                        if ilevel != 0
+                        else self.features[ilevel]
+                    ),
                     n_cond=n_cond,
                     ffn_param=ffn_param,
                     cnu_param=cnu_param,
@@ -90,7 +98,7 @@ class ModelClass(nn.Module):
             assert x.shape == (
                 conf.loader.batch_size,
                 self.pools[ilevel].ratio,
-                self.features[ilevel + 1],
+                self.features[ilevel + 1] * self.n_heads,
             )
 
         return {
@@ -100,57 +108,82 @@ class ModelClass(nn.Module):
 
 
 class BipartPool(nn.Module):
-    def __init__(self, *, in_channels, ratio, n_heads) -> None:
+    def __init__(self, *, in_channels, ratio, n_heads, mode) -> None:
         super().__init__()
         self.in_channels = in_channels
         self.ratio = ratio
         self.n_heads = n_heads
+        self.mode = mode
+        assert self.mode in ["attn", "mpl"]
 
         self.xcent_base = nn.Parameter(
-            torch.normal(0, 1, size=(self.ratio, self.in_channels))
+            torch.normal(0, 1, size=(self.ratio, self.in_channels * self.n_heads))
         )
 
-        self.mpl = GATv2MinConv(
-            in_channels=in_channels,
-            out_channels=in_channels,
-            heads=self.n_heads,
-            concat=False,
-        )
+        if self.mode == "attn":
+            self.attn = torch.nn.MultiheadAttention(
+                embed_dim=self.in_channels * self.n_heads, num_heads=self.n_heads
+            )
+            mask = ~(
+                torch.eye(conf.loader.batch_size)
+                .repeat_interleave(self.ratio, 1)
+                .bool()
+            )
+            self.register_buffer("mask", mask, persistent=True)
+        else:
+            self.mpl = GATv2MinConv(
+                in_channels=in_channels * self.n_heads,
+                out_channels=in_channels,
+                heads=self.n_heads,
+                concat=True,
+            )
 
     def forward(self, x: Tensor, edge_index: Tensor, batch: Tensor):
         batch_size = int(batch[-1] + 1)
         n_features = x.shape[-1]
-        if x.dim() == 3:
-            x = x.reshape(x.shape[0] * x.shape[1], x.shape[-1])
-        source_graph_size = len(x)
+        x_aggrs = self.xcent_base.repeat(batch_size, 1)
 
-        source = torch.arange(
-            source_graph_size, device=x.device, dtype=torch.long
-        ).repeat_interleave(self.ratio)
+        if self.mode == "attn":
+            x_large = x.reshape(-1, n_features)  # self.ln_up()
 
-        target = torch.arange(self.ratio, device=x.device, dtype=torch.long).repeat(
-            source_graph_size
-        )
-        # shift for the batchidx
-        target += batch.repeat_interleave(self.ratio) * self.ratio
-        # assert len(source) == len(target) == source_graph_size * self.ratio
-        # assert ((0 <= source) & (source < source_graph_size)).all()
-        # assert ((0 <= target) & (target < target_graph_size)).all()
-        # assert max(source) + 1 == source_graph_size
-        # assert max(target) + 1 == target_graph_size
-        # tcounts = (
-        #     target.unique(return_counts=True)[1].reshape(batch_size, self.ratio).T
-        # )
-        # assert (tcounts[0] == tcounts).all()
+            attn_output, _ = self.attn(
+                x_aggrs, x_large, x_large, attn_mask=self.mask[batch].T
+            )
+            xcent = attn_output
 
-        ei_o2c = torch.vstack([source, target])
+        else:
+            if x.dim() == 3:
+                x = x.reshape(x.shape[0] * x.shape[1], x.shape[-1])
+            source_graph_size = len(x)
 
-        xcent = self.mpl(
-            x=(x, self.xcent_base.repeat(batch_size, 1)),
-            edge_index=ei_o2c,
-            # edge_attr=torch.ones_like(source).reshape(-1, 1),
-            # size=(x.shape[0], self.xcent_base.shape[0] * batch_size),
-        )
+            source = torch.arange(
+                source_graph_size, device=x.device, dtype=torch.long
+            ).repeat_interleave(self.ratio)
+
+            target = torch.arange(
+                self.ratio, device=x.device, dtype=torch.long
+            ).repeat(source_graph_size)
+            # shift for the batchidx
+            target += batch.repeat_interleave(self.ratio) * self.ratio
+            # assert len(source) == len(target) == source_graph_size * self.ratio
+            # assert ((0 <= source) & (source < source_graph_size)).all()
+            # assert ((0 <= target) & (target < target_graph_size)).all()
+            # assert max(source) + 1 == source_graph_size
+            # assert max(target) + 1 == target_graph_size
+            # tcounts = (
+            #     target.unique(return_counts=True)[1]
+            #     .reshape(batch_size, self.ratio).T
+            # )
+            # assert (tcounts[0] == tcounts).all()
+
+            ei_o2c = torch.vstack([source, target])
+
+            xcent = self.mpl(
+                x=(x, x_aggrs),
+                edge_index=ei_o2c,
+                # edge_attr=torch.ones_like(source).reshape(-1, 1),
+                # size=(x.shape[0], self.xcent_base.shape[0] * batch_size),
+            )
         self.batchcent = torch.arange(
             batch_size, device=x.device, dtype=torch.long
         ).repeat_interleave(self.ratio)
@@ -183,7 +216,7 @@ class TSumTDisc(nn.Module):
             [
                 CentralNodeUpdate(
                     n_ftx_in=n_ftx,
-                    n_ftx_latent=n_ftx_latent,
+                    n_ftx_latent=n_ftx,
                     n_global=n_ftx_global,
                     **cnu_param,
                     ffn_param=ffn_param,

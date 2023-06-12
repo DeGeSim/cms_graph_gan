@@ -212,6 +212,7 @@ model_param_options:
       norm: "batchnorm"
     bipart_param:
       n_heads: 4
+      mode: "mpl"
     critics_param:
       n_ftx_latent: 4
       n_ftx_global: 5
