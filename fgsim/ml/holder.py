@@ -55,6 +55,8 @@ class Holder:
         self.models: SubNetworkCollector = SubNetworkCollector(conf.models)
         # For SWA the models need to be on the right device before initializing
         self.models = self.models.float().to(device)
+        # if not conf.debug:
+        #     self.models = torch.compile(self.models)
         self.train_log.log_model_graph(self.models)
         self.swa_models = {
             # k: AveragedModel(v) for k, v in self.models.parts.items()
@@ -233,10 +235,10 @@ class Holder:
         batch_size = conf.loader.batch_size
         cond_gen_features = conf.loader.cond_gen_features
         cond_critic_features = conf.loader.cond_critic_features
-        # if eval:
-        #     self.models.eval()
-        # else:
-        #     self.models.train()
+        if eval:
+            self.models.eval()
+        else:
+            self.models.train()
 
         if eval and conf["models"]["gen"]["scheduler"]["name"] == "SWA":
             gen = self.swa_models["gen"]
