@@ -1,3 +1,4 @@
+import math
 from typing import List, Optional
 
 from torch import nn
@@ -19,6 +20,7 @@ class FFN(nn.Module):
         final_linear: bool = False,
         bias: bool = False,
         hidden_layer_size: Optional[int] = None,
+        equallr: Optional[bool] = None,
     ) -> None:
         if norm is None:
             norm = conf.ffn.norm
@@ -37,6 +39,12 @@ class FFN(nn.Module):
             activation = conf.ffn.activation
         if weight_init_method is None:
             weight_init_method = conf.ffn.weight_init_method
+
+        if equallr is None:
+            equallr = conf.ffn.equallr
+
+        if equallr and norm in ["spectral", "weight", "bwn"]:
+            raise RuntimeError()
 
         def activation_function():
             return getattr(nn, activation)(
@@ -67,7 +75,12 @@ class FFN(nn.Module):
                     init_factor=0.5,
                 )
             else:
-                m = nn.Linear(features[ilayer], features[ilayer + 1], bias=bias)
+                if equallr:
+                    m = EqualLinear(
+                        features[ilayer], features[ilayer + 1], bias=bias
+                    )
+                else:
+                    m = nn.Linear(features[ilayer], features[ilayer + 1], bias=bias)
                 if norm == "spectral":
                     m = nn.utils.parametrizations.spectral_norm(m)
                 elif norm == "weight":
@@ -102,7 +115,8 @@ class FFN(nn.Module):
         self.hidden_layer_size = hidden_layer_size
         self.activation = activation
         self.bias = bias
-        self.reset_parameters()
+        if not equallr:
+            self.reset_parameters()
 
     def forward(self, x):
         oldshape = x.shape
@@ -159,3 +173,50 @@ class FFN(nn.Module):
                     )
             else:
                 pass
+
+
+class EqualLR:
+    def __init__(self, name):
+        self.name = name
+
+    def compute_weight(self, module):
+        weight = getattr(module, self.name + "_orig")
+        fan_in = weight.data.size(1) * weight.data[0][0].numel()
+
+        return weight * math.sqrt(2 / fan_in)
+
+    @staticmethod
+    def apply(module, name):
+        fn = EqualLR(name)
+
+        weight = getattr(module, name)  # 1
+        del module._parameters[name]
+        module.register_parameter(name + "_orig", nn.Parameter(weight.data))
+        module.register_forward_pre_hook(fn)  # 2
+
+        return fn
+
+    def __call__(self, module, input):  # 3
+        weight = self.compute_weight(module)  # 4
+        setattr(module, self.name, weight)  # 5
+
+
+def equal_lr(module, name="weight"):
+    EqualLR.apply(module, name)
+
+    return module
+
+
+class EqualLinear(nn.Module):
+    def __init__(self, in_dim, out_dim, bias):
+        super().__init__()
+
+        linear = nn.Linear(in_dim, out_dim, bias=bias)
+        linear.weight.data.normal_()
+        if bias:
+            linear.bias.data.zero_()
+
+        self.linear = equal_lr(linear)
+
+    def forward(self, input):
+        return self.linear(input)

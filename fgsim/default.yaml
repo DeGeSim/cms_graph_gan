@@ -109,6 +109,7 @@ ffn:
   weight_init_method: default
   norm: batchnorm
   dropout: 0.0
+  equallr: false
 
 layer_options:
   DeepConv:
@@ -205,6 +206,7 @@ model_param_options:
       hidden_layer_size: 40
       dropout: 0.0
       norm: "spectral"
+      equallr: false
     cnu_param:
       norm: "spectral"
     emb_param:
