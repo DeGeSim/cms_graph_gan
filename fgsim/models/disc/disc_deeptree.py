@@ -30,12 +30,12 @@ class ModelClass(nn.Module):
 
         self.n_levels = len(self.nodes)
         self.n_heads = bipart_param["n_heads"]
-        self.embeddings = nn.ModuleList()
+        self.embs = nn.ModuleList()
         self.pools = nn.ModuleList()
-        self.pcdiscs = nn.ModuleList()
+        self.critics = nn.ModuleList()
 
         for ilevel in range(self.n_levels):
-            self.embeddings.append(
+            self.embs.append(
                 Embedding(
                     n_ftx_in=(
                         self.features[ilevel] * self.n_heads
@@ -56,7 +56,7 @@ class ModelClass(nn.Module):
                 )
             )
         for ilevel in range(self.n_levels + 1):
-            self.pcdiscs.append(
+            self.critics.append(
                 TSumTDisc(
                     n_ftx=(
                         self.features[ilevel] * self.n_heads
@@ -80,11 +80,11 @@ class ModelClass(nn.Module):
         for ilevel in range(self.n_levels + 1):
             assert not x.isnan().any()
 
-            score_List.append(self.pcdiscs[ilevel](x, batchidx, condition).clone())
+            score_List.append(self.critics[ilevel](x, batchidx, condition).clone())
 
             if ilevel == self.n_levels:
                 break
-            x = self.embeddings[ilevel](x, batchidx)
+            x = self.embs[ilevel](x, batchidx)
             # aggregate latent space features
             x_lat_dict[f"lvl{ilevel}_emb"] = x
 
@@ -116,7 +116,7 @@ class BipartPool(nn.Module):
         self.mode = mode
         assert self.mode in ["attn", "mpl"]
 
-        self.xcent_base = nn.Parameter(
+        self.aggrs = nn.Parameter(
             torch.normal(0, 1, size=(self.ratio, self.in_channels * self.n_heads))
         )
 
@@ -137,11 +137,13 @@ class BipartPool(nn.Module):
                 heads=self.n_heads,
                 concat=True,
             )
+            batchcent = torch.arange(conf.loader.batch_size, dtype=torch.long)
+            self.register_buffer("batchcent", batchcent, persistent=True)
 
     def forward(self, x: Tensor, edge_index: Tensor, batch: Tensor):
-        batch_size = int(batch[-1] + 1)
+        batch_size = conf.loader.batch_size
         n_features = x.shape[-1]
-        x_aggrs = self.xcent_base.repeat(batch_size, 1)
+        x_aggrs = self.aggrs.repeat(batch_size, 1)
 
         if self.mode == "attn":
             x_large = x.reshape(-1, n_features)  # self.ln_up()
@@ -182,16 +184,14 @@ class BipartPool(nn.Module):
                 x=(x, x_aggrs),
                 edge_index=ei_o2c,
                 # edge_attr=torch.ones_like(source).reshape(-1, 1),
-                # size=(x.shape[0], self.xcent_base.shape[0] * batch_size),
+                # size=(x.shape[0], self.aggrs.shape[0] * batch_size),
             )
-        self.batchcent = torch.arange(
-            batch_size, device=x.device, dtype=torch.long
-        ).repeat_interleave(self.ratio)
+
         return (
             xcent.reshape(batch_size, self.ratio, n_features),
             None,
             None,
-            self.batchcent,
+            self.batchcent.repeat_interleave(self.ratio),
             None,
             None,
         )
@@ -240,24 +240,24 @@ class CentralNodeUpdate(nn.Module):
     def __init__(self, n_ftx_in, n_ftx_latent, norm, n_global, ffn_param) -> None:
         super().__init__()
         ffn_param = ffn_param | {"norm": norm}
-        self.emb_nn = FFN(n_ftx_in, n_ftx_latent, **ffn_param)
-        self.global_nn = FFN(1 + n_ftx_latent * 3, n_global, **ffn_param)
-        self.out_nn = FFN(
+        self.emb = FFN(n_ftx_in, n_ftx_latent, **ffn_param)
+        self.glob = FFN(1 + n_ftx_latent * 3, n_global, **ffn_param)
+        self.out = FFN(
             n_ftx_latent + n_global, n_ftx_in, final_linear=True, **ffn_param
         )
 
     def forward(self, x, batch=None):
-        x = self.emb_nn(x)
+        x = self.emb(x)
 
         x_glob = torch.hstack(global_mad_pool(x, batch))
 
-        x_global = self.global_nn(x_glob)
+        x_global = self.glob(x_glob)
         if x.dim() == 2:
             ten_l = [x, x_global[batch]]
         else:
             ten_l = [x, x_global[batch].reshape(x.shape[0], x.shape[1], -1)]
 
-        x = self.out_nn(torch.concat(ten_l, dim=-1))
+        x = self.out(torch.concat(ten_l, dim=-1))
         return x
 
 
@@ -285,7 +285,7 @@ class Embedding(nn.Module):
         #     n_cond=5,
         #     n_mpl=2,
         # )
-        self.inp_emb = FFN(
+        self.inemb = FFN(
             self.n_ftx_in,
             self.n_ftx_out,
             **(ffn_param | {"bias": True, "norm": norm}),
@@ -303,7 +303,7 @@ class Embedding(nn.Module):
         # x = self.space_emb(x)
         # ei = knn_graph(x[..., : self.n_ftx_space], batch=batch, k=5)
         # x = self.mpls(x=x, edge_index=ei, batch=batch, cond=condition)
-        x = self.inp_emb(x)
+        x = self.inemb(x)
         x = self.cnu(x.clone(), batch) + x.clone()
         return x
 

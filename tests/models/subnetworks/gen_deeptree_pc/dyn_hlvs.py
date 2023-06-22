@@ -14,16 +14,16 @@ def test_dyn_hlvs_compute_graph(static_objects: DTColl):
       branching_layer (BranchingLayer): The branching layer to test.
       global_features (torch.Tensor): torch.Tensor
     """
-    graph, tree, cond, branching_layers, dyn_hlvs_layer = (
+    graph, tree, cond, branchings, dyn_hlvs_layer = (
         static_objects.graph,
         static_objects.tree,
         static_objects.cond,
-        static_objects.branching_layers,
+        static_objects.branchings,
         static_objects.dyn_hlvs_layer,
     )
     tftx_copy = graph.tftx.requires_grad_()
 
-    new_graph1 = branching_layers[0](graph, cond)
+    new_graph1 = branchings[0](graph, cond)
     new_global_features = dyn_hlvs_layer(
         x=new_graph1.tftx, cond=cond, batch=tree.tbatch_by_level[1]
     )
@@ -42,7 +42,7 @@ def test_dyn_hlvs_compute_graph2(static_objects: DTColl):
         static_objects.graph,
         static_objects.tree,
         static_objects.cond,
-        static_objects.branching_layers,
+        static_objects.branchings,
         static_objects.dyn_hlvs_layer,
     )
     tftx_copy = graph.tftx.requires_grad_()

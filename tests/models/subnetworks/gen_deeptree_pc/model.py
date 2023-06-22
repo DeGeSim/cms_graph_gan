@@ -5,18 +5,18 @@ from torch_geometric.nn.conv import GINConv
 
 
 def test_GlobalFeedBackNN_ancestor_conv(static_objects: DTColl):
-    graph, tree, cond, branching_layers, dyn_hlvs_layer, ancestor_conv_layer = (
+    graph, tree, cond, branchings, dyn_hlvs_layer, ancestor_conv_layer = (
         static_objects.graph,
         static_objects.tree,
         static_objects.cond,
-        static_objects.branching_layers,
+        static_objects.branchings,
         static_objects.dyn_hlvs_layer,
         static_objects.ancestor_conv_layer,
     )
     n_global = static_objects.props["n_global"]
     n_levels = static_objects.props["n_levels"]
     for ilevel in range(n_levels - 1):
-        graph = branching_layers[ilevel](graph, cond)
+        graph = branchings[ilevel](graph, cond)
         # ### Global
         graph.global_features = dyn_hlvs_layer(
             x=graph.tftx, cond=cond, batch=tree.tbatch_by_level[ilevel + 1]
@@ -33,11 +33,11 @@ def test_GlobalFeedBackNN_ancestor_conv(static_objects: DTColl):
 
 
 def test_GlobalFeedBackNN_GINConv(static_objects: DTColl):
-    graph, tree, cond, branching_layers, dyn_hlvs_layer, _ = (
+    graph, tree, cond, branchings, dyn_hlvs_layer, _ = (
         static_objects.graph,
         static_objects.tree,
         static_objects.cond,
-        static_objects.branching_layers,
+        static_objects.branchings,
         static_objects.dyn_hlvs_layer,
         static_objects.ancestor_conv_layer,
     )
@@ -51,7 +51,7 @@ def test_GlobalFeedBackNN_GINConv(static_objects: DTColl):
     )
 
     for ilevel in range(n_levels - 1):
-        graph = branching_layers[ilevel](graph, cond)
+        graph = branchings[ilevel](graph, cond)
         # ### Global
         global_features = dyn_hlvs_layer(
             x=graph.tftx, cond=cond, batch=tree.tbatch_by_level[ilevel + 1]
@@ -78,18 +78,18 @@ def test_full_NN_compute_graph(static_objects: DTColl):
     """
     torch.autograd.set_detect_anomaly(True)
 
-    graph, tree, cond, branching_layers, dyn_hlvs_layer, ancestor_conv_layer = (
+    graph, tree, cond, branchings, dyn_hlvs_layer, ancestor_conv_layer = (
         static_objects.graph,
         static_objects.tree,
         static_objects.cond,
-        static_objects.branching_layers,
+        static_objects.branchings,
         static_objects.dyn_hlvs_layer,
         static_objects.ancestor_conv_layer,
     )
     n_global = static_objects.props["n_global"]
     n_levels = static_objects.props["n_levels"]
 
-    tree_lists = branching_layers[0].tree.tree_lists
+    tree_lists = branchings[0].tree.tree_lists
     zero_feature = torch.zeros_like(graph.tftx[0])
     x_old = graph.tftx
     for ilevel in range(n_levels - 1):
@@ -98,7 +98,7 @@ def test_full_NN_compute_graph(static_objects: DTColl):
         )
         assert graph.global_features.shape[1] == n_global
 
-        graph = branching_layers[ilevel](graph, cond)
+        graph = branchings[ilevel](graph, cond)
         graph.tftx = ancestor_conv_layer(
             x=graph.tftx,
             cond=cond,
@@ -213,7 +213,7 @@ def test_full_modelparts_grad():
             check_z()
             graph_tree.global_features[1, :].sum().backward(retain_graph=True)
             check_cond()
-        graph_tree = model.branching_layers[ilevel](graph_tree, cond)
+        graph_tree = model.branchings[ilevel](graph_tree, cond)
 
         graph_tree.tftx[[tree.tbatch_by_level[ilevel + 1] == 1]].sum().backward(
             retain_graph=True
@@ -226,7 +226,7 @@ def test_full_modelparts_grad():
         edge_index = model.tree.ancestor_ei(ilevel + 1)
         edge_attr = model.tree.ancestor_ea(ilevel + 1)
 
-        graph_tree.tftx = model.ancestor_conv_layers[ilevel](
+        graph_tree.tftx = model.ac_mpl[ilevel](
             x=graph_tree.tftx,
             cond=cond,
             edge_index=edge_index,

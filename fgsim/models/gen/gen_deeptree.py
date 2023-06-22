@@ -65,7 +65,7 @@ class ModelClass(nn.Module):
             features=self.features,
         )
 
-        self.branching_layers: nn.ModuleList[BranchingLayer] = nn.ModuleList(
+        self.branchings: nn.ModuleList[BranchingLayer] = nn.ModuleList(
             [
                 BranchingLayer(
                     tree=self.tree,
@@ -103,7 +103,7 @@ class ModelClass(nn.Module):
         # )
 
         if self.ancestor_mpl["n_mpl"] > 0:
-            self.ancestor_conv_layers = nn.ModuleList(
+            self.ac_mpl = nn.ModuleList(
                 [
                     self.wrap_layer_init(ilevel, type="ac")
                     for ilevel in range(n_levels - 1)
@@ -125,12 +125,12 @@ class ModelClass(nn.Module):
         self.presaved_batch: Optional[Batch] = None
         self.presaved_batch_indexing: Optional[torch.Tensor] = None
 
-        # self.ancestor_conv_layers[-1].mpls[-1].nn.seq[-1].register_backward_hook(
+        # self.ac_mpl[-1].mpls[-1].nn.seq[-1].register_backward_hook(
         #     lambda m, go, gi: logger.debug(
         #         f"grad: ac abs mean {gi[0].abs().mean():.0e} std {gi[0].std():.0e}"
         #     )
         # )
-        # self.branching_layers[0].proj_nn.seq[-1].register_backward_hook(
+        # self.branchings[0].proj_nn.seq[-1].register_backward_hook(
         #     lambda m, go, gi: logger.debug(
         #         f"grad: br abs mean {gi[0].abs().mean():.0e} std {gi[0].std():.0e}"
         #     )
@@ -203,7 +203,7 @@ class ModelClass(nn.Module):
             )
 
             # Branch the leaves
-            graph_tree = self.branching_layers[ilevel](graph_tree, cond)
+            graph_tree = self.branchings[ilevel](graph_tree, cond)
             check_tensor(graph_tree.tftx)
 
             # Assign the new indices for the updated tree
@@ -233,7 +233,7 @@ class ModelClass(nn.Module):
             # )
 
             if self.ancestor_mpl["n_mpl"] > 0:
-                graph_tree.tftx = self.ancestor_conv_layers[ilevel](
+                graph_tree.tftx = self.ac_mpl[ilevel](
                     x=graph_tree.tftx,
                     cond=cond,
                     edge_index=edge_index,

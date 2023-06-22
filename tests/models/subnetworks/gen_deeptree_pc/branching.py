@@ -18,25 +18,25 @@ def test_BranchingLayer_compute_graph(branching_objects: DTColl):
     is nonzero for the root of the event we apply the `backwards()` on.
     Args:
       graph (Data): The original graph.
-      branching_layers[0] (BranchingLayer): The branching layer to test.
+      branchings[0] (BranchingLayer): The branching layer to test.
       global_features (torch.Tensor): torch.Tensor
     """
-    graph, tree, cond, branching_layers, _, _ = (
+    graph, tree, cond, branchings, _, _ = (
         branching_objects.graph,
         branching_objects.tree,
         branching_objects.cond,
-        branching_objects.branching_layers,
+        branching_objects.branchings,
         branching_objects.dyn_hlvs_layer,
         branching_objects.ancestor_conv_layer,
     )
     graph = branching_objects.graph
-    branching_layers = branching_objects.branching_layers
+    branchings = branching_objects.branchings
     tree = branching_objects.tree
     batch_size = len(graph.tftx)
 
     tftx_copy = graph.tftx.requires_grad_()
-    new_graph1 = branching_layers[0](graph, cond)
-    # tree = branching_layers[0].tree
+    new_graph1 = branchings[0](graph, cond)
+    # tree = branchings[0].tree
     assert torch.all(
         new_graph1.tftx[tree.idxs_by_level[1]]
         == new_graph1.tftx[torch.hstack([e.idxs for e in tree.tree_lists[1]])]
@@ -72,7 +72,7 @@ def test_BranchingLayer_compute_graph(branching_objects: DTColl):
     #     tftx_copy.grad.data.zero_()
     tftx_copy2 = new_graph1.tftx.requires_grad_()
     tftx_copy2.retain_grad()
-    new_graph2 = branching_layers[1](new_graph1, cond)
+    new_graph2 = branchings[1](new_graph1, cond)
     assert torch.all(
         new_graph2.tftx[tree.idxs_by_level[2]]
         == new_graph2.tftx[torch.hstack([e.idxs for e in tree.tree_lists[2]])]
@@ -112,7 +112,7 @@ def test_tree_ancestor_connectivity_static(static_objects: DTColl):
     props = static_objects.props
     # graph = static_objects.graph
     tree = static_objects.tree
-    # branching_layers = static_objects.branching_layers
+    # branchings = static_objects.branchings
     for ilevel in range(1, props["n_levels"]):
         ei = tree.ancestor_ei(ilevel).T
         conlist = ei.cpu().numpy().tolist()
@@ -185,7 +185,7 @@ def test_tree_children_connectivity_static(static_objects: DTColl):
     props = static_objects.props
     # graph = static_objects.graph
     tree = static_objects.tree
-    # branching_layers = static_objects.branching_layers
+    # branchings = static_objects.branchings
     for ilevel in range(1, props["n_levels"]):
         ei = tree.children_ei(ilevel).T
         conlist = ei.cpu().numpy().tolist()
@@ -255,28 +255,28 @@ def test_tree_children_connectivity_static(static_objects: DTColl):
 
 
 def test_BranchingLayer_shapes(dyn_objects: DTColl):
-    graph, tree, cond, branching_layers, props = (
+    graph, tree, cond, branchings, props = (
         dyn_objects.graph,
         dyn_objects.tree,
         dyn_objects.cond,
-        dyn_objects.branching_layers,
+        dyn_objects.branchings,
         dyn_objects.props,
     )
-    branching_layers = dyn_objects.branching_layers
+    branchings = dyn_objects.branchings
     n_features = props["n_features"]
     n_branches = props["n_branches"]
     # n_global = props["n_global"]
     batch_size = props["batch_size"]
     n_levels = props["n_levels"]
     # Shape
-    tree_lists = branching_layers[0].tree.tree_lists
+    tree_lists = branchings[0].tree.tree_lists
     assert len(tree_lists) == n_levels
     for ilevel in range(1, n_levels):
         n_parents = len(tree_lists[ilevel - 1])
         assert len(tree_lists[ilevel]) == n_parents * n_branches
 
     for ilevel in range(n_levels - 1):
-        graph = branching_layers[ilevel](graph, cond)
+        graph = branchings[ilevel](graph, cond)
         # split once
         # tftx shape testing
         assert graph.tftx.shape[1] == n_features

@@ -21,7 +21,7 @@ class DTColl:
     props: Dict[str, int]
     graph: TreeGraph
     tree: Tree
-    branching_layers: List[BranchingLayer]
+    branchings: List[BranchingLayer]
     dyn_hlvs_layer: DynHLVsLayer
     ancestor_conv_layer: DeepConv
     cond: torch.Tensor
@@ -65,7 +65,7 @@ def object_gen(props: Dict[str, int]) -> DTColl:
         global_features=global_features,
     )
 
-    branching_layers = [
+    branchings = [
         BranchingLayer(
             tree=tree,
             level=level,
@@ -108,7 +108,7 @@ def object_gen(props: Dict[str, int]) -> DTColl:
     # If we want to check the gradients for independence,
     # we need to disable batchnorm
 
-    for brl in branching_layers:
+    for brl in branchings:
         recur_remove_ffnorm(brl)
     recur_remove_ffnorm(dyn_hlvs_layer)
     recur_remove_ffnorm(ancestor_conv_layer)
@@ -117,7 +117,7 @@ def object_gen(props: Dict[str, int]) -> DTColl:
         props=props,
         graph=graph,
         tree=tree,
-        branching_layers=branching_layers,
+        branchings=branchings,
         dyn_hlvs_layer=dyn_hlvs_layer,
         ancestor_conv_layer=ancestor_conv_layer,
         cond=cond,
@@ -157,7 +157,7 @@ def dyn_props(request):
 def branching_objects(request, static_props):
     (mode, dim_red, residual) = request.param
     objs = object_gen(static_props)
-    objs.branching_layers = [
+    objs.branchings = [
         BranchingLayer(
             tree=objs.tree,
             level=level,
@@ -173,7 +173,7 @@ def branching_objects(request, static_props):
         ).to(device)
         for level in range(static_props["n_levels"] - 1)
     ]
-    recur_remove_ffnorm(objs.branching_layers)
+    recur_remove_ffnorm(objs.branchings)
     return objs
 
 
