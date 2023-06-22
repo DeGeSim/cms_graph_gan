@@ -7,8 +7,9 @@ from omegaconf import DictConfig, OmegaConf
 from torch_geometric.data import Batch
 
 from fgsim.config import conf, device
-from fgsim.monitoring.metrics_aggr import MetricAggregator
+from fgsim.monitoring.metrics_aggr import GradHistAggregator, MetricAggregator
 from fgsim.monitoring.train_log import TrainLog
+from fgsim.plot.modelgrads import get_grad_dict
 from fgsim.utils.check_for_nans import contains_nans
 
 
@@ -31,6 +32,7 @@ class SubNetworkLoss:
         self.train_log = train_log
         self.parts: Dict[str, LossFunction] = {}
         self.metric_aggr = MetricAggregator()
+        self.grad_aggr = GradHistAggregator()
 
         for lossname, lossconf in pconf.items():
             assert lossname != "parts"
@@ -74,6 +76,8 @@ class SubNetworkLoss:
             partloss.backward(retain_graph=True)
         else:
             partloss.backward()
+
+        self.grad_aggr.append_dict(get_grad_dict(holder.models[self.name]))
         self.metric_aggr.append_dict(
             {k: v.detach().cpu().numpy() for k, v in losses_dict.items()}
         )

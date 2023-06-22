@@ -11,6 +11,7 @@ from fgsim.ml.holder import Holder
 from fgsim.ml.smoothing import smooth_features
 from fgsim.ml.validation import validate
 from fgsim.monitoring import TrainLog, logger
+from fgsim.plot.modelgrads import fig_grads
 from fgsim.utils.model_summary import log_model
 
 
@@ -105,13 +106,22 @@ class Trainer:
 
             # log the learning rates
             lr_dict = self.holder.optims.metric_aggr.aggregate()
-
             self.train_log.log_metrics(
                 {f"train/{pname}/lr": plr for pname, plr in lr_dict.items()}
             )
 
+            # plot the gradients
+            grad_dict = {
+                lpart.name: lpart.grad_aggr.aggregate()
+                for lpart in self.holder.losses
+            }
+            for k, v in grad_dict.items():
+                grad_fig = fig_grads(v, k)
+                self.train_log.log_figure(f"Gradients {k}", grad_fig)
+
             # Also log training speed
             self.train_log.write_trainstep_logs()
+
         if not conf.ray:
             self.holder.checkpoint_after_time()
         self.holder.state.grad_step += 1
