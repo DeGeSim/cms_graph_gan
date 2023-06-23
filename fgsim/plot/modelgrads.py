@@ -1,3 +1,5 @@
+import math
+
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.colors import LogNorm
@@ -15,6 +17,7 @@ def get_grad_dict(model):
                 .rstrip(".weight")
                 .rstrip(".linear")
                 .replace(".seq.", ".")
+                .replace(".nn.", ".")
             )
             ave_grads.append(p.grad.abs().mean().cpu())
             # max_grads.append(p.grad.abs().max().cpu())
@@ -24,7 +27,7 @@ def get_grad_dict(model):
 def fig_grads(graddict, partname) -> plt.Figure:
     # plt.title(f"{var}, all gen values are nan")
     layers = list(graddict.keys())
-    ave_grads = list(graddict.values())
+    ave_grads = np.array([list(e) for e in graddict.values()])
 
     layers_split = [e.split(".") for e in layers]
     max_levels = max([len(e) for e in layers_split])
@@ -34,7 +37,6 @@ def fig_grads(graddict, partname) -> plt.Figure:
         max([len(e[ilevel]) for e in layers_split]) for ilevel in range(max_levels)
     ]
     # padd the characters
-
     layers_split = [
         [
             substr + " " * (max_chars_per_lvl[ilvl] - len(substr))
@@ -43,13 +45,24 @@ def fig_grads(graddict, partname) -> plt.Figure:
         for e in layers_split
     ]
     layers_formated = ["/".join(e) for e in layers_split]
-    nparts = len(ave_grads)
-    timesteps = len(ave_grads[0])
+
+    max_bins = 3
+    nparts, timesteps_pre = ave_grads.shape
+    if timesteps_pre > max_bins:
+        pad_to = math.ceil(timesteps_pre / max_bins) * max_bins
+        ave_grads = np.pad(
+            ave_grads,
+            pad_width=((0, 0), (0, pad_to - timesteps_pre)),
+            constant_values=np.nan,
+        )
+        ave_grads = ave_grads.reshape(nparts, -1, max_bins)[..., 0]
+    timesteps = ave_grads.shape[-1]
+
     xaxis = np.arange(nparts)
 
-    fig = plt.figure(figsize=(20 + timesteps, 24))
-    plt.cla()
     plt.clf()
+    fig = plt.figure(figsize=(20 + timesteps / 2, 24))
+
     plt.imshow(
         ave_grads,
         cmap=plt.cm.coolwarm,

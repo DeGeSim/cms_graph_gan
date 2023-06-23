@@ -385,7 +385,7 @@ training:
     improvement: 0.05
   checkpoint_minutes: 15
   smoothing: ${mergedefault:${dataset_options},${dataset_name},smoothing}
-  log_interval: 50
+  log_interval: 100
   max_epochs: 10000
   val: ${mergedefault:${dataset_options},${dataset_name},validation}
 

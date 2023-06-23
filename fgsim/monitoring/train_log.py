@@ -1,8 +1,10 @@
 from datetime import datetime
 from typing import Union
 
+import matplotlib.pyplot as plt
 import numpy as np
 import torch
+from matplotlib.figure import Figure
 from omegaconf import DictConfig
 from torch.utils.tensorboard import SummaryWriter
 
@@ -102,10 +104,10 @@ class TrainLog:
 
     def log_figure(
         self,
-        figure_name,
-        figure,
-        overwrite=False,
-        step=None,
+        figure_name: str,
+        figure: Figure,
+        overwrite: bool = False,
+        step: int = None,
     ):
         if step is None:
             step = self.state["grad_step"]
@@ -113,6 +115,7 @@ class TrainLog:
             self.writer.add_figure(tag=figure_name, figure=figure, global_step=step)
         if self.use_wandb:
             wandb.log(data={figure_name: wandb.Image(figure)}, step=step)
+        plt.close(figure)
 
     def log_test_metrics(
         self,
