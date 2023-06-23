@@ -75,11 +75,14 @@ def validation_plots(
     ).items():
         fig_logger(fig, title)
 
-    fig_logger(
-        ratioplot(
-            sim=res["sim_crit"].flatten(),
-            gen=res["gen_crit"].flatten(),
-            title="Disc Score",
-        ),
-        "disc.pdf",
-    )
+    val_size = conf.loader.validation_set_size
+    for icritic, (sim_crit, gen_crit) in enumerate(
+        zip(
+            res["sim_crit"].reshape(-1, val_size),
+            res["gen_crit"].reshape(-1, val_size),
+        )
+    ):
+        fig_logger(
+            ratioplot(sim=sim_crit, gen=gen_crit, title=f"Critic #{icritic} Score"),
+            f"critic{icritic}.pdf",
+        )
