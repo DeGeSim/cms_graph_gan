@@ -203,7 +203,7 @@ def test_full_modelparts_grad():
     for ilevel in range(n_levels - 1):
         # Assign the global features
         ftx_level = graph_tree.tftx_by_level(ilevel)
-        graph_tree.global_features = model.prebr_hlvs[ilevel](
+        graph_tree.global_features = model.hlvs_nn[ilevel](
             x=ftx_level,
             cond=cond,
             batch=batch_level,

@@ -25,11 +25,13 @@ class GradHistAggregator:
     def __init__(self) -> None:
         self.metric_collector = OrderedDict()
         self.history = OrderedDict()
+        self.steps = deque()
         # self.max_memory = 10
 
-    def aggregate(self):
+    def aggregate(self, step):
         aggr_dict = {k: np.mean(v) for k, v in self.metric_collector.items()}
         self.append_dict_(self.history, aggr_dict)
+        self.steps.append(step)
         # if len(list(self.history.values())[0]) > self.max_memory:
         #     self.compress_history()
         self.metric_collector = OrderedDict()

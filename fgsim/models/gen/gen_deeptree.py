@@ -79,7 +79,7 @@ class ModelClass(nn.Module):
             ]
         )
 
-        self.prebr_hlvs = nn.ModuleList(
+        self.hlvs_nn = nn.ModuleList(
             [
                 DynHLVsLayer(
                     n_features=nfeatures,
@@ -198,7 +198,7 @@ class ModelClass(nn.Module):
                 ]
             ).all()
             ftx_level = graph_tree.tftx_by_level(ilevel)
-            graph_tree.global_features = self.prebr_hlvs[ilevel](
+            graph_tree.global_features = self.hlvs_nn[ilevel](
                 x=ftx_level, cond=cond, batch=batch_level
             )
 

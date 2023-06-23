@@ -47,7 +47,10 @@ class Trainer:
         for batch in tbar:
             if self.holder.state.grad_step % self.val_interval == 0:
                 self.validation_step()
+                if self.holder.state.grad_step != 0:
+                    self.log_grads()
                 tbar.unpause()
+
             batch = self.pre_training_step(batch)
             self.training_step(batch)
             self.post_training_step()
@@ -111,13 +114,8 @@ class Trainer:
             )
 
             # plot the gradients
-            grad_dict = {
-                lpart.name: lpart.grad_aggr.aggregate()
-                for lpart in self.holder.losses
-            }
-            for k, v in grad_dict.items():
-                grad_fig = fig_grads(v, k)
-                self.train_log.log_figure(f"Gradients {k}", grad_fig)
+            for lpart in self.holder.losses:
+                lpart.grad_aggr.aggregate(self.holder.state.grad_step)
 
             # Also log training speed
             self.train_log.write_trainstep_logs()
@@ -131,7 +129,14 @@ class Trainer:
         if not conf.debug:
             logger.info("Validating")
             validate(self.holder, self.loader)
+
         self.holder.state.time_train_step_start = time.time()
+
+    def log_grads(self):
+        for lpart in self.holder.losses:
+            if len(lpart.grad_aggr.history):
+                grad_fig = fig_grads(lpart.grad_aggr, lpart.name)
+                self.train_log.log_figure(f"grads/{lpart.name}", grad_fig)
 
     def pre_epoch(self):
         self.loader.queue_epoch(n_skip_events=self.holder.state.processed_events)
