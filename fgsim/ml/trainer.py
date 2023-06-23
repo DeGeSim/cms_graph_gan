@@ -45,11 +45,12 @@ class Trainer:
         self.pre_epoch()
         tbar = tqdm(self.loader.qfseq, **self.tqdmkw())
         for batch in tbar:
-            if self.holder.state.grad_step % self.val_interval == 0:
+            step = self.holder.state.grad_step
+            if step % self.val_interval == 0:
                 self.validation_step()
-                if self.holder.state.grad_step != 0:
-                    self.log_grads()
-                tbar.unpause()
+            if step % conf.training.val.plot_interval == step != 0:
+                self.log_grads()
+            tbar.unpause()
 
             batch = self.pre_training_step(batch)
             self.training_step(batch)
