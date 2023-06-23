@@ -212,7 +212,7 @@ class TSumTDisc(nn.Module):
         ffn_param,
     ) -> None:
         super().__init__()
-        self.disc_emb = nn.ModuleList(
+        self.emb = nn.ModuleList(
             [
                 CentralNodeUpdate(
                     n_ftx_in=n_ftx,
@@ -224,13 +224,13 @@ class TSumTDisc(nn.Module):
                 for _ in range(n_updates)
             ]
         )
-        self.disc = FFN(1 + 3 * n_ftx + n_cond, 1, **ffn_param, final_linear=True)
+        self.red = FFN(1 + 3 * n_ftx + n_cond, 1, **ffn_param, final_linear=True)
 
     def forward(self, x, batch, condition):
-        for layer in self.disc_emb:
+        for layer in self.emb:
             x = x.clone() + layer(x.clone(), batch)
         x = global_mad_pool(x.clone(), batch)
-        x = self.disc(torch.hstack([*x, condition]))
+        x = self.red(torch.hstack([*x, condition]))
         return x
 
 
