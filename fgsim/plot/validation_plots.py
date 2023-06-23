@@ -1,9 +1,6 @@
 from itertools import combinations
-from pathlib import Path
-from typing import Optional
 
 from fgsim.config import conf
-from fgsim.monitoring.train_log import TrainLog
 from fgsim.plot.fig_logger import FigLogger
 from fgsim.plot.labels import var_to_label
 from fgsim.plot.marginals import ftx_marginals
@@ -12,15 +9,7 @@ from fgsim.plot.xyscatter import xy_hist
 from .ratioplot import ratioplot
 
 
-def validation_plots(
-    train_log: TrainLog,
-    res: dict,
-    plot_path: Optional[Path],
-    best_last_val: str,
-    step: int,
-):
-    fig_logger = FigLogger(train_log, plot_path, best_last_val, step)
-
+def validation_plots(fig_logger: FigLogger, res: dict, best_last_val: str):
     # res["sim_batch"]._small = Batch.from_data_list(
     #     res["sim_batch"][: conf.loader.batch_size]
     # )

@@ -9,12 +9,15 @@ from fgsim.io.sel_loader import scaler
 from fgsim.ml.holder import Holder
 from fgsim.ml.smoothing import smooth_features
 from fgsim.monitoring import logger
+from fgsim.plot.fig_logger import FigLogger
+from fgsim.plot.modelgrads import fig_grads
 from fgsim.plot.validation_plots import validation_plots
 from fgsim.utils.check_for_nans import check_chain_for_nans
 
 
 def validate(holder: Holder, loader: QueuedDataset) -> None:
     check_chain_for_nans((holder.models,))
+    step = holder.state.grad_step
 
     # generate the batches
     logger.debug("Val: Running Generator and Critic")
@@ -44,7 +47,7 @@ def validate(holder: Holder, loader: QueuedDataset) -> None:
 
     for batch in sim_batch, gen_batch:
         if conf.training.smoothing.active:
-            batch.x = smooth_features(batch.x, holder.state.grad_step)
+            batch.x = smooth_features(batch.x, step)
 
     results_d = {
         "sim_batch": sim_batch,
@@ -53,13 +56,13 @@ def validate(holder: Holder, loader: QueuedDataset) -> None:
         "sim_crit": sim_crit,
     }
 
-    # if holder.state.grad_step % conf.training.val.plot_interval == 0:
+    # if step % conf.training.val.plot_interval == 0:
     #     validation_plots(
     #         train_log=holder.train_log,
     #         res=results_d,
     #         plot_path=None,
     #         best_last_val="val/scaled",
-    #         step=holder.state.grad_step,
+    #         step=step,
     #     )
 
     logger.debug("Start scaling")
@@ -72,14 +75,21 @@ def validate(holder: Holder, loader: QueuedDataset) -> None:
     logger.debug("End scaling")
 
     if not conf.debug:
-        if holder.state.grad_step % conf.training.val.plot_interval == 0:
-            validation_plots(
-                train_log=holder.train_log,
-                res=results_d,
+        if step % conf.training.val.plot_interval == 0:
+            best_last_val = "val/unscaled"
+            fig_logger = FigLogger(
+                holder.train_log,
                 plot_path=None,
-                best_last_val="val/unscaled",
-                step=holder.state.grad_step,
+                best_last_val=best_last_val,
+                step=step if step != 0 else 1,
             )
+            validation_plots(
+                fig_logger=fig_logger, res=results_d, best_last_val=best_last_val
+            )
+            for lpart in holder.losses:
+                if len(lpart.grad_aggr.history):
+                    grad_fig = fig_grads(lpart.grad_aggr, lpart.name)
+                    fig_logger(grad_fig, f"grads/{lpart.name}")
 
     if len({"kpd", "fgd"} & set(conf.training.val.metrics)):
         from fgsim.utils.jetnetutils import to_efp

@@ -11,7 +11,6 @@ from fgsim.ml.holder import Holder
 from fgsim.ml.smoothing import smooth_features
 from fgsim.ml.validation import validate
 from fgsim.monitoring import TrainLog, logger
-from fgsim.plot.modelgrads import fig_grads
 from fgsim.utils.model_summary import log_model
 
 
@@ -48,8 +47,6 @@ class Trainer:
             step = self.holder.state.grad_step
             if step % self.val_interval == 0:
                 self.validation_step()
-            if step % conf.training.val.plot_interval == step != 0:
-                self.log_grads()
             tbar.unpause()
 
             batch = self.pre_training_step(batch)
@@ -132,12 +129,6 @@ class Trainer:
             validate(self.holder, self.loader)
 
         self.holder.state.time_train_step_start = time.time()
-
-    def log_grads(self):
-        for lpart in self.holder.losses:
-            if len(lpart.grad_aggr.history):
-                grad_fig = fig_grads(lpart.grad_aggr, lpart.name)
-                self.train_log.log_figure(f"grads/{lpart.name}", grad_fig)
 
     def pre_epoch(self):
         self.loader.queue_epoch(n_skip_events=self.holder.state.processed_events)
