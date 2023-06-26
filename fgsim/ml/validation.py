@@ -87,7 +87,7 @@ def validate(holder: Holder, loader: QueuedDataset) -> None:
                 fig_logger=fig_logger, res=results_d, best_last_val=best_last_val
             )
             for lpart in holder.losses:
-                if len(lpart.grad_aggr.history):
+                if len(lpart.grad_aggr.steps):
                     grad_fig = fig_grads(lpart.grad_aggr, lpart.name)
                     fig_logger(grad_fig, f"grads/{lpart.name}")
 

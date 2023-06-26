@@ -5,40 +5,46 @@ import numpy as np
 
 class MetricAggregator:
     def __init__(self) -> None:
-        self.metric_collector = OrderedDict()
+        self.__metric_collector = OrderedDict()
 
     def aggregate(self):
-        aggr_dict = {k: np.mean(v) for k, v in self.metric_collector.items()}
-        self.metric_collector = OrderedDict()
+        aggr_dict = {k: np.mean(v) for k, v in self.__metric_collector.items()}
+        self.__metric_collector = OrderedDict()
         return aggr_dict
 
     def append_dict(self, upd):
         # Make sure the fields in the state are available
         for metric_name in upd:
-            if metric_name not in self.metric_collector:
-                self.metric_collector[metric_name] = deque()
+            if metric_name not in self.__metric_collector:
+                self.__metric_collector[metric_name] = deque()
             # Write values to the state
-            self.metric_collector[metric_name].append(upd[metric_name])
+            self.__metric_collector[metric_name].append(upd[metric_name])
 
 
 class GradHistAggregator:
     def __init__(self) -> None:
-        self.metric_collector = OrderedDict()
-        self.history = OrderedDict()
+        self.__grad_collector = OrderedDict()
+        self.__weigth_collector = OrderedDict()
+        self.grad_history = OrderedDict()
+        self.weigth_history = OrderedDict()
         self.steps = deque()
         # self.max_memory = 10
 
     def aggregate(self, step):
-        aggr_dict = {k: np.mean(v) for k, v in self.metric_collector.items()}
-        self.append_dict_(self.history, aggr_dict)
+        aggr_dict = {k: np.mean(v) for k, v in self.__grad_collector.items()}
+        self.append_dict_(self.grad_history, aggr_dict)
+
+        aggr_dict = {k: np.mean(v) for k, v in self.__weigth_collector.items()}
+        self.append_dict_(self.weigth_history, aggr_dict)
+
         self.steps.append(step)
-        # if len(list(self.history.values())[0]) > self.max_memory:
-        #     self.compress_history()
-        self.metric_collector = OrderedDict()
-        return self.history
+
+        self.__grad_collector = OrderedDict()
+        return self.weigth_history, self.grad_history
 
     def append_dict(self, upd):
-        self.append_dict_(self.metric_collector, upd)
+        self.append_dict_(self.__weigth_collector, upd["weights"])
+        self.append_dict_(self.__grad_collector, upd["grads"])
 
     def append_dict_(self, target, upd):
         # Make sure the fields in the state are available
