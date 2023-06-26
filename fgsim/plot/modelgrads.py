@@ -84,6 +84,6 @@ def pad_to_multiple(arr: np.ndarray, max_bins: int):
     arr = np.pad(
         arr,
         pad_width=((0, 0), (0, pad_to - nentries)),
-        constant_values=np.nan,
+        constant_values=-9999,
     )
     return arr.reshape(nparts, -1, max_bins)[..., 0]
