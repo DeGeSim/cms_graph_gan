@@ -1,4 +1,3 @@
-import math
 from collections import OrderedDict
 
 import matplotlib.pyplot as plt
@@ -63,7 +62,7 @@ def fig_grads(grad_aggr, partname: str) -> Figure:
     plt.clf()
     fig = plt.figure(figsize=(24, 24))
 
-    plt.imshow(ave_grads, cmap=plt.cm.coolwarm, norm=LogNorm())
+    plt.imshow(ave_grads, cmap=plt.cm.coolwarm, norm=LogNorm(), vmin=5e-5, vmax=1e1)
     plt.yticks(ticks=np.arange(nparts), labels=layers_formated, family="monospace")
     plt.xticks(ticks=np.arange(ntimesteps), labels=steps, rotation=45)
     plt.ylabel("Layers")
@@ -77,13 +76,9 @@ def fig_grads(grad_aggr, partname: str) -> Figure:
 
 
 def pad_to_multiple(arr: np.ndarray, max_bins: int):
-    nparts, nentries = arr.shape
+    _, nentries = arr.shape
     if nentries <= max_bins:
         return arr
-    pad_to = math.ceil(nentries / max_bins) * max_bins
-    arr = np.pad(
-        arr,
-        pad_width=((0, 0), (0, pad_to - nentries)),
-        constant_values=-9999,
-    )
-    return arr.reshape(nparts, -1, max_bins)[..., 0]
+    arr = arr.T
+    choice = np.round(np.linspace(0, nentries - 2, num=max_bins)).astype(int)
+    return arr[:, choice]
