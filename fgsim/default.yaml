@@ -126,6 +126,9 @@ layer_options:
     bias: False
   GINCConv:
     final_linear: True
+  GATv2MinConv:
+    heads: 8
+    concat: True
 
 model_param_options:
   gen_deeptree:

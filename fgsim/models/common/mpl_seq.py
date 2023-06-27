@@ -1,10 +1,11 @@
 from typing import Optional
 
 import torch
-from torch_geometric.nn import EdgeConv, GINConv, GravNetConv
+from torch_geometric.nn import EdgeConv, GINConv, GravNetConv, Sequential
 
 from fgsim.models.common import FFN, GINCConv
 from fgsim.models.common.deeptree import DeepConv
+from fgsim.models.mpl.gatmin import GATv2MinConv
 
 
 class MPLSeq(torch.nn.Module):
@@ -97,6 +98,25 @@ class MPLSeq(torch.nn.Module):
                 out_channels=out_features,
                 **layer_param,
             )
+        elif conv_name == "GATv2MinConv":
+            return Sequential(
+                "x, edge_index",
+                [
+                    (
+                        GATv2MinConv(
+                            in_channels=in_features + self.n_cond + self.n_global,
+                            out_channels=out_features,
+                            **layer_param,
+                        ),
+                        "x, edge_index -> x",
+                    ),
+                    torch.nn.utils.parametrizations.spectral_norm(
+                        torch.nn.Linear(
+                            out_features * layer_param["heads"], out_features
+                        )
+                    ),
+                ],
+            )
 
         else:
             raise Exception
@@ -142,7 +162,9 @@ class MPLSeq(torch.nn.Module):
                 batch=batch,
                 global_features=global_features,
             )
-        elif isinstance(layer, GravNetConv):
+        elif hasattr(layer, "__getitem__") and isinstance(
+            list(layer)[0], GATv2MinConv
+        ):
             return layer(
                 torch.hstack(
                     (
@@ -151,7 +173,7 @@ class MPLSeq(torch.nn.Module):
                         global_features[batch],
                     )
                 ),
-                # edge_index,
+                edge_index,
             )
         else:
             raise Exception
