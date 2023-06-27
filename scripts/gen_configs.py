@@ -36,8 +36,22 @@ models:
 model_param_options:
   gen_deeptree:
     pruning: cut
+    dim_red_in_branching: True
+    n_global: 10
     branching_param:
       mode: "mat"
+      residual: True
+      final_linear: True
+      norm: batchnorm
+      res_mean: False
+      res_final_layer: True
+    connect_all_ancestors: True
+    ancestor_mpl:
+      n_mpl: 1
+      n_hidden_nodes: 100
+      conv_name: GINConv
+      skip_connecton: True
+    final_layer_scaler: False
   disc_deeptree:
       ffn_param:
         bias: false
@@ -75,7 +89,7 @@ loss_options:
     factor: 1.0e-01
     """
     ),
-    ["mad2scan"],
+    ["scan"],
 )
 
 
@@ -95,21 +109,21 @@ exp_list: List[ExperimentConfig] = [base_config]
 
 
 # MSE vs Hinge
-@add_option
-def option_ganmode(exp_config: ExperimentConfig) -> Dict[str, DictConfig]:
-    res = defaultdict(exp_config.config.copy)
-    res["W"]["training"]["gan_mode"] = "W"
-    return res
+# @add_option
+# def option_ganmode(exp_config: ExperimentConfig) -> Dict[str, DictConfig]:
+#     res = defaultdict(exp_config.config.copy)
+#     res["W"]["training"]["gan_mode"] = "W"
+#     return res
 
 
-@add_option
-def option_hist(exp_config: ExperimentConfig) -> Dict[str, DictConfig]:
-    res = defaultdict(exp_config.config.copy)
-    res["gnoh"]["models"]["gen"]["additional_losses_list"] = ["feature_matching"]
-    res["dnoh"]["models"]["disc"]["additional_losses_list"] = []
-    res["noh"]["models"]["gen"]["additional_losses_list"] = ["feature_matching"]
-    res["noh"]["models"]["disc"]["additional_losses_list"] = []
-    return res
+# @add_option
+# def option_hist(exp_config: ExperimentConfig) -> Dict[str, DictConfig]:
+#     res = defaultdict(exp_config.config.copy)
+#     res["gnoh"]["models"]["gen"]["additional_losses_list"] = ["feature_matching"]
+#     res["dnoh"]["models"]["disc"]["additional_losses_list"] = []
+#     res["noh"]["models"]["gen"]["additional_losses_list"] = ["feature_matching"]
+#     res["noh"]["models"]["disc"]["additional_losses_list"] = []
+#     return res
 
 
 # @add_option
@@ -133,8 +147,10 @@ def option_hist(exp_config: ExperimentConfig) -> Dict[str, DictConfig]:
 #         "norm"
 #     ] = "batchnorm"
 
-#     res["cbwn"]["model_param_options"]["disc_deeptree"]["ffn_param"]["norm"] = "bwn"
-#     res["cbwn"]["model_param_options"]["disc_deeptree"]["cnu_param"]["norm"] = "bwn"
+#     res["cbwn"]["model_param_options"]["disc_deeptree"]["ffn_param"]["norm"
+# ] = "bwn"
+#     res["cbwn"]["model_param_options"]["disc_deeptree"]["cnu_param"]["norm"
+# ] = "bwn"
 
 #     res["cln"]["model_param_options"]["disc_deeptree"]["ffn_param"][
 #         "norm"
@@ -184,31 +200,71 @@ def option_branching(exp_config: ExperimentConfig) -> Dict[str, DictConfig]:
 
 
 @add_option
-def option_beta(exp_config: ExperimentConfig) -> Dict[str, DictConfig]:
+def option_dropout(exp_config: ExperimentConfig) -> Dict[str, DictConfig]:
     res = defaultdict(exp_config.config.copy)
-    res["dnomom"]["optim_options"]["disc"]["Adam"]["betas"] = [0.0, 0.9]
-    res["dSGD"]["models"]["disc"]["optim"]["name"] = "SGD"
+
+    res["d.2"]["model_param_options"]["disc_deeptree"]["ffn_param"]["bias"] = 0.2
+    res["d.5"]["model_param_options"]["disc_deeptree"]["ffn_param"]["bias"] = 0.5
+
     return res
 
 
 @add_option
-def option_swa(exp_config: ExperimentConfig) -> Dict[str, DictConfig]:
+def option_nglob(exp_config: ExperimentConfig) -> Dict[str, DictConfig]:
     res = defaultdict(exp_config.config.copy)
-    res["gCyclicLR"]["models"]["gen"]["scheduler"]["name"] = "CyclicLR"
-    res["gSWA"]["models"]["gen"]["scheduler"]["name"] = "SWA"
+
+    res["gn0glob"]["model_param_options"]["gen_deeptree"]["n_global"] = 0
+    res["gn40glob"]["model_param_options"]["gen_deeptree"]["n_global"] = 40
+
     return res
 
 
 @add_option
-def option_glr(exp_config: ExperimentConfig) -> Dict[str, DictConfig]:
+def option_gnoac(exp_config: ExperimentConfig) -> Dict[str, DictConfig]:
     res = defaultdict(exp_config.config.copy)
 
-    res["glrhigh"]["optim_options"]["gen"]["Adam"]["lr"] *= 5
-    res["glrlow"]["optim_options"]["gen"]["Adam"]["lr"] /= 5
+    res["g0ac"]["model_param_options"]["gen_deeptree"]["ancestor_mpl"]["n_mpl"] = 0
+    res["g3ac"]["model_param_options"]["gen_deeptree"]["ancestor_mpl"]["n_mpl"] = 3
 
-    res["dlrhigh"]["optim_options"]["disc"]["Adam"]["lr"] *= 5
-    res["dlrlow"]["optim_options"]["disc"]["Adam"]["lr"] /= 5
     return res
+
+
+@add_option
+def option_gacgat(exp_config: ExperimentConfig) -> Dict[str, DictConfig]:
+    res = defaultdict(exp_config.config.copy)
+
+    res["GATv2MinConv"]["model_param_options"]["gen_deeptree"]["ancestor_mpl"][
+        "conv_name"
+    ] = "GATv2MinConv"
+    return res
+
+
+# @add_option
+# def option_beta(exp_config: ExperimentConfig) -> Dict[str, DictConfig]:
+#     res = defaultdict(exp_config.config.copy)
+#     res["dnomom"]["optim_options"]["disc"]["Adam"]["betas"] = [0.0, 0.9]
+#     res["dSGD"]["models"]["disc"]["optim"]["name"] = "SGD"
+#     return res
+
+
+# @add_option
+# def option_swa(exp_config: ExperimentConfig) -> Dict[str, DictConfig]:
+#     res = defaultdict(exp_config.config.copy)
+#     res["gCyclicLR"]["models"]["gen"]["scheduler"]["name"] = "CyclicLR"
+#     res["gSWA"]["models"]["gen"]["scheduler"]["name"] = "SWA"
+#     return res
+
+
+# @add_option
+# def option_glr(exp_config: ExperimentConfig) -> Dict[str, DictConfig]:
+#     res = defaultdict(exp_config.config.copy)
+
+#     res["glrhigh"]["optim_options"]["gen"]["Adam"]["lr"] *= 5
+#     res["glrlow"]["optim_options"]["gen"]["Adam"]["lr"] /= 5
+
+#     res["dlrhigh"]["optim_options"]["disc"]["Adam"]["lr"] *= 5
+#     res["dlrlow"]["optim_options"]["disc"]["Adam"]["lr"] /= 5
+#     return res
 
 
 # @add_option

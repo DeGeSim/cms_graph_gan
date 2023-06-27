@@ -4,7 +4,7 @@
         {
             "args": [
                 "--hash",
-                "1e831c5",
+                "fe41e12",
                 // "--ray",
                 // "--debug",
                 "train"
@@ -19,7 +19,7 @@
         {
             "args": [
                 "--tag",
-                "t150_cfix_ddt_bl5",
+                "scan_brredskip",
                 "--debug",
                 "train"
             ],
@@ -33,7 +33,7 @@
         {
             "args": [
                 "--tag",
-                "t150_cfix_ddt_bl5",
+                "scan_brredskip",
                 "--debug",
                 "test"
             ],
@@ -47,7 +47,7 @@
         {
             "args": [
                 "--tag",
-                "t150_cfix_ddt_bl5",
+                "scan_brredskip",
                 "--debug",
                 "preprocess"
             ],
@@ -75,7 +75,7 @@
             "type": "python",
             "args": [
                 "--tag",
-                "t150_cfix_ddt_bl5",
+                "scan_brredskip",
                 "--debug",
                 "train"
             ],
@@ -88,7 +88,7 @@
             "type": "python",
             "args": [
                 "--tag",
-                "t150_cfix_ddt_bl5",
+                "scan_brredskip",
                 // "--debug",
                 "setup"
             ],

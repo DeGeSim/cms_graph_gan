@@ -9,12 +9,6 @@
     "folders": [
         {
             "path": "."
-        },
-        {
-            "path": "../CaloChallenge"
-        },
-        {
-            "path": "../MDMA"
         }
     ],
     "settings": {
