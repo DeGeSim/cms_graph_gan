@@ -77,6 +77,7 @@ def object_gen(props: Dict[str, int]) -> DTColl:
             residual=False,
             res_final_layer=False,
             res_mean=False,
+            dim_red_skip=True,
             mode="mat",
         ).to(device)
         for level in range(n_levels - 1)
@@ -164,6 +165,7 @@ def branching_objects(request, static_props):
             n_global=static_props["n_global"],
             n_cond=static_props["n_cond"],
             dim_red=dim_red,
+            dim_red_skip=True,
             final_linear=True,
             norm="none",
             residual=residual,

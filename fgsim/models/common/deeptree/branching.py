@@ -43,6 +43,7 @@ class BranchingLayer(nn.Module):
         dim_red: bool,
         res_mean: bool,
         res_final_layer: bool,
+        dim_red_skip: bool,
         mode: bool,
     ):
         super().__init__()
@@ -56,6 +57,7 @@ class BranchingLayer(nn.Module):
         self.final_linear = final_linear
         self.norm = norm
         self.dim_red = dim_red
+        self.dim_red_skip = dim_red_skip
         self.res_mean = res_mean
         self.mode = mode
         self.res_final_layer = res_final_layer
@@ -208,8 +210,8 @@ class BranchingLayer(nn.Module):
         # )
         # Do the down projection to the desired dimension
         foo("br post skip", children_ftxs)
-        if self.dim_red:
-            children_ftxs = self.reduction_nn(children_ftxs)
+        children_ftxs = self.red_children(children_ftxs)
+
         check_tensor(children_ftxs)
         graph.tftx = torch.vstack(
             [graph.tftx[..., :n_features_target], children_ftxs]
@@ -322,9 +324,7 @@ class BranchingLayer(nn.Module):
             batch_size * n_parents * n_branches, n_features_source
         )
         foo("br post skip", children_ftxs)
-        if self.dim_red:
-            children_ftxs = self.reduction_nn(children_ftxs)
-        check_tensor(children_ftxs)
+        children_ftxs = self.red_children(children_ftxs)
         graph.tftx = torch.vstack(
             [graph.tftx[..., :n_features_target], children_ftxs]
         )
@@ -395,9 +395,8 @@ class BranchingLayer(nn.Module):
             batch_size * n_parents * n_branches, n_features_source
         )
         foo("br post skip", children_ftxs)
-        if self.dim_red:
-            children_ftxs = self.reduction_nn(children_ftxs)
-        check_tensor(children_ftxs)
+        children_ftxs = self.red_children(children_ftxs)
+
         graph.tftx = torch.vstack(
             [graph.tftx[..., :n_features_target], children_ftxs]
         )
@@ -415,6 +414,17 @@ class BranchingLayer(nn.Module):
             return self.forward_noise(*args, **kwargs)
         else:
             raise NotImplementedError
+
+    def red_children(self, children_ftxs: torch.Tensor) -> torch.Tensor:
+        if self.dim_red:
+            children_ftxs_red = self.reduction_nn(children_ftxs)
+            if self.dim_red_skip:
+                children_ftxs_red += children_ftxs[
+                    ..., : self.n_features_target
+                ].clone()
+            children_ftxs = children_ftxs_red
+        check_tensor(children_ftxs)
+        return children_ftxs
 
 
 @torch.jit.script

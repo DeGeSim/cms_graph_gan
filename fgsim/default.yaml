@@ -143,6 +143,7 @@ model_param_options:
       norm: batchnorm
       res_mean: False
       res_final_layer: True
+      dim_red_skip: False
     connect_all_ancestors: True
     ancestor_mpl:
       n_mpl: 1
