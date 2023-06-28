@@ -24,13 +24,13 @@ base_config = ExperimentConfig(
 models:
   disc:
     name: disc_deeptree
-    additional_losses_list: ["histd"]
+    additional_losses_list: []
     optim:
       name: Adam
     scheduler:
       name: NullScheduler
   gen:
-    additional_losses_list: ["feature_matching", "histg"]
+    additional_losses_list: ["feature_matching"]
     scheduler:
       name: NullScheduler
 model_param_options:
@@ -53,40 +53,38 @@ model_param_options:
       skip_connecton: True
     final_layer_scaler: False
   disc_deeptree:
-      ffn_param:
-        bias: false
-        n_layers: 2
-        hidden_layer_size: 40
-        dropout: 0.0
-        norm: spectral
-      emb_param:
-        n_ftx_latent: 10
-      bipart_param:
-        n_heads: 4
-      critics_param:
-        n_ftx_latent: 4
-        n_ftx_global: 5
-        n_updates: 2
-training:
-  gan_mode: Hinge
-optim_options:
-  gen:
-    Adam:
-      lr: 1.0e-05
-      weight_decay: 1.0e-4
-      betas: [0.9, 0.999]
-  disc:
-    Adam:
-      lr: 3.0e-5
-      weight_decay: 1.0e-4
-      betas: [0.9, 0.999]
+    nodes: [30, 6, 1]
+    features: [3, 10, 10, 10]
+    ffn_param:
+      bias: False
+      n_layers: 3
+      hidden_layer_size: 100
+      dropout: 0.0
+      norm: "spectral"
+      equallr: false
+    cnu_param:
+      norm: "spectral"
+    emb_param:
+      n_ftx_latent: 40
+      norm: "batchnorm"
+    bipart_param:
+      n_heads: 16
+      mode: "mpl"
+    critics_param:
+      n_ftx_latent: 40
+      n_ftx_global: 40
+      n_updates: 2
+ffn:
+  activation: LeakyReLU
+  hidden_layer_size: 100
+  n_layers: 3
+  weight_init_method: default
+  norm: batchnorm
+  dropout: 0.0
+  equallr: false
 loss_options:
   feature_matching:
     factor: 1.0e-1
-  histd:
-    factor: 1.0e-01
-  histg:
-    factor: 1.0e-01
     """
     ),
     ["scan"],
@@ -124,6 +122,14 @@ exp_list: List[ExperimentConfig] = [base_config]
 #     res["noh"]["models"]["gen"]["additional_losses_list"] = ["feature_matching"]
 #     res["noh"]["models"]["disc"]["additional_losses_list"] = []
 #     return res
+
+
+@add_option
+def option_fml(exp_config: ExperimentConfig) -> Dict[str, DictConfig]:
+    res = defaultdict(exp_config.config.copy)
+    res["nofml"]["models"]["gen"]["additional_losses_list"] = []
+    res["fml10"]["loss_options"]["feature_matching"]["factor"] = 10
+    return res
 
 
 # @add_option
@@ -200,12 +206,24 @@ def option_branching(exp_config: ExperimentConfig) -> Dict[str, DictConfig]:
 
 
 @add_option
-def option_dropout(exp_config: ExperimentConfig) -> Dict[str, DictConfig]:
+def option_cdropout(exp_config: ExperimentConfig) -> Dict[str, DictConfig]:
     res = defaultdict(exp_config.config.copy)
 
-    res["d.2"]["model_param_options"]["disc_deeptree"]["ffn_param"]["bias"] = 0.2
-    res["d.5"]["model_param_options"]["disc_deeptree"]["ffn_param"]["bias"] = 0.5
+    res["cdr.2"]["model_param_options"]["disc_deeptree"]["ffn_param"][
+        "dropout"
+    ] = 0.2
+    res["cdr.5"]["model_param_options"]["disc_deeptree"]["ffn_param"][
+        "dropout"
+    ] = 0.5
+    return res
 
+
+@add_option
+def option_gdropout(exp_config: ExperimentConfig) -> Dict[str, DictConfig]:
+    res = defaultdict(exp_config.config.copy)
+
+    res["gdr.2"]["ffn"]["dropout"] = 0.2
+    res["gdr.5"]["ffn"]["dropout"] = 0.5
     return res
 
 
@@ -247,12 +265,12 @@ def option_gacgat(exp_config: ExperimentConfig) -> Dict[str, DictConfig]:
 #     return res
 
 
-# @add_option
-# def option_swa(exp_config: ExperimentConfig) -> Dict[str, DictConfig]:
-#     res = defaultdict(exp_config.config.copy)
-#     res["gCyclicLR"]["models"]["gen"]["scheduler"]["name"] = "CyclicLR"
-#     res["gSWA"]["models"]["gen"]["scheduler"]["name"] = "SWA"
-#     return res
+@add_option
+def option_swa(exp_config: ExperimentConfig) -> Dict[str, DictConfig]:
+    res = defaultdict(exp_config.config.copy)
+    res["gCyclicLR"]["models"]["gen"]["scheduler"]["name"] = "CyclicLR"
+    # res["gSWA"]["models"]["gen"]["scheduler"]["name"] = "SWA"
+    return res
 
 
 # @add_option
