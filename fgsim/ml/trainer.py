@@ -47,7 +47,7 @@ class Trainer:
             step = self.holder.state.grad_step
             if step % self.val_interval == 0:
                 self.validation_step()
-            tbar.unpause()
+                tbar.unpause()
 
             batch = self.pre_training_step(batch)
             self.training_step(batch)
