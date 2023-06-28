@@ -122,6 +122,7 @@ def validate(holder: Holder, loader: QueuedDataset) -> None:
             "best_epoch": holder.state["best_epoch"],
         },
         prefix="trend",
+        commit=True,
     )
 
     logger.debug("Validation done.")

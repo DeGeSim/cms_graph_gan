@@ -41,6 +41,7 @@ def setup_experiment() -> None:
             "code_dir": f"./{conf.path.run_path}/fgsim/models",
         },
     )
+    run_train.log_code(f"./{conf.path.run_path}/fgsim/models")
     exp_orga_wandb[conf["hash"]] = run_train.id
 
     run_test = wandb.init(
