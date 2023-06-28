@@ -61,7 +61,7 @@ class ValidationMetrics:
                 # )
         self.metric_aggr.append_dict(mval)
 
-    def log_metrics(self, n_grad_steps_per_epoch) -> None:
+    def log_metrics(self, n_grad_steps_per_epoch, step) -> None:
         """
         The function takes the validation metrics and computes the fraction
         of times that the value of this metric is smaller then the other runs
@@ -73,7 +73,7 @@ class ValidationMetrics:
         up_metrics_d = self.metric_aggr.aggregate()
 
         # Log the validation loss
-        self.train_log.log_metrics(up_metrics_d, prefix="val")
+        self.train_log.log_metrics(up_metrics_d, prefix="val", step=step)
 
         logstr = "Validation:"
         for metric_name, metric_val in up_metrics_d.items():

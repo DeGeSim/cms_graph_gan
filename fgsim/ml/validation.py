@@ -18,6 +18,7 @@ from fgsim.utils.check_for_nans import check_chain_for_nans
 def validate(holder: Holder, loader: QueuedDataset) -> None:
     check_chain_for_nans((holder.models,))
     step = holder.state.grad_step
+    step = 1 if step == 0 else step
 
     # generate the batches
     logger.debug("Val: Running Generator and Critic")
@@ -81,7 +82,7 @@ def validate(holder: Holder, loader: QueuedDataset) -> None:
                 holder.train_log,
                 plot_path=None,
                 best_last_val=best_last_val,
-                step=step if step != 0 else 1,
+                step=step,
             )
             validation_plots(
                 fig_logger=fig_logger, res=results_d, best_last_val=best_last_val
@@ -106,7 +107,8 @@ def validate(holder: Holder, loader: QueuedDataset) -> None:
     # evaluate the validation metrics
     with torch.no_grad():
         holder.val_metrics(**results_d)
-    holder.val_metrics.log_metrics(loader.n_grad_steps_per_epoch)
+    holder.val_metrics.log_metrics(loader.n_grad_steps_per_epoch, step=step)
+
     if conf.debug:
         return
     # save the best model
