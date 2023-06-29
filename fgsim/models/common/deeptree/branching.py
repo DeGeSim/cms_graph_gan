@@ -102,7 +102,7 @@ class BranchingLayer(nn.Module):
             proj_out,
             norm=self.norm,
             bias=False,
-            final_linear=self.final_linear or (not self.dim_red and lastlayer),
+            final_linear=self.final_linear and (not self.dim_red and lastlayer),
         )
         if self.mode == "equivar":
             self.proj_cat = FFN(
@@ -110,7 +110,7 @@ class BranchingLayer(nn.Module):
                 self.n_features_source,
                 norm=self.norm,
                 bias=False,
-                final_linear=self.final_linear or (not self.dim_red and lastlayer),
+                final_linear=self.final_linear and (not self.dim_red and lastlayer),
             )
         if self.dim_red:
             self.reduction_nn = FFN(
