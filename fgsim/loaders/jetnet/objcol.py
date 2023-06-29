@@ -10,6 +10,7 @@ from torch_scatter import scatter_add
 from fgsim.config import conf
 from fgsim.io import FileManager, ScalerBase
 from fgsim.io.dequantscaler import dequant_stdscale
+from fgsim.utils import check_tensor
 
 jn_dict = {}
 
@@ -100,15 +101,17 @@ def norm_pt_sum(pts, batchidx):
     scale = pt_scaler._scaler.scale_[0]
 
     # Backwards transform
-    pts = pts.clone() * scale + mean
+    pts = pts.clone().double() * scale + mean
     if lmbd == 0:
         pts = torch.exp(pts.clone())
     else:
         pts = torch.pow(pts.clone() * lmbd + 1, 1 / lmbd)
+    check_tensor(pts)
 
     # Norm
     ptsum_per_batch = scatter_add(pts, batchidx, dim=-1)
     pts = pts / ptsum_per_batch[batchidx]
+    check_tensor(pts)
 
     # Forward transform
     if lmbd == 0:
@@ -117,4 +120,5 @@ def norm_pt_sum(pts, batchidx):
         pts = (torch.pow(pts.clone(), lmbd) - 1) / lmbd
 
     pts = (pts.clone() - mean) / scale
-    return pts
+    check_tensor(pts)
+    return pts.float()
