@@ -61,19 +61,14 @@ class ValidationMetrics:
                 # )
         self.metric_aggr.append_dict(mval)
 
-    def log_metrics(self, n_grad_steps_per_epoch, step) -> None:
+    def get_metrics(self) -> tuple[dict, list]:
         """
         The function takes the validation metrics and computes the fraction
         of times that the value of this metric is smaller then the other runs
-
-        @param n_grad_steps_per_epoch The number of gradient steps per epoch.
         """
         # Call metric_aggr to aggregate the collected metrics over the
         # validation batches.
         up_metrics_d = self.metric_aggr.aggregate()
-
-        # Log the validation loss
-        self.train_log.log_metrics(up_metrics_d, prefix="val", step=step)
 
         logstr = "Validation:"
         for metric_name, metric_val in up_metrics_d.items():
@@ -87,8 +82,13 @@ class ValidationMetrics:
                 )
         logger.warn(logstr)
         if conf.debug:
-            return
+            return dict(), list()
 
+        score = self.__compute_score_per_val(up_metrics_d)
+        self.history["score"] = score
+        return up_metrics_d, score
+
+    def __compute_score_per_val(self, up_metrics_d):
         # compute the stop_metric
         val_metrics = self.history["val"]
         # check which of the metrics should be used for the early stopping
@@ -109,15 +109,7 @@ class ValidationMetrics:
             lambda row: np.array([np.mean(row >= e) for e in row]), 1, loss_history
         ).mean(0)
         score = [float(val) for val in score]
-        self.history["score"] = list(score)
-        # overwrite the recorded score for each
-        for ivalstep in range(len(score)):
-            self.train_log.log_metrics(
-                {"trend/score": score[ivalstep]},
-                step=ivalstep * conf.training.val.interval,
-                epoch=(ivalstep * conf.training.val.interval)
-                // n_grad_steps_per_epoch,
-            )
+        return score
 
     def __getitem__(self, lossname: str) -> Callable:
         return self.parts[lossname]

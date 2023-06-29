@@ -17,8 +17,9 @@ from fgsim.utils.check_for_nans import check_chain_for_nans
 
 def validate(holder: Holder, loader: QueuedDataset) -> None:
     check_chain_for_nans((holder.models,))
+
     step = holder.state.grad_step
-    step = 1 if step == 0 else step
+    epoch = holder.state.epoch
 
     # generate the batches
     logger.debug("Val: Running Generator and Critic")
@@ -75,6 +76,9 @@ def validate(holder: Holder, loader: QueuedDataset) -> None:
     )
     logger.debug("End scaling")
 
+    # Plotting
+    # workaround for wandb
+    step = step if step != 0 else 1
     if not conf.debug:
         if step % conf.training.val.plot_interval == 0:
             best_last_val = "val/unscaled"
@@ -107,10 +111,21 @@ def validate(holder: Holder, loader: QueuedDataset) -> None:
     # evaluate the validation metrics
     with torch.no_grad():
         holder.val_metrics(**results_d)
-    holder.val_metrics.log_metrics(loader.n_grad_steps_per_epoch, step=step)
+    up_metrics_d, score = holder.val_metrics.get_metrics()
 
     if conf.debug:
         return
+    logkw = {"step": step, "epoch": epoch}
+
+    holder.train_log.log_metrics(up_metrics_d, prefix="val", **logkw)
+    # overwrite the recorded score for each val step
+    for ivalstep in range(len(score)):
+        holder.train_log.log_metrics(
+            {"trend/score": score[ivalstep]},
+            step=ivalstep * conf.training.val.interval,
+            epoch=(ivalstep * conf.training.val.interval)
+            // loader.n_grad_steps_per_epoch,
+        )
     # save the best model
     if max(holder.history["score"]) == holder.history["score"][-1]:
         holder.state.best_step = holder.state["grad_step"]
@@ -125,6 +140,7 @@ def validate(holder: Holder, loader: QueuedDataset) -> None:
         },
         prefix="trend",
         commit=True,
+        **logkw,
     )
 
     logger.debug("Validation done.")
