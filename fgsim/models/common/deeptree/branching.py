@@ -64,6 +64,8 @@ class BranchingLayer(nn.Module):
         self.n_branches = self.tree.branches[level]
         self.n_features_source = self.tree.features[level]
         self.n_features_target = self.tree.features[level + int(self.dim_red)]
+        self.parents = self.tree.tree_lists[self.level]
+        self.n_parents = len(self.parents)
 
         # Calculate the number of nodes currently in the graphs
         self.points = prod([br for br in self.tree.branches[: self.level]])
@@ -94,16 +96,19 @@ class BranchingLayer(nn.Module):
             self.n_noise = min(max(self.n_features_source, 5), 15)
             proj_in = self.n_features_source + n_global + n_cond + self.n_noise
             proj_out = self.n_features_source
+        elif self.mode == "bppool":
+            pass
         else:
             raise NotImplementedError
 
-        self.proj_nn = FFN(
-            proj_in,
-            proj_out,
-            norm=self.norm,
-            bias=False,
-            final_linear=self.final_linear and (not self.dim_red and lastlayer),
-        )
+        if self.mode != "bppool":
+            self.proj_nn = FFN(
+                proj_in,
+                proj_out,
+                norm=self.norm,
+                bias=False,
+                final_linear=self.final_linear and (not self.dim_red and lastlayer),
+            )
         if self.mode == "equivar":
             self.proj_cat = FFN(
                 self.n_features_source * 2,
@@ -112,6 +117,27 @@ class BranchingLayer(nn.Module):
                 bias=False,
                 final_linear=self.final_linear and (not self.dim_red and lastlayer),
             )
+        if self.mode == "bppool":
+            from fgsim.models.pool.bppool import BipartPool
+
+            self.n_heads = 8
+            self.pool = BipartPool(
+                in_channels=self.n_features_source,
+                ratio=self.n_branches,
+                n_heads=self.n_heads,
+                mode="mpl",
+                batch_size=self.batch_size,
+            )
+            self.lin_in = nn.Linear(
+                self.n_features_source + self.n_cond + self.n_global,
+                self.n_features_source * self.n_heads,
+            )
+            self.lin_out = nn.Linear(
+                self.n_features_source * self.n_heads,
+                self.n_features_source,
+            )
+            attbatch_idx = torch.arange(self.batch_size * self.n_parents)
+            self.register_buffer("attbatch_idx", attbatch_idx, persistent=True)
         if self.dim_red:
             self.reduction_nn = FFN(
                 self.n_features_source,
@@ -210,6 +236,64 @@ class BranchingLayer(nn.Module):
         # )
         # Do the down projection to the desired dimension
         foo("br post skip", children_ftxs)
+        children_ftxs = self.red_children(children_ftxs)
+
+        check_tensor(children_ftxs)
+        graph.tftx = torch.vstack(
+            [graph.tftx[..., :n_features_target], children_ftxs]
+        )
+
+        graph.cur_level = graph.cur_level + 1
+        graph.global_features = graph.global_features
+        return graph
+
+    # Split each of the leafs in the the graph.tree
+    # into n_branches and connect them
+    def forward_style(self, graph: TreeGraph, cond) -> TreeGraph:
+        batch_size = self.batch_size
+        n_branches = self.n_branches
+        n_features_target = self.n_features_target
+        parents = self.tree.tree_lists[self.level]
+        n_parents = len(parents)
+
+        assert graph.cur_level == self.level
+
+        # parentidx > batchsize > n_features_source
+        treeidxs = self.tree.idxs_by_level[self.level]
+        parents_ftxs = graph.tftx[treeidxs]
+        self.tree.tbatch_by_level[self.level][treeidxs]
+
+        # Compute the new feature vectors:
+        # for the parents indices generate a matrix where
+        # each row is the global vector of the respective event
+
+        parent_global = graph.global_features.repeat(
+            self.tree.points_by_level[self.level], 1
+        )
+        cond_global = cond.repeat(self.tree.points_by_level[self.level], 1)
+
+        pstack = torch.hstack(
+            [
+                parents_ftxs,
+                cond_global,
+                parent_global,
+            ]
+        )
+
+        pstacktf = self.lin_in(pstack)
+        att_out, _cbatchidx = self.pool(x=pstacktf, batch=self.attbatch_idx)
+        proj_ftx = self.lin_out(att_out)
+        # children_ftxs = children_ftxs.reshape(
+        #     batch_size * n_parents * n_branches, self.n_features_source
+        # )
+        children_ftxs = reshape_features(
+            proj_ftx,
+            n_parents=n_parents,
+            batch_size=batch_size,
+            n_branches=n_branches,
+            n_features=self.n_features_source,
+        )
+
         children_ftxs = self.red_children(children_ftxs)
 
         check_tensor(children_ftxs)
@@ -406,14 +490,17 @@ class BranchingLayer(nn.Module):
         return graph
 
     def forward(self, *args, **kwargs):
-        if self.mode == "equivar":
-            return self.forward_eqv(*args, **kwargs)
-        elif self.mode == "mat":
-            return self.forward_mat(*args, **kwargs)
-        elif self.mode == "noise":
-            return self.forward_noise(*args, **kwargs)
-        else:
-            raise NotImplementedError
+        match self.mode:
+            case "equivar":
+                return self.forward_eqv(*args, **kwargs)
+            case "mat":
+                return self.forward_mat(*args, **kwargs)
+            case "bppool":
+                return self.forward_style(*args, **kwargs)
+            case "noise":
+                return self.forward_noise(*args, **kwargs)
+            case _:
+                raise NotImplementedError
 
     def red_children(self, children_ftxs: torch.Tensor) -> torch.Tensor:
         if self.dim_red:

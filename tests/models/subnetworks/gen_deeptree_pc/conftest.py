@@ -153,7 +153,9 @@ def dyn_props(request):
 
 
 @pytest.fixture(
-    params=product(["mat", "equivar", "noise"], [True, False], [True, False])
+    params=product(
+        ["mat", "equivar", "noise", "bppool"], [False, True], [False, True]
+    )
 )
 def branching_objects(request, static_props):
     (mode, dim_red, residual) = request.param

@@ -4,7 +4,7 @@
         {
             "args": [
                 "--hash",
-                "fe41e12",
+                "907969b",
                 // "--ray",
                 // "--debug",
                 "train"
@@ -19,7 +19,7 @@
         {
             "args": [
                 "--tag",
-                "scan_brredskip",
+                "scan_gbrbppool",
                 "--debug",
                 "train"
             ],
@@ -33,7 +33,7 @@
         {
             "args": [
                 "--tag",
-                "scan_brredskip",
+                "scan_gbrbppool",
                 "--debug",
                 "test"
             ],
@@ -47,7 +47,7 @@
         {
             "args": [
                 "--tag",
-                "scan_brredskip",
+                "scan_gbrbppool",
                 "--debug",
                 "preprocess"
             ],
@@ -75,7 +75,7 @@
             "type": "python",
             "args": [
                 "--tag",
-                "scan_brredskip",
+                "scan_gbrbppool",
                 "--debug",
                 "train"
             ],
@@ -88,7 +88,7 @@
             "type": "python",
             "args": [
                 "--tag",
-                "scan_brredskip",
+                "scan_gbrbppool",
                 // "--debug",
                 "setup"
             ],
