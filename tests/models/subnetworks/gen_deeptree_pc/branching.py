@@ -5,7 +5,7 @@ import pytest
 import torch
 from conftest import DTColl
 
-from fgsim.models.common.deeptree.branching import reshape_features
+from fgsim.models.common.deeptree.branching_base import reshape_features
 from fgsim.models.common.deeptree.node import Node
 
 device = torch.device("cpu")

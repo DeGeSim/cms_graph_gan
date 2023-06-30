@@ -8,7 +8,13 @@ from torch import nn
 
 # install_import_hook("fgsim")
 from fgsim.models.common import FFN, DynHLVsLayer
-from fgsim.models.common.deeptree import BranchingLayer, DeepConv, Tree, TreeGraph
+from fgsim.models.common.deeptree import (
+    BranchingBase,
+    DeepConv,
+    Tree,
+    TreeGraph,
+    get_br_layer,
+)
 
 # from typeguard.importhook import install_import_hook
 
@@ -21,7 +27,7 @@ class DTColl:
     props: Dict[str, int]
     graph: TreeGraph
     tree: Tree
-    branchings: List[BranchingLayer]
+    branchings: List[BranchingBase]
     dyn_hlvs_layer: DynHLVsLayer
     ancestor_conv_layer: DeepConv
     cond: torch.Tensor
@@ -66,7 +72,7 @@ def object_gen(props: Dict[str, int]) -> DTColl:
     )
 
     branchings = [
-        BranchingLayer(
+        get_br_layer(
             tree=tree,
             level=level,
             n_global=n_global,
@@ -161,7 +167,7 @@ def branching_objects(request, static_props):
     (mode, dim_red, residual) = request.param
     objs = object_gen(static_props)
     objs.branchings = [
-        BranchingLayer(
+        get_br_layer(
             tree=objs.tree,
             level=level,
             n_global=static_props["n_global"],

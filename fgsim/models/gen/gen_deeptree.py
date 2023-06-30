@@ -8,7 +8,12 @@ from torch_geometric.data import Batch
 
 from fgsim.config import conf
 from fgsim.models.common import DynHLVsLayer, FtxScaleLayer, MPLSeq
-from fgsim.models.common.deeptree import BranchingLayer, Tree, TreeGraph
+from fgsim.models.common.deeptree import (
+    BranchingBase,
+    Tree,
+    TreeGraph,
+    get_br_layer,
+)
 from fgsim.monitoring import logger
 from fgsim.utils import check_tensor
 
@@ -65,9 +70,9 @@ class ModelClass(nn.Module):
             features=self.features,
         )
 
-        self.branchings: nn.ModuleList[BranchingLayer] = nn.ModuleList(
+        self.branchings: nn.ModuleList[BranchingBase] = nn.ModuleList(
             [
-                BranchingLayer(
+                get_br_layer(
                     tree=self.tree,
                     level=level,
                     n_global=n_global,
