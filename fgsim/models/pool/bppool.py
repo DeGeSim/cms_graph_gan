@@ -1,17 +1,17 @@
 import torch
 from torch import Tensor, nn
 
-from fgsim.config import conf
 from fgsim.models.mpl.gatmin import GATv2MinConv
 
 
 class BipartPool(nn.Module):
-    def __init__(self, *, in_channels, ratio, n_heads, mode) -> None:
+    def __init__(self, *, in_channels, ratio, n_heads, mode, batch_size) -> None:
         super().__init__()
         self.in_channels = in_channels
         self.ratio = ratio
         self.n_heads = n_heads
         self.mode = mode
+        self.batch_size = batch_size
         assert self.mode in ["attn", "mpl"]
 
         self.aggrs = nn.Parameter(
@@ -22,11 +22,7 @@ class BipartPool(nn.Module):
             self.attn = torch.nn.MultiheadAttention(
                 embed_dim=self.in_channels * self.n_heads, num_heads=self.n_heads
             )
-            mask = ~(
-                torch.eye(conf.loader.batch_size)
-                .repeat_interleave(self.ratio, 1)
-                .bool()
-            )
+            mask = ~(torch.eye(batch_size).repeat_interleave(self.ratio, 1).bool())
             self.register_buffer("mask", mask, persistent=True)
         else:
             self.mpl = GATv2MinConv(
@@ -35,13 +31,12 @@ class BipartPool(nn.Module):
                 heads=self.n_heads,
                 concat=True,
             )
-            batchcent = torch.arange(conf.loader.batch_size, dtype=torch.long)
+            batchcent = torch.arange(batch_size, dtype=torch.long)
             self.register_buffer("batchcent", batchcent, persistent=True)
 
     def forward(self, x: Tensor, batch: Tensor):
-        batch_size = conf.loader.batch_size
         n_features = x.shape[-1]
-        x_aggrs = self.aggrs.repeat(batch_size, 1)
+        x_aggrs = self.aggrs.repeat(self.batch_size, 1)
 
         if self.mode == "attn":
             x_large = x.reshape(-1, n_features)  # self.ln_up()
@@ -86,7 +81,7 @@ class BipartPool(nn.Module):
             )
 
         return (
-            xcent.reshape(batch_size, self.ratio, n_features),
+            xcent.reshape(self.batch_size, self.ratio, n_features),
             None,
             None,
             self.batchcent.repeat_interleave(self.ratio),

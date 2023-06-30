@@ -53,6 +53,7 @@ class ModelClass(nn.Module):
                     in_channels=self.features[ilevel + 1],
                     ratio=self.nodes[ilevel],
                     **bipart_param,
+                    batch_size=conf.loader.batch_size,
                 )
             )
         for ilevel in range(self.n_levels + 1):
