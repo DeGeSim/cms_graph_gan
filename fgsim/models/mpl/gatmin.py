@@ -216,6 +216,7 @@ class GATv2MinConv(MessagePassing):
         edge_index: Adj,
         edge_attr: OptTensor = None,
         return_attention_weights: bool = None,
+        size=None,
     ):
         # type: (Union[Tensor, PairTensor], Tensor, OptTensor, NoneType) -> Tensor  # noqa
         # type: (Union[Tensor, PairTensor], SparseTensor, OptTensor, NoneType) -> Tensor  # noqa
@@ -274,7 +275,7 @@ class GATv2MinConv(MessagePassing):
 
         # propagate_type: (x: PairTensor, edge_attr: OptTensor)
         out = self.propagate(
-            edge_index, x=(x_l, x_r), edge_attr=edge_attr, size=None
+            edge_index, x=(x_l, x_r), edge_attr=edge_attr, size=size
         )
 
         alpha = self._alpha

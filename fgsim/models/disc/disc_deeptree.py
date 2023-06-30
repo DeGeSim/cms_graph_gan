@@ -89,9 +89,7 @@ class ModelClass(nn.Module):
             # aggregate latent space features
             x_lat_dict[f"lvl{ilevel}_emb"] = x
 
-            x, _, _, batchidx, _, _ = self.pools[ilevel](
-                x=x.clone(), batch=batchidx
-            )
+            x, batchidx = self.pools[ilevel](x=x.clone(), batch=batchidx)
             x_lat_dict[f"lvl{ilevel}_pool"] = x
 
             assert x.shape == (

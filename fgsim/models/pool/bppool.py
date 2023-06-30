@@ -30,13 +30,13 @@ class BipartPool(nn.Module):
                 out_channels=in_channels,
                 heads=self.n_heads,
                 concat=True,
+                add_self_loops=False,
             )
-            batchcent = torch.arange(batch_size, dtype=torch.long)
-            self.register_buffer("batchcent", batchcent, persistent=True)
 
     def forward(self, x: Tensor, batch: Tensor):
         n_features = x.shape[-1]
-        x_aggrs = self.aggrs.repeat(self.batch_size, 1)
+        batch_size = batch[-1] + 1
+        x_aggrs = self.aggrs.repeat(batch_size, 1)
 
         if self.mode == "attn":
             x_large = x.reshape(-1, n_features)  # self.ln_up()
@@ -60,6 +60,9 @@ class BipartPool(nn.Module):
             ).repeat(source_graph_size)
             # shift for the batchidx
             target += batch.repeat_interleave(self.ratio) * self.ratio
+
+            # # for debugging
+            # target_graph_size = len(x_aggrs)
             # assert len(source) == len(target) == source_graph_size * self.ratio
             # assert ((0 <= source) & (source < source_graph_size)).all()
             # assert ((0 <= target) & (target < target_graph_size)).all()
@@ -67,7 +70,8 @@ class BipartPool(nn.Module):
             # assert max(target) + 1 == target_graph_size
             # tcounts = (
             #     target.unique(return_counts=True)[1]
-            #     .reshape(batch_size, self.ratio).T
+            #     .reshape(self.batch_size, self.ratio)
+            #     .T
             # )
             # assert (tcounts[0] == tcounts).all()
 
@@ -76,15 +80,12 @@ class BipartPool(nn.Module):
             xcent = self.mpl(
                 x=(x, x_aggrs),
                 edge_index=ei_o2c,
-                # edge_attr=torch.ones_like(source).reshape(-1, 1),
-                # size=(x.shape[0], self.aggrs.shape[0] * batch_size),
+                size=(len(x), self.ratio * batch_size),
             )
 
         return (
-            xcent.reshape(self.batch_size, self.ratio, n_features),
-            None,
-            None,
-            self.batchcent.repeat_interleave(self.ratio),
-            None,
-            None,
+            xcent.reshape(batch_size, self.ratio, n_features),
+            torch.arange(batch_size, dtype=torch.long).repeat_interleave(
+                self.ratio
+            ),
         )
