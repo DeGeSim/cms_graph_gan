@@ -84,6 +84,36 @@ class BranchingBase(nn.Module):
     def forward(self, *args, **kwargs):
         raise NotImplementedError
 
+    def add_parent_skip(self, children_ftxs, parents_ftxs):
+        batch_size = self.batch_size
+        n_branches = self.n_branches
+        n_features_target = self.n_features_target
+        parents = self.tree.tree_lists[self.level]
+        n_parents = len(parents)
+        # If this branching layer reduces the dimensionality,
+        # we need to slice the parent_ftxs for the residual connection
+        if not self.dim_red:
+            parents_ftxs = parents_ftxs[..., :n_features_target]
+        # If residual, add the features of the parent to the children
+        if self.residual and (
+            self.res_final_layer or self.level + 1 != self.tree.n_levels - 1
+        ):
+            parents_ftxs_full = parents_ftxs.repeat(1, n_branches).reshape(
+                batch_size * n_parents, n_branches, self.n_features_source
+            )
+            parents_ftxs_full = self.reshape_features(
+                parents_ftxs_full,
+                n_parents=n_parents,
+                batch_size=batch_size,
+                n_branches=n_branches,
+                n_features=self.n_features_source,
+            ).reshape(batch_size * n_parents * n_branches, self.n_features_source)
+            # assert (parents_ftxs_full == parents_ftxs.repeat(n_branches, 1)).all()
+            children_ftxs += parents_ftxs_full
+            if self.res_mean:
+                children_ftxs /= 2
+        return children_ftxs
+
     def red_children(self, children_ftxs: torch.Tensor) -> torch.Tensor:
         if self.dim_red:
             children_ftxs_red = self.reduction_nn(children_ftxs)

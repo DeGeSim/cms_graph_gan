@@ -105,41 +105,13 @@ class BranchingEquivar(BranchingBase):
 
         # If this branching layer reduces the dimensionality,
         # we need to slice the parent_ftxs for the residual connection
-        if not self.dim_red:
-            parents_ftxs = parents_ftxs[..., :n_features_target]
-        # If residual, add the features of the parent to the children
-        if self.residual and (
-            self.res_final_layer or self.level + 1 != self.tree.n_levels - 1
-        ):
-            # this skip connection breaks the equivariance
-            # but otherwise we dont have enough feature
-            parents_ftxs_full = parents_ftxs.repeat(1, n_branches).reshape(
-                batch_size * n_parents, n_branches, n_features_source
-            )
-            parents_ftxs_full = self.reshape_features(
-                parents_ftxs_full,
-                n_parents=n_parents,
-                batch_size=batch_size,
-                n_branches=n_branches,
-                n_features=self.n_features_source,
-            ).reshape(batch_size, n_parents * n_branches, self.n_features_source)
-            children_ftxs += parents_ftxs_full
-            # parents_ftxs.reshape(batch_size, n_parents, n_features_source).repeat(
-            #     n_branches, 1, 1
-            # ).reshape(batch_size, n_parents * n_branches, n_features_source)
-
-            if self.res_mean:
-                children_ftxs /= 2
-
-        # model_plotter.save_tensor(
-        #     f"branching output level{self.level}",
-        #     children_ftxs,
-        # )
 
         # Do the down projection to the desired dimension
         children_ftxs = children_ftxs.reshape(
             batch_size * n_parents * n_branches, n_features_source
         )
+        children_ftxs = self.add_parent_skip(children_ftxs, parents_ftxs)
+
         children_ftxs = self.red_children(children_ftxs)
         graph.tftx = torch.vstack(
             [graph.tftx[..., :n_features_target], children_ftxs]

@@ -90,6 +90,8 @@ class BranchingBPPool(BranchingBase):
             n_features=self.n_features_source,
         )
 
+        children_ftxs = self.add_parent_skip(children_ftxs, parents_ftxs)
+
         children_ftxs = self.red_children(children_ftxs)
 
         check_tensor(children_ftxs)
