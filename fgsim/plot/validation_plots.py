@@ -65,10 +65,12 @@ def validation_plots(fig_logger: FigLogger, res: dict, best_last_val: str):
         fig_logger(fig, title)
 
     val_size = conf.loader.validation_set_size
+    batch_size = conf.loader.batch_size
+    fraction = val_size // batch_size
     for icritic, (sim_crit, gen_crit) in enumerate(
         zip(
-            res["sim_crit"].reshape(-1, val_size),
-            res["gen_crit"].reshape(-1, val_size),
+            res["sim_crit"].reshape(fraction, -1, batch_size).transpose(0, 1),
+            res["gen_crit"].reshape(fraction, -1, batch_size).transpose(0, 1),
         )
     ):
         fig_logger(
