@@ -15,6 +15,7 @@ class ModelPlotter:
     def save_tensor(self, name: str, arr: torch.Tensor):
         if not self.active:
             return
+        assert len(arr.shape) == 2
         self.arrlist.append(
             [name, arr[..., : self.n_features].detach().cpu().numpy()]
         )
@@ -33,6 +34,7 @@ class ModelPlotter:
 
         for iarr in range(n_arrs):
             arr = self.arrlist[iarr][1]
+            arr = arr.reshape(-1, arr.shape[-1])
             title = self.arrlist[iarr][0]
             for icomb in range(n_combs):
                 axes = axs[iarr][icomb]
