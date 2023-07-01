@@ -85,7 +85,7 @@ class BipartPool(nn.Module):
 
         return (
             xcent.reshape(batch_size, self.ratio, n_features),
-            torch.arange(batch_size, dtype=torch.long).repeat_interleave(
-                self.ratio
-            ),
+            torch.arange(batch_size, dtype=torch.long)
+            .to(x.device)
+            .repeat_interleave(self.ratio),
         )

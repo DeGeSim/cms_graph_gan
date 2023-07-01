@@ -99,7 +99,9 @@ class TrainLog:
             for name, value in md.items():
                 self.writer.add_scalar(name, value, step, new_style=True)
 
-    def _log_metrics_wandb(self, md: dict, step: int, epoch: int, commit: bool):
+    def _log_metrics_wandb(
+        self, md: dict, step: int, epoch: int, commit: bool = False
+    ):
         if self.use_wandb:
             wandb.log(md | {"epoch": epoch}, step=step, commit=commit)
 

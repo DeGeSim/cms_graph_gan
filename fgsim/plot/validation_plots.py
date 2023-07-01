@@ -74,6 +74,10 @@ def validation_plots(fig_logger: FigLogger, res: dict, best_last_val: str):
         )
     ):
         fig_logger(
-            ratioplot(sim=sim_crit, gen=gen_crit, title=f"Critic #{icritic} Score"),
+            ratioplot(
+                sim=sim_crit.reshape(-1),
+                gen=gen_crit.reshape(-1),
+                title=f"Critic #{icritic} Score",
+            ),
             f"critic{icritic}.pdf",
         )
