@@ -1,8 +1,9 @@
 from itertools import combinations
 
+import numpy as np
 import torch
 
-from fgsim.plot.binborders import binborders_wo_outliers, chip_to_binborders
+from fgsim.plot.binborders import chip_to_binborders
 
 
 class ModelPlotter:
@@ -25,6 +26,7 @@ class ModelPlotter:
             raise Exception
         # self.arrlist = self.arrlist[: (len(self.arrlist) // 2)]
         from matplotlib import pyplot as plt
+        from matplotlib.pyplot import Axes
 
         plt.cla()
         plt.clf()
@@ -37,7 +39,7 @@ class ModelPlotter:
             arr = arr.reshape(-1, arr.shape[-1])
             title = self.arrlist[iarr][0]
             for icomb in range(n_combs):
-                axes = axs[iarr][icomb]
+                axes: Axes = axs[iarr][icomb]
                 x = arr[:, self.combinations[icomb][0]]
                 y = arr[:, self.combinations[icomb][1]]
 
@@ -45,9 +47,21 @@ class ModelPlotter:
                 # y_name = conf.loader.x_features[self.combinations[icomb][1]]
                 x_name = f"feature # {self.combinations[icomb][0]}"
                 y_name = f"feature # {self.combinations[icomb][1]}"
+                cov = np.cov(np.stack([x, y]))
 
-                xedges = binborders_wo_outliers(x)
-                yedges = binborders_wo_outliers(y)
+                # np.set_printoptions(formatter={"float_kind": "{:.3g}".format})
+                axes.text(
+                    0.75,
+                    0.75,
+                    s=str(cov),
+                    fontdict={"backgroundcolor": "white"},
+                    transform=axes.transAxes,
+                )
+
+                # xedges = binborders_wo_outliers(x)
+                # yedges = binborders_wo_outliers(y)
+                xedges = np.linspace(-3, 3, 50)
+                yedges = xedges
                 axes.hist2d(
                     chip_to_binborders(x, xedges),
                     chip_to_binborders(y, yedges),
