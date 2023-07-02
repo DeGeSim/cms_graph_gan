@@ -1,7 +1,6 @@
 import torch
 import torch.nn as nn
 
-from fgsim.models.common import FFN
 from fgsim.models.pool.bppool import BipartPool
 from fgsim.utils import check_tensor
 
@@ -33,15 +32,6 @@ class BranchingBPPool(BranchingBase):
         )
         attbatch_idx = torch.arange(self.batch_size * self.n_parents)
         self.register_buffer("attbatch_idx", attbatch_idx, persistent=True)
-
-        if self.dim_red:
-            self.reduction_nn = FFN(
-                self.n_features_source,
-                self.n_features_target,
-                norm=self.norm,
-                bias=False,
-                final_linear=self.final_linear or self.lastlayer,
-            )
 
     # Split each of the leafs in the the graph.tree
     # into n_branches and connect them

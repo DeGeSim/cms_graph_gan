@@ -22,14 +22,6 @@ class BranchingNoise(BranchingBase):
             bias=False,
             final_linear=self.final_linear or (not self.dim_red and self.lastlayer),
         )
-        if self.dim_red:
-            self.reduction_nn = FFN(
-                self.n_features_source,
-                self.n_features_target,
-                norm=self.norm,
-                bias=False,
-                final_linear=self.final_linear or self.lastlayer,
-            )
 
     # Split each of the leafs in the the graph.tree
     # into n_branches and connect them

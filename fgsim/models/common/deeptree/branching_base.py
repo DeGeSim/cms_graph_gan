@@ -3,6 +3,7 @@ from math import prod
 import torch
 import torch.nn as nn
 
+from fgsim.models.common import FFN
 from fgsim.utils import check_tensor
 
 from .tree import Tree
@@ -77,6 +78,15 @@ class BranchingBase(nn.Module):
             assert self.n_features_source == self.n_features_target
 
         self.lastlayer = level + 1 == len(tree.features) - 1
+
+        if self.dim_red:
+            self.reduction_nn = FFN(
+                self.n_features_source,
+                self.n_features_target,
+                norm=self.norm,
+                bias=False,
+                final_linear=self.final_linear or self.lastlayer,
+            )
 
     def reshape_features(self, *args, **kwargs):
         return reshape_features(*args, **kwargs)
