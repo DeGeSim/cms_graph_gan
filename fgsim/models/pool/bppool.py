@@ -33,7 +33,7 @@ class BipartPool(nn.Module):
                 add_self_loops=False,
             )
 
-    def forward(self, x: Tensor, batch: Tensor):
+    def forward(self, x: Tensor, batch: Tensor) -> tuple[Tensor, torch.LongTensor]:
         n_features = x.shape[-1]
         batch_size = batch[-1] + 1
         x_aggrs = self.aggrs.repeat(batch_size, 1)
