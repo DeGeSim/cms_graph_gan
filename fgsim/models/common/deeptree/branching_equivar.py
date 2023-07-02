@@ -19,16 +19,14 @@ class BranchingEquivar(BranchingBase):
             proj_out,
             norm=self.norm,
             bias=False,
-            final_linear=self.final_linear
-            and (not self.dim_red and self.lastlayer),
+            final_linear=self.final_linear or (not self.dim_red and self.lastlayer),
         )
         self.proj_cat = FFN(
             self.n_features_source * 2,
             self.n_features_source,
             norm=self.norm,
             bias=False,
-            final_linear=self.final_linear
-            and (not self.dim_red and self.lastlayer),
+            final_linear=self.final_linear or (not self.dim_red and self.lastlayer),
         )
         if self.dim_red:
             self.reduction_nn = FFN(
