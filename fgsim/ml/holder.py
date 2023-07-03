@@ -270,6 +270,7 @@ class Holder:
         ).all()
 
         with with_grad(train_gen):
+            z.requires_grad = train_gen
             gen_batch = gen(z, cond_gen, sim_batch.n_pointsv)
             # make sure the number of points is the same
             assert (gen_batch.ptr == sim_batch.ptr).all()
