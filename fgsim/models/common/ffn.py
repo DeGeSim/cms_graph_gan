@@ -1,7 +1,9 @@
 import math
 from typing import List, Optional
 
+import torch
 from torch import nn
+from torch_geometric import nn as gnn
 
 from fgsim.config import conf
 from fgsim.models.common.benno import WeightNormalizedLinear
@@ -23,7 +25,9 @@ class FFN(nn.Module):
         equallr: Optional[bool] = None,
     ) -> None:
         if norm is None:
-            norm = conf.ffn.norm
+            self.norm = conf.ffn.norm
+        else:
+            self.norm = norm
         if dropout is None:
             dropout = conf.ffn.dropout
         if dropout == 0:
@@ -43,7 +47,7 @@ class FFN(nn.Module):
         if equallr is None:
             equallr = conf.ffn.equallr
 
-        if equallr and norm in ["spectral", "weight", "bwn"]:
+        if equallr and self.norm in ["spectral", "weight", "bwn", "graph"]:
             raise RuntimeError()
 
         def activation_function():
@@ -63,9 +67,9 @@ class FFN(nn.Module):
         # to keep the std of 1, the last layer should not see a reduction
         # in dimensionality, because otherwise it
 
-        self.seq = nn.Sequential()
+        seqtmp = []
         for ilayer in range(n_layers):
-            if norm == "bwn":
+            if self.norm == "bwn":
                 m = WeightNormalizedLinear(
                     features[ilayer],
                     features[ilayer + 1],
@@ -81,32 +85,41 @@ class FFN(nn.Module):
                     )
                 else:
                     m = nn.Linear(features[ilayer], features[ilayer + 1], bias=bias)
-                if norm == "spectral":
+                if self.norm == "spectral":
                     m = nn.utils.parametrizations.spectral_norm(m)
-                elif norm == "weight":
+                elif self.norm == "weight":
                     m = nn.utils.weight_norm(m)
 
-            self.seq.append(m)
+            seqtmp.append((m, "x->x"))
             if ilayer == n_layers - 1 and final_linear:
                 continue
             else:
                 if dropout:
-                    self.seq.append(nn.Dropout(dropout))
-                if norm == "batchnorm":
-                    self.seq.append(
-                        nn.BatchNorm1d(
-                            features[ilayer + 1],
-                            affine=False,
-                            track_running_stats=False,
+                    seqtmp.append((nn.Dropout(dropout), "x->x"))
+                if self.norm == "batchnorm":
+                    seqtmp.append(
+                        (
+                            nn.BatchNorm1d(
+                                features[ilayer + 1],
+                                affine=False,
+                                track_running_stats=False,
+                            ),
+                            "x->x",
                         )
                     )
-                elif norm == "layernorm":
-                    self.seq.append(nn.LayerNorm(features[ilayer + 1]))
-                elif norm in ("none", "spectral", "weight", "bwn"):
+                elif self.norm == "graph":
+                    seqtmp.append(
+                        (GraphOrBatch(features[ilayer + 1]), "x, batch -> x")
+                    )
+                elif self.norm == "layernorm":
+                    seqtmp.append((nn.LayerNorm(features[ilayer + 1]), "x->x"))
+                elif self.norm in ("none", "spectral", "weight", "bwn"):
                     pass
                 else:
                     raise Exception
-                self.seq.append(activation_function())
+                seqtmp.append((activation_function(), "x->x"))
+
+        self.seq = gnn.Sequential("x, batch", seqtmp)
 
         self.input_dim = input_dim
         self.output_dim = output_dim
@@ -118,14 +131,24 @@ class FFN(nn.Module):
         if not equallr:
             self.reset_parameters()
 
-    def forward(self, x):
+    def forward(self, x, batchidx=None):
         oldshape = x.shape
-        if len(oldshape) == 3:
-            x = x.reshape(oldshape[0] * oldshape[1], oldshape[2])
-        x = self.seq(x.clone())
-        if len(oldshape) == 3:
+        dim = len(oldshape)
+        if self.norm == "graph":
+            if dim == 2:
+                if batchidx is None:
+                    raise Exception("batchidx is None despite 2dim tensor.")
+                elif (batchidx.unique(return_counts=True)[1] < 2).any():
+                    raise Exception()
+            return self.seq(x.clone(), batchidx)
+        if dim == 3:
+            x = x.reshape(-1, oldshape[2])
+            x = self.seq(x.clone(), None)
             x = x.reshape(oldshape[0], oldshape[1], self.output_dim)
-        return x
+            return x
+        else:
+            x = self.seq(x.clone(), None)
+            return x
 
     def __repr__(self):
         return (
@@ -220,3 +243,41 @@ class EqualLinear(nn.Module):
 
     def forward(self, input):
         return self.linear(input)
+
+
+class GraphOrBatch(nn.Module):
+    def __init__(self, nftx):
+        super().__init__()
+
+        self.bn = nn.BatchNorm1d(nftx)
+        self.inorm = nn.InstanceNorm1d(nftx)
+        self.lnorm = nn.LayerNorm(nftx)
+        self.gn = gnn.GraphNorm(nftx)
+
+    def assert_mode(self, mode: bool):
+        if not hasattr(self, "norm_mode"):
+            self.norm_mode = mode
+        if self.norm_mode != mode:
+            raise Exception("switching mode not allowed")
+
+    def forward(self, x, batchidx):
+        xs = x.shape
+        assert x.dim() in [2, 3]
+        if x.dim() == 2:
+            self.assert_mode(True)
+            x = self.gn(x, batchidx)
+            assert not (x == 0).all()
+            return
+        elif xs[1] < 3:
+            self.assert_mode(False)
+            x = x.reshape(-1, xs[-1])
+            x = self.bn(x).reshape(*xs)
+            assert not (x == 0).all()
+            return x
+        else:
+            self.assert_mode(True)
+            batchidx = torch.arange(xs[1], device=x.device).repeat_interleave(xs[1])
+            x = x.reshape(-1, xs[-1])
+            x = self.gn(x).reshape(*xs)
+            assert not (x == 0).all()
+            return x

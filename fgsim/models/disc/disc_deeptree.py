@@ -137,7 +137,8 @@ class TSumTDisc(nn.Module):
         for layer in self.emb:
             x = x.clone() + layer(x.clone(), batch)
         x = global_mad_pool(x.clone(), batch)
-        x = self.red(torch.hstack([*x, condition]))
+        x = self.red(torch.hstack([*x, condition]).unsqueeze(1)).squeeze(1)
+
         return x
 
 
@@ -154,7 +155,7 @@ class CentralNodeUpdate(nn.Module):
         )
 
     def forward(self, x, batch=None):
-        x = self.emb(x)
+        x = self.emb(x, batch)
 
         x_glob = torch.hstack(global_mad_pool(x, batch))
 
@@ -164,7 +165,7 @@ class CentralNodeUpdate(nn.Module):
         else:
             ten_l = [x, x_global[batch].reshape(x.shape[0], x.shape[1], -1)]
 
-        x = self.out(torch.concat(ten_l, dim=-1))
+        x = self.out(torch.concat(ten_l, dim=-1), batch)
         return x
 
 
@@ -210,7 +211,7 @@ class Embedding(nn.Module):
         # x = self.space_emb(x)
         # ei = knn_graph(x[..., : self.n_ftx_space], batch=batch, k=5)
         # x = self.mpls(x=x, edge_index=ei, batch=batch, cond=condition)
-        x = self.inemb(x)
+        x = self.inemb(x, batch)
         x = self.cnu(x.clone(), batch) + x.clone()
         return x
 

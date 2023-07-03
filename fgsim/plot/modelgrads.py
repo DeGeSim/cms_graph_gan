@@ -17,7 +17,7 @@ def get_grad_dict(model):
     # max_grads = []
     layers = []
     for n, p in named_parameters:
-        if (p.requires_grad) and ("bias" not in n):
+        if (p.requires_grad) and ("bias" not in n) and p.grad is not None:
             layers.append(
                 n.replace(".parametrizations.weight.orig", ".snorm")
                 .rstrip("_orig")
