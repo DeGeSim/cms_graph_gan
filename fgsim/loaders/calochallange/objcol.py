@@ -68,11 +68,15 @@ def contruct_graph_from_row(chk: Tuple[torch.Tensor, torch.Tensor]) -> Data:
 scaler = ScalerBase(
     files=file_manager.files,
     len_dict=file_manager.file_len_dict,
-    transfs=[
+    transfs_x=[
         PowerTransformer(method="box-cox", standardize=True),
         dequant_stdscale(),
         dequant_stdscale(),
         dequant_stdscale(),
+    ],
+    transfs_y=[
+        PowerTransformer(method="box-cox", standardize=True),  # Energy
+        dequant_stdscale((0, conf.loader.n_points + 1)),  # num_particles
     ],
     read_chunk=read_chunks,
     transform_wo_scaling=contruct_graph_from_row,
