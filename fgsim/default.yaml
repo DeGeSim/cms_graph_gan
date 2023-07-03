@@ -481,6 +481,8 @@ dataset_options:
       x_features: ["E", "r", "alpha", "z"]
       x_ftx_energy_pos: 0
       y_features: ["E", "num_particles"]
+      cond_gen_features: [True, True]
+      cond_critic_features: [True, True]
       chunk_size: 1000
       batch_size: 50
     validation:
