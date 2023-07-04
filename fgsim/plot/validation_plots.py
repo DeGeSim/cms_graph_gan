@@ -67,6 +67,7 @@ def validation_plots(fig_logger: FigLogger, res: dict, best_last_val: str):
     val_size = conf.loader.validation_set_size
     batch_size = conf.loader.batch_size
     fraction = val_size // batch_size
+    fig_logger.best_last_val = best_last_val.split("/")[1] + "/critic"
     for icritic, (sim_crit, gen_crit) in enumerate(
         zip(
             res["sim_crit"].reshape(fraction, -1, batch_size).transpose(0, 1),
@@ -81,3 +82,4 @@ def validation_plots(fig_logger: FigLogger, res: dict, best_last_val: str):
             ),
             f"critic{icritic}.pdf",
         )
+    fig_logger.best_last_val = best_last_val
