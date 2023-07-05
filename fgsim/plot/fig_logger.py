@@ -1,12 +1,21 @@
+from pathlib import Path
+from typing import Optional
+
 import matplotlib.pyplot as plt
 from matplotlib.figure import Figure
 
 from fgsim.config import conf
-from fgsim.monitoring import logger
+from fgsim.monitoring import TrainLog, logger
 
 
 class FigLogger:
-    def __init__(self, train_log, plot_path, best_last_val, step) -> None:
+    def __init__(
+        self,
+        train_log: TrainLog,
+        plot_path: Optional[Path],
+        best_last_val: list[str],
+        step: int,
+    ) -> None:
         self.train_log = train_log
         self.plot_path = plot_path
         self.best_last_val = best_last_val
@@ -40,12 +49,15 @@ class FigLogger:
             fontsize=5,
         )
 
+        prefix = "/".join(self.best_last_val)
+
         if self.plot_path is not None:
-            # figure.savefig((self.plot_path / filename).with_suffix(".png"), dpi=150)
-            figure.savefig((self.plot_path / filename).with_suffix(".pdf"))
+            # figure.savefig((self.plot_path / filename
+            # ).with_suffix(".png"), dpi=150)
+            figure.savefig((self.plot_path / prefix / filename).with_suffix(".pdf"))
 
         self.train_log.log_figure(
-            figure_name=f"{self.best_last_val}/{filename}",
+            figure_name=f"{prefix}/{filename}",
             figure=figure,
             overwrite=False,
             step=self.step,

@@ -310,31 +310,6 @@ class Holder:
             pt_pos = conf.loader.x_ftx_energy_pos
             pts = batch.x[..., pt_pos].clone()
             batch.x[..., pt_pos] = norm_pt_sum(pts, batch.batch).clone()
-
-            # from fgsim.loaders.jetnet.objcol import scaler
-            # from torch_scatter import scatter_add
-
-            # pt_scaler = scaler.transfs[2]
-            # pt_pos = conf.loader.x_ftx_energy_pos
-
-            # pts = batch.x[..., pt_pos].clone()
-            # pts_backtransf_gen = torch.tensor(
-            #     pt_scaler.inverse_transform(
-            #         pts.cpu().detach().numpy().reshape(-1, 1)
-            #     ).reshape(-1)
-            # ).to(batch.x.device)
-            # pts_sum_gen = scatter_add(pts_backtransf_gen, batch.batch, dim=-1)
-            # assert torch.allclose(pts_sum_gen, torch.ones_like(pts_sum_gen))
-
-            # pt_sim = sim_batch.x[..., pt_pos]
-            # pts_backtransf_sim = torch.tensor(
-            #     pt_scaler.inverse_transform(
-            #         pt_sim.cpu().detach().numpy().reshape(-1, 1)
-            #     ).reshape(-1)
-            # ).to(batch.x.device)
-            # pts_sum_sim = scatter_add(pts_backtransf_sim, sim_batch.batch, dim=-1)
-            # assert (pts_sum_sim - 1).abs().max() < 0.05
-            # assert torch.allclose(pts_sum_gen, torch.ones_like(pts_sum_gen))
         return batch
 
 

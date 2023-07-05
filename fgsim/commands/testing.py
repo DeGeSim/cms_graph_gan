@@ -19,8 +19,8 @@ from fgsim.io.queued_dataset import QueuedDataset
 from fgsim.io.sel_loader import loader_info, scaler
 from fgsim.ml.holder import Holder
 from fgsim.monitoring import TrainLog, logger
+from fgsim.plot.eval_plots import eval_plots
 from fgsim.plot.fig_logger import FigLogger
-from fgsim.plot.validation_plots import validation_plots
 from fgsim.utils.jetnetutils import to_efp
 
 batch_size = conf.loader.batch_size
@@ -87,7 +87,7 @@ def test_procedure() -> None:
             best_last_val=best_last_val,
             step=test_info.step,
         )
-        validation_plots(
+        eval_plots(
             fig_logger=fig_logger, res=test_data.res_d, best_last_val=best_last_val
         )
 

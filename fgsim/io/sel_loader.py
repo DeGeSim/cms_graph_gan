@@ -9,8 +9,11 @@ loader_info: LoaderInfo = importlib.import_module(
     f"fgsim.loaders.{conf.dataset_name}"
 ).loader
 
+
 file_manager = loader_info.file_manager
 scaler = loader_info.scaler
+if not conf.loader.preprocess_training:
+    scaler.fit()
 process_seq = loader_info.process_seq
 shared_postprocess_switch = loader_info.shared_postprocess_switch
 Batch: Type = loader_info.Batch

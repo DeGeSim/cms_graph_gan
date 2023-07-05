@@ -26,13 +26,13 @@ class ScalerBase:
         self.read_chunk = read_chunk
         self.transform_wo_scaling = transform_wo_scaling
         self.scalerpath = Path(conf.path.dataset_processed) / "scaler.gz"
-        if conf.command != "preprocess":
+        if conf.command != "preprocess" and conf.loader.preprocess_training:
             if not self.scalerpath.is_file():
                 raise FileNotFoundError(f"No scalar found at {self.scalerpath}")
             else:
                 self.transfs_x, self.transfs_y = joblib.load(self.scalerpath)
 
-    def save_scaler(self):
+    def fit(self, saveplots=False):
         assert self.len_dict[self.files[0]] >= conf.loader.scaling_fit_size
         chk = self.read_chunk(
             [(Path(self.files[0]), 0, conf.loader.scaling_fit_size)]
@@ -49,7 +49,8 @@ class ScalerBase:
                 mask = np.hstack([e.mask.clone().numpy() for e in event_list])
                 pcs = pcs[mask]
 
-            self.plot_scaling(pcs, x_or_y)
+            if saveplots:
+                self.plot_scaling(pcs, x_or_y)
             assert pcs.shape[1] == len(conf.loader[x_or_y + "_features"])
             transfs = self.transfs_x if x_or_y == "x" else self.transfs_y
             res = np.hstack(
@@ -60,8 +61,11 @@ class ScalerBase:
             )
             if not np.isfinite(res).all():
                 raise RuntimeError("Result not finite")
-            self.plot_scaling(res, x_or_y, True)
+            if saveplots:
+                self.plot_scaling(res, x_or_y, True)
 
+    def save_scaler(self):
+        self.fit(True)
         joblib.dump((self.transfs_x, self.transfs_y), self.scalerpath)
 
     def transform(self, pcs: torch.Tensor, x_or_y: str):

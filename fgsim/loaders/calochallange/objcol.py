@@ -3,7 +3,12 @@ from typing import List, Tuple
 
 import h5py
 import torch
-from sklearn.preprocessing import PowerTransformer
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import (
+    FunctionTransformer,
+    PowerTransformer,
+    StandardScaler,
+)
 from torch_geometric.data import Data
 
 from fgsim.config import conf
@@ -65,11 +70,27 @@ def contruct_graph_from_row(chk: Tuple[torch.Tensor, torch.Tensor]) -> Data:
     return res
 
 
+def Identity(x):
+    return x
+
+
+def NetToZero(x):
+    x[x < 0] = 0
+    return x
+
+
+hitE_tf = make_pipeline(
+    PowerTransformer(method="box-cox", standardize=False),
+    FunctionTransformer(Identity, NetToZero, validate=True),
+    StandardScaler(),
+)
+
+
 scaler = ScalerBase(
     files=file_manager.files,
     len_dict=file_manager.file_len_dict,
     transfs_x=[
-        PowerTransformer(method="box-cox", standardize=True),
+        hitE_tf,
         dequant_stdscale(),
         dequant_stdscale(),
         dequant_stdscale(),

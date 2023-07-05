@@ -102,6 +102,7 @@ def norm_pt_sum(pts, batchidx):
 
     # Backwards transform
     pts = pts.clone().double() * scale + mean
+    check_tensor(pts)
     if lmbd == 0:
         pts = torch.exp(pts.clone())
     else:
