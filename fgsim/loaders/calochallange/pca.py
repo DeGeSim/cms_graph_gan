@@ -42,4 +42,4 @@ def fpc_from_batch(batch: Batch) -> dict[str, torch.Tensor]:
     #     0
     # ].reshape(1, 3)
     # assert ((untrfs-fct).std(0)<(untrfs).std(0)).all()
-    return dict(zip(["x", "y", "z"], first_pc.T))
+    return dict(zip(["x", "y", "z"], first_pc.T.float()))

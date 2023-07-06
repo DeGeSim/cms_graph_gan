@@ -491,7 +491,15 @@ dataset_options:
       interval: 1_500
       plot_interval: 3_000
       use_for_stopping: ["marginalEw", "showershape", "fpc", "coneratio"]
-      metrics: ["marginal", "marginalEw", "showershape", "fpc", "coneratio"]
+      metrics:
+        [
+          "marginal",
+          "marginalEw",
+          "showershape",
+          "fpc",
+          "coneratio",
+          "response",
+        ]
       debug_metrics: ["marginalEw"]
   hgcal_graph:
     validation:

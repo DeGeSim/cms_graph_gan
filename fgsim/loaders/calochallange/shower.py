@@ -26,7 +26,7 @@ def analyze_shower(batch: Batch) -> dict[str, torch.Tensor]:
     assert (hist.sum(1) == batch.ptr[1:] - batch.ptr[:-1]).all()
 
     # # Produce the zshape
-    zshape = hist.sum(0)
+    # zshape = hist.sum(0)
 
     # # Produce the zshape centered by the peak
     peak_hits, peak_layer = hist.max(1)
@@ -40,10 +40,10 @@ def analyze_shower(batch: Batch) -> dict[str, torch.Tensor]:
     # shift peak to number of layers
     centered_layers_perevent += -peak_layer.reshape(-1, 1) + len(zvals)
 
-    # aggegate for each of the shifted layers
-    zshape_centered = global_add_pool(
-        hist.reshape(-1), centered_layers_perevent.reshape(-1)
-    )
+    # # aggegate for each of the shifted layers
+    # zshape_centered = global_add_pool(
+    #     hist.reshape(-1), centered_layers_perevent.reshape(-1)
+    # )
 
     # Plot to check
     # import matplotlib.pyplot as plt
@@ -74,10 +74,11 @@ def analyze_shower(batch: Batch) -> dict[str, torch.Tensor]:
 
     return {
         "peak_layer": peak_layer.float(),
-        "psr": psr,
+        "psr": psr.float(),
         "turnon_layer": turnon_layer.float(),
-        "shape": zshape,
-        "cshape": zshape_centered,
+        # "shape": zshape, # wrong shape
+        # "zshape_centered": zshape_centered, wrong shape
+        # TODO
     }
 
 
@@ -100,3 +101,11 @@ def cone_ratio(batch: Batch) -> torch.Tensor:
     e_large = global_add_pool(Ehit * (delta < 0.3).float(), batchidx) / Esum
 
     return e_small / e_large
+
+
+def response(batch: Batch) -> torch.Tensor:
+    batchidx = batch.batch
+    Ehit = batch.x[:, conf.loader.x_ftx_energy_pos]
+    Esum = global_add_pool(Ehit, batchidx)
+
+    return Esum / batch.y[:, conf.loader.y_features.index("E")]
