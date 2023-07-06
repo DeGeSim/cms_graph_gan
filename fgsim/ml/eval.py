@@ -56,9 +56,9 @@ def postprocess(batch: Batch) -> Batch:
         batch = to_efp(batch)
 
     if conf.dataset_name == "calochallange":
-        from fgsim.loaders.calochallange.convcoord import batch_to_Exyz
+        from fgsim.loaders.calochallange import postprocess
 
-        batch = batch_to_Exyz(batch)
+        batch = postprocess(batch)
     return batch
 
 

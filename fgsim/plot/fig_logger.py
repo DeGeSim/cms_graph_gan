@@ -54,7 +54,8 @@ class FigLogger:
         if self.plot_path is not None:
             # figure.savefig((self.plot_path / filename
             # ).with_suffix(".png"), dpi=150)
-            figure.savefig((self.plot_path / prefix / filename).with_suffix(".pdf"))
+            folder = (self.plot_path / prefix).mkdir(parents=True, exist_ok=True)
+            figure.savefig((folder / filename).with_suffix(".pdf"))
 
         self.train_log.log_figure(
             figure_name=f"{prefix}/{filename}",

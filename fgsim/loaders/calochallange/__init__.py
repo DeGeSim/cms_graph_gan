@@ -6,6 +6,8 @@ should be passed the qfseq.
 
 import sys
 
+from .postprocess import postprocess
+
 if "pytest" not in sys.modules:
     from torch_geometric.data import Batch
 

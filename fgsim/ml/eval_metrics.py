@@ -52,7 +52,7 @@ class EvaluationMetrics:
                     # If the loss is processed for each hlv
                     # the return type is Dict[str,float]
                     for var, lossval in comp_metrics.items():
-                        mval[f"{metric_name}_{var}"] = float(lossval)
+                        mval[f"{metric_name}/{var}"] = float(lossval)
                 else:
                     mval[metric_name] = comp_metrics
                 # print(

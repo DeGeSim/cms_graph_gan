@@ -5,7 +5,7 @@ from torch_geometric.nn.pool import global_mean_pool
 from fgsim.models.pool.std_pool import global_std_pool
 
 
-def fpc_from_batch(batch: Batch) -> torch.Tensor:
+def fpc_from_batch(batch: Batch) -> dict[str, torch.Tensor]:
     """Get the first principal component from a PC"""
     batchidx = batch.batch.detach().cpu()
     xyz = batch.xyz.detach().cpu().double()
@@ -42,4 +42,4 @@ def fpc_from_batch(batch: Batch) -> torch.Tensor:
     #     0
     # ].reshape(1, 3)
     # assert ((untrfs-fct).std(0)<(untrfs).std(0)).all()
-    return first_pc
+    return dict(zip(["x", "y", "z"], first_pc.T))
