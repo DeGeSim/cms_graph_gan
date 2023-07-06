@@ -27,14 +27,17 @@ def eval_plots(fig_logger: FigLogger, res: dict):
     make_critics_plots(res, fig_logger)
 
 
-def make_1d_plots(res, fig_logger, ftxname):
+def make_1d_plots(res: dict, fig_logger: FigLogger, ftxname: str) -> None:
+    fig_logger.best_last_val.append("1D")
     for title, fig in ftx_marginals(
         res["sim_batch"], res["gen_batch"], ftxname
     ).items():
         fig_logger(fig, title)
+    fig_logger.best_last_val.pop()
 
 
-def make_2d_plots(res, fig_logger, ftxname):
+def make_2d_plots(res: dict, fig_logger: FigLogger, ftxname: str) -> None:
+    fig_logger.best_last_val.append("2D")
     for v1, v2 in combinations(list(range(conf.loader.n_features)), 2):
         figure = xy_hist(
             sim=res["sim_batch"][ftxname][:, [v1, v2]].cpu().numpy(),
@@ -50,9 +53,10 @@ def make_2d_plots(res, fig_logger, ftxname):
             figure,
             f"2dhist_{conf.loader.x_features[v1]}_vs_{conf.loader.x_features[v2]}.pdf",
         )
+    fig_logger.best_last_val.pop()
 
 
-def make_critics_plots(res, fig_logger):
+def make_critics_plots(res: dict, fig_logger: FigLogger) -> None:
     match conf.command:
         case "train":
             val_size = conf.loader.validation_set_size
@@ -79,7 +83,7 @@ def make_critics_plots(res, fig_logger):
         )
 
 
-def make_jetnet_plots(res, fig_logger):
+def make_jetnet_plots(res: dict, fig_logger: FigLogger) -> None:
     from fgsim.plot.jetfeatures import jet_features
 
     for title, fig in jet_features(

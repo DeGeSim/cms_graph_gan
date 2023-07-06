@@ -1,11 +1,46 @@
 import torch
 from torch_geometric.data import Batch
 
-from fgsim.config import conf
+from fgsim.config import conf, device
 from fgsim.io.sel_loader import scaler
+from fgsim.ml.holder import Holder
 from fgsim.plot.eval_plots import eval_plots
 from fgsim.plot.fig_logger import FigLogger
 from fgsim.plot.modelgrads import fig_grads
+
+
+def gen_res_from_sim_batches(batches: list[Batch], holder: Holder):
+    res_d_l = {
+        "sim_batch": [],
+        "gen_batch": [],
+        "sim_crit": [],
+        "gen_crit": [],
+    }
+    for batch in batches:
+        batch = batch.to(device)
+        for k, val in holder.pass_batch_through_model(batch, eval=True).items():
+            if k in ["sim_batch", "gen_batch"]:
+                for e in val.to_data_list():
+                    res_d_l[k].append(e.detach().cpu())
+            elif k in ["sim_crit", "gen_crit"]:
+                res_d_l[k].append(val.detach().cpu())
+    sim_crit = torch.vstack(res_d_l["sim_crit"])
+    gen_crit = torch.vstack(res_d_l["gen_crit"])
+
+    sim_batch = Batch.from_data_list(res_d_l["sim_batch"])
+    gen_batch = Batch.from_data_list(res_d_l["gen_batch"])
+
+    assert sim_batch.x.shape == gen_batch.x.shape
+
+    results_d = {
+        "sim_batch": sim_batch,
+        "gen_batch": gen_batch,
+        "gen_crit": gen_crit,
+        "sim_crit": sim_crit,
+    }
+    for k in ["sim_batch", "gen_batch"]:
+        results_d[k] = postprocess(results_d[k])
+    return results_d
 
 
 def postprocess(batch: Batch) -> Batch:
@@ -27,11 +62,11 @@ def postprocess(batch: Batch) -> Batch:
     return batch
 
 
-def eval_res_d(results_d, holder):
-    step = holder.state.grad_step
+def eval_res_d(
+    results_d: dict, holder: Holder, step: int, epoch: int, plot_path=None
+):
     plot = step % conf.training.val.plot_interval == 0 or conf.command == "test"
     step = step if step != 0 else 1
-    epoch = holder.state.epoch
 
     # evaluate the validation metrics
     with torch.no_grad():
@@ -46,8 +81,12 @@ def eval_res_d(results_d, holder):
     if not plot:
         return score
     best_last_val = "test" if conf.command == "test" else "val"
+
     fig_logger = FigLogger(
-        holder.train_log, plot_path=None, best_last_val=[best_last_val], step=step
+        holder.train_log,
+        plot_path=plot_path,
+        best_last_val=[best_last_val],
+        step=step,
     )
 
     eval_plots(fig_logger=fig_logger, res=results_d)
