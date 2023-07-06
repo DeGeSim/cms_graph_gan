@@ -2,7 +2,6 @@ from functools import partial
 
 import numpy as np
 import scipy
-from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import FunctionTransformer, StandardScaler
 
 from .idxscale import IdxToScale
@@ -25,7 +24,7 @@ def backward(x, lower, dist):
     return x * dist + lower
 
 
-def dequant_stdscale(inputrange=None):
+def dequant_stdscale(inputrange=None) -> list:
     if inputrange is None:
         scaletf = IdxToScale((0, 1))
     else:
@@ -49,4 +48,4 @@ def dequant_stdscale(inputrange=None):
         ),
         StandardScaler(),
     ]
-    return make_pipeline(*tfseq)
+    return tfseq

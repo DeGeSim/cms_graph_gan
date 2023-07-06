@@ -7,6 +7,7 @@ from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import (
     FunctionTransformer,
     PowerTransformer,
+    QuantileTransformer,
     StandardScaler,
 )
 from torch_geometric.data import Data
@@ -82,23 +83,36 @@ def NetToZero(x):
 hitE_tf = make_pipeline(
     PowerTransformer(method="box-cox", standardize=False),
     FunctionTransformer(Identity, NetToZero, validate=True),
+    # SplineTransformer(),
     StandardScaler(),
 )
 
+E_tf = make_pipeline(
+    PowerTransformer(method="box-cox", standardize=False),
+    QuantileTransformer(output_distribution="normal"),
+)
+num_particles_tf = make_pipeline(
+    *dequant_stdscale((0, conf.loader.n_points + 1)),
+    QuantileTransformer(output_distribution="normal"),
+)
+E_per_hit_tf = make_pipeline(
+    PowerTransformer(method="box-cox", standardize=False),
+    QuantileTransformer(output_distribution="normal"),
+)
 
 scaler = ScalerBase(
     files=file_manager.files,
     len_dict=file_manager.file_len_dict,
     transfs_x=[
-        hitE_tf,
-        dequant_stdscale(),
-        dequant_stdscale(),
-        dequant_stdscale(),
+        hitE_tf,  # h_energy
+        make_pipeline(*dequant_stdscale()),  # z
+        make_pipeline(*dequant_stdscale()),  # alpha
+        make_pipeline(*dequant_stdscale()),  # r
     ],
     transfs_y=[
-        PowerTransformer(method="box-cox", standardize=True),  # Energy
-        dequant_stdscale((0, conf.loader.n_points + 1)),  # num_particles
-        PowerTransformer(method="box-cox", standardize=True),  # Energy
+        E_tf,  # Energy
+        num_particles_tf,  # num_particles
+        E_per_hit_tf,  # Energy pre hit
     ],
     read_chunk=read_chunks,
     transform_wo_scaling=contruct_graph_from_row,

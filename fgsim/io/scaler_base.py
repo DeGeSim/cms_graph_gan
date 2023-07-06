@@ -27,8 +27,8 @@ class ScalerBase:
         self.transform_wo_scaling = transform_wo_scaling
         self.scalerpath = Path(conf.path.dataset_processed) / "scaler.gz"
 
-        assert len(self.transfs_x) == conf.loader.x_features
-        assert len(self.transfs_y) == conf.loader.y_features
+        assert len(self.transfs_x) == len(conf.loader.x_features)
+        assert len(self.transfs_y) == len(conf.loader.y_features)
 
         if conf.command != "preprocess" and conf.loader.preprocess_training:
             if not self.scalerpath.is_file():
