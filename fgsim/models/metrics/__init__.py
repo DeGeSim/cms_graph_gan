@@ -1,5 +1,5 @@
 from .auc import auc
-from .calo import cdfdist, w1cr, w1fpc, w1mar, w1z
+from .calo import coneratio, fpc3, marginal, marginalEw, showershape
 from .dcd import cd, dcd
 from .ft_w1 import ft_w1
 from .jetnet import cov_mmd, fpd, fpnd, kpd, w1efp, w1m, w1p
