@@ -480,13 +480,13 @@ dataset_options:
       n_points: 6000 # 2, 3, 2,5 , 2,5 , 10
       x_features: ["E", "z", "alpha", "r"]
       x_ftx_energy_pos: 0
-      y_features: ["E", "num_particles"]
-      cond_gen_features: [True, True]
-      cond_critic_features: [True, True]
+      y_features: ["E", "num_particles", "Eperlayer"]
+      cond_gen_features: [True, True, True]
+      cond_critic_features: [True, True, True]
       chunk_size: 1000
       batch_size: 50
-      validation_set_size: 30000
-      test_set_size: 50000
+      validation_set_size: 20000
+      test_set_size: 40000
     validation:
       interval: 1_500
       plot_interval: 3_000

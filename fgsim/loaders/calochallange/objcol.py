@@ -66,7 +66,7 @@ def contruct_graph_from_row(chk: Tuple[torch.Tensor, torch.Tensor]) -> Data:
     pc = torch.stack([h_energy, z, alpha, r]).T
     assert not pc.isnan().any()
     num_hits = torch.tensor(idxs[0].shape).float()
-    res = Data(x=pc, y=torch.concat([E, num_hits]).reshape(1, 2))
+    res = Data(x=pc, y=torch.concat([E, num_hits, E / num_hits]).reshape(1, 3))
     return res
 
 
@@ -98,6 +98,7 @@ scaler = ScalerBase(
     transfs_y=[
         PowerTransformer(method="box-cox", standardize=True),  # Energy
         dequant_stdscale((0, conf.loader.n_points + 1)),  # num_particles
+        PowerTransformer(method="box-cox", standardize=True),  # Energy
     ],
     read_chunk=read_chunks,
     transform_wo_scaling=contruct_graph_from_row,
