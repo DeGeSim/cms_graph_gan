@@ -17,10 +17,10 @@ from omegaconf.dictconfig import DictConfig
 from torch_geometric.data import Batch
 
 from fgsim.config import conf
+from fgsim.ml.eval_metrics import EvaluationMetrics
 from fgsim.ml.loss import LossesCol
 from fgsim.ml.network import SubNetworkCollector
 from fgsim.ml.optim import OptimAndSchedulerCol
-from fgsim.ml.val_metrics import ValidationMetrics
 from fgsim.monitoring import TrainLog, logger
 from fgsim.utils import check_tensor
 from fgsim.utils.check_for_nans import contains_nans
@@ -99,9 +99,7 @@ class Holder:
         #     # torcheck.add_module_nan_check(model, module_name=partname)
 
         self.losses: LossesCol = LossesCol(self.train_log)
-        self.val_metrics: ValidationMetrics = ValidationMetrics(
-            self.train_log, self.history
-        )
+        self.eval_metrics = EvaluationMetrics(self.train_log, self.history)
 
         self.to(self.device)
 

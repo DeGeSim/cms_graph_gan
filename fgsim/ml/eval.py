@@ -70,8 +70,8 @@ def eval_res_d(
 
     # evaluate the validation metrics
     with torch.no_grad():
-        holder.val_metrics(**results_d)
-    up_metrics_d, score = holder.val_metrics.get_metrics()
+        holder.eval_metrics(**results_d)
+    up_metrics_d, score = holder.eval_metrics.get_metrics()
 
     holder.train_log.log_metrics(up_metrics_d, prefix="val", step=step, epoch=epoch)
 

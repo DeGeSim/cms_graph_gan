@@ -12,7 +12,7 @@ from fgsim.config import conf
 from fgsim.monitoring import MetricAggregator, TrainLog, logger
 
 
-class ValidationMetrics:
+class EvaluationMetrics:
     """
     Calling this object will save the output of the validation batches to
     self.metric_aggr . In the log_metrics they are aggregated and logged
