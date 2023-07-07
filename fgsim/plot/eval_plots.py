@@ -2,7 +2,7 @@ from itertools import combinations
 
 from fgsim.config import conf
 from fgsim.plot.fig_logger import FigLogger
-from fgsim.plot.labels import var_to_label
+from fgsim.plot.infolut import var_to_bins, var_to_label
 from fgsim.plot.marginals import ftx_marginals
 from fgsim.plot.xyscatter import xy_hist
 
@@ -29,8 +29,12 @@ def eval_plots(fig_logger: FigLogger, res: dict):
 
 def make_1d_plots(res: dict, fig_logger: FigLogger, ftxname: str) -> None:
     fig_logger.best_last_val.append("1D")
+    if "unscaled" in fig_logger.best_last_val:
+        bins = [var_to_bins(e) for e in conf.loader.x_features]
+    else:
+        bins = None
     for title, fig in ftx_marginals(
-        res["sim_batch"], res["gen_batch"], ftxname
+        res["sim_batch"], res["gen_batch"], ftxname, bins
     ).items():
         fig_logger(fig, title)
     fig_logger.best_last_val.pop()

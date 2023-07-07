@@ -1,3 +1,5 @@
+from typing import Optional
+
 import matplotlib.pyplot as plt
 import mplhep
 import numpy as np
@@ -9,7 +11,9 @@ from .binborders import binborders_wo_outliers
 
 
 @wrap_torch_to_np
-def ratioplot(sim: np.ndarray, gen: np.ndarray, title: str) -> Figure:
+def ratioplot(
+    sim: np.ndarray, gen: np.ndarray, title: str, bins: Optional[np.ndarray] = None
+) -> Figure:
     fig, (ax, axrat) = plt.subplots(
         2,
         1,
@@ -19,7 +23,8 @@ def ratioplot(sim: np.ndarray, gen: np.ndarray, title: str) -> Figure:
     # if title == "Disc Score":
     #     bins = binborders_by_bounds(0, 1)
     # else:
-    bins = binborders_wo_outliers(sim)
+    if bins is None:
+        bins = binborders_wo_outliers(sim)
     n_bins = len(bins) - 1
 
     sim_hist, _ = np.histogram(sim, bins=bins)
@@ -55,8 +60,10 @@ def ratioplot(sim: np.ndarray, gen: np.ndarray, title: str) -> Figure:
             **kwstyle,
         )
 
+    if (sim_hist > (sim_hist.max() / 10)).mean() < 0.1:
+        ax.set_yscale("log")
     ax.set_ylabel("Frequency", fontsize=16)
-    ax.get_yaxis().set_ticks([])
+    # ax.get_yaxis().set_ticks([])
 
     ax.legend(fontsize=16, loc="upper left")
     ax.tick_params(axis="both", which="major", labelsize=12)
@@ -85,7 +92,7 @@ def ratioplot(sim: np.ndarray, gen: np.ndarray, title: str) -> Figure:
     )
     # axrat.plot(frac, marker="o", linestyle="", markersize=4)
 
-    axrat.set_ylim(0, 2)
+    axrat.set_ylim(0.5, 1.5)
     axrat.set_xticks([])
     axrat.set_xticklabels([])
 

@@ -38,6 +38,7 @@ def gen_res_from_sim_batches(batches: list[Batch], holder: Holder):
         "gen_crit": gen_crit,
         "sim_crit": sim_crit,
     }
+    gen_batch.y = sim_batch.y.clone()
     for k in ["sim_batch", "gen_batch"]:
         results_d[k] = postprocess(results_d[k])
     return results_d
@@ -87,6 +88,7 @@ def eval_res_d(
         plot_path=plot_path,
         best_last_val=[best_last_val],
         step=step,
+        epoch=epoch,
     )
 
     eval_plots(fig_logger=fig_logger, res=results_d)

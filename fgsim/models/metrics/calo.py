@@ -3,6 +3,7 @@ import torch
 from torch_geometric.data import Batch
 
 from fgsim.config import conf
+from fgsim.plot.infolut import var_to_bins
 from fgsim.plot.xyscatter import binborders_wo_outliers
 
 from .distutils import (
@@ -11,13 +12,6 @@ from .distutils import (
     calc_scaled1d_dist,
     calc_wcdf_dist,
 )
-
-mar_bins = [
-    torch.linspace(0, 6000, 100).float(),  # E
-    torch.linspace(0, 44, 45).float(),  # z
-    torch.linspace(0, 15, 16).float(),  # alpha
-    torch.linspace(0, 8, 9).float(),  # r
-]
 
 
 def run_dists(sim_batch, gen_batch, k, bins=None):
@@ -70,7 +64,12 @@ def run_dists(sim_batch, gen_batch, k, bins=None):
 
 
 def marginal(gen_batch: Batch, sim_batch: Batch, **kwargs) -> dict[str, np.float32]:
-    return run_dists(sim_batch, gen_batch, k=None, bins=mar_bins)
+    return run_dists(
+        sim_batch,
+        gen_batch,
+        k=None,
+        bins=[torch.tensor(var_to_bins(i)).float() for i in range(4)],
+    )
 
 
 def marginalEw(
@@ -81,7 +80,7 @@ def marginalEw(
     kwargs = {
         "r": sim_batch.x[..., 1:],
         "f": gen_batch.x[..., 1:],
-        "bins": mar_bins[1:],
+        "bins": [torch.tensor(var_to_bins(i)).float() for i in range(1, 4)],
         "rw": sim_batch.x[..., 0],
         "fw": gen_batch.x[..., 0],
     }

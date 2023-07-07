@@ -3,7 +3,7 @@ from typing import Dict
 import jetnet
 from matplotlib.figure import Figure
 
-from fgsim.plot.labels import var_to_label
+from fgsim.plot.infolut import var_to_label
 from fgsim.utils.jetnetutils import to_stacked_mask
 
 from .ratioplot import ratioplot
