@@ -41,6 +41,10 @@ def make_1d_plots(res: dict, fig_logger: FigLogger, ftxname: str) -> None:
 
 
 def make_2d_plots(res: dict, fig_logger: FigLogger, ftxname: str) -> None:
+    if "unscaled" in fig_logger.best_last_val:
+        bins = [var_to_bins(e) for e in conf.loader.x_features]
+    else:
+        bins = [None for _ in conf.loader.x_features]
     fig_logger.best_last_val.append("2D")
     for v1, v2 in combinations(list(range(conf.loader.n_features)), 2):
         figure = xy_hist(
@@ -52,6 +56,8 @@ def make_2d_plots(res: dict, fig_logger: FigLogger, ftxname: str) -> None:
             ),
             v1name=var_to_label(v1),
             v2name=var_to_label(v2),
+            v1bins=bins[v1],
+            v2bins=bins[v2],
         )
         fig_logger(
             figure,

@@ -5,6 +5,9 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 import torch
+from matplotlib.axes import Axes
+from matplotlib.colors import LogNorm, Normalize
+from matplotlib.figure import Figure
 
 from fgsim.plot.binborders import (
     binborders_wo_outliers,
@@ -40,7 +43,7 @@ def xyscatter(
     title: str,
     v1name: str,
     v2name: str,
-) -> plt.Figure:
+) -> Figure:
     sim = to_np(sim)
     gen = to_np(gen)
 
@@ -50,14 +53,14 @@ def xyscatter(
         {
             v1name: sim[:, 0],
             v2name: sim[:, 1],
-            "cls": f"MC",
+            "cls": "MC",
         }
     )
     gen_df = pd.DataFrame(
         {
             v1name: gen[:, 0],
             v2name: gen[:, 1],
-            "cls": f"DeepTreeGAN",
+            "cls": "DeepTreeGAN",
         }
     )
     df = pd.concat([sim_df, gen_df], ignore_index=True)
@@ -93,7 +96,7 @@ def xyscatter_faint(
     v1name: str,
     v2name: str,
     step: Optional[int] = None,
-) -> plt.Figure:
+) -> Figure:
     if len(sim) > 5000:
         sampleidxs = np.random.choice(sim.shape[0], size=5000, replace=False)
         sim = sim[sampleidxs]
@@ -105,14 +108,14 @@ def xyscatter_faint(
         {
             v1name: sim[:, 0],
             v2name: sim[:, 1],
-            "cls": f"MC",
+            "cls": "MC",
         }
     )
     gen_df = pd.DataFrame(
         {
             v1name: gen[:, 0],
             v2name: gen[:, 1],
-            "cls": f"DeepTreeGAN",
+            "cls": "DeepTreeGAN",
         }
     )
     df = pd.concat([sim_df, gen_df], ignore_index=True)
@@ -151,34 +154,69 @@ def xy_hist(
     title: str,
     v1name: str,
     v2name: str,
+    v1bins: Optional[np.ndarray] = None,
+    v2bins: Optional[np.ndarray] = None,
     step: Optional[int] = None,
-) -> plt.Figure:
+) -> Figure:
     plt.cla()
     plt.clf()
 
     sns.set()
-    fig, axes = plt.subplots(1, 2, sharex=True, sharey=True)
-    xedges = binborders_wo_outliers(sim[:, 0])
-    yedges = binborders_wo_outliers(sim[:, 1])
-    axes[0].hist2d(
+    fig: Figure
+    sim_axes: Axes
+    gen_axes: Axes
+    fig, (sim_axes, gen_axes) = plt.subplots(
+        1, 2, sharex=True, sharey=True  # , figsize=(20, 12)
+    )
+    if v1bins is None:
+        xedges = binborders_wo_outliers(sim[:, 0])
+        yedges = binborders_wo_outliers(sim[:, 1])
+    else:
+        xedges = v1bins
+        yedges = v2bins
+
+    # flip x and y axis if the x val has more bins
+    if len(xedges) > len(yedges) + 5:
+        xedges, yedges = yedges, xedges
+        sim = sim[:, (1, 0)]
+        gen = gen[:, (1, 0)]
+        v1bins, v2bins = v2bins, v1bins
+        v1name, v2name = v2name, v1name
+
+    shist, _, _ = np.histogram2d(
         chip_to_binborders(sim[:, 0], xedges),
         chip_to_binborders(sim[:, 1], yedges),
-        bins=[xedges, yedges],
-    )
-
-    axes[1].hist2d(
+        bins=(xedges, yedges),
+    )  # , density=density, weights=weights)
+    ghist, _, _ = np.histogram2d(
         chip_to_binborders(gen[:, 0], xedges),
         chip_to_binborders(gen[:, 1], yedges),
-        bins=[xedges, yedges],
+        bins=(xedges, yedges),
     )
-    axes[0].set_title("MC")
-    axes[1].set_title("DeepTreeGAN")
-    axes[0].set(xlabel=v1name, ylabel=v2name)
-    axes[1].set(xlabel=v1name, ylabel=v2name)
+
+    if (shist > (shist.max() / 10)).mean() < 0.1:
+        norm = LogNorm(max(shist.min(), 1), shist.max())
+    else:
+        norm = Normalize(shist.min(), shist.max())
+
+    for iax, (ax, hist) in enumerate(zip([sim_axes, gen_axes], [shist, ghist])):
+        im = ax.imshow(hist.T, cmap=plt.cm.coolwarm, norm=norm)  # , aspect="equal")
+        if iax == 0:
+            ax.set_ylabel(v2name)
+            ax.set_yticks(**edge_to_labels(yedges))
+        ax.set_xticks(rotation=45, **edge_to_labels(xedges))
+        ax.set_xlabel(v1name)
+
+    # s_cax = sim_axes.inset_axes([1.04, 0.2, 0.05, 0.6])
+    fig.colorbar(im)
+
+    sim_axes.set_title("MC")
+    gen_axes.set_title("DeepTreeGAN")
 
     if step is not None:
         title += f"\nStep {step}"
     fig.suptitle(title)
+    fig.tight_layout()
     return fig
 
 
@@ -187,3 +225,12 @@ def simranges(sim: np.ndarray):
     xrange = bounds_wo_outliers(sim[:, 0])
     yrange = bounds_wo_outliers(sim[:, 1])
     return xrange, yrange
+
+
+def edge_to_labels(edges):
+    if len(edges) < 10:
+        ticks = np.arange(len(edges))
+    else:
+        ticks = np.linspace(0, len(edges) - 1, 10, dtype="int")
+    labels = [str(int(e)) for e in edges[ticks]]
+    return dict(ticks=ticks, labels=labels)
