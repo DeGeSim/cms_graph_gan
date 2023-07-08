@@ -55,7 +55,7 @@ def calc_wcdf_dist(
     dists = []
     assert r.shape == f.shape
     for iftx in range(r.shape[-1]):
-        cdf_real, w_real = wcdf(f[..., iftx], rw)
+        cdf_real, w_real = wcdf(r[..., iftx], rw)
         cdf_fake, w_fake = wcdf(f[..., iftx], fw)
 
         ww = w_fake * w_real
