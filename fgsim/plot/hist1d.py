@@ -8,7 +8,7 @@ from fgsim.plot.infolut import var_to_label
 from .ratioplot import ratioplot
 
 
-def ftx_marginals(sim, gen, ftxname: str, bins=None) -> Dict[str, Figure]:
+def hist1d(sim, gen, ftxname: str, bins=None) -> Dict[str, Figure]:
     sim_features = {
         varname: arr
         for varname, arr in zip(

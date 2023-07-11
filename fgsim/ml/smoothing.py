@@ -4,7 +4,7 @@ import torch
 
 from fgsim.config import conf
 from fgsim.io.sel_loader import scaler
-from fgsim.plot.xyscatter import binborders_wo_outliers
+from fgsim.plot import binborders_wo_outliers
 
 
 class Smoother:
@@ -72,7 +72,8 @@ class Smoother:
         #     .numpy()
         # )
         # fig, (ax1, ax2) = plt.subplots(2, 1)
-        # ax1.hist(dists, bins=binbourders_wo_outliers(dists, bins=300), histtype="bar")
+        # ax1.hist(dists, bins=binbourders_wo_outliers(dists, bins=300),
+        # histtype="bar")
         # ax1.set_title("cdist histogram")
 
         # ax2.set_title("marginal histogram")

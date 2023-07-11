@@ -35,7 +35,7 @@ def ratioplot(
     mplhep.histplot(
         [sim_hist, gen_hist],
         bins=bins,
-        label=["Simulation", "DeepTree"],
+        label=["Simulation", "Model"],
         yerr=[sim_error, gen_error],
         ax=ax,
     )

@@ -3,8 +3,7 @@ import torch
 from torch_geometric.data import Batch
 
 from fgsim.config import conf
-from fgsim.plot.infolut import var_to_bins
-from fgsim.plot.xyscatter import binborders_wo_outliers
+from fgsim.plot import binborders_wo_outliers, var_to_bins
 
 from .distutils import (
     calc_cdf_dist,

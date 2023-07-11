@@ -1,10 +1,7 @@
 from itertools import combinations
 
 from fgsim.config import conf
-from fgsim.plot.fig_logger import FigLogger
-from fgsim.plot.infolut import var_to_bins, var_to_label
-from fgsim.plot.marginals import ftx_marginals
-from fgsim.plot.xyscatter import xy_hist
+from fgsim.plot import FigLogger, hist1d, hist2d, var_to_bins, var_to_label
 
 from .ratioplot import ratioplot
 
@@ -33,7 +30,7 @@ def make_1d_plots(res: dict, fig_logger: FigLogger, ftxname: str) -> None:
         bins = [var_to_bins(e) for e in conf.loader.x_features]
     else:
         bins = None
-    for title, fig in ftx_marginals(
+    for title, fig in hist1d(
         res["sim_batch"], res["gen_batch"], ftxname, bins
     ).items():
         fig_logger(fig, title)
@@ -47,7 +44,7 @@ def make_2d_plots(res: dict, fig_logger: FigLogger, ftxname: str) -> None:
         bins = [None for _ in conf.loader.x_features]
     fig_logger.prefixes.append("2D")
     for v1, v2 in combinations(list(range(conf.loader.n_features)), 2):
-        figure = xy_hist(
+        figure = hist2d(
             sim=res["sim_batch"][ftxname][:, [v1, v2]].cpu().numpy(),
             gen=res["gen_batch"][ftxname][:, [v1, v2]].cpu().numpy(),
             title=(

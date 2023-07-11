@@ -38,8 +38,8 @@ def var_to_bins(v: Union[str, int]) -> Optional[np.ndarray]:
     ):
         return {
             "E": np.linspace(0, 6000, 100),  # E
-            "z": np.linspace(0, 44, 45),  # z
-            "alpha": np.linspace(0, 15, 16),  # alpha
-            "r": np.linspace(0, 8, 9),  # r
+            "z": np.linspace(0, 45, 45),  # z
+            "alpha": np.linspace(0, 16, 16),  # alpha
+            "r": np.linspace(0, 9, 9),  # r
         }[vname]
     return None
