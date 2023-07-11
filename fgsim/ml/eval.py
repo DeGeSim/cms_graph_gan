@@ -1,5 +1,6 @@
 import torch
 from torch_geometric.data import Batch
+from tqdm import tqdm
 
 from fgsim.config import conf, device
 from fgsim.io.sel_loader import scaler
@@ -16,7 +17,9 @@ def gen_res_from_sim_batches(batches: list[Batch], holder: Holder):
         "sim_crit": [],
         "gen_crit": [],
     }
-    for batch in batches:
+    for batch in tqdm(
+        batches, "Generating eval batches", miniters=5, mininterval=2.0
+    ):
         batch = batch.to(device)
         for k, val in holder.pass_batch_through_model(batch, eval=True).items():
             if k in ["sim_batch", "gen_batch"]:

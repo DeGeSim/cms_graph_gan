@@ -20,17 +20,6 @@ from fgsim.monitoring import logger
 batch_size = conf.loader.batch_size
 
 
-# @dataclass
-# class TestInfo:
-#     train_log: TrainLog
-#     res_d: dict
-#     hlvs_dict: Optional[Dict[str, Dict[str, np.ndarray]]]
-#     plot_path: Path
-#     step: int
-#     epoch: int
-#     best_or_last: str
-
-
 @dataclass
 class TestDataset:
     res_d: dict
@@ -42,14 +31,12 @@ class TestDataset:
 
 def test_procedure() -> None:
     holder: Holder = Holder(device)
-    # train_log: TrainLog = holder.train_log
-
     ds_dict = {
         best_or_last: get_testing_datasets(holder, best_or_last)
         for best_or_last in ["last", "best"]
     }
 
-    for best_or_last in ["last", "best"]:
+    for best_or_last in ds_dict.keys():
         test_data: TestDataset = ds_dict[best_or_last]
         plot_path = Path(f"{conf.path.run_path}/plots_{best_or_last}/")
         plot_path.mkdir(exist_ok=True)
