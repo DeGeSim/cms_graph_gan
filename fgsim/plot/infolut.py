@@ -47,9 +47,9 @@ def var_to_bins(v: Union[str, int]) -> Optional[np.ndarray]:
         and "calochallange2" in conf.loader.dataset_path
     ):
         return {
-            "E": np.linspace(0, 6000, 100) - 0.5,  # E
-            "z": np.linspace(0, 45, 45) - 0.5,  # z
-            "alpha": np.linspace(0, 16, 16) - 0.5,  # alpha
-            "r": np.linspace(0, 9, 9) - 0.5,  # r
+            "E": np.linspace(0, 6000, 100 + 1) - 0.5,  # E
+            "z": np.linspace(0, 45, 45 + 1) - 0.5,  # z
+            "alpha": np.linspace(0, 16, 16 + 1) - 0.5,  # alpha
+            "r": np.linspace(0, 9, 9 + 1) - 0.5,  # r
         }[vname]
     return None
