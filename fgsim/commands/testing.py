@@ -62,19 +62,9 @@ def test_procedure() -> None:
             step = holder.state.grad_step
             epoch = holder.state.epoch
 
-        # test_info = TestInfo(
-        #     train_log=train_log,
-        #     res_d=test_data.res_d,
-        #     hlvs_dict=test_data.hlvs_dict,
-        #     plot_path=plot_path,
-        #     step=step,
-        #     epoch=epoch,
-        #     best_or_last=best_or_last,
-        # )
-
-        # test_metrics(test_info)
-
-        eval_res_d(test_data.res_d, holder, step, epoch, plot_path)
+        eval_res_d(
+            test_data.res_d, holder, step, epoch, ["test", best_or_last], plot_path
+        )
 
     exit(0)
 

@@ -64,7 +64,12 @@ def postprocess(batch: Batch) -> Batch:
 
 
 def eval_res_d(
-    results_d: dict, holder: Holder, step: int, epoch: int, plot_path=None
+    results_d: dict,
+    holder: Holder,
+    step: int,
+    epoch: int,
+    mode: list["str"],
+    plot_path=None,
 ):
     plot = step % conf.training.val.plot_interval == 0 or conf.command == "test"
     step = step if step != 0 else 1
@@ -74,30 +79,30 @@ def eval_res_d(
         holder.eval_metrics(**results_d)
     up_metrics_d, score = holder.eval_metrics.get_metrics()
 
-    holder.train_log.log_metrics(up_metrics_d, prefix="val", step=step, epoch=epoch)
+    holder.train_log.log_metrics(
+        up_metrics_d, prefix="/".join(mode), step=step, epoch=epoch
+    )
 
     if conf.debug:
         return score
 
     if not plot:
         return score
-    best_last_val = "test" if conf.command == "test" else "val"
 
     fig_logger = FigLogger(
         holder.train_log,
         plot_path=plot_path,
-        best_last_val=[best_last_val],
+        prefixes=mode,
         step=step,
         epoch=epoch,
     )
 
     eval_plots(fig_logger=fig_logger, res=results_d)
 
-    if best_last_val != "val":
+    if mode[0] == "test":
         return score
 
     # Plot the gradients and the weights
-    fig_logger.best_last_val = ["val"]
     for lpart in holder.losses:
         if len(lpart.grad_aggr.steps):
             grad_fig = fig_grads(lpart.grad_aggr, lpart.name)

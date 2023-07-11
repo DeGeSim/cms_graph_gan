@@ -10,26 +10,26 @@ from .ratioplot import ratioplot
 
 
 def eval_plots(fig_logger: FigLogger, res: dict):
-    fig_logger.best_last_val.append("unscaled")
+    fig_logger.prefixes.append("unscaled")
     make_1d_plots(res, fig_logger, "x")
     make_2d_plots(res, fig_logger, "x")
 
     if conf.dataset_name == "calochallange":
-        fig_logger.best_last_val[-1] = "scaled"
+        fig_logger.prefixes[-1] = "scaled"
         make_1d_plots(res, fig_logger, "x_scaled")
         make_2d_plots(res, fig_logger, "x_scaled")
 
     if conf.dataset_name == "jetnet":
-        fig_logger.best_last_val[-1] = "jn"
+        fig_logger.prefixes[-1] = "jn"
         make_jetnet_plots(res, fig_logger)
 
-    fig_logger.best_last_val[-1] = "critics"
+    fig_logger.prefixes[-1] = "critics"
     make_critics_plots(res, fig_logger)
 
 
 def make_1d_plots(res: dict, fig_logger: FigLogger, ftxname: str) -> None:
-    fig_logger.best_last_val.append("1D")
-    if "unscaled" in fig_logger.best_last_val:
+    fig_logger.prefixes.append("1D")
+    if "unscaled" in fig_logger.prefixes:
         bins = [var_to_bins(e) for e in conf.loader.x_features]
     else:
         bins = None
@@ -37,15 +37,15 @@ def make_1d_plots(res: dict, fig_logger: FigLogger, ftxname: str) -> None:
         res["sim_batch"], res["gen_batch"], ftxname, bins
     ).items():
         fig_logger(fig, title)
-    fig_logger.best_last_val.pop()
+    fig_logger.prefixes.pop()
 
 
 def make_2d_plots(res: dict, fig_logger: FigLogger, ftxname: str) -> None:
-    if "unscaled" in fig_logger.best_last_val:
+    if "unscaled" in fig_logger.prefixes:
         bins = [var_to_bins(e) for e in conf.loader.x_features]
     else:
         bins = [None for _ in conf.loader.x_features]
-    fig_logger.best_last_val.append("2D")
+    fig_logger.prefixes.append("2D")
     for v1, v2 in combinations(list(range(conf.loader.n_features)), 2):
         figure = xy_hist(
             sim=res["sim_batch"][ftxname][:, [v1, v2]].cpu().numpy(),
@@ -63,7 +63,7 @@ def make_2d_plots(res: dict, fig_logger: FigLogger, ftxname: str) -> None:
             figure,
             f"2dhist_{conf.loader.x_features[v1]}_vs_{conf.loader.x_features[v2]}.pdf",
         )
-    fig_logger.best_last_val.pop()
+    fig_logger.prefixes.pop()
 
 
 def make_critics_plots(res: dict, fig_logger: FigLogger) -> None:

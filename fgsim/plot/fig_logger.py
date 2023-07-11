@@ -15,13 +15,13 @@ class FigLogger:
         self,
         train_log: TrainLog,
         plot_path: Optional[Path],
-        best_last_val: list[str],
+        prefixes: list[str],
         step: int,
         epoch: int,
     ) -> None:
         self.train_log = train_log
         self.plot_path = plot_path
-        self.best_last_val = best_last_val
+        self.prefixes = prefixes
         self.step = step
         self.epoch = epoch
 
@@ -46,18 +46,18 @@ class FigLogger:
                 fontsize=5,
             )
 
-        prefix = "/".join(self.best_last_val)
+        prefix = "/".join(self.prefixes)
 
         if self.plot_path is not None:
             # figure.savefig((self.plot_path / filename
             # ).with_suffix(".png"), dpi=150)
-            folder = (self.plot_path / prefix).mkdir(parents=True, exist_ok=True)
+            folder = self.plot_path / prefix
+            folder.mkdir(parents=True, exist_ok=True)
             figure.savefig((folder / filename).with_suffix(".pdf"))
 
         self.train_log.log_figure(
             figure_name=f"{prefix}/{filename}",
             figure=figure,
-            overwrite=False,
             step=self.step,
         )
         logger.info(filename)

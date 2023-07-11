@@ -18,7 +18,12 @@ def validate(holder: Holder, loader: QueuedDataset) -> None:
     logger.debug("Validation batches created")
 
     score = eval_res_d(
-        results_d, holder, holder.state["grad_step"], holder.state["epoch"]
+        results_d,
+        holder,
+        holder.state["grad_step"],
+        holder.state["epoch"],
+        ["val"],
+        None,
     )
 
     # overwrite the recorded score for each val step

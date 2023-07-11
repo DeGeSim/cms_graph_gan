@@ -94,7 +94,7 @@ class Trainer:
             for pname, ploosd in ldict.items():
                 self.train_log.log_metrics(
                     {
-                        f"train/{pname}/{lname}": lossval
+                        f"loss/{pname}/{lname}": lossval
                         for lname, lossval in ploosd.items()
                     }
                 )
@@ -108,7 +108,7 @@ class Trainer:
             # log the learning rates
             lr_dict = self.holder.optims.metric_aggr.aggregate()
             self.train_log.log_metrics(
-                {f"train/{pname}/lr": plr for pname, plr in lr_dict.items()}
+                {f"loss/{pname}/lr": plr for pname, plr in lr_dict.items()}
             )
 
             # plot the gradients

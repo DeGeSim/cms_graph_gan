@@ -78,7 +78,7 @@ class TrainLog:
         step=None,
         epoch=None,
         prefix=None,
-        commit=False,
+        commit=True,
     ):
         if conf.debug and conf.command != "test":
             return
@@ -103,21 +103,21 @@ class TrainLog:
         self, md: dict, step: int, epoch: int, commit: bool = False
     ):
         if self.use_wandb:
+            md = {"m/" + k: v for k, v in md.items()}
             wandb.log(md | {"epoch": epoch}, step=step, commit=commit)
 
     def log_figure(
         self,
         figure_name: str,
         figure: Figure,
-        overwrite: bool = False,
-        step: int = None,
+        step: int,
     ):
         if step is None:
             step = self.state["grad_step"]
         if self.use_tb:
             self.writer.add_figure(tag=figure_name, figure=figure, global_step=step)
         if self.use_wandb:
-            wandb.log(data={figure_name: wandb.Image(figure)}, step=step)
+            wandb.log(data={"p/" + figure_name: wandb.Image(figure)}, step=step)
         plt.close(figure)
 
     def log_test_metrics(
