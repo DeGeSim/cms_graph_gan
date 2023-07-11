@@ -1,5 +1,6 @@
 """Dynamically import the losses"""
 import importlib
+from datetime import datetime
 
 # from datetime import datetime
 from typing import Callable, Dict, List, Optional
@@ -46,8 +47,14 @@ class EvaluationMetrics:
         mval = {}
         with torch.no_grad():
             for metric_name, metric in self.parts.items():
-                # start = datetime.now()
+                logger.debug(f"Running metric {metric_name}")
+                start = datetime.now()
                 comp_metrics = metric(**kwargs)
+                delta = datetime.now() - start
+                if delta.seconds > 10:
+                    logger.info(
+                        f"Metric {metric_name} took {delta.total_seconds()} sec"
+                    )
                 if isinstance(comp_metrics, dict):
                     # If the loss is processed for each hlv
                     # the return type is Dict[str,float]
@@ -55,10 +62,7 @@ class EvaluationMetrics:
                         mval[f"{metric_name}/{var}"] = float(lossval)
                 else:
                     mval[metric_name] = comp_metrics
-                # print(
-                #     f"Metric {metric_name} took"
-                #     f" {(datetime.now()-start).seconds} sec"
-                # )
+
         self.metric_aggr.append_dict(mval)
 
     def get_metrics(self) -> tuple[dict, list]:

@@ -12,6 +12,16 @@ labels_dict: Dict[str, str] = {
     "phi": "$Σ ϕ_{rel}$",
     "pt": "$Σp_{T}^{rel}$",
     "eta": "$Ση_{rel}$",
+    "response": "Response (E/ΣE)",
+    "showershape_peak_layer": "Peak Hist Layer",
+    "showershape_psr": (
+        "|Turnon Layer - Peak Hist Layer| / |Turnoff Layer - Peak Hist Layer|"
+    ),
+    "showershape_turnon_layer": "",
+    "coneratio": "Cone(Δ=0.2)/Cone(Δ=0.3)",
+    "fpc_x": "First PCA vector x",
+    "fpc_y": "First PCA vector y",
+    "fpc_z": "First PCA vector z",
 }
 
 
@@ -37,9 +47,9 @@ def var_to_bins(v: Union[str, int]) -> Optional[np.ndarray]:
         and "calochallange2" in conf.loader.dataset_path
     ):
         return {
-            "E": np.linspace(0, 6000, 100),  # E
-            "z": np.linspace(0, 45, 45),  # z
-            "alpha": np.linspace(0, 16, 16),  # alpha
-            "r": np.linspace(0, 9, 9),  # r
+            "E": np.linspace(0, 6000, 100) - 0.5,  # E
+            "z": np.linspace(0, 45, 45) - 0.5,  # z
+            "alpha": np.linspace(0, 16, 16) - 0.5,  # alpha
+            "r": np.linspace(0, 9, 9) - 0.5,  # r
         }[vname]
     return None

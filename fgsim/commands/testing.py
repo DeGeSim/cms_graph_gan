@@ -38,7 +38,7 @@ def test_procedure() -> None:
 
     for best_or_last in ds_dict.keys():
         test_data: TestDataset = ds_dict[best_or_last]
-        plot_path = Path(f"{conf.path.run_path}/plots_{best_or_last}/")
+        plot_path = Path(f"{conf.path.run_path}")
         plot_path.mkdir(exist_ok=True)
 
         if best_or_last == "best":

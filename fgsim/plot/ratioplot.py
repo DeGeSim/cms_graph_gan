@@ -96,6 +96,6 @@ def ratioplot(
     axrat.set_xticks([])
     axrat.set_xticklabels([])
 
-    fig.suptitle(title, fontsize=30)
+    fig.suptitle(title, fontsize=25)
     plt.tight_layout()
     return fig

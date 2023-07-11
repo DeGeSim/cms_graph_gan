@@ -6,12 +6,18 @@ from fgsim.utils.torchtonp import wrap_torch_to_np
 @wrap_torch_to_np
 def binborders_wo_outliers(points: np.ndarray, bins=50) -> np.ndarray:
     assert len(points.shape) == 1
+    if len(np.unique(points[:500])) < 50:
+        uniques = np.sort(np.unique(points))
+        if len(uniques) < 50:
+            delta = (uniques[1] - uniques[0]) / 2
+            return np.concatenate([uniques[0:1] - delta, uniques + delta])
+
     return np.linspace(*bounds_wo_outliers(points), num=bins, endpoint=True)
 
 
-@wrap_torch_to_np
-def binborders_by_bounds(lower, upper, bins=50) -> np.ndarray:
-    return np.linspace(lower, upper, num=bins, endpoint=True)
+# @wrap_torch_to_np
+# def binborders_by_bounds(lower, upper, bins=50) -> np.ndarray:
+#     return np.linspace(lower, upper, num=bins, endpoint=True)
 
 
 @wrap_torch_to_np
