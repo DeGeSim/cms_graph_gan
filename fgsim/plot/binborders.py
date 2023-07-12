@@ -15,9 +15,8 @@ def binborders_wo_outliers(points: np.ndarray, bins=50) -> np.ndarray:
     return np.linspace(*bounds_wo_outliers(points), num=bins, endpoint=True)
 
 
-# @wrap_torch_to_np
-# def binborders_by_bounds(lower, upper, bins=50) -> np.ndarray:
-#     return np.linspace(lower, upper, num=bins, endpoint=True)
+def bincenters(bins: np.ndarray) -> np.ndarray:
+    return (bins[1:] + bins[:-1]) / 2
 
 
 @wrap_torch_to_np

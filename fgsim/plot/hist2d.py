@@ -49,16 +49,6 @@ def hist2d(
         v1bins, v2bins = v2bins, v1bins
         v1name, v2name = v2name, v1name
 
-    # shist, _, _ = np.histogram2d(
-    #     chip_to_binborders(sim[:, 0], xedges),
-    #     chip_to_binborders(sim[:, 1], yedges),
-    #     bins=(xedges, yedges),
-    # )  # , density=density, weights=weights)
-    # ghist, _, _ = np.histogram2d(
-    #     chip_to_binborders(gen[:, 0], xedges),
-    #     chip_to_binborders(gen[:, 1], yedges),
-    #     bins=(xedges, yedges),
-    # )
     norm = None
     for iax, (ax, arr) in enumerate(zip([sim_axes, gen_axes], [sim, gen])):
         mesh, norm = _2dhist_with_autonorm(
@@ -68,23 +58,15 @@ def hist2d(
             bins=[xedges, yedges],
             cmap=plt.cm.hot,
             norm=norm,
+            linewidths=2,
         )
+        for spline in ax.spines.values():
+            spline.set_linewidth(1.2)
+            spline.set_color("black")
+
         if iax == 0:
             ax.set_ylabel(v2name)
-            # ax.set_yticks(**edge_to_labels(yedges))
-        # ax.set_xticks(rotation=45, **edge_to_labels(xedges))
         ax.set_xlabel(v1name)
-
-    # for iax, (ax, hist) in enumerate(zip([sim_axes, gen_axes], [shist, ghist])):
-    #     im = ax.imshow(hist.T, cmap=plt.cm.hot, norm=norm, aspect="auto")
-    #     if iax == 0:
-    #         ax.set_ylabel(v2name)
-    #         ax.set_yticks(**edge_to_labels(yedges))
-    #     ax.set_xticks(rotation=45, **edge_to_labels(xedges))
-    #     ax.set_xlabel(v1name)
-
-    # s_cax = sim_axes.inset_axes([1.04, 0.2, 0.05, 0.6])
-    # plt.colorbar(im, [sim_axes, gen_axes])
 
     sim_axes.set_title("Simulation")
     gen_axes.set_title("Model")
@@ -94,7 +76,6 @@ def hist2d(
     fig.suptitle(title)
     fig.tight_layout()
 
-    # fig.colorbar(mesh, ax=axes.ravel().tolist(), shrink=0.95)
     cax = make_axes_locatable(plt.gca()).append_axes("right", "5%", pad="3%")
 
     fig.colorbar(mesh, cax)
