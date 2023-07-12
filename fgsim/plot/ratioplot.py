@@ -15,10 +15,7 @@ def ratioplot(
     sim: np.ndarray, gen: np.ndarray, title: str, bins: Optional[np.ndarray] = None
 ) -> Figure:
     fig, (ax, axrat) = plt.subplots(
-        2,
-        1,
-        figsize=(6, 7),
-        gridspec_kw={"height_ratios": [2, 0.7]},
+        2, 1, figsize=(6, 7), gridspec_kw={"height_ratios": [2, 0.7]}, sharex="col"
     )
     # if title == "Disc Score":
     #     bins = binborders_by_bounds(0, 1)
