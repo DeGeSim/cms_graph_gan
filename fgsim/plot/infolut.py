@@ -13,11 +13,9 @@ labels_dict: Dict[str, str] = {
     "pt": "$Σp_{T}^{rel}$",
     "eta": "$Ση_{rel}$",
     "response": "Response (E/ΣE)",
-    "showershape_peak_layer": "Peak Hist Layer",
-    "showershape_psr": (
-        "|Turnon Layer - Peak Hist Layer| / |Turnoff Layer - Peak Hist Layer|"
-    ),
-    "showershape_turnon_layer": "",
+    "showershape_peak_layer": "Peak Layer",
+    "showershape_psr": "Ratio Δ(Turnon(/off), Peak) Layer",
+    "showershape_turnon_layer": "Turnon Layer",
     "coneratio": "Cone(Δ=0.2)/Cone(Δ=0.3)",
     "fpc_x": "First PCA vector x",
     "fpc_y": "First PCA vector y",
