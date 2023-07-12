@@ -21,12 +21,17 @@ def gen_res_from_sim_batches(batches: list[Batch], holder: Holder):
         batches, "Generating eval batches", miniters=5, mininterval=2.0
     ):
         batch = batch.to(device)
-        for k, val in holder.pass_batch_through_model(batch, eval=True).items():
+        ires_d = holder.pass_batch_through_model(batch, eval=True)
+        ires_d["gen_batch"].y = ires_d["sim_batch"].y.clone()
+
+        for k, val in ires_d.items():
             if k in ["sim_batch", "gen_batch"]:
+                val = postprocess(val)
                 for e in val.to_data_list():
-                    res_d_l[k].append(e.detach().cpu())
+                    res_d_l[k].append(e)
             elif k in ["sim_crit", "gen_crit"]:
-                res_d_l[k].append(val.detach().cpu())
+                res_d_l[k].append(val)
+
     sim_crit = torch.vstack(res_d_l["sim_crit"])
     gen_crit = torch.vstack(res_d_l["gen_crit"])
 
@@ -41,9 +46,7 @@ def gen_res_from_sim_batches(batches: list[Batch], holder: Holder):
         "gen_crit": gen_crit,
         "sim_crit": sim_crit,
     }
-    gen_batch.y = sim_batch.y.clone()
-    for k in ["sim_batch", "gen_batch"]:
-        results_d[k] = postprocess(results_d[k])
+
     return results_d
 
 

@@ -20,6 +20,7 @@ labels_dict: Dict[str, str] = {
     "fpc_x": "First PCA vector x",
     "fpc_y": "First PCA vector y",
     "fpc_z": "First PCA vector z",
+    "fpc_eval": "First PCA Eigenvalue",
 }
 
 
