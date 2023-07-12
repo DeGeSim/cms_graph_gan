@@ -33,7 +33,7 @@ def test_procedure() -> None:
     holder: Holder = Holder(device)
     ds_dict = {
         best_or_last: get_testing_datasets(holder, best_or_last)
-        for best_or_last in ["best"]  # ["last", "best"]
+        for best_or_last in ["last", "best"]
     }
 
     for best_or_last in ds_dict.keys():
