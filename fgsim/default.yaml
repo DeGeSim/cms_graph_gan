@@ -431,6 +431,7 @@ dataset_options:
     loader:
       rootprefix: "treeMaker/tree"
       dataset_glob: "**/*.root"
+      eval_glob: null
       preprocess_training: True
       chunk_size: 1000
       batch_size: 200
@@ -477,6 +478,7 @@ dataset_options:
     loader:
       dataset_path: "~/fgsim/data/calochallange2"
       dataset_glob: "**/dataset_2_*.hdf5"
+      eval_glob: "dataset_2_2.hdf5"
       n_points: 6000 # 2, 3, 2,5 , 2,5 , 10
       x_features: ["E", "z", "alpha", "r"]
       x_ftx_energy_pos: 0
@@ -485,8 +487,8 @@ dataset_options:
       cond_critic_features: [True, True, True]
       chunk_size: 1000
       batch_size: 50
-      validation_set_size: 20000
-      test_set_size: 40000
+      validation_set_size: 10_000
+      test_set_size: 50_000
     validation:
       interval: 1_500
       plot_interval: 3_000

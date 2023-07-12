@@ -42,38 +42,7 @@ must queue an epoch via `queue_epoch()` and iterate over the instance of the cla
         self.shared_batch_size = loader.shared_batch_size
         process_seq = loader.process_seq
 
-        chunk_coords = compute_chucks(files, len_dict)
-
-        np.random.shuffle(chunk_coords)
-
-        # Make sure the chunks can be split evenly into batches:
-        assert chunk_size % batch_size == 0
-
-        assert conf.loader.validation_set_size % batch_size == 0
-        n_validation_batches = conf.loader.validation_set_size // batch_size
-        n_validation_chunks = conf.loader.validation_set_size // chunk_size
-
-        assert conf.loader.test_set_size % chunk_size == 0
-        self.n_test_batches = conf.loader.test_set_size // batch_size
-        n_testing_chunks = conf.loader.test_set_size // chunk_size
-
-        logger.info(
-            f"Using the first {n_validation_batches} batches for "
-            + f"validation and the next {self.n_test_batches} batches for testing."
-        )
-
-        self.validation_chunks = chunk_coords[:n_validation_chunks]
-        self.testing_chunks = chunk_coords[
-            n_validation_chunks : n_validation_chunks + n_testing_chunks
-        ]
-        self.training_chunks = chunk_coords[
-            n_validation_chunks + n_testing_chunks :
-        ]
-
-        # Check that there is a reasonable amount of data
-        assert len(self.validation_chunks) + len(self.testing_chunks) < len(
-            self.training_chunks
-        ), "Dataset to small"
+        self.__assign_chunks(files, len_dict)
 
         self.n_training_events = conf.loader.chunk_size * len(self.training_chunks)
         self.n_grad_steps_per_epoch = self.n_training_events // batch_size
@@ -100,6 +69,54 @@ must queue an epoch via `queue_epoch()` and iterate over the instance of the cla
                 )
                 if len(self.preprocessed_files) == 0:
                     raise FileNotFoundError("Couldn't find preprocessed dataset.")
+
+    def __assign_chunks(self, files, len_dict):
+        # Make sure the chunks can be split evenly into batches:
+        assert chunk_size % batch_size == 0
+
+        assert conf.loader.validation_set_size % batch_size == 0
+        n_validation_batches = conf.loader.validation_set_size // batch_size
+        n_validation_chunks = conf.loader.validation_set_size // chunk_size
+
+        assert conf.loader.test_set_size % chunk_size == 0
+        self.n_test_batches = conf.loader.test_set_size // batch_size
+        n_testing_chunks = conf.loader.test_set_size // chunk_size
+
+        logger.info(
+            f"Using the first {n_validation_batches} batches for "
+            + f"validation and the next {self.n_test_batches} batches for testing."
+        )
+
+        if conf.loader.eval_glob is None:
+            chunk_coords = compute_chucks(files, len_dict)
+            self.validation_chunks = chunk_coords[:n_validation_chunks]
+            self.testing_chunks = chunk_coords[
+                n_validation_chunks : n_validation_chunks + n_testing_chunks
+            ]
+            self.training_chunks = chunk_coords[
+                n_validation_chunks + n_testing_chunks :
+            ]
+        else:
+            import re
+
+            eval_files = [
+                e for e in files if re.search(conf.loader.eval_glob, str(e))
+            ]
+            train_files = [e for e in files if e not in eval_files]
+            self.training_chunks = compute_chucks(train_files, len_dict)
+
+            eval_chunks = compute_chucks(eval_files, len_dict)
+            self.validation_chunks = eval_chunks[:n_validation_chunks]
+            self.testing_chunks = eval_chunks[
+                n_validation_chunks : n_validation_chunks + n_testing_chunks
+            ]
+        assert len(self.testing_chunks) == n_testing_chunks
+        assert len(self.validation_chunks) == n_validation_chunks
+
+        # Check that there is a reasonable amount of data
+        assert len(self.validation_chunks) + len(self.testing_chunks) < len(
+            self.training_chunks
+        ), "Dataset to small"
 
     @property
     def validation_batches(self):
@@ -171,11 +188,8 @@ must queue an epoch via `queue_epoch()` and iterate over the instance of the cla
         n_skip_batches = n_skip_events // conf.loader.batch_size
 
         if n_skip_batches > 0:
-            logger.warning(
-                "Skipping"
-                f" {n_skip_batches}(/{self.n_training_events//conf.loader.batch_size})"
-                "  batches."
-            )
+            total_batches = self.n_training_events // conf.loader.batch_size
+            logger.warning(f"Skipping {n_skip_batches}(/{total_batches}) batches.")
         for ibatch in range(n_skip_batches):
             _ = next(self.qfseq)
             logger.debug(f"Skipped batch({ibatch}).")
