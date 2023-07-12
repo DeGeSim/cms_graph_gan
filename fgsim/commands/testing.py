@@ -33,7 +33,7 @@ def test_procedure() -> None:
     holder: Holder = Holder(device)
     ds_dict = {
         best_or_last: get_testing_datasets(holder, best_or_last)
-        for best_or_last in ["last", "best"]
+        for best_or_last in ["best"]  # ["last", "best"]
     }
 
     for best_or_last in ds_dict.keys():
@@ -59,23 +59,36 @@ def test_procedure() -> None:
 def get_testing_datasets(holder: Holder, best_or_last) -> TestDataset:
     ds_path = Path(conf.path.run_path) / f"testdata_{best_or_last}.pt"
     test_data: TestDataset
+    if best_or_last == "best":
+        step = holder.state.best_step
+    else:
+        step = holder.state.grad_step
 
     if ds_path.is_file():
         logger.info(f"Loading test dataset from {ds_path}")
         test_data = TestDataset(
             **torch.load(ds_path, map_location=torch.device("cpu"))
         )
-        reprocess = (
-            test_data.grad_step != holder.state.grad_step
-            or test_data.loader_hash != conf.loader_hash
-            or test_data.hash != conf.hash
-        )
+        reprocess = False
+
+        if test_data.loader_hash != conf.loader_hash:
+            logger.warning(
+                f"Loader hash changed, reprocessing {best_or_last} Dataset"
+            )
+            reprocess = True
+        if test_data.hash != conf.hash:
+            logger.warning(f"Hash changed, reprocessing {best_or_last} Dataset")
+            reprocess = True
+
+        if test_data.grad_step != step:
+            logger.warning(
+                f"New step available, reprocessing {best_or_last} Dataset"
+            )
+            reprocess = True
     else:
         reprocess = True
 
     if reprocess:
-        # reprocess
-        logger.warning(f"Reprocessing {best_or_last} Dataset")
         # Make sure the batches are loaded
         loader = QueuedDataset(loader_info)
 
@@ -88,7 +101,7 @@ def get_testing_datasets(holder: Holder, best_or_last) -> TestDataset:
 
         test_data = TestDataset(
             res_d=res_d,
-            grad_step=holder.state.grad_step,
+            grad_step=step,
             hlvs_dict=None,
             loader_hash=conf.loader_hash,
             hash=conf.hash,
