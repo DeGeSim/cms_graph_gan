@@ -5,28 +5,28 @@ from torch_scatter import scatter_std
 
 from fgsim.config import conf
 
+n_layers = 45
+
 
 def analyze_layers(batch: Batch) -> dict[str, torch.Tensor]:
     """Get the ratio between half-turnon and
     half turnoff to peak center from a PC"""
     batchidx = batch.batch
+    n_events = int(batchidx[-1] + 1)
     device = batch.x.device
     z = batch.xyz[..., -1]
 
-    # global_max_pool(z, batchidx)
-
-    zvals = z.unique()
-    n_layers = len(zvals)
-    if n_layers > 100:
-        raise RuntimeError("To many layers")
-
-    # Construct the matrices to compare which zvalue belongs to which layer
-    zval_mat = zvals.reshape(1, -1).repeat(len(z), 1)
-    z_mat = z.reshape(-1, 1).repeat(1, n_layers)
-
     # compute the histogramm with dim (events,layers)
-    hist = global_add_pool((zval_mat == z_mat).float(), batchidx)
-    del zval_mat, z_mat
+    z_ev = (z.long() + batchidx * n_layers).sort().values
+
+    zvals, zcounts = z_ev.unique_consecutive(return_counts=True)
+
+    layer_idx = zvals % n_layers
+    ev_idx = (zvals - layer_idx) // n_layers
+
+    hist = torch.zeros(n_events, n_layers).long().to(device)
+    hist[ev_idx, layer_idx] = zcounts
+
     assert (hist.sum(1) == batch.ptr[1:] - batch.ptr[:-1]).all()
 
     max_hits_per_event, peak_layer_per_event = hist.max(1)
