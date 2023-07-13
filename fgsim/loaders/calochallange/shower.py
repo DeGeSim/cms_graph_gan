@@ -1,6 +1,7 @@
 import torch
 from torch_geometric.data import Batch
 from torch_geometric.nn.pool import global_add_pool, global_max_pool
+from torch_scatter import scatter_std
 
 from fgsim.config import conf
 
@@ -73,20 +74,17 @@ def analyze_layers(batch: Batch) -> dict[str, torch.Tensor]:
     }
 
 
-def cone_ratio(batch: Batch) -> torch.Tensor:
+def sphereratio(batch: Batch) -> torch.Tensor:
     batchidx = batch.batch
-    Ehit = batch.x[:, conf.loader.x_ftx_energy_pos]
-    Esum = global_add_pool(Ehit, batchidx)
-    x, y = batch.xyz[:, 0], batch.xyz[:, 1]
+    Ehit = batch.x[:, conf.loader.x_ftx_energy_pos].reshape(-1, 1)
+    Esum = global_add_pool(Ehit, batchidx).reshape(-1, 1)
 
     # get the center, weighted by energy
-    x_center = global_add_pool(x * Ehit, batchidx) / Esum
-    y_center = global_add_pool(y * Ehit, batchidx) / Esum
-
+    center = global_add_pool(batch.xyz * Ehit, batchidx) / Esum
+    std = scatter_std(batch.xyz * Ehit, batchidx, dim=-2)
     # hit distance to center
-    delta = torch.sqrt(
-        (x - x_center[batchidx]) ** 2 + (y - y_center[batchidx]) ** 2
-    )
+    delta = (((batch.xyz - center[batchidx]) / std[batchidx]) ** 2).mean(-1).sqrt()
+    del center, std
     # energy fraction inside circle around center
     e_small = global_add_pool(Ehit * (delta < 0.2).float(), batchidx) / Esum
     e_large = global_add_pool(Ehit * (delta < 0.3).float(), batchidx) / Esum

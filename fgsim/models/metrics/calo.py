@@ -103,10 +103,10 @@ def marginalEw(
 # Marginal Variables
 
 
-def coneratio(
+def sphereratio(
     gen_batch: Batch, sim_batch: Batch, **kwargs
 ) -> dict[str, np.float32]:
-    return run_dists(sim_batch, gen_batch, k="coneratio")
+    return run_dists(sim_batch, gen_batch, k="sphereratio")
 
 
 def response(gen_batch: Batch, sim_batch: Batch, **kwargs) -> dict[str, np.float32]:

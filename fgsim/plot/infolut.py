@@ -16,7 +16,7 @@ labels_dict: Dict[str, str] = {
     "showershape_peak_layer": "Peak Layer",
     "showershape_psr": "Ratio Δ(Turnon(/off), Peak) Layer",
     "showershape_turnon_layer": "Turnon Layer",
-    "coneratio": "Cone(Δ=0.2)/Cone(Δ=0.3)",
+    "sphereratio": "Sphere(Δ=0.2)/Sphere(Δ=0.3)",
     "fpc_x": "First PCA vector x",
     "fpc_y": "First PCA vector y",
     "fpc_z": "First PCA vector z",
