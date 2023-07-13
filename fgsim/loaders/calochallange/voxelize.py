@@ -92,6 +92,11 @@ def sum_dublicate_hits(batch):
     # need to shift the ptr by the number of removed hits
     batch.ptr[1:] -= n_multihit.cumsum(-1)
 
+    batch.nhits = {
+        "n": batch.n_pointsv,
+        "n_by_E": batch.n_pointsv / batch.y[:, 0],
+    }
+
     return batch
 
 

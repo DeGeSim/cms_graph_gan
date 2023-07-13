@@ -143,3 +143,7 @@ def showershape(
     gen_batch: Batch, sim_batch: Batch, **kwargs
 ) -> dict[str, np.float32]:
     return run_dists(sim_batch, gen_batch, k="showershape")
+
+
+def nhits(gen_batch: Batch, sim_batch: Batch, **kwargs) -> dict[str, np.float32]:
+    return run_dists(sim_batch, gen_batch, k="nhits")
