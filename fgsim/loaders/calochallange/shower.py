@@ -95,7 +95,7 @@ def sphereratio(batch: Batch) -> dict[str, torch.Tensor]:
         / Esum.squeeze()
     )
 
-    return {"0.03σ": e_small, "0.05σ": e_large, "0.03/0.05σ": e_small / e_large}
+    return {"0.03σ": e_small, "0.05σ": e_large, "0.03_by_0.05σ": e_small / e_large}
 
 
 def response(batch: Batch) -> torch.Tensor:
