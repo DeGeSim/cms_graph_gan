@@ -34,9 +34,17 @@ def cdf(arr):
 
 def calc_cdf_dist(r: torch.Tensor, f: torch.Tensor, **kwargs) -> np.ndarray:
     dists = []
-    assert r.shape == f.shape
+    assert r.shape[-1] == f.shape[-1]
+    assert r.shape[0] >= f.shape[0]
+
+    # if necessairy, sample r
+    if r.shape[0] > f.shape[0]:
+        r = r[torch.randperm(r.shape[0])[: f.shape[0]]]
     for iftx in range(r.shape[-1]):
-        cdfdist = (cdf(f[..., iftx]) - cdf(r[..., iftx])).abs().mean(0)
+        real_cdf = cdf(r[..., iftx])
+        fake_cdf = cdf(f[..., iftx])
+
+        cdfdist = (fake_cdf - real_cdf).abs().mean(0)
         dists.append(cdfdist)
     return torch.stack(dists, dim=0).cpu().numpy()
 
@@ -53,7 +61,15 @@ def calc_wcdf_dist(
     r: torch.Tensor, f: torch.Tensor, rw: torch.Tensor, fw: torch.Tensor, **kwargs
 ) -> np.ndarray:
     dists = []
-    assert r.shape == f.shape
+    assert r.shape[-1] == f.shape[-1]
+    assert r.shape[0] >= f.shape[0]
+
+    # if necessairy, sample r
+    if r.shape[0] > f.shape[0]:
+        idx = torch.randperm(r.shape[0])[: f.shape[0]]
+        r = r[idx]
+        rw = rw[idx]
+
     for iftx in range(r.shape[-1]):
         cdf_real, w_real = wcdf(r[..., iftx], rw)
         cdf_fake, w_fake = wcdf(f[..., iftx], fw)
