@@ -69,10 +69,13 @@ def calc_wcdf_dist(
 def cdf_by_hist(
     arr: torch.Tensor, bins: torch.Tensor, weight: Optional[torch.Tensor] = None
 ) -> torch.Tensor:
-    val = torch.histogram(arr, bins=bins, weight=weight)
+    dev = arr.device
+    if weight is not None:
+        weight = weight.cpu()
+    val = torch.histogram(arr.cpu(), bins=bins.cpu(), weight=weight)
     cdf = val.hist.cumsum(-1)
     cdf /= cdf[-1].clone()
-    return cdf
+    return cdf.to(dev)
 
 
 def calc_hist_dist(

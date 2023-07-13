@@ -5,6 +5,7 @@ from tqdm import tqdm
 from fgsim.config import conf, device
 from fgsim.io.sel_loader import scaler
 from fgsim.ml.holder import Holder
+from fgsim.monitoring import logger
 from fgsim.plot.eval_plots import eval_plots
 from fgsim.plot.fig_logger import FigLogger
 from fgsim.plot.modelgrads import fig_grads
@@ -26,7 +27,6 @@ def gen_res_from_sim_batches(batches: list[Batch], holder: Holder):
 
         for k, val in ires_d.items():
             if k in ["sim_batch", "gen_batch"]:
-                val = postprocess(val)
                 for e in val.to_data_list():
                     res_d_l[k].append(e)
             elif k in ["sim_crit", "gen_crit"]:
@@ -37,6 +37,11 @@ def gen_res_from_sim_batches(batches: list[Batch], holder: Holder):
 
     sim_batch = Batch.from_data_list(res_d_l["sim_batch"])
     gen_batch = Batch.from_data_list(res_d_l["gen_batch"])
+
+    logger.info("Postprocessing")
+    sim_batch = postprocess(sim_batch)
+    gen_batch = postprocess(gen_batch)
+    logger.info("Postprocessing done")
 
     assert sim_batch.x.shape == gen_batch.x.shape
 
