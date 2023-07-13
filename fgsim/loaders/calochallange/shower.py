@@ -74,7 +74,7 @@ def analyze_layers(batch: Batch) -> dict[str, torch.Tensor]:
     }
 
 
-def sphereratio(batch: Batch) -> torch.Tensor:
+def sphereratio(batch: Batch) -> dict[str, torch.Tensor]:
     batchidx = batch.batch
     Ehit = batch.x[:, conf.loader.x_ftx_energy_pos].reshape(-1, 1)
     Esum = global_add_pool(Ehit, batchidx).reshape(-1, 1)
@@ -86,10 +86,16 @@ def sphereratio(batch: Batch) -> torch.Tensor:
     delta = (((batch.xyz - center[batchidx]) / std[batchidx]) ** 2).mean(-1).sqrt()
     del center, std
     # energy fraction inside circle around center
-    e_small = global_add_pool(Ehit * (delta < 0.2).float(), batchidx) / Esum
-    e_large = global_add_pool(Ehit * (delta < 0.3).float(), batchidx) / Esum
+    e_small = (
+        global_add_pool(Ehit.squeeze() * (delta < 0.03).float(), batchidx)
+        / Esum.squeeze()
+    )
+    e_large = (
+        global_add_pool(Ehit.squeeze() * (delta < 0.5).float(), batchidx)
+        / Esum.squeeze()
+    )
 
-    return e_small / e_large
+    return {"0.03σ": e_small, "0.05σ": e_large, "0.03/0.05σ": e_small / e_large}
 
 
 def response(batch: Batch) -> torch.Tensor:

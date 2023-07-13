@@ -11,7 +11,7 @@ def postprocess(batch: Batch) -> Batch:
     batch = batch_to_Exyz(batch)
     metrics: list[str] = conf.training.val.metrics
     if "sphereratio" in metrics:
-        batch["sphereratio"] = sphereratio(batch).reshape(-1)
+        batch["sphereratio"] = sphereratio(batch)
     if "fpc" in metrics:
         batch["fpc"] = fpc_from_batch(batch)
     if "showershape" in metrics:
