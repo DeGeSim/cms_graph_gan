@@ -7,6 +7,7 @@ import torch
 from matplotlib.figure import Figure
 from omegaconf import DictConfig
 from torch.utils.tensorboard import SummaryWriter
+from typeguard import typechecked
 
 import wandb
 from fgsim.config import conf
@@ -99,6 +100,7 @@ class TrainLog:
             for name, value in md.items():
                 self.writer.add_scalar(name, value, step, new_style=True)
 
+    @typechecked
     def _log_metrics_wandb(
         self, md: dict, step: int, epoch: int, commit: bool = False
     ):
@@ -106,6 +108,7 @@ class TrainLog:
             md = {"m/" + k: v for k, v in md.items()}
             wandb.log(md | {"epoch": epoch}, step=step, commit=commit)
 
+    @typechecked
     def log_figure(
         self,
         figure_name: str,
