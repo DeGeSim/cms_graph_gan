@@ -23,7 +23,6 @@ def gen_res_from_sim_batches(batches: list[Batch], holder: Holder):
     ):
         batch = batch.to(device)
         ires_d = holder.pass_batch_through_model(batch, eval=True)
-        ires_d["gen_batch"].y = ires_d["sim_batch"].y.clone()
 
         for k, val in ires_d.items():
             if k in ["sim_batch", "gen_batch"]:
@@ -38,12 +37,13 @@ def gen_res_from_sim_batches(batches: list[Batch], holder: Holder):
     sim_batch = Batch.from_data_list(res_d_l["sim_batch"])
     gen_batch = Batch.from_data_list(res_d_l["gen_batch"])
 
+    assert sim_batch.x.shape == gen_batch.x.shape
+
     logger.info("Postprocessing")
+    gen_batch.y = sim_batch.y.clone()
     sim_batch = postprocess(sim_batch)
     gen_batch = postprocess(gen_batch)
     logger.info("Postprocessing done")
-
-    assert sim_batch.x.shape == gen_batch.x.shape
 
     results_d = {
         "sim_batch": sim_batch,
