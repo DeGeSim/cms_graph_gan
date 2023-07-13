@@ -33,13 +33,8 @@ def cdf(arr):
 
 
 def calc_cdf_dist(r: torch.Tensor, f: torch.Tensor, **kwargs) -> np.ndarray:
+    assert r.shape == f.shape
     dists = []
-    assert r.shape[-1] == f.shape[-1]
-    assert r.shape[0] >= f.shape[0]
-
-    # if necessairy, sample r
-    if r.shape[0] > f.shape[0]:
-        r = r[torch.randperm(r.shape[0])[: f.shape[0]]]
     for iftx in range(r.shape[-1]):
         real_cdf = cdf(r[..., iftx])
         fake_cdf = cdf(f[..., iftx])
@@ -60,16 +55,8 @@ def wcdf(arr, weigths):
 def calc_wcdf_dist(
     r: torch.Tensor, f: torch.Tensor, rw: torch.Tensor, fw: torch.Tensor, **kwargs
 ) -> np.ndarray:
+    assert r.shape == f.shape
     dists = []
-    assert r.shape[-1] == f.shape[-1]
-    assert r.shape[0] >= f.shape[0]
-
-    # if necessairy, sample r
-    if r.shape[0] > f.shape[0]:
-        idx = torch.randperm(r.shape[0])[: f.shape[0]]
-        r = r[idx]
-        rw = rw[idx]
-
     for iftx in range(r.shape[-1]):
         cdf_real, w_real = wcdf(r[..., iftx], rw)
         cdf_fake, w_fake = wcdf(f[..., iftx], fw)

@@ -44,6 +44,13 @@ def run_dists(sim_batch, gen_batch, k, bins=None):
             real = torch.stack([sim_batch[k][ftxn] for ftxn in ftxnames], -1)
             fake = torch.stack([gen_batch[k][ftxn] for ftxn in ftxnames], -1)
 
+    assert real.shape[-1] == fake.shape[-1]
+    assert real.shape[0] >= fake.shape[0]
+    # if necessairy, sample r
+    if real.shape[0] > fake.shape[0]:
+        idx = torch.randperm(real.shape[0])[: fake.shape[0]]
+        real = real[idx]
+
     dists_d = {
         distname: fct(r=real, f=fake, bins=bins)
         for distname, fct in zip(
@@ -76,13 +83,28 @@ def marginalEw(
 ) -> dict[str, np.float32]:
     # Eralphz
     res_d = {}
+
+    real = sim_batch.x[..., 1:]
+    fake = gen_batch.x[..., 1:]
+    rw = sim_batch.x[..., 0]
+    fw = gen_batch.x[..., 0]
+
+    assert real.shape[-1] == fake.shape[-1]
+    assert real.shape[0] >= fake.shape[0]
+    # if necessairy, sample r
+    if real.shape[0] > fake.shape[0]:
+        idx = torch.randperm(real.shape[0])[: fake.shape[0]]
+        real = real[idx]
+        rw = rw[idx]
+
     kwargs = {
-        "r": sim_batch.x[..., 1:],
-        "f": gen_batch.x[..., 1:],
+        "r": real,
+        "f": fake,
         "bins": [torch.tensor(var_to_bins(i)).float() for i in range(1, 4)],
-        "rw": sim_batch.x[..., 0],
-        "fw": gen_batch.x[..., 0],
+        "rw": rw,
+        "fw": fw,
     }
+
     cdfdist = calc_wcdf_dist(**kwargs)
     sw1dist = calc_scaled1d_dist(**kwargs)
     histdist = calc_hist_dist(**kwargs)
