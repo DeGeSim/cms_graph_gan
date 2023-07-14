@@ -17,10 +17,12 @@ def dump_procedure():
     for s in [conf.hash, f"{conf.hash}_train", f"{conf.hash}_test"]:
         if s in exp_orga_wandb:
             try:
-                run = api.run(f"{conf.project_name}/{exp_orga_wandb[s]}")
+                run = api.from_path(f"{conf.project_name}/runs/{exp_orga_wandb[s]}")
                 run.delete()
-            except Exception:
+                del exp_orga_wandb[s]
+            except wandb.errors.CommError:
                 pass
+
             del exp_orga_wandb[s]
 
     # local
