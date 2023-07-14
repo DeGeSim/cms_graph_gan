@@ -4,7 +4,7 @@
         {
             "args": [
                 "--hash",
-                "907969b",
+                "94ddd08",
                 // "--ray",
                 // "--debug",
                 "train"
@@ -19,7 +19,7 @@
         {
             "args": [
                 "--tag",
-                "scan_gbrbppool",
+                "cc_knnloss",
                 "--debug",
                 "train"
             ],
@@ -33,7 +33,7 @@
         {
             "args": [
                 "--tag",
-                "scan_gbrbppool",
+                "cc_knnloss",
                 "--debug",
                 "test"
             ],
@@ -47,7 +47,7 @@
         {
             "args": [
                 "--tag",
-                "scan_gbrbppool",
+                "cc_knnloss",
                 "--debug",
                 "preprocess"
             ],
@@ -75,7 +75,7 @@
             "type": "python",
             "args": [
                 "--tag",
-                "scan_gbrbppool",
+                "cc_knnloss",
                 "--debug",
                 "train"
             ],
@@ -88,7 +88,7 @@
             "type": "python",
             "args": [
                 "--tag",
-                "scan_gbrbppool",
+                "cc_knnloss",
                 // "--debug",
                 "setup"
             ],
@@ -111,9 +111,9 @@
             "console": "integratedTerminal",
             "args": [
                 "--hash",
-                "47a6ed9",
+                "86e1439",
                 "--remote",
-                "train"
+                "test"
             ],
         },
         // {

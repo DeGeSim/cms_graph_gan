@@ -380,6 +380,8 @@ loss_options:
     lpnorm: 1
     batch_wise: False
     pow: 1
+  knndist:
+    factor: 1.0
 
 training:
   gan_mode: Hinge
