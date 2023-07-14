@@ -61,7 +61,7 @@ def make_high_level_plots(res: dict, fig_logger: FigLogger) -> None:
             gen=gen_arr.cpu().numpy(),
             title=var_to_label(ftn),
         )
-        fig_logger(fig, f"hlv_{ftn}_.pdf")
+        fig_logger(fig, f"hlv_{ftn}.pdf")
 
     fig_logger.prefixes.pop()
 
