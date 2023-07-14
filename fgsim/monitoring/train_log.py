@@ -105,7 +105,6 @@ class TrainLog:
         self, md: dict, step: int, epoch: int, commit: bool = False
     ):
         if self.use_wandb:
-            md = {"m/" + k: v for k, v in md.items()}
             wandb.log(md | {"epoch": epoch}, step=step, commit=commit)
 
     @typechecked
@@ -120,7 +119,7 @@ class TrainLog:
         if self.use_tb:
             self.writer.add_figure(tag=figure_name, figure=figure, global_step=step)
         if self.use_wandb:
-            wandb.log(data={"p/" + figure_name: wandb.Image(figure)}, step=step)
+            wandb.log(data={figure_name: wandb.Image(figure)}, step=step)
         plt.close(figure)
 
     def log_test_metrics(
