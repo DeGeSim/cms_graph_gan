@@ -105,6 +105,7 @@ class TrainLog:
         self, md: dict, step: int, epoch: int, commit: bool = False
     ):
         if self.use_wandb:
+            md = {"m/" + k: v for k, v in md.items()}
             wandb.log(md | {"epoch": epoch}, step=step, commit=commit)
 
     @typechecked
