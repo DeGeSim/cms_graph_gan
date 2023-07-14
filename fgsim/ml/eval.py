@@ -37,6 +37,9 @@ def gen_res_from_sim_batches(batches: list[Batch], holder: Holder):
     sim_batch = Batch.from_data_list(res_d_l["sim_batch"])
     gen_batch = Batch.from_data_list(res_d_l["gen_batch"])
 
+    del res_d_l
+    torch.cuda.empty_cache()
+
     assert sim_batch.x.shape == gen_batch.x.shape
 
     logger.info("Postprocessing")
@@ -51,7 +54,7 @@ def gen_res_from_sim_batches(batches: list[Batch], holder: Holder):
         "gen_crit": gen_crit,
         "sim_crit": sim_crit,
     }
-
+    torch.cuda.empty_cache()
     return results_d
 
 
