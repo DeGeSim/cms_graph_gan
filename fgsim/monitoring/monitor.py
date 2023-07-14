@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import wandb
 from fgsim.utils.oc_utils import dict_to_kv
 
@@ -41,7 +43,11 @@ def setup_experiment() -> None:
             "code_dir": f"./{conf.path.run_path}/fgsim/models",
         },
     )
-    run_train.log_code(f"./{conf.path.run_path}/fgsim/models")
+
+    codepath = Path(conf.path.run_path) / "fgsim/models"
+    assert codepath.is_dir()
+    run_train.log_code(codepath.absolute())
+
     exp_orga_wandb[conf["hash"]] = run_train.id
 
     run_test = wandb.init(
