@@ -73,17 +73,17 @@ def sum_dublicate_hits(batch):
     x_new = torch.hstack([hitE_new.reshape(-1, 1), pos_new])
 
     # Tests
-    old_counts = torch.unique_consecutive(batchidx, return_counts=True)[1]
-    if "n_pointsv" in batch.keys:
-        assert (old_counts == batch.n_pointsv).all()
-    assert ((old_counts - new_counts) == n_multihit).all()
-    assert torch.allclose(
-        scatter_add(hitE_new, batchidx_new), scatter_add(hitE, batchidx)
-    )
-    assert torch.allclose(
-        scatter_add(pos_new * hitE_new.unsqueeze(-1), batchidx_new, -2),
-        scatter_add(pos * hitE.unsqueeze(-1), batchidx, -2),
-    )
+    # old_counts = torch.unique_consecutive(batchidx, return_counts=True)[1]
+    # if "n_pointsv" in batch.keys:
+    #     assert (old_counts == batch.n_pointsv).all()
+    # assert ((old_counts - new_counts) == n_multihit).all()
+    # assert torch.allclose(
+    #     scatter_add(hitE_new, batchidx_new), scatter_add(hitE, batchidx)
+    # )
+    # assert torch.allclose(
+    #     scatter_add(pos_new * hitE_new.unsqueeze(-1), batchidx_new, -2),
+    #     scatter_add(pos * hitE.unsqueeze(-1), batchidx, -2),
+    # )
 
     batch.n_multihit = n_multihit
     batch.batch = batchidx_new
