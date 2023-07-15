@@ -11,7 +11,6 @@ from fgsim.ml.holder import Holder
 from fgsim.ml.smoothing import smooth_features
 from fgsim.ml.validation import validate
 from fgsim.monitoring import TrainLog, logger
-from fgsim.utils.model_summary import log_model
 
 
 class Trainer:
@@ -25,7 +24,7 @@ class Trainer:
             if conf.debug
             else conf.training.val.interval
         )
-        log_model(holder)
+        # log_model(holder)
         logger.info(f"Device: {torch.cuda.get_device_name()}")
 
     def training_loop(self):

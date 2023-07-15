@@ -79,7 +79,6 @@ class TrainLog:
         step=None,
         epoch=None,
         prefix=None,
-        commit=True,
     ):
         if conf.debug and conf.command != "test":
             return
@@ -93,7 +92,7 @@ class TrainLog:
             metrics_dict = {f"{prefix}/{k}": v for k, v in metrics_dict.items()}
 
         self._log_metrics_tb(metrics_dict, step, epoch)
-        self._log_metrics_wandb(metrics_dict, step, epoch, commit=commit)
+        self._log_metrics_wandb(metrics_dict, step, epoch)
 
     def _log_metrics_tb(self, md: dict, step: int, epoch: int):
         if self.use_tb:
@@ -101,12 +100,10 @@ class TrainLog:
                 self.writer.add_scalar(name, value, step, new_style=True)
 
     @typechecked
-    def _log_metrics_wandb(
-        self, md: dict, step: int, epoch: int, commit: bool = False
-    ):
+    def _log_metrics_wandb(self, md: dict, step: int, epoch: int):
         if self.use_wandb:
             md = {"m/" + k: v for k, v in md.items()}
-            wandb.log(md | {"epoch": epoch}, step=step, commit=commit)
+            wandb.log(md | {"epoch": epoch}, step=step)
 
     @typechecked
     def log_figure(
