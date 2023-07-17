@@ -57,7 +57,7 @@ class Holder:
         self.models = self.models.float().to(device)
         # if not conf.debug:
         #     self.models = torch.compile(self.models)
-        self.train_log.log_model_graph(self.models)
+        # self.train_log.log_model_graph(self.models)
         self.swa_models = {
             # k: AveragedModel(v) for k, v in self.models.parts.items()
         }
