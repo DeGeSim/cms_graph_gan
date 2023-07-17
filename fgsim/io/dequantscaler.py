@@ -15,7 +15,9 @@ def dequant(x):
 def requant(x):
     edgecase = x.astype("int") == x
     x[edgecase] -= 1
-    return np.floor(x)
+    x[~edgecase] = np.floor(x[~edgecase])
+    assert np.all(x.astype("int") == x)
+    return x
 
 
 def forward(x, lower, dist):

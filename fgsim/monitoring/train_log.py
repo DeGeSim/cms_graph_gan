@@ -76,18 +76,10 @@ class TrainLog:
     def log_metrics(
         self,
         metrics_dict: dict[str, Union[float, torch.Tensor, np.float32]],
-        step=None,
-        epoch=None,
+        step,
+        epoch,
         prefix=None,
     ):
-        if conf.debug and conf.command != "test":
-            return
-        if step is None:
-            step = self.state["grad_step"]
-            epoch = self.state["epoch"]
-        if epoch is None:
-            raise Exception
-
         if prefix is not None:
             metrics_dict = {f"{prefix}/{k}": v for k, v in metrics_dict.items()}
 
@@ -112,8 +104,6 @@ class TrainLog:
         figure: Figure,
         step: int,
     ):
-        if step is None:
-            step = self.state["grad_step"]
         if self.use_tb:
             self.writer.add_figure(tag=figure_name, figure=figure, global_step=step)
         if self.use_wandb:
@@ -159,6 +149,8 @@ class TrainLog:
                 "utilisation": utilisation,
                 "processed_events": self.state.processed_events,
             },
+            self.state["grad_step"],
+            self.state["epoch"],
             prefix="speed",
         )
 

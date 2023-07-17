@@ -74,17 +74,16 @@ class EvaluationMetrics:
         # validation batches.
         up_metrics_d = self.metric_aggr.aggregate()
 
-        logstr = "Validation:"
         for metric_name, metric_val in up_metrics_d.items():
             val_metric_hist = self.history["val"][metric_name]
             val_metric_hist.append(metric_val)
 
-            logstr += f" {metric_name} {val_metric_hist[-1]:.2f} "
+            logstr = f"Validation: {metric_name} {val_metric_hist[-1]:.2f} "
             if len(val_metric_hist) > 1:
                 logstr += (
                     f"(Δ{(val_metric_hist[-1]/val_metric_hist[-2]-1)*100:+.0f}%)"
                 )
-        logger.warn(logstr)
+            logger.info(logstr)
         if conf.debug:
             return dict(), list()
 
@@ -102,9 +101,17 @@ class EvaluationMetrics:
             for k in up_metrics_d.keys()
             if any([k.startswith(mn) for mn in conf.training.val.use_for_stopping])
         ]
+
+        # for the following, all recordings need to have the same
+        # lenght, so we count the most frequent one
+        histlen = max([len(val_metrics[metric]) for metric in val_metrics_names])
         # collect all metrics for all validation runs in a 2d array
         loss_history = np.stack(
-            [val_metrics[metric] for metric in val_metrics_names]
+            [
+                val_metrics[metric]
+                for metric in val_metrics_names
+                if len(val_metrics[metric]) == histlen
+            ]
         )
         # for a given metric and validation run,
         # count the fraction of times that the value of this metric

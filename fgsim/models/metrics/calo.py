@@ -5,12 +5,8 @@ from torch_geometric.data import Batch
 from fgsim.config import conf
 from fgsim.plot import binborders_wo_outliers, var_to_bins
 
-from .distutils import (
-    calc_cdf_dist,
-    calc_hist_dist,
-    calc_scaled1d_dist,
-    calc_wcdf_dist,
-)
+# calc_cdf_dist,; calc_scaled1d_dist,; calc_wcdf_dist
+from .distutils import calc_hist_dist
 
 
 def run_dists(sim_batch, gen_batch, k, bins=None):
@@ -54,8 +50,10 @@ def run_dists(sim_batch, gen_batch, k, bins=None):
     dists_d = {
         distname: fct(r=real, f=fake, bins=bins)
         for distname, fct in zip(
-            ["cdf", "sw1", "histd"],
-            [calc_cdf_dist, calc_scaled1d_dist, calc_hist_dist],
+            ["histd"],  # ["cdf", "sw1", "histd"]
+            [
+                calc_hist_dist
+            ],  # [calc_cdf_dist, calc_scaled1d_dist, calc_hist_dist],
         )
     }
     res_d = {}
@@ -105,18 +103,14 @@ def marginalEw(
         "fw": fw,
     }
 
-    cdfdist = calc_wcdf_dist(**kwargs)
-    sw1dist = calc_scaled1d_dist(**kwargs)
+    # cdfdist = calc_wcdf_dist(**kwargs)
+    # sw1dist = calc_scaled1d_dist(**kwargs)
     histdist = calc_hist_dist(**kwargs)
-    for (
-        k,
-        vcdf,
-        vsw1d,
-        vhistd,
-    ) in zip(conf.loader.x_features, cdfdist, sw1dist, histdist):
-        res_d[f"{k}/cdf"] = vcdf
-        res_d[f"{k}/sw1"] = vsw1d
-        res_d[f"{k}/histd"] = vhistd
+    distnames = ["histd"]  # ["cdf", "sw1", "histd"]
+    distarrays = [histdist]  # [cdfdist, sw1dist, histdist]
+    for iftx, k in enumerate(conf.loader.x_features[1:]):
+        for distname, arr in zip(distnames, distarrays):
+            res_d[f"{k}/{distname}"] = arr[iftx]
 
     return res_d
 

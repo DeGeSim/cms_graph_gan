@@ -84,6 +84,8 @@ class Trainer:
         self.holder.state.processed_events += conf.loader.batch_size
         self.holder.state.time_train_step_end = time.time()
         loss_hist = self.holder.history["losses"]
+        step = self.holder.state["grad_step"]
+        epoch = self.holder.state["epoch"]
 
         if self.holder.state.grad_step % conf.training.log_interval == 0:
             # aggregate the losses that have accumulated since the last time
@@ -97,7 +99,9 @@ class Trainer:
                     {
                         f"loss/{pname}/{lname}": lossval
                         for lname, lossval in ploosd.items()
-                    }
+                    },
+                    step,
+                    epoch,
                 )
                 if pname not in loss_hist:
                     loss_hist[pname] = {}
@@ -109,7 +113,9 @@ class Trainer:
             # log the learning rates
             lr_dict = self.holder.optims.metric_aggr.aggregate()
             self.train_log.log_metrics(
-                {f"loss/{pname}/lr": plr for pname, plr in lr_dict.items()}
+                {f"loss/{pname}/lr": plr for pname, plr in lr_dict.items()},
+                step,
+                epoch,
             )
 
             # plot the gradients

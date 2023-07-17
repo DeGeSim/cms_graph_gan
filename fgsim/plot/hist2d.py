@@ -111,9 +111,9 @@ def _2dhist_with_autonorm(
 
     if norm is None:
         if (h > (h.max() / 10)).mean() < 0.1:
-            norm = LogNorm(max(h.min(), 1), h.max())
+            norm = LogNorm(1, h.max())
         else:
-            norm = Normalize(h.min(), h.max())
+            norm = Normalize(0, h.max())
 
     pc = ax.pcolormesh(xedges, yedges, h.T, norm=norm, **kwargs)
     ax.set_xlim(xedges[0], xedges[-1])
