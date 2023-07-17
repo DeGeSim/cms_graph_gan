@@ -13,6 +13,8 @@ def dequant(x):
 
 
 def requant(x):
+    edgecase = x.astype("int") == x
+    x[edgecase] -= 1
     return np.floor(x)
 
 

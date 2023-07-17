@@ -37,6 +37,8 @@ cell_idxs = torch.arange(prod(dims)).reshape(*dims)
 
 
 def sum_dublicate_hits(batch):
+    old_dev = batch.x.device
+    batch = batch.to("cpu")
     dev = batch.x.device
     batchidx = batch.batch
     n_events = int(batchidx[-1] + 1)
@@ -44,7 +46,13 @@ def sum_dublicate_hits(batch):
     hitE = batch.x[:, 0]
     pos = batch.x[:, 1:].long()
 
-    cell_idx_per_hit = cell_idxs.to(dev)[pos[:, 0], pos[:, 1], pos[:, 2]]
+    pos_z, pos_alpha, pos_r = pos.T
+    assert (pos >= 0).all()
+    assert (pos_z < num_z).all()
+    assert (pos_alpha < num_alpha).all()
+    assert (pos_r < num_r).all()
+
+    cell_idx_per_hit = cell_idxs.to(dev)[pos_z, pos_alpha, pos_r]
 
     # give pos unique values for each event
     eventshift = torch.arange(n_events).to(dev) * prod(dims)
@@ -72,7 +80,7 @@ def sum_dublicate_hits(batch):
 
     x_new = torch.hstack([hitE_new.reshape(-1, 1), pos_new])
 
-    # Tests
+    # # Tests
     # old_counts = torch.unique_consecutive(batchidx, return_counts=True)[1]
     # if "n_pointsv" in batch.keys:
     #     assert (old_counts == batch.n_pointsv).all()
@@ -97,7 +105,7 @@ def sum_dublicate_hits(batch):
         "n_by_E": batch.n_pointsv / batch.y[:, 0],
     }
 
-    return batch
+    return batch.to(old_dev)
 
 
 def _scatter_sort(x, index, dim=-1):
@@ -119,9 +127,11 @@ def test_sum_dublicate_hits():
                         [1, 0, 0, 0],
                         [1, 0, 1, 0],
                         [1, 0, 0, 0],
-                        [1, 0, 0, 1],
+                        [1, num_z - 1, num_alpha - 1, num_r - 1],
                     ]
-                )
+                ),
+                y=torch.tensor([[1, 1]]),
+                n_pointsv=torch.tensor(4),
             ),
             Data(
                 x=torch.tensor(
@@ -130,7 +140,9 @@ def test_sum_dublicate_hits():
                         [1, 0, 0, 0],
                         [1, 0, 1, 0],
                     ]
-                )
+                ),
+                y=torch.tensor([[1, 1]]),
+                n_pointsv=torch.tensor(3),
             ),
         ]
     )
@@ -158,3 +170,6 @@ def test_sum_dublicate_hits():
         scatter_add(pos_new * hitE_new.unsqueeze(-1), batchidx_new, -2),
         scatter_add(pos * hitE.unsqueeze(-1), batchidx, -2),
     )
+
+
+test_sum_dublicate_hits()
