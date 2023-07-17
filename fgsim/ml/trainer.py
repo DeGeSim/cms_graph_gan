@@ -123,7 +123,7 @@ class Trainer:
                 lpart.grad_aggr.aggregate(self.holder.state.grad_step)
 
             # Also log training speed
-            self.train_log.write_trainstep_logs()
+            self.train_log.write_trainstep_logs(conf.training.log_interval)
 
         if not conf.ray:
             self.holder.checkpoint_after_time()

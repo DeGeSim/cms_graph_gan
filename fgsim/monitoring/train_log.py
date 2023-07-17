@@ -125,7 +125,7 @@ class TrainLog:
             for k, v in metrics_dict.items():
                 self.wandb_run.summary[k] = v
 
-    def write_trainstep_logs(self) -> None:
+    def write_trainstep_logs(self, interval) -> None:
         if not all(
             [
                 hasattr(self.state, time)
@@ -145,9 +145,9 @@ class TrainLog:
 
         self.log_metrics(
             {
-                "batchtime": traintime,
-                "utilisation": utilisation,
-                "processed_events": self.state.processed_events,
+                "batchtime": traintime / interval,
+                "utilisation": utilisation / interval,
+                "processed_events": self.state.processed_events / interval,
             },
             self.state["grad_step"],
             self.state["epoch"],
