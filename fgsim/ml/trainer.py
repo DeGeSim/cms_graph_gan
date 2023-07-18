@@ -127,8 +127,9 @@ class Trainer:
 
         if not conf.ray:
             self.holder.checkpoint_after_time()
-        self.holder.state.grad_step += 1
         self.holder.state.time_train_step_start = time.time()
+        self.train_log.flush()
+        self.holder.state.grad_step += 1
 
     def validation_step(self):
         if not conf.debug:

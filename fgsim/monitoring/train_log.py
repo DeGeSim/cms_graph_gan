@@ -11,30 +11,30 @@ from typeguard import typechecked
 
 import wandb
 from fgsim.config import conf
+from fgsim.monitoring import logger
 from fgsim.monitoring.monitor import exp_orga_wandb
 
 
 class TrainLog:
-    """Initialized with the `holder`, provides the logging with wandb/tensorboard.
-    """
+    """Initialized with the `holder`,
+    provides the logging with wandb/tensorboard."""
 
     def __init__(self, state):
         # This code block is formatting the hyperparameters
         # for the experiment and creating a list of tags.
         self.state: DictConfig = state
-        self.use_tb = not conf.debug or conf.command == "test"
+        default_log = conf.command in ["train", "test"] and not conf.debug
+        if conf.command == "test":
+            default_log = True
+        self.use_tb = default_log
+        self.use_wandb = default_log
 
-        self.use_wandb = not conf.debug or conf.command == "test"
+        _epoch = self.state["epoch"]
+        _step = self.state["grad_step"]
+
         if self.use_tb:
             self.writer: SummaryWriter = SummaryWriter(conf.path.tensorboard)
-
-        if self.use_tb:
-            self.writer.add_scalar(
-                "epoch",
-                self.state["epoch"],
-                self.state["grad_step"],
-                new_style=True,
-            )
+            self.writer.add_scalar("epoch", _epoch, _step, new_style=True)
 
         if self.use_wandb:
             if not conf.ray:
@@ -54,20 +54,19 @@ class TrainLog:
                     dir=conf.path.run_path,
                     project=conf.project_name,
                     job_type=conf.command,
+                    allow_val_change=True,
                     settings={"quiet": True},
                 )
+            self._wandb_tmp = {}
+            self._wandb_step = None
+            self._wandb_epoch = None
 
-            wandb.log(
-                data={"other/epoch": self.state["epoch"]},
-                step=self.state["grad_step"],
-            )
         self.log_cmd_time()
 
     def log_cmd_time(self):
         if self.use_wandb:
-            self.wandb_run.summary[
-                f"time/{conf.command}"
-            ] = datetime.now().strftime("%y-%m-%d-%H:%M")
+            dstr = datetime.now().strftime("%y-%m-%d-%H:%M")
+            self.wandb_run.summary[f"time/{conf.command}"] = dstr
 
     def log_model_graph(self, model):
         if self.use_wandb:
@@ -94,8 +93,30 @@ class TrainLog:
     @typechecked
     def _log_metrics_wandb(self, md: dict, step: int, epoch: int):
         if self.use_wandb:
+            self._set_wandb_state(step, epoch)
             md = {"m/" + k: v for k, v in md.items()}
-            wandb.log(md | {"epoch": epoch}, step=step)
+            self._wandb_tmp.update(md)
+
+    def _set_wandb_state(self, step: int, epoch: int):
+        if self._wandb_step is None and self._wandb_epoch is None:
+            self._wandb_step = step
+            self._wandb_epoch = epoch
+        elif self._wandb_step != step or self._wandb_epoch != epoch:
+            raise Exception("Step of metrics doesnt match")
+        else:
+            return
+
+    def flush(self):
+        if self.use_wandb:
+            if len(self._wandb_tmp):
+                logger.info("Wandb flush")
+                wandb.log(
+                    self._wandb_tmp | {"epoch": self._wandb_epoch},
+                    step=self._wandb_step,
+                )
+                self._wandb_tmp = {}
+                self._wandb_step = None
+                self._wandb_epoch = None
 
     @typechecked
     def log_figure(
@@ -103,12 +124,13 @@ class TrainLog:
         figure_name: str,
         figure: Figure,
         step: int,
+        epoch: int,
     ):
         if self.use_tb:
             self.writer.add_figure(tag=figure_name, figure=figure, global_step=step)
         if self.use_wandb:
-            wandb.log(data={f"p/{figure_name}": wandb.Image(figure)}, step=step)
-            # wandb.log(data={figure_name: wandb.Image(figure)}, step=step)
+            self._set_wandb_state(step, epoch)
+            self._wandb_tmp.update({f"p/{figure_name}": wandb.Image(figure)})
         plt.close(figure)
 
     def log_test_metrics(
@@ -163,11 +185,6 @@ class TrainLog:
                 self.state["epoch"],
                 self.state["grad_step"],
                 new_style=True,
-            )
-        if self.use_wandb:
-            wandb.log(
-                data={"epoch": self.state["epoch"]},
-                step=self.state["grad_step"],
             )
 
     def __del__(self):

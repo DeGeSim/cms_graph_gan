@@ -37,6 +37,7 @@ def setup_experiment() -> None:
         job_type="train",
         resume=False,
         reinit=True,
+        allow_val_change=True,
         settings={
             "quiet": True,
             "disable_job_creation": True,
@@ -60,6 +61,7 @@ def setup_experiment() -> None:
         job_type="test",
         reinit=True,
         resume=False,
+        allow_val_change=True,
         settings={"quiet": True, "disable_job_creation": True},
     )
     exp_orga_wandb[f"{conf['hash']}_test"] = run_test.id

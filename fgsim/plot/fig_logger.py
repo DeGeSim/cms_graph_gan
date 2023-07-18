@@ -59,6 +59,7 @@ class FigLogger:
             figure_name=f"{prefix}/{filename}",
             figure=figure,
             step=self.step,
+            epoch=self.epoch,
         )
         logger.info(filename)
         plt.close(figure)

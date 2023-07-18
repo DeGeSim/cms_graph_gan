@@ -1,6 +1,5 @@
 from copy import deepcopy
 
-from fgsim.config import conf
 from fgsim.io.queued_dataset import QueuedDataset
 from fgsim.ml.holder import Holder
 from fgsim.monitoring import logger
@@ -17,7 +16,7 @@ def validate(holder: Holder, loader: QueuedDataset) -> None:
     results_d = gen_res_from_sim_batches(loader.validation_batches, holder)
     logger.debug("Validation batches created")
 
-    score = eval_res_d(
+    eval_res_d(
         results_d,
         holder,
         holder.state["grad_step"],
@@ -26,16 +25,16 @@ def validate(holder: Holder, loader: QueuedDataset) -> None:
         None,
     )
 
-    # overwrite the recorded score for each val step
+    # # overwrite the recorded score for each val step
+    # import wandb
+    # for ivalstep in range(len(score)):
+    #     scoreistep = ivalstep * conf.training.val.interval
 
-    for ivalstep in range(len(score)):
-        scoreistep = ivalstep * conf.training.val.interval
-
-        holder.train_log.log_metrics(
-            {"trend/score": score[ivalstep]},
-            step=scoreistep,
-            epoch=scoreistep // loader.n_grad_steps_per_epoch,
-        )
+    #     wandb.log(
+    #         {"trend/score": score[ivalstep]},
+    #         step=scoreistep,
+    #         epoch=scoreistep // loader.n_grad_steps_per_epoch,
+    #     )
 
     # save the best model
     if max(holder.history["score"]) == holder.history["score"][-1]:
