@@ -94,7 +94,7 @@ class EvaluationMetrics:
     def __aggr_dists(self, md):
         for dname in ["cdf", "sw1", "histd"]:
             md[f"dmean_{dname}"] = float(
-                np.mean([v for k, v in md.items() if k.endswith(dname)])
+                np.nanmean([v for k, v in md.items() if k.endswith(dname)])
             )
         return md
 

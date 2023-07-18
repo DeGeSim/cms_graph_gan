@@ -87,14 +87,13 @@ def eval_res_d(
 ):
     plot = step % conf.training.val.plot_interval == 0 or conf.command == "test"
     # plot = True
-    step = step if step != 0 else 1
 
     # evaluate the validation metrics
     with torch.no_grad():
         holder.eval_metrics(**results_d)
     up_metrics_d, score = holder.eval_metrics.get_metrics()
 
-    holder.train_log.log_test_metrics(
+    holder.train_log.log_metrics(
         up_metrics_d, prefix="/".join(mode), step=step, epoch=epoch
     )
 

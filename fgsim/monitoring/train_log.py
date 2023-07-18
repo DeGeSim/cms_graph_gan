@@ -158,19 +158,19 @@ class TrainLog:
             self._wandb_tmp.update({f"p/{figure_name}": wandb.Image(figure)})
         plt.close(figure)
 
-    def log_test_metrics(
-        self,
-        metrics_dict: dict[str, Union[float, torch.Tensor]],
-        step: int,
-        epoch: int,
-        prefix: str,
-    ):
-        metrics_dict = {f"{prefix}/{k}": v for k, v in metrics_dict.items()}
-        self._log_metrics_tb(metrics_dict, step, epoch)
-        self._log_metrics_wandb(metrics_dict, step, epoch)
-        if self.use_wandb:
-            for k, v in metrics_dict.items():
-                self.wandb_run.summary[k] = v
+    # def log_test_metrics(
+    #     self,
+    #     metrics_dict: dict[str, Union[float, torch.Tensor]],
+    #     step: int,
+    #     epoch: int,
+    #     prefix: str,
+    # ):
+    #     metrics_dict = {f"{prefix}/{k}": v for k, v in metrics_dict.items()}
+    #     self._log_metrics_tb(metrics_dict, step, epoch)
+    #     self._log_metrics_wandb(metrics_dict, step, epoch)
+    #     if self.use_wandb:
+    #         for k, v in metrics_dict.items():
+    #             self.wandb_run.summary[k] = v
 
     def write_trainstep_logs(self, interval) -> None:
         if not all(

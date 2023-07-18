@@ -29,7 +29,6 @@ def validate(holder: Holder, loader: QueuedDataset) -> None:
     # import wandb
     # for ivalstep in range(len(score)):
     #     scoreistep = ivalstep * conf.training.val.interval
-
     #     wandb.log(
     #         {"trend/score": score[ivalstep]},
     #         step=scoreistep,
@@ -44,7 +43,6 @@ def validate(holder: Holder, loader: QueuedDataset) -> None:
         logger.warning(f"New best model at step {holder.state.best_step}")
 
     step = holder.state.grad_step
-    step = step if step != 0 else 1
     epoch = holder.state.epoch
     holder.train_log.log_metrics(
         {
