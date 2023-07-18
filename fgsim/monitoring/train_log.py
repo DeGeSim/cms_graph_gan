@@ -57,7 +57,10 @@ class TrainLog:
                     allow_val_change=True,
                     settings={"quiet": True},
                 )
-            self._wandb_tmp = {}
+            wandb.define_metric("grad_step")
+            wandb.define_metric("*", step_metric="grad_step")
+            wandb.define_metric("m/*", goal="minimize")
+            self._wandb_tmp: dict[str, float] = {}
             self._wandb_step = None
             self._wandb_epoch = None
 
@@ -110,13 +113,35 @@ class TrainLog:
         if self.use_wandb:
             if len(self._wandb_tmp):
                 logger.info("Wandb flush")
-                wandb.log(
-                    self._wandb_tmp | {"epoch": self._wandb_epoch},
-                    step=self._wandb_step,
-                )
+                if conf.command == "test":
+                    self._flush_test_wandb()
+                else:
+                    wandb.log(
+                        self._wandb_tmp
+                        | {
+                            "epoch": self._wandb_epoch,
+                            "grad_step": self._wandb_step,
+                        }
+                    )
                 self._wandb_tmp = {}
                 self._wandb_step = None
                 self._wandb_epoch = None
+
+    def _flush_test_wandb(self):
+        pass
+        # wandb.log(
+        #     {k: v for k, v in self._wandb_tmp.items() if "/best/" in k}
+        #     | {"epoch": self._wandb_epoch},
+        # )
+        # for k, v in self._wandb_tmp:
+        #     karr = k.split("/")
+        #     match karr[0]:
+        #         case "m":
+        #             self.wandb_run.summary["/".join(karr[1:])] = v
+        #         case "p":
+        #             pass
+        #         case _:
+        #             pass
 
     @typechecked
     def log_figure(
