@@ -73,27 +73,52 @@ def make_high_level_plots(res: dict, fig_logger: FigLogger) -> None:
 def make_2d_plots(
     res: dict, fig_logger: FigLogger, ftxname: str, energy_weighted=False
 ) -> None:
+    fig_logger.prefixes.append("2D")
+    epos = conf.loader.x_ftx_energy_pos
+    ename = conf.loader.x_features[epos]
+
+    ftxidxs, ftxnames = zip(
+        *list(
+            (idx, e)
+            for idx, e in enumerate(conf.loader.x_features)
+            if not energy_weighted or e != ename
+        )
+    )
+
     if "unscaled" in fig_logger.prefixes:
         bins = [var_to_bins(e) for e in conf.loader.x_features]
     else:
         bins = [None for _ in conf.loader.x_features]
-    fig_logger.prefixes.append("2D")
-    for v1, v2 in combinations(list(range(conf.loader.n_features)), 2):
+
+    fext = "_Ew" if energy_weighted else ""
+    title = (
+        f"2D Histogram for {conf.loader.n_points} points in"
+        f" {conf.loader.test_set_size} events"
+    )
+    if energy_weighted:
+        title = "Weighted " + title
+
+    for v1, v2 in combinations(ftxidxs, 2):
+        if energy_weighted:
+            simw = res["sim_batch"][ftxname][:, epos].cpu().numpy()
+            genw = res["gen_batch"][ftxname][:, epos].cpu().numpy()
+        else:
+            simw = None
+            genw = None
         figure = hist2d(
             sim=res["sim_batch"][ftxname][:, [v1, v2]].cpu().numpy(),
             gen=res["gen_batch"][ftxname][:, [v1, v2]].cpu().numpy(),
-            title=(
-                f"2D Histogram for {conf.loader.n_points} points in"
-                f" {conf.loader.test_set_size} events"
-            ),
+            title=title,
             v1name=var_to_label(v1),
             v2name=var_to_label(v2),
             v1bins=bins[v1],
             v2bins=bins[v2],
+            simw=simw,
+            genw=genw,
         )
         fig_logger(
             figure,
-            f"2dhist_{conf.loader.x_features[v1]}_vs_{conf.loader.x_features[v2]}.pdf",
+            f"2dhist_{conf.loader.x_features[v1]}_vs_{conf.loader.x_features[v2]}{fext}.pdf",
         )
     fig_logger.prefixes.pop()
 

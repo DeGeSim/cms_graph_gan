@@ -23,6 +23,8 @@ def hist2d(
     v2name: str,
     v1bins: Optional[np.ndarray] = None,
     v2bins: Optional[np.ndarray] = None,
+    simw: Optional[np.ndarray] = None,
+    genw: Optional[np.ndarray] = None,
     step: Optional[int] = None,
 ) -> Figure:
     plt.close("all")
@@ -50,7 +52,9 @@ def hist2d(
         v1name, v2name = v2name, v1name
 
     norm = None
-    for iax, (ax, arr) in enumerate(zip([sim_axes, gen_axes], [sim, gen])):
+    for iax, (ax, arr, weights) in enumerate(
+        zip([sim_axes, gen_axes], [sim, gen], [simw, genw])
+    ):
         mesh, norm = _2dhist_with_autonorm(
             ax=ax,
             x=chip_to_binborders(arr[:, 0], xedges),
@@ -59,6 +63,7 @@ def hist2d(
             cmap=plt.cm.hot,
             norm=norm,
             linewidths=2,
+            weights=weights,
         )
         for spline in ax.spines.values():
             spline.set_linewidth(1.2)
@@ -110,7 +115,8 @@ def _2dhist_with_autonorm(
     )
 
     if norm is None:
-        if (h > (h.max() / 10)).mean() < 0.1:
+        # if (h > (h.max() / 10)).mean() < 0.1:
+        if h.max() / max(np.median(h), 1) > 6:
             norm = LogNorm(1, h.max())
         else:
             norm = Normalize(0, h.max())

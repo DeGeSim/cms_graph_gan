@@ -16,6 +16,7 @@ def hist1d(
 
     sim_features = _exftxt(sim[ftxname])
     gen_features = _exftxt(gen[ftxname])
+    fext = "_Ew" if energy_weighted else ""
 
     plots_d: Dict[str, Figure] = {}
     for iftx, ftn in enumerate(conf.loader.x_features):
@@ -24,7 +25,7 @@ def hist1d(
         b = bins[iftx] if bins is not None else None
         simw = sim_features[ename] if energy_weighted else None
         genw = gen_features[ename] if energy_weighted else None
-        plots_d[f"marginal_{ftn}.pdf"] = ratioplot(
+        plots_d[f"marginal_{ftn}{fext}.pdf"] = ratioplot(
             sim=sim_features[ftn],
             gen=gen_features[ftn],
             title=var_to_label(ftn),
