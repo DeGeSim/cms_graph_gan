@@ -11,29 +11,32 @@ dims = [num_z, num_alpha, num_r]
 cell_idxs = torch.arange(prod(dims)).reshape(*dims)
 
 
-# def voxelize(batch, mask, cond):
-#     empty = torch.zeros(
-#         (batch.shape[0], *dims), dtype=batch.dtype, device=batch.device
-#     )
-#     # Get the valid hits
-#     valid_hits = temp[~mask]
-#     valid_coordinates = valid_hits[:, 1:].long().t()
-#     shower_index = torch.arange(batch.shape[0]).repeat_interleave(
-#         (~mask).float().sum(1).reshape(-1).int()
-#     )
-#     indices = torch.cat((shower_index.unsqueeze(1), valid_coordinates.t()), dim=1)
-#     moritz = torch.arange(batch.shape[0] * dims[0] * dims[1] * dims[2]).reshape(
-#         *empty.shape
-#     )
-#     scatter_index = moritz[
-#         indices[..., 0], indices[..., 1], indices[..., 2], indices[..., 3]
-#     ]
-#     vox = scatter_add(
-#         src=valid_hits[:, 0],
-#         index=scatter_index,
-#         dim_size=prod(dims) * batch.shape[0],
-#     )
-#     return vox.reshape(batch.shape[0], *dims)
+def voxelize(batch):
+    batch_size = int(batch.batch[-1] + 1)
+    empty = torch.zeros((batch_size, *dims), dtype=batch.dtype, device=batch.device)
+    # Get the valid hits
+    # valid_hits = temp[~mask]
+    # Ehit = valid_hits[:, 0]
+    # valid_coordinates = valid_hits[:, 1:].long().t()
+    # shower_index = torch.arange(batch_size).repeat_interleave(
+    #     (~mask).float().sum(1).reshape(-1).int()
+    # )
+    shower_index = batch.batch
+    Ehit = batch.x.T[0]
+    valid_coordinates = batch.x.T[1:]
+    indices = torch.cat((shower_index.unsqueeze(1), valid_coordinates.t()), dim=1)
+    moritz = torch.arange(batch_size * dims[0] * dims[1] * dims[2]).reshape(
+        *empty.shape
+    )
+    scatter_index = moritz[
+        indices[..., 0], indices[..., 1], indices[..., 2], indices[..., 3]
+    ]
+    vox = scatter_add(
+        src=Ehit,
+        index=scatter_index,
+        dim_size=prod(dims) * batch_size,
+    )
+    return vox.reshape(batch_size, *dims)
 
 
 def sum_dublicate_hits(batch):

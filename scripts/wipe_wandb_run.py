@@ -45,6 +45,7 @@ def del_runs(exphash):
                 del exp_orga_wandb[s]
             except wandb.errors.CommError:
                 pass
+    print(exphash)
 
 
 def reinit_runs(exphash):
@@ -92,9 +93,7 @@ def reinit_runs(exphash):
     exp_orga_wandb[f"{conf['hash']}_test"] = run_test.id
 
 
-exphash = "f7fbe2b"
-
-for h in ["94ddd08", "b0e90d4", "c4d5763", "f7fbe2b"]:
+for h in ["040f723", "f7fbe2b", "94ddd08", "b0e90d4", "c4d5763"]:
     print(h)
     del_runs(h)
     del_wandb_dirs(h)

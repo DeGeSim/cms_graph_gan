@@ -4,13 +4,13 @@
         {
             "args": [
                 "--hash",
-                "94ddd08",
+                "c4d5763",
                 // "--ray",
                 // "--debug",
                 "train"
             ],
             "cwd": "/home/mscham/fgsim",
-            // "justMyCode": false,
+            "justMyCode": false,
             "module": "fgsim",
             "name": "hash",
             "request": "launch",
@@ -91,6 +91,19 @@
                 "cc_knnloss",
                 // "--debug",
                 "setup"
+            ],
+        },
+        {
+            "cwd": "/home/mscham/fgsim",
+            "name": "setup",
+            "request": "launch",
+            "program": "fgsim/__main__.py",
+            "type": "python",
+            "args": [
+                "--tag",
+                "cc_knnloss",
+                // "--debug",
+                "generate"
             ],
         },
         {

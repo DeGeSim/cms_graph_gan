@@ -82,54 +82,59 @@ def main():
         )
         logger.info(f"Running command {args.command}")
 
-    if args.command == "gethash":
-        if args.hash is not None:
+    match args.command:
+        case "gethash":
+            if args.hash is not None:
+                raise Exception
+            from fgsim.commands.setup import gethash_procedure
+
+            gethash_procedure()
+
+        case "setup":
+            if args.hash is not None:
+                raise Exception
+            from fgsim.commands.setup import setup_procedure
+
+            print(setup_procedure())
+        case "dump":
+            from fgsim.commands.dump import dump_procedure
+
+            dump_procedure()
+
+        case "overwrite":
+            from fgsim.commands.overwrite import overwrite_procedure
+
+            overwrite_procedure()
+
+        case "preprocess":
+            from fgsim.commands.preprocess import preprocess_procedure
+
+            preprocess_procedure()
+
+        case "train":
+            from fgsim.commands.training import training_procedure
+
+            training_procedure()
+
+        case "test":
+            from fgsim.commands.testing import test_procedure
+
+            test_procedure()
+        case "generate":
+            from fgsim.commands.generate import generate_procedure
+
+            generate_procedure()
+
+        case "loadfile":
+            file_name = str(conf.file_to_load)
+            import re
+
+            file_name = re.sub(".*fgsim/(.*?).py", ".\\1", file_name)
+            file_name = re.sub("/", ".", file_name)
+            importlib.import_module(file_name, "fgsim")
+
+        case _:
             raise Exception
-        from fgsim.commands.setup import gethash_procedure
-
-        gethash_procedure()
-
-    elif args.command == "setup":
-        if args.hash is not None:
-            raise Exception
-        from fgsim.commands.setup import setup_procedure
-
-        print(setup_procedure())
-    elif args.command == "dump":
-        from fgsim.commands.dump import dump_procedure
-
-        dump_procedure()
-
-    elif args.command == "overwrite":
-        from fgsim.commands.overwrite import overwrite_procedure
-
-        overwrite_procedure()
-
-    elif args.command == "preprocess":
-        from fgsim.commands.preprocess import preprocess_procedure
-
-        preprocess_procedure()
-
-    elif args.command == "train":
-        from fgsim.commands.training import training_procedure
-
-        training_procedure()
-
-    elif args.command == "test":
-        from fgsim.commands.testing import test_procedure
-
-        test_procedure()
-
-    elif args.command == "loadfile":
-        file_name = str(conf.file_to_load)
-        import re
-
-        file_name = re.sub(".*fgsim/(.*?).py", ".\\1", file_name)
-        file_name = re.sub("/", ".", file_name)
-        importlib.import_module(file_name, "fgsim")
-
-    else:
-        raise Exception
 
 
 def overwrite_path():

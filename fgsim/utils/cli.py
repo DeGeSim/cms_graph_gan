@@ -38,6 +38,7 @@ commands = [
     "gethash",
     "train",
     "test",
+    "generate",
     "preprocess",
     "dump",
     "overwrite",
