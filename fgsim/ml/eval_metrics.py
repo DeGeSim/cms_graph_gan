@@ -72,7 +72,7 @@ class EvaluationMetrics:
         """
         # Call metric_aggr to aggregate the collected metrics over the
         # validation batches.
-        up_metrics_d = self.metric_aggr.aggregate()
+        up_metrics_d = self.__aggr_dists(self.metric_aggr.aggregate())
 
         for metric_name, metric_val in up_metrics_d.items():
             val_metric_hist = self.history["val"][metric_name]
@@ -90,6 +90,13 @@ class EvaluationMetrics:
         score = self.__compute_score_per_val(up_metrics_d)
         self.history["score"] = score
         return up_metrics_d, score
+
+    def __aggr_dists(self, md):
+        for dname in ["cdf", "sw1", "histd"]:
+            md[f"dmean_{dname}"] = float(
+                np.mean([v for k, v in md.items() if k.endswith(dname)])
+            )
+        return md
 
     def __compute_score_per_val(self, up_metrics_d):
         # compute the stop_metric
