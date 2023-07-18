@@ -9,7 +9,9 @@ from .ratioplot import ratioplot
 def eval_plots(fig_logger: FigLogger, res: dict):
     fig_logger.prefixes.append("unscaled")
     make_1d_plots(res, fig_logger, "x")
+    make_1d_plots(res, fig_logger, "x", True)
     make_2d_plots(res, fig_logger, "x")
+    make_2d_plots(res, fig_logger, "x", True)
     fig_logger.prefixes.pop()
 
     # if conf.dataset_name == "calochallange":
@@ -27,14 +29,16 @@ def eval_plots(fig_logger: FigLogger, res: dict):
     make_critics_plots(res, fig_logger)
 
 
-def make_1d_plots(res: dict, fig_logger: FigLogger, ftxname: str) -> None:
+def make_1d_plots(
+    res: dict, fig_logger: FigLogger, ftxname: str, energy_weighted=False
+) -> None:
     fig_logger.prefixes.append("1D")
     if "unscaled" in fig_logger.prefixes:
         bins = [var_to_bins(e) for e in conf.loader.x_features]
     else:
         bins = None
     for title, fig in hist1d(
-        res["sim_batch"], res["gen_batch"], ftxname, bins
+        res["sim_batch"], res["gen_batch"], ftxname, bins, energy_weighted
     ).items():
         fig_logger(fig, title)
     fig_logger.prefixes.pop()
@@ -66,7 +70,9 @@ def make_high_level_plots(res: dict, fig_logger: FigLogger) -> None:
     fig_logger.prefixes.pop()
 
 
-def make_2d_plots(res: dict, fig_logger: FigLogger, ftxname: str) -> None:
+def make_2d_plots(
+    res: dict, fig_logger: FigLogger, ftxname: str, energy_weighted=False
+) -> None:
     if "unscaled" in fig_logger.prefixes:
         bins = [var_to_bins(e) for e in conf.loader.x_features]
     else:

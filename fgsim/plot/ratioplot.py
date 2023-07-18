@@ -3,6 +3,7 @@ from typing import Optional
 import matplotlib.pyplot as plt
 import mplhep
 import numpy as np
+from matplotlib.axes import Axes
 from matplotlib.figure import Figure
 
 from fgsim.utils.torchtonp import wrap_torch_to_np
@@ -12,18 +13,25 @@ from .binborders import binborders_wo_outliers, bincenters
 
 @wrap_torch_to_np
 def ratioplot(
-    sim: np.ndarray, gen: np.ndarray, title: str, bins: Optional[np.ndarray] = None
+    sim: np.ndarray,
+    gen: np.ndarray,
+    title: str,
+    bins: Optional[np.ndarray] = None,
+    simw: Optional[np.ndarray] = None,
+    genw: Optional[np.ndarray] = None,
 ) -> Figure:
     if bins is None:
         bins = binborders_wo_outliers(sim)
     n_bins = len(bins) - 1
 
-    sim_hist, _ = np.histogram(sim, bins=bins)
-    gen_hist, _ = np.histogram(gen, bins=bins)
+    sim_hist, _ = np.histogram(sim, bins=bins, weights=simw)
+    gen_hist, _ = np.histogram(gen, bins=bins, weights=genw)
     sim_error = np.sqrt(sim_hist)
     gen_error = np.sqrt(gen_hist)
 
     plt.close("all")
+    ax: Axes
+    axrat: Axes
     fig, (ax, axrat) = plt.subplots(
         2, 1, figsize=(6, 7), gridspec_kw={"height_ratios": [2, 0.7]}, sharex="col"
     )
@@ -92,8 +100,9 @@ def ratioplot(
         for spline in iax.spines.values():
             spline.set_linewidth(1)
             spline.set_color("black")
-
-    fig.suptitle(title, fontsize=25)
+    if simw is not None:
+        title += " weighted"
+    fig.suptitle(title, fontsize=23)
     plt.tight_layout()
     # fig.savefig("wd/fig.pdf")
     return fig
