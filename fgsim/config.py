@@ -14,6 +14,14 @@ from fgsim.utils.oc_utils import dict_to_keylist, gethash, removekeys
 register_resolvers()
 
 
+defaultconf = OmegaConf.load(Path("~/fgsim/fgsim/default.yaml").expanduser())
+# Load the default settings, overwrite them
+# witht the tag-specific settings and then
+# overwrite those with cli arguments.
+conf: DictConfig = defaultconf.copy()
+hyperparameters: DictConfig = DictConfig({})
+
+
 def compute_conf(default, *confs):
     default = default.copy()
 
@@ -27,11 +35,11 @@ def compute_conf(default, *confs):
                 f" Difference:\n{c_key_set - default_key_set}"
             )
 
-    conf = OmegaConf.merge(*(default, *confs))
+    newconf = OmegaConf.merge(*(default, *confs))
 
     # remove the dependency on hash and loader hash to be able to resolve
     conf_without_paths = removekeys(
-        conf,
+        newconf,
         [
             "path",
         ],
@@ -43,11 +51,11 @@ def compute_conf(default, *confs):
     # dataset is safed to ensure the parameters dont change
     # Exclude the keys that do not affect the training
     exclude_keys = ["preprocess_training", "debug"] + [
-        x for x in conf["loader"] if "n_workers" in x
+        x for x in newconf["loader"] if "n_workers" in x
     ]
 
     loader_params = removekeys(conf_without_paths["loader"], exclude_keys)
-    conf["loader_hash"] = gethash(loader_params)
+    newconf["loader_hash"] = gethash(loader_params)
 
     hyperparameters = removekeys(
         conf_without_paths,
@@ -61,27 +69,20 @@ def compute_conf(default, *confs):
             "project_name",
             "ray",
         ]
-        + [key for key in conf.keys() if key.endswith("_options")],
+        + [key for key in newconf.keys() if key.endswith("_options")],
     )
 
-    conf["hash"] = gethash(hyperparameters)
+    newconf["hash"] = gethash(hyperparameters)
     # Infer the parameters here
-    OmegaConf.resolve(conf)
-    for k in conf.path:
-        conf.path[k] = str(Path(conf.path[k]).expanduser())
+    OmegaConf.resolve(newconf)
+    for k in newconf.path:
+        newconf.path[k] = str(Path(newconf.path[k]).expanduser())
     # remove the options:
-    for key in list(conf.keys()):
+    for key in list(newconf.keys()):
         if key.endswith("_options"):
-            del conf[key]
-    return conf, hyperparameters
-
-
-defaultconf = OmegaConf.load(Path("~/fgsim/fgsim/default.yaml").expanduser())
-# Load the default settings, overwrite them
-# witht the tag-specific settings and then
-# overwrite those with cli arguments.
-conf: DictConfig = defaultconf.copy()
-hyperparameters: DictConfig({})
+            del newconf[key]
+    conf.update(newconf)
+    return newconf, hyperparameters
 
 
 def parse_arg_conf(args=None):
