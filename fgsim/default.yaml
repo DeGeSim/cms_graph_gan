@@ -382,6 +382,8 @@ loss_options:
     pow: 1
   knndist:
     factor: 1.0
+  marsw1:
+    factor: 1.0
 
 training:
   gan_mode: Hinge
