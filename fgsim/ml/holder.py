@@ -308,7 +308,7 @@ class Holder:
         # rotate alpha without changing the distribution for the evaulation
         batch = batch.clone()
         if conf.dataset_name == "calochallange":
-            batch = self.postprocess(self, batch)
+            batch = self.postprocess(batch)
         return batch
 
     def postprocess(self, batch: Batch) -> Batch:
