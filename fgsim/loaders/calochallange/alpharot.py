@@ -29,14 +29,19 @@ def rotate_alpha(alphas, batchidx, fake=False, center=False):
     if not center:
         shift = torch.rand(batch_size).to(alphas.device)[batchidx]
     else:
-        shift = -scatter_mean(alphas, batchidx)[batchidx]
+        shift = -scatter_mean(alphas, batchidx)[batchidx] + 0.5
     if fake:
         shift *= 0
     alphas = alphas.clone() + shift
     alphas[alphas > 1] -= 1
+    alphas[alphas < 0] += 1
+
+    assert (alphas <= 1).all()
+    assert (0 <= alphas).all()
 
     # Forward transform #1 logit
     alphas = torch.special.logit(alphas.clone())
+    check_tensor(alphas)
 
     # Forward transform #0 stdscalar
     alphas = (alphas.clone() - mean) / scale
