@@ -115,8 +115,8 @@ def _2dhist_with_autonorm(
     )
 
     if norm is None:
-        # if (h > (h.max() / 10)).mean() < 0.1:
-        if h.max() / max(np.median(h), 1) > 6:
+        if (h > (h.max() / 10)).mean() < 0.1:
+            # if h.max() / max(np.median(h), 1) > 6:
             norm = LogNorm(1, h.max())
         else:
             norm = Normalize(0, h.max())
