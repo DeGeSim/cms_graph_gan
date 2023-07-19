@@ -284,7 +284,9 @@ class Holder:
 
         # In both cases the gradient needs to pass though gen_crit
         with with_grad(train_gen or train_disc):
-            res |= prepend_to_key(disc(gen_batch, cond_critic), "gen_")
+            res |= prepend_to_key(
+                disc(self.disc_preprocess(gen_batch), cond_critic), "gen_"
+            )
 
         # assert res["gen_crit"].shape == (conf.loader.batch_size, 1)
         assert not torch.isnan(res["gen_crit"]).any()
@@ -308,7 +310,12 @@ class Holder:
         # rotate alpha without changing the distribution for the evaulation
         batch = batch.clone()
         if conf.dataset_name == "calochallange":
-            batch = self.postprocess(batch)
+            from fgsim.loaders.calochallange.alpharot import rotate_alpha
+
+            alphapos = conf.loader.x_features.index("alpha")
+            batch.x[..., alphapos] = rotate_alpha(
+                batch.x[..., alphapos].clone(), batch.batch, center=True
+            )
         return batch
 
     def postprocess(self, batch: Batch) -> Batch:

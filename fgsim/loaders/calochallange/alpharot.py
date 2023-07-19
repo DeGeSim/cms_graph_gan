@@ -1,4 +1,5 @@
 import torch
+from torch_scatter import scatter_mean
 
 from fgsim.config import conf
 from fgsim.utils import check_tensor
@@ -6,7 +7,7 @@ from fgsim.utils import check_tensor
 from .objcol import scaler
 
 
-def rotate_alpha(pts, batchidx, fake=False):
+def rotate_alpha(alphas, batchidx, fake=False, center=False):
     batch_size = int(batchidx[-1] + 1)
     alphapos = conf.loader.x_features.index("alpha")
     ascalers = scaler.transfs_x[alphapos].steps[::-1]
@@ -16,23 +17,28 @@ def rotate_alpha(pts, batchidx, fake=False):
     scale = ascalers[0][1].scale_[0]
 
     # Backwards transform #0 stdscalar
-    pts = pts.clone().double() * scale + mean
+    alphas = alphas.clone().double() * scale + mean
 
     # Backwards transform #1 logit
-    pts = torch.special.expit(pts)
+    alphas = torch.special.expit(alphas)
 
+    assert (alphas <= 1).all()
+    assert (0 <= alphas).all()
     # Rotation
     # smin, smax = ascalers[2][1].feature_range
-    shift = torch.rand(batch_size).to(pts.device)[batchidx]
+    if not center:
+        shift = torch.rand(batch_size).to(alphas.device)[batchidx]
+    else:
+        shift = -scatter_mean(alphas, batchidx)[batchidx]
     if fake:
         shift *= 0
-    pts = pts.clone() + shift
-    pts[pts > 1] -= 1
+    alphas = alphas.clone() + shift
+    alphas[alphas > 1] -= 1
 
     # Forward transform #1 logit
-    pts = torch.special.logit(pts.clone())
+    alphas = torch.special.logit(alphas.clone())
 
     # Forward transform #0 stdscalar
-    pts = (pts.clone() - mean) / scale
-    check_tensor(pts)
-    return pts.float()
+    alphas = (alphas.clone() - mean) / scale
+    check_tensor(alphas)
+    return alphas.float()
