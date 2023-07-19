@@ -12,7 +12,7 @@ models:
     params: ${model_param_options[${models.gen.name}]}
     losses: "${optionlist:${loss_options},${models.gen.losses_list}}"
     losses_list: ${listadd:${gan_mode_options[${training.gan_mode}][gen]},${models.gen.additional_losses_list}}
-    additional_losses_list: ["feature_matching"]
+    additional_losses_list: []
     optim:
       name: Adam
       params: ${optim_options[gen][${models.gen.optim.name}]}
@@ -208,7 +208,7 @@ model_param_options:
       bias: False
       n_layers: 3
       hidden_layer_size: 100
-      dropout: 0.0
+      dropout: 0.5
       norm: "spectral"
       equallr: false
     cnu_param:
@@ -494,8 +494,8 @@ dataset_options:
       validation_set_size: 10_000
       test_set_size: 50_000
     validation:
-      interval: 1_500
-      plot_interval: 3_000
+      interval: 2_000
+      plot_interval: 4_000
       use_for_stopping:
         ["marginalEw", "showershape", "fpc", "sphereratio", "nhits"]
       metrics:
