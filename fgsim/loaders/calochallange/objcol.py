@@ -2,6 +2,7 @@ from pathlib import Path
 from typing import List, Tuple
 
 import h5py
+import numpy as np
 import torch
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import (
@@ -75,14 +76,13 @@ def Identity(x):
     return x
 
 
-def NetToZero(x):
-    x[x < 0] = 0
-    return x
+def LimitForBoxCox(x):
+    return np.clip(x, -19, None)
 
 
 hitE_tf = make_pipeline(
     PowerTransformer(method="box-cox", standardize=False),
-    FunctionTransformer(Identity, NetToZero, validate=True),
+    FunctionTransformer(Identity, LimitForBoxCox, validate=True),
     # SplineTransformer(),
     StandardScaler(),
 )

@@ -1,4 +1,5 @@
 # %%
+import numpy as np
 import torch
 from torch_geometric.data import Batch
 
@@ -15,7 +16,7 @@ from fgsim.loaders.calochallange.objcol import (  # noqa: E402
     scaler,
 )
 from fgsim.loaders.calochallange.postprocess import postprocess  # noqa: E402
-from fgsim.loaders.calochallange.voxelize import voxelize  # noqa: E402
+from fgsim.loaders.calochallange.voxelize import dims, voxelize  # noqa: E402
 
 # %%
 pcs = read_chunks([(file_manager.files[0], 0, 3)])
@@ -47,12 +48,34 @@ batch.y = scaler.inverse_transform(batch.y, "y")
 
 delta = (batch.x - batch_untf.x).abs()
 idx = torch.where(delta == delta.max())
-print(batch.x[idx[0], :], batch_untf.x[idx[0], :], idx[1])
+
+if not torch.allclose(batch.x, batch_untf.x, rtol=1e-04):
+    sel_tf = scaler.transfs_x[idx[1]]
+    print(batch.x[idx], batch_untf.x[idx], idx[1])
+    print(
+        batch_scaled.x[idx], sel_tf.transform(batch_untf.x[:, idx[1]])[idx], idx[1]
+    )
+
+    tfsteps = [e[1] for e in sel_tf.steps]
+    forward_res_step = [batch_untf.x[idx].numpy().reshape(-1, 1)]
+    for _tf in tfsteps:
+        forward_res_step.append(_tf.transform(forward_res_step[-1].copy()))
+    backward_res_step = [forward_res_step[-1].copy()]
+    for itf, _tf in enumerate(tfsteps[::-1]):
+        a = backward_res_step[-1]
+        b = forward_res_step[-1 - itf]
+        print(a, b)
+        if not np.allclose(a, b):
+            print("the problem is ", tfsteps[-itf])
+        backward_res_step.append(
+            _tf.inverse_transform(backward_res_step[-1].copy())
+        )
 
 
 assert torch.allclose(batch.x, batch_untf.x, rtol=1e-04)
 batch = postprocess(batch)
-assert (batch.x == batch_untf.x).all()
+assert torch.allclose(batch.x, batch_untf.x)
 pcs_out = voxelize(batch)
-assert pcs_out == torch.stack([torch.tensor(e[1]) for e in pcs], 0)
+input_images = torch.stack([e[1].reshape(*dims) for e in pcs], 0)
+assert torch.allclose(pcs_out, input_images)
 # %%

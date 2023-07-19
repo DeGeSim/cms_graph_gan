@@ -13,10 +13,13 @@ def dequant(x):
 
 
 def requant(x):
-    edgecase = x.astype("int") == x
+    x_copy = x.copy()
+    edgecase = (x.astype("int") == x).squeeze()
     x[edgecase] -= 1
     x[~edgecase] = np.floor(x[~edgecase])
     assert np.all(x.astype("int") == x)
+    delta = x_copy - x
+    assert (delta >= 0).all() and (delta <= 1).all()
     return x
 
 

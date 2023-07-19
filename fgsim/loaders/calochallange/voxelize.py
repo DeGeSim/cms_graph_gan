@@ -13,7 +13,8 @@ cell_idxs = torch.arange(prod(dims)).reshape(*dims)
 
 def voxelize(batch):
     batch_size = int(batch.batch[-1] + 1)
-    empty = torch.zeros((batch_size, *dims), dtype=batch.dtype, device=batch.device)
+    x = batch.x
+    empty = torch.zeros((batch_size, *dims), dtype=x.dtype, device=x.device)
     # Get the valid hits
     # valid_hits = temp[~mask]
     # Ehit = valid_hits[:, 0]
@@ -22,8 +23,8 @@ def voxelize(batch):
     #     (~mask).float().sum(1).reshape(-1).int()
     # )
     shower_index = batch.batch
-    Ehit = batch.x.T[0]
-    valid_coordinates = batch.x.T[1:]
+    Ehit = x.T[0]
+    valid_coordinates = x.T[1:].int()
     indices = torch.cat((shower_index.unsqueeze(1), valid_coordinates.t()), dim=1)
     moritz = torch.arange(batch_size * dims[0] * dims[1] * dims[2]).reshape(
         *empty.shape
