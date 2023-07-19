@@ -6,7 +6,7 @@ from fgsim.utils import check_tensor
 from .objcol import scaler
 
 
-def rotate_alpha(pts, batchidx):
+def rotate_alpha(pts, batchidx, fake=False):
     batch_size = int(batchidx[-1] + 1)
     alphapos = conf.loader.x_features.index("alpha")
     ascalers = scaler.transfs_x[alphapos].steps[::-1]
@@ -24,6 +24,8 @@ def rotate_alpha(pts, batchidx):
     # Rotation
     # smin, smax = ascalers[2][1].feature_range
     shift = torch.rand(batch_size).to(pts.device)[batchidx]
+    if fake:
+        shift *= 0
     pts = pts.clone() + shift
     pts[pts > 1] -= 1
 
