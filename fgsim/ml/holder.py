@@ -309,13 +309,13 @@ class Holder:
     def disc_preprocess(self, batch: Batch) -> Batch:
         # rotate alpha without changing the distribution for the evaulation
         batch = batch.clone()
-        if conf.dataset_name == "calochallange":
-            from fgsim.loaders.calochallange.alpharot import rotate_alpha
+        # if conf.dataset_name == "calochallange":
+        #     from fgsim.loaders.calochallange.alpharot import rotate_alpha
 
-            alphapos = conf.loader.x_features.index("alpha")
-            batch.x[..., alphapos] = rotate_alpha(
-                batch.x[..., alphapos].clone(), batch.batch, center=True
-            )
+        #     alphapos = conf.loader.x_features.index("alpha")
+        #     batch.x[..., alphapos] = rotate_alpha(
+        #         batch.x[..., alphapos].clone(), batch.batch, center=True
+        #     )
         return batch
 
     def postprocess(self, batch: Batch) -> Batch:
@@ -325,13 +325,13 @@ class Holder:
             pt_pos = conf.loader.x_ftx_energy_pos
             pts = batch.x[..., pt_pos].clone()
             batch.x[..., pt_pos] = norm_pt_sum(pts, batch.batch).clone()
-        if conf.dataset_name == "calochallange":
-            from fgsim.loaders.calochallange.alpharot import rotate_alpha
+        # if conf.dataset_name == "calochallange":
+        #     from fgsim.loaders.calochallange.alpharot import rotate_alpha
 
-            alphapos = conf.loader.x_features.index("alpha")
-            batch.x[..., alphapos] = rotate_alpha(
-                batch.x[..., alphapos].clone(), batch.batch
-            )
+        #     alphapos = conf.loader.x_features.index("alpha")
+        #     batch.x[..., alphapos] = rotate_alpha(
+        #         batch.x[..., alphapos].clone(), batch.batch
+        #     )
 
         return batch
 

@@ -1,3 +1,4 @@
+import torch
 from torch_geometric.data import Batch
 
 from fgsim.config import conf
@@ -7,8 +8,21 @@ from .pca import fpc_from_batch
 from .shower import analyze_layers, response, sphereratio
 from .voxelize import sum_dublicate_hits
 
+alphapos = conf.loader.x_features.index("alpha")
+num_alpha = 16
+
 
 def postprocess(batch: Batch) -> Batch:
+    alphas = batch.x[..., alphapos].clone()
+
+    shift = torch.randint(0, num_alpha, (batch.batch[-1] + 1,)).to(alphas.device)[
+        batch.batch
+    ]
+    alphas = alphas.clone() + shift.float()
+    alphas[alphas > num_alpha - 1] -= num_alpha
+
+    batch.x[..., alphapos] = alphas
+
     batch = sum_dublicate_hits(batch)
     batch = batch_to_Exyz(batch)
     metrics: list[str] = conf.training.val.metrics
