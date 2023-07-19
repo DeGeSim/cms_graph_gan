@@ -298,10 +298,20 @@ class Holder:
             or ("feature_matching" in conf.models.gen.losses and train_gen)
         ):
             with with_grad(train_disc):
-                res |= prepend_to_key(disc(sim_batch, cond_critic), "sim_")
+                sim_batch_disc_input = self.disc_preprocess(sim_batch)
+                res |= prepend_to_key(
+                    disc(sim_batch_disc_input, cond_critic), "sim_"
+                )
         return res
 
-    def postprocess(self, batch):
+    def disc_preprocess(self, batch: Batch) -> Batch:
+        # rotate alpha without changing the distribution for the evaulation
+        batch = batch.clone()
+        if conf.dataset_name == "calochallange":
+            batch = self.postprocess(self, batch)
+        return batch
+
+    def postprocess(self, batch: Batch) -> Batch:
         if conf.dataset_name == "jetnet" and conf.loader.n_points == 150:
             from fgsim.loaders.jetnet.objcol import norm_pt_sum
 
