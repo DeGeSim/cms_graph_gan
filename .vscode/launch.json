@@ -129,6 +129,26 @@
                 "test"
             ],
         },
+        {
+            "name": "cc eval",
+            "type": "python",
+            "request": "launch",
+            "cwd": "/home/mscham/homepage/code",
+            "program": "/home/mscham/homepage/code/evaluate.py",
+            "console": "integratedTerminal",
+            "args": [
+                "-i",
+                "~/fgsim/wd/cc_knnloss/040f723/out.hdf5",
+                "-m",
+                "all",
+                "-r",
+                "~/fgsim/data/calochallange2/dataset_2_2.hdf5",
+                "-d",
+                "2",
+                "--output_dir",
+                "~/fgsim/wd/cc_knnloss/040f723/cc_eval/"
+            ],
+        },
         // {
         //     "args": [],
         //     "command": "pytest",
