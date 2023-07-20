@@ -7,12 +7,12 @@ from pathlib import Path
 
 import h5py
 import torch
-from torch_geometric.data import Batch
 from tqdm import tqdm
 
 from fgsim.config import conf, device
 from fgsim.io.queued_dataset import QueuedDataset
 from fgsim.io.sel_loader import loader_info
+from fgsim.loaders.calochallange.voxelize import voxelize
 from fgsim.ml.eval import postprocess
 from fgsim.ml.holder import Holder
 
@@ -23,7 +23,9 @@ def generate_procedure() -> None:
 
     loader = QueuedDataset(loader_info)
 
-    generated_batches = []
+    x_l = []
+    E_l = []
+
     for sim_batch in tqdm(loader.eval_batches):
         batch_size = conf.loader.batch_size
         cond_gen_features = conf.loader.cond_gen_features
@@ -34,19 +36,17 @@ def generate_procedure() -> None:
             cond = torch.empty((batch_size, 0)).float().to(device)
         gen_batch = holder.generate(cond, sim_batch.n_pointsv)
 
-        __recur_transpant_dict(gen_batch, sim_batch)
-        __recur_transpant_dict(gen_batch._slice_dict, sim_batch._slice_dict)
-        __recur_transpant_dict(gen_batch._inc_dict, sim_batch._inc_dict)
+        gen_batch.y = sim_batch.y.clone()
         gen_batch = postprocess(gen_batch)
-        generated_batches.append(gen_batch.to("cpu"))
 
-    data_list = []
-    for gen_batch in generated_batches:
-        data_list += gen_batch.to_data_list()
-    gen_ds = Batch.from_data_list(data_list)
+        # __recur_transpant_dict(gen_batch, sim_batch)
+        # __recur_transpant_dict(gen_batch._slice_dict, sim_batch._slice_dict)
+        # __recur_transpant_dict(gen_batch._inc_dict, sim_batch._inc_dict)
+        x_l.append(voxelize(gen_batch).cpu())
+        E_l.append(gen_batch.y.T[0].clone().cpu())
 
-    your_energies = gen_ds.y.T[0]
-    your_showers = gen_ds.x
+    your_energies = torch.hstack(E_l)
+    your_showers = torch.vstack(x_l)
 
     with h5py.File(Path(conf.path.run_path) / "out.hdf5", "w") as dataset_file:
         dataset_file.create_dataset(
