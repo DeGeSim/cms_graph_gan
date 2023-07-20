@@ -143,6 +143,21 @@ must queue an epoch via `queue_epoch()` and iterate over the instance of the cla
             logger.debug("Finished loading.")
         return self._testing_batches
 
+    @property
+    def eval_batches(self):
+        batch_list = self.validation_batches + self.testing_batches
+        if conf.loader.eval_glob is None:
+            return batch_list
+        rest_eval_path = Path(conf.path.dataset_processed) / "rest_eval.pt"
+        if not hasattr(self, "_rest_eval_batches"):
+            logger.debug("Remainder eval batches not loaded, loading from disk.")
+            self._rest_eval_batches = torch.load(
+                rest_eval_path, map_location=torch.device("cpu")
+            )
+            logger.debug("Finished loading.")
+        batch_list += self._rest_eval_batches
+        return batch_list
+
     def queue_epoch(self, n_skip_events=0) -> None:
         if not self.qfseq.started:
             self.qfseq.start()

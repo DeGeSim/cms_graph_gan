@@ -217,6 +217,29 @@ class Holder:
             self.saved_first_checkpoint = True
             self.save_checkpoint()
 
+    def generate(self, cond: torch.Tensor, n_pointsv: torch.Tensor):
+        check_tensor(cond, n_pointsv)
+
+        self.models.eval()
+
+        if conf["models"]["gen"]["scheduler"]["name"] == "SWA":
+            gen = self.swa_models["gen"]
+        else:
+            gen = self.models.gen
+
+        # generate the random vector
+        z = torch.randn(
+            *self.models.gen.z_shape,
+            requires_grad=True,
+            dtype=torch.float,
+            device=self.device,
+        )
+
+        with torch.no_grad():
+            z.requires_grad = False
+            gen_batch = gen(z, cond, n_pointsv)
+        return gen_batch
+
     def pass_batch_through_model(
         self,
         sim_batch,

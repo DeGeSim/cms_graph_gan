@@ -22,20 +22,23 @@ def generate_procedure() -> None:
     holder.select_best_model()
 
     loader = QueuedDataset(loader_info)
-    loader.qfseq.queue_iterable(loader.eval_chunks)
-    loader.qfseq.start()
 
     generated_batches = []
-    for sim_batch in tqdm(loader.qfseq):
-        res = holder.pass_batch_through_model(sim_batch, train_disc=True)
-        gen_batch = res["gen_batch"]
+    for sim_batch in tqdm(loader.eval_batches):
+        batch_size = conf.loader.batch_size
+        cond_gen_features = conf.loader.cond_gen_features
+
+        if sum(cond_gen_features) > 0:
+            cond = sim_batch.y[..., cond_gen_features].clone()
+        else:
+            cond = torch.empty((batch_size, 0)).float().to(device)
+        gen_batch = holder.generate(cond, sim_batch.n_pointsv)
 
         __recur_transpant_dict(gen_batch, sim_batch)
         __recur_transpant_dict(gen_batch._slice_dict, sim_batch._slice_dict)
         __recur_transpant_dict(gen_batch._inc_dict, sim_batch._inc_dict)
         gen_batch = postprocess(gen_batch)
         generated_batches.append(gen_batch.to("cpu"))
-        break
 
     data_list = []
     for gen_batch in generated_batches:

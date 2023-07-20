@@ -1,5 +1,6 @@
 """Provides the procedure to preprocess the datasets"""
 
+from pathlib import Path
 from typing import List
 
 import torch
@@ -19,8 +20,8 @@ def preprocess_procedure() -> None:
     data_loader.qfseq.start()
 
     logger.warning(
-        f"""\
-Processing validation batches, queuing {len(data_loader.validation_chunks)} chunks."""
+        "Processing validation batches, queuing"
+        f" {len(data_loader.validation_chunks)} chunks."
     )
     # Turn the postprocessing off for the validation and testing
     data_loader.shared_postprocess_switch.value = 1
@@ -34,8 +35,8 @@ Processing validation batches, queuing {len(data_loader.validation_chunks)} chun
     logger.warning(f"Validation batches pickled to {conf.path.validation}.")
 
     logger.warning(
-        f"""\
-Processing testing batches, queuing {len(data_loader.testing_chunks)} chunks."""
+        "Processing testing batches, queuing"
+        f" {len(data_loader.testing_chunks)} chunks."
     )
     # Test Batch
     # data_loader.shared_batch_size.value = conf.loader.test_set_size
@@ -43,6 +44,27 @@ Processing testing batches, queuing {len(data_loader.testing_chunks)} chunks."""
     test_batch = [e for e in data_loader.qfseq]
     torch.save(test_batch, conf.path.test)
     logger.warning(f"Testing batches pickled to {conf.path.test}.")
+
+    if hasattr(data_loader, "eval_chunks"):
+        rest_eval_chunks = [
+            e
+            for e in data_loader.eval_chunks
+            if e not in data_loader.testing_chunks
+            and e not in data_loader.validation_chunks
+        ]
+        if len(rest_eval_chunks) > 0:
+            logger.warning(
+                "Processing remaining eval batches, queuing"
+                f" {len(rest_eval_chunks)} chunks."
+            )
+            data_loader.qfseq.queue_iterable(rest_eval_chunks)
+            rest_eval_batches = [e for e in data_loader.qfseq]
+            rest_eval_path = Path(conf.path.dataset_processed) / "rest_eval.pt"
+            torch.save(
+                rest_eval_batches,
+                rest_eval_path,
+            )
+            logger.warning(f"Remaining eval  batches pickled to {rest_eval_path}.")
 
     # if conf.loader.preprocess_training:
     logger.warning("Processing training batches")
