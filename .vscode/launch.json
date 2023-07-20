@@ -4,10 +4,10 @@
         {
             "args": [
                 "--hash",
-                "c4d5763",
+                "040f723",
                 // "--ray",
-                // "--debug",
-                "train"
+                "--debug",
+                "generate"
             ],
             "cwd": "/home/mscham/fgsim",
             "justMyCode": false,
@@ -19,7 +19,7 @@
         {
             "args": [
                 "--tag",
-                "cc_knnloss",
+                "cc_marsw1",
                 "--debug",
                 "train"
             ],
@@ -33,7 +33,7 @@
         {
             "args": [
                 "--tag",
-                "cc_knnloss",
+                "cc_marsw1",
                 "--debug",
                 "test"
             ],
@@ -47,7 +47,7 @@
         {
             "args": [
                 "--tag",
-                "cc_knnloss",
+                "cc_marsw1",
                 "--debug",
                 "preprocess"
             ],
@@ -75,7 +75,7 @@
             "type": "python",
             "args": [
                 "--tag",
-                "cc_knnloss",
+                "cc_marsw1",
                 "--debug",
                 "train"
             ],
@@ -88,7 +88,7 @@
             "type": "python",
             "args": [
                 "--tag",
-                "cc_knnloss",
+                "cc_marsw1",
                 // "--debug",
                 "setup"
             ],
@@ -101,7 +101,7 @@
             "type": "python",
             "args": [
                 "--tag",
-                "cc_knnloss",
+                "cc_marsw1",
                 // "--debug",
                 "generate"
             ],

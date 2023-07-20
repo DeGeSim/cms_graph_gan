@@ -48,7 +48,10 @@ must queue an epoch via `queue_epoch()` and iterate over the instance of the cla
         self.n_grad_steps_per_epoch = self.n_training_events // batch_size
 
         self.qfseq: qf.Sequence
-        if conf.command != "preprocess" and conf.loader.preprocess_training:
+        if conf.loader.preprocess_training and conf.command not in [
+            "preprocess",
+            "generate",
+        ]:
             qf.init(False)
             self.qfseq = qf.Sequence(*preprocessed_seq())
         else:
@@ -105,9 +108,9 @@ must queue an epoch via `queue_epoch()` and iterate over the instance of the cla
             train_files = [e for e in files if e not in eval_files]
             self.training_chunks = compute_chucks(train_files, len_dict)
 
-            eval_chunks = compute_chucks(eval_files, len_dict)
-            self.validation_chunks = eval_chunks[:n_validation_chunks]
-            self.testing_chunks = eval_chunks[
+            self.eval_chunks = compute_chucks(eval_files, len_dict)
+            self.validation_chunks = self.eval_chunks[:n_validation_chunks]
+            self.testing_chunks = self.eval_chunks[
                 n_validation_chunks : n_validation_chunks + n_testing_chunks
             ]
         assert len(self.testing_chunks) == n_testing_chunks

@@ -51,20 +51,27 @@ def batch_construct_direct(pcs: torch.Tensor, batch_idxs: torch.Tensor) -> Batch
     batch = Batch(x=pcs, batch=batch_idxs)
     batch._num_graphs = int(batch.batch.max() + 1)
 
-    _slice_dict = defaultdict(dict)
-    out = torch_scatter.scatter_add(
-        torch.ones(len(batch.x), dtype=torch.long, device=device), batch_idxs, dim=0
-    )
-    out = out.cumsum(dim=0)
-    _slice_dict["x"] = torch.cat(
-        [torch.zeros(1, dtype=torch.long, device=device), out], dim=0
-    )
-
-    batch._slice_dict = _slice_dict
+    batch = fix_slice_dict_nodeattr(batch, "x")
 
     _inc_dict = defaultdict(dict)
     _inc_dict["x"] = torch.zeros(batch._num_graphs, dtype=torch.long, device=device)
     batch._inc_dict = _inc_dict
+    return batch
+
+
+def fix_slice_dict_nodeattr(batch: Batch, attrname: str) -> Batch:
+    if not hasattr(batch, "_slice_dict"):
+        batch._slice_dict = defaultdict(dict)
+    attr = batch[attrname]
+    batch_idxs = batch.batch
+    device = attr.device
+    out = torch_scatter.scatter_add(
+        torch.ones(len(attr), dtype=torch.long, device=device), batch_idxs, dim=0
+    )
+    out = out.cumsum(dim=0)
+    batch._slice_dict[attrname] = torch.cat(
+        [torch.zeros(1, dtype=torch.long, device=device), out], dim=0
+    )
     return batch
 
 
@@ -110,6 +117,7 @@ def pcs_to_batch_reshape_list(pcs: torch.Tensor, batch_idxs: torch.Tensor) -> Ba
 
 # fastest method
 batch_from_pcs_list = pcs_to_batch_sort_list
+
 
 # Compute stuff
 def batch_compute_hlvs(batch) -> Batch:

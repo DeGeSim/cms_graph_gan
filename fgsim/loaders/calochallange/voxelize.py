@@ -3,6 +3,8 @@ from math import prod
 import torch
 from torch_scatter import scatter_add
 
+from fgsim.io.batch_tools import fix_slice_dict_nodeattr
+
 num_z = 45
 num_alpha = 16
 num_r = 9
@@ -108,6 +110,7 @@ def sum_dublicate_hits(batch):
         "n": batch.n_pointsv,
         "n_by_E": batch.n_pointsv / batch.y[:, 0],
     }
+    fix_slice_dict_nodeattr(batch, "x")
 
     return batch.to(old_dev)
 
