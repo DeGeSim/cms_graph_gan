@@ -1,6 +1,11 @@
 import torch
 from torch_geometric.data import Batch
-from torch_geometric.nn import knn_graph
+from torch_geometric.nn import global_add_pool, knn_graph
+
+from fgsim.config import conf
+from fgsim.io.sel_loader import scaler
+
+eidx = conf.loader.x_ftx_energy_pos
 
 
 class LossGen:
@@ -15,40 +20,54 @@ class LossGen:
     ):
         assert gen_batch.x.requires_grad
 
-        nndelta_sim = self.nndist(sim_batch)
-        nndelta_gen = self.nndist(gen_batch)
+        dev = sim_batch.x.device
+        posidx = [i for i in range(gen_batch.x.shape[-1]) if i != eidx]
 
         loss = torch.tensor(0.0).to(gen_batch.x.device)
+        for fridx in [[eidx], posidx]:
+            nndelta_sim = self.nndist(sim_batch, fridx)
+            nndelta_gen = self.nndist(gen_batch, fridx)
+            nnd_sim_scaled, nnd_gen_scaled = scale_b_to_a(nndelta_sim, nndelta_gen)
+            if fridx == [eidx]:
+                loss += wmse(nnd_sim_scaled, nnd_gen_scaled)
+            else:
+                sw = self.inv_scale_hitE(sim_batch).to(dev)
+                gw = self.inv_scale_hitE(gen_batch).to(dev)
 
-        for iftx in range(gen_batch.x.shape[-1]):
-            nnd_sim_scaled, nnd_gen_scaled = scale_b_to_a(
-                nndelta_sim[:, iftx], nndelta_gen[:, iftx]
-            )
-            loss += wasserstein_distance(nnd_sim_scaled, nnd_gen_scaled)
+                assert (sw > 0).all() and (gw > 0).all()
+                loss += wmse(nnd_sim_scaled, nnd_gen_scaled, sw, gw)
 
         return loss
 
-    def nndist(self, batch):
-        x = batch.x
+    def inv_scale_hitE(self, batch):
+        return torch.tensor(
+            scaler.transfs_x[eidx].inverse_transform(
+                batch.x[:, [eidx]].detach().cpu().numpy()
+            )
+        ).squeeze()
+
+    def nndist(self, batch, slice):
+        x = batch.x[:, slice]
         batchidx = batch.batch
-        ei = knn_graph(x.clone(), k=1, batch=batchidx, loop=False)
-        delta = x[ei[0]] - x[ei[1]]
-        return delta.abs()
+        ei = knn_graph(x.clone(), k=3, batch=batchidx, loop=False)
+        delta = (x[ei[0]] - x[ei[1]]).abs().mean(1)
+        delta_aggr = global_add_pool(delta, ei[1])
+        return delta_aggr
 
 
-def cdf(arr):
-    # arr = arr.clone() / arr.clone().sum()
-    val, _ = arr.sort()
-    cdf = val.cumsum(-1)
-    cdf /= cdf[-1].clone()
-    return cdf
+# def cdf(arr):
+#     # arr = arr.clone() / arr.clone().sum()
+#     val, _ = arr.sort()
+#     cdf = val.cumsum(-1)
+#     cdf /= cdf[-1].clone()
+#     return cdf
 
 
-def w1dist(a, b):
-    ca = cdf(a)
-    cb = cdf(b)
-    dist = (ca - cb).abs().mean()
-    return dist
+# def w1dist(a, b):
+#     ca = cdf(a)
+#     cb = cdf(b)
+#     dist = (ca - cb).abs().mean()
+#     return dist
 
 
 def scale_b_to_a(a, b):
@@ -60,11 +79,16 @@ def scale_b_to_a(a, b):
     return sa, sb
 
 
+def wmse(u_values, v_values, u_weights=None, v_weights=None):
+    return _cdf_distance(2, u_values, v_values, u_weights, v_weights)
+
+
 def wasserstein_distance(u_values, v_values, u_weights=None, v_weights=None):
     return _cdf_distance(1, u_values, v_values, u_weights, v_weights)
 
 
 def _cdf_distance(p, u_values, v_values, u_weights=None, v_weights=None):
+    dev = u_values.device
     u_sorter = torch.argsort(u_values)
     v_sorter = torch.argsort(v_values)
 
@@ -88,7 +112,7 @@ def _cdf_distance(p, u_values, v_values, u_weights=None, v_weights=None):
         u_cdf = u_cdf_indices.float() / u_values.numel()
     else:
         u_sorted_cumweights = torch.cat(
-            (torch.tensor([0.0]), u_weights[u_sorter].cumsum())
+            (torch.tensor([0.0]).to(dev), u_weights[u_sorter].cumsum(0))
         )
         u_cdf = u_sorted_cumweights[u_cdf_indices].float() / u_sorted_cumweights[-1]
 
@@ -96,7 +120,7 @@ def _cdf_distance(p, u_values, v_values, u_weights=None, v_weights=None):
         v_cdf = v_cdf_indices.float() / v_values.numel()
     else:
         v_sorted_cumweights = torch.cat(
-            (torch.tensor([0.0]), v_weights[v_sorter].cumsum())
+            (torch.tensor([0.0]).to(dev), v_weights[v_sorter].cumsum(0))
         )
         v_cdf = v_sorted_cumweights[v_cdf_indices].float() / v_sorted_cumweights[-1]
 
