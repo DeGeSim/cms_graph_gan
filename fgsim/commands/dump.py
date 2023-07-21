@@ -19,7 +19,6 @@ def dump_procedure():
             try:
                 run = api.from_path(f"{conf.project_name}/runs/{exp_orga_wandb[s]}")
                 run.delete()
-                del exp_orga_wandb[s]
             except wandb.errors.CommError:
                 pass
 
