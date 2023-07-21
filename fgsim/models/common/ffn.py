@@ -28,6 +28,8 @@ class FFN(nn.Module):
             self.norm = conf.ffn.norm
         else:
             self.norm = norm
+        allnorms = {"snbn", "batchnorm", "spectral", "weight", "bwn", "graph"}
+        assert self.norm in allnorms
         if dropout is None:
             dropout = conf.ffn.dropout
         if dropout == 0:
@@ -85,7 +87,7 @@ class FFN(nn.Module):
                     )
                 else:
                     m = nn.Linear(features[ilayer], features[ilayer + 1], bias=bias)
-                if self.norm == "spectral":
+                if self.norm in ["spectral", "snbn"]:
                     m = nn.utils.parametrizations.spectral_norm(m)
                 elif self.norm == "weight":
                     m = nn.utils.weight_norm(m)
@@ -96,7 +98,7 @@ class FFN(nn.Module):
             else:
                 if dropout:
                     seqtmp.append((nn.Dropout(dropout), "x->x"))
-                if self.norm == "batchnorm":
+                if self.norm in ["batchnorm", "snbn"]:
                     seqtmp.append(
                         (
                             nn.BatchNorm1d(

@@ -219,6 +219,8 @@ model_param_options:
     bipart_param:
       n_heads: 16
       mode: "mpl"
+      spectral_norm: False
+      dropout: 0.0
     critics_param:
       n_ftx_latent: 40
       n_ftx_global: 40

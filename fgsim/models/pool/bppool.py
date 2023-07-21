@@ -5,12 +5,24 @@ from fgsim.models.mpl.gatmin import GATv2MinConv
 
 
 class BipartPool(nn.Module):
-    def __init__(self, *, in_channels, ratio, n_heads, mode, batch_size) -> None:
+    def __init__(
+        self,
+        *,
+        in_channels,
+        ratio,
+        n_heads,
+        mode,
+        spectral_norm,
+        dropout,
+        batch_size,
+    ) -> None:
         super().__init__()
         self.in_channels = in_channels
         self.ratio = ratio
         self.n_heads = n_heads
         self.mode = mode
+        self.spectral_norm = spectral_norm
+        self.dropout = dropout
         self.batch_size = batch_size
         assert self.mode in ["attn", "mpl"]
 
@@ -31,7 +43,15 @@ class BipartPool(nn.Module):
                 heads=self.n_heads,
                 concat=True,
                 add_self_loops=False,
+                dropout=dropout,
             )
+            if self.spectral_norm:
+                self.mpl.lin_l = nn.utils.parametrizations.spectral_norm(
+                    self.mpl.lin_l
+                )
+                self.mpl.lin_r = nn.utils.parametrizations.spectral_norm(
+                    self.mpl.lin_r
+                )
 
     def forward(self, x: Tensor, batch: Tensor) -> tuple[Tensor, torch.LongTensor]:
         n_features = x.shape[-1]
