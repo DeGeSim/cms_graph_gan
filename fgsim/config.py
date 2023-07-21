@@ -68,6 +68,7 @@ def compute_conf(default, *confs):
             "path",
             "project_name",
             "ray",
+            "hash",
         ]
         + [key for key in newconf.keys() if key.endswith("_options")],
     )
@@ -100,8 +101,8 @@ def parse_arg_conf(args=None):
             raise IndexError(f"No experiement with hash {args.hash} is set up.")
         conf = OmegaConf.load(folder / "conf.yaml")
         hyperparameters = OmegaConf.load(folder / "hyperparameters.yaml")
-
-        conf["command"] = str(args.command)
+        conf["debug"] = args.debug
+        conf["command"] = args.command
     else:
         fn = f"wd/{args.tag}/conf.yaml"
         if os.path.isfile(fn):

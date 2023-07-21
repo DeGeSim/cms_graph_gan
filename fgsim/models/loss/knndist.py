@@ -31,7 +31,7 @@ class LossGen:
     def nndist(self, batch):
         x = batch.x
         batchidx = batch.batch
-        ei = knn_graph(x.clone(), k=3, batch=batchidx, loop=False)
+        ei = knn_graph(x.clone(), k=1, batch=batchidx, loop=False)
         delta = x[ei[0]] - x[ei[1]]
         return delta.abs()
 
