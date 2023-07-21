@@ -3,7 +3,9 @@ from math import prod
 import torch
 from torch_scatter import scatter_add
 
+from fgsim.config import conf
 from fgsim.io.batch_tools import fix_slice_dict_nodeattr
+from fgsim.io.sel_loader import scaler
 
 num_z = 45
 num_alpha = 16
@@ -40,6 +42,49 @@ def voxelize(batch):
         dim_size=prod(dims) * batch_size,
     )
     return vox.reshape(batch_size, *dims)
+
+
+def get_pos(batch):
+    pos_l = []
+    for iftx in range(batch.x.shape[1]):
+        if iftx == conf.loader.x_ftx_energy_pos:
+            continue
+        pos_l.append(
+            torch.tensor(
+                scaler.transfs_x[iftx].inverse_transform(
+                    batch.x[:, [iftx]].detach().cpu().numpy()
+                )
+            ).to(batch.x.device)
+        )
+    return torch.hstack(pos_l)
+
+
+def cell_occ_per_hit(batch):
+    batch_size = int(batch.batch[-1] + 1)
+    dev = batch.x.device
+    x = batch.x.detach()
+    fulldim = (batch_size, *dims)
+    empty = torch.zeros(fulldim, dtype=torch.int, device=x.device)
+
+    valid_coordinates = get_pos(batch).int()
+    indices = torch.hstack((batch.batch.unsqueeze(1), valid_coordinates))
+    moritz = (
+        torch.arange(batch_size * dims[0] * dims[1] * dims[2])
+        .reshape(*empty.shape)
+        .to(dev)
+    )
+    scatter_index = moritz[
+        indices[..., 0], indices[..., 1], indices[..., 2], indices[..., 3]
+    ]
+    occ = scatter_add(
+        src=torch.ones(len(batch.batch), dtype=torch.int, device=dev),
+        index=scatter_index,
+        dim_size=prod(dims) * batch_size,
+    ).reshape(*fulldim)
+    batch_occ = occ[
+        indices[..., 0], indices[..., 1], indices[..., 2], indices[..., 3]
+    ]
+    return batch_occ
 
 
 def sum_dublicate_hits(batch):
