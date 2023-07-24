@@ -12,9 +12,9 @@ class BipartPool(nn.Module):
         ratio,
         n_heads,
         mode,
-        spectral_norm,
-        dropout,
         batch_size,
+        spectral_norm=False,
+        dropout=0.0,
     ) -> None:
         super().__init__()
         self.in_channels = in_channels
