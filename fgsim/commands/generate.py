@@ -5,6 +5,7 @@ and compare the generated events to the simulated events.
 
 import os
 from pathlib import Path
+from subprocess import PIPE, CalledProcessError, Popen
 
 import h5py
 import torch
@@ -23,53 +24,64 @@ conf.command = "test"
 
 def generate_procedure() -> None:
     holder: Holder = Holder(device)
-    # holder.select_best_model()
-    dspath = Path(conf.path.run_path) / "out.hdf5"
-    if not dspath.exists():
-        __write_dataset(holder, dspath)
-    else:
-        with h5py.File(dspath, "r") as ds:
-            if "hash" not in ds.attrs or "grad_step" not in ds.attrs:
-                __write_dataset(holder, dspath)
-            assert ds.attrs["hash"] == conf.hash
-            if ds.attrs["grad_step"] != holder.state["grad_step"]:
-                __write_dataset(holder, dspath)
+    for best_or_last in ["last", "best"]:
+        if best_or_last == "best":
+            holder.select_best_model()
 
-    ## compute the aucs
+        dspath = Path(conf.path.run_path).absolute() / f"out_{best_or_last}.hdf5"
+        if not dspath.exists():
+            __write_dataset(holder, dspath)
+        else:
+            with h5py.File(dspath, "r") as ds:
+                if "hash" not in ds.attrs or "grad_step" not in ds.attrs:
+                    __write_dataset(holder, dspath)
+                assert ds.attrs["hash"] == conf.hash
+                if ds.attrs["grad_step"] != holder.state["grad_step"]:
+                    __write_dataset(holder, dspath)
+
+        ## compute the aucs
+        resd = __run_classifiers(dspath)
+
+        holder.train_log.log_metrics(
+            resd,
+            prefix="/".join(["test", best_or_last]),
+            step=holder.state["grad_step"],
+            epoch=holder.state["epoch"],
+        )
+        holder.train_log.flush()
+    exit(0)
+
+
+def __run_classifiers(dspath):
     resd = {}
 
     os.chdir("/home/mscham/fgsim/")
     rpath = Path(conf.path.run_path).absolute()
     outdir = rpath / "cc_eval/"
-    dspath = rpath / "out.hdf5"
     test_path = "/home/mscham/fgsim/data/calochallange2/dataset_2_2.hdf5"
     os.chdir("/home/mscham/homepage/code/")
     for classifer in "cls-high", "cls-low", "cls-low-normed":
         logger.info(f"Running classifier {classifer}")
-        command = (
+        cmd = (
             f"/dev/shm/mscham/fgsim/bin/python evaluate.py -i {dspath} -m"
             f" {classifer} -r {test_path} -d 2"
             f" --output_dir {outdir}"
         )
-        # print("Command:")
-        # print(command)
-        stream = os.popen(command)
+
         lines = []
-        for line in stream.readlines():
-            lines.append(line)
-            print(line)
-        aucidx = lines.index("Final result of classifier test (AUC / JSD):") + 1
-        auc = float(lines[aucidx].split("/")[0].rstrip())
+        with Popen(cmd, stdout=PIPE, bufsize=1, universal_newlines=True) as p:
+            for line in p.stdout:
+                lines.append(line)
+                print(line, end="")  # process line here
+
+        if p.returncode != 0:
+            raise CalledProcessError(p.returncode, p.args)
+
+        # aucidx = lines.index("Final result of classifier test (AUC / JSD):\n") + 1
+        auc = float(lines[-1].split("/")[0].rstrip())
         resd[classifer] = auc
         logger.info(f"Classifier {classifer} AUC {auc}")
-
-    holder.train_log.log_metrics(
-        resd,
-        prefix="/".join(["test", "best"]),
-        step=holder.state["grad_step"],
-        epoch=holder.state["epoch"],
-    )
-    exit(0)
+    return resd
 
 
 def __write_dataset(holder, dspath):
@@ -78,7 +90,8 @@ def __write_dataset(holder, dspath):
     x_l = []
     E_l = []
 
-    for sim_batch in tqdm(loader.eval_batches):
+    for batch in tqdm(loader.eval_batches):
+        sim_batch = batch.to(device)
         batch_size = conf.loader.batch_size
         cond_gen_features = conf.loader.cond_gen_features
 
@@ -96,10 +109,14 @@ def __write_dataset(holder, dspath):
         # __recur_transpant_dict(gen_batch._inc_dict, sim_batch._inc_dict)
         x_l.append(voxelize(gen_batch).cpu())
         E_l.append(gen_batch.y.T[0].clone().cpu())
+        del sim_batch
 
     your_energies = torch.hstack(E_l)
     your_showers = torch.vstack(x_l)
 
+    if dspath.exists():
+        dspath.unlink()
+    # dspath.touch()
     with h5py.File(dspath.absolute(), "w") as ds:
         ds.create_dataset(
             "incident_energies",

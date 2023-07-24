@@ -3,7 +3,7 @@ from math import prod
 import torch
 from torch_scatter import scatter_add
 
-from fgsim.config import conf
+from fgsim.config import conf, device
 from fgsim.io.batch_tools import fix_slice_dict_nodeattr
 
 from .objcol import scaler
@@ -14,12 +14,17 @@ num_r = 9
 dims = [num_z, num_alpha, num_r]
 
 cell_idxs = torch.arange(prod(dims)).reshape(*dims)
+full_event_cell_idx = (
+    torch.arange(conf.loader.batch_size * dims[0] * dims[1] * dims[2])
+    .reshape(conf.loader.batch_size, *dims)
+    .to(device)
+)
 
 
 def voxelize(batch):
     batch_size = int(batch.batch[-1] + 1)
     x = batch.x
-    empty = torch.zeros((batch_size, *dims), dtype=x.dtype, device=x.device)
+
     # Get the valid hits
     # valid_hits = temp[~mask]
     # Ehit = valid_hits[:, 0]
@@ -31,10 +36,7 @@ def voxelize(batch):
     Ehit = x.T[0]
     valid_coordinates = x.T[1:].int()
     indices = torch.cat((shower_index.unsqueeze(1), valid_coordinates.t()), dim=1)
-    moritz = torch.arange(batch_size * dims[0] * dims[1] * dims[2]).reshape(
-        *empty.shape
-    )
-    scatter_index = moritz[
+    scatter_index = full_event_cell_idx[
         indices[..., 0], indices[..., 1], indices[..., 2], indices[..., 3]
     ]
     vox = scatter_add(
@@ -66,18 +68,11 @@ def invscale_add_position(batch):
 def cell_occ_per_hit(batch):
     batch_size = int(batch.batch[-1] + 1)
     dev = batch.x.device
-    x = batch.x.detach()
     fulldim = (batch_size, *dims)
-    empty = torch.zeros(fulldim, dtype=torch.int, device=x.device)
 
     invscale_add_position(batch)
     indices = torch.hstack((batch.batch.unsqueeze(1), batch.pos))
-    moritz = (
-        torch.arange(batch_size * dims[0] * dims[1] * dims[2])
-        .reshape(*empty.shape)
-        .to(dev)
-    )
-    scatter_index = moritz[
+    scatter_index = full_event_cell_idx[
         indices[..., 0], indices[..., 1], indices[..., 2], indices[..., 3]
     ]
     occ = scatter_add(
