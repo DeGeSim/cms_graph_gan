@@ -19,8 +19,32 @@ from fgsim.ml.holder import Holder
 
 def generate_procedure() -> None:
     holder: Holder = Holder(device)
-    holder.select_best_model()
+    # holder.select_best_model()
+    dspath = Path(conf.path.run_path) / "out.hdf5"
+    if not dspath.exists():
+        __write_dataset(holder, dspath)
+    else:
+        with h5py.File(dspath, "r") as ds:
+            assert ds.attrs["hash"] == conf.hash
+            if ds.attrs["grad_step"] != holder.state["grad_step"]:
+                __write_dataset(holder, dspath)
 
+    import os
+
+    os.chdir("/home/mscham/homepage/code/")
+    pathstr = f"{conf.tag}/{conf.hash}"
+    for classifer in "cls-low", "cls-high", "cls-low-normed":
+        command = (
+            f"python evaluate.py -i {dspath} -m {classifer} -r"
+            " ~/fgsim/data/calochallange2/dataset_2_2.hdf5 -d 2 --output_dir"
+            f" ~/fgsim/wd/{pathstr}/cc_eval/"
+        )
+        os.system(command)
+
+    exit(0)
+
+
+def __write_dataset(holder, dspath):
     loader = QueuedDataset(loader_info)
 
     x_l = []
@@ -48,19 +72,19 @@ def generate_procedure() -> None:
     your_energies = torch.hstack(E_l)
     your_showers = torch.vstack(x_l)
 
-    with h5py.File(Path(conf.path.run_path) / "out.hdf5", "w") as dataset_file:
-        dataset_file.create_dataset(
+    with h5py.File(dspath, "w") as ds:
+        ds.create_dataset(
             "incident_energies",
             data=your_energies.reshape(len(your_energies), -1),
             compression="gzip",
         )
-        dataset_file.create_dataset(
+        ds.create_dataset(
             "showers",
             data=your_showers.reshape(len(your_showers), -1),
             compression="gzip",
         )
-
-    exit(0)
+        ds.attrs["hash"] = conf.hash
+        ds.attrs["grad_step"] = holder.state["grad_step"]
 
 
 def __recur_transpant_dict(gsd, ssd):
