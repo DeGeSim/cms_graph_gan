@@ -32,26 +32,30 @@ def init_batch(batch_idx: torch.Tensor):
         raise Exception()
 
     batch = Batch(batch=batch_idx)
-    dev = batch_idx.device
 
+    batch.ptr = __ptr_from_batchidx(batch_idx)
+    batch._num_graphs = int(batch.batch.max() + 1)
+
+    batch._slice_dict = defaultdict(dict)
+    batch._inc_dict = defaultdict(dict)
+    return batch
+
+
+def __ptr_from_batchidx(batch_idx):
     # Construct the ptr to adress single graphs
     # graph[idx].x= batch.x[batch.ptr[idx]:batch.ptr[idx]+1]
     # Get delta with diff
     # Get idx of diff >0 with nonzero
     # shift by -1
     # add the batch size -1 as last element and add 0 in front
-    batch.ptr = torch.concatenate(
+    dev = batch_idx.device
+    return torch.concatenate(
         (
             torch.tensor(0).long().to(dev).unsqueeze(0),
-            (batch_idx.diff()).nonzero().squeeze() + 1,
+            (batch_idx.diff()).nonzero().reshape(-1) + 1,
             torch.tensor(len(batch_idx)).long().to(dev).unsqueeze(0),
         )
     )
-    batch._num_graphs = int(batch.batch.max() + 1)
-
-    batch._slice_dict = defaultdict(dict)
-    batch._inc_dict = defaultdict(dict)
-    return batch
 
 
 def add_nodewise_attr(batch: Batch, attrname: str, attr: torch.Tensor):
