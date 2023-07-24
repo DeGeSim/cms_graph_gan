@@ -5,7 +5,8 @@ from torch_scatter import scatter_add
 
 from fgsim.config import conf
 from fgsim.io.batch_tools import fix_slice_dict_nodeattr
-from fgsim.io.sel_loader import scaler
+
+from .objcol import scaler
 
 num_z = 45
 num_alpha = 16
@@ -44,7 +45,10 @@ def voxelize(batch):
     return vox.reshape(batch_size, *dims)
 
 
-def get_pos(batch):
+def invscale_add_position(batch):
+    if batch.pos is not None:
+        if len(batch.x) == len(batch.pos):
+            return
     pos_l = []
     for iftx in range(batch.x.shape[1]):
         if iftx == conf.loader.x_ftx_energy_pos:
@@ -56,7 +60,7 @@ def get_pos(batch):
                 )
             ).to(batch.x.device)
         )
-    return torch.hstack(pos_l)
+    batch.pos = torch.hstack(pos_l).long()
 
 
 def cell_occ_per_hit(batch):
@@ -66,8 +70,8 @@ def cell_occ_per_hit(batch):
     fulldim = (batch_size, *dims)
     empty = torch.zeros(fulldim, dtype=torch.int, device=x.device)
 
-    valid_coordinates = get_pos(batch).int()
-    indices = torch.hstack((batch.batch.unsqueeze(1), valid_coordinates))
+    invscale_add_position(batch).int()
+    indices = torch.hstack((batch.batch.unsqueeze(1), batch.pos))
     moritz = (
         torch.arange(batch_size * dims[0] * dims[1] * dims[2])
         .reshape(*empty.shape)
