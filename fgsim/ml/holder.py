@@ -70,12 +70,14 @@ class Holder:
 
         # try to load a check point
         self.checkpoint_loaded = False
-        if (conf.command == "test" or not conf.debug) and not conf.ray:
-            self.load_checkpoint()
-        if conf.command == "test" and conf.ray:
-            self.load_ray_checkpoint(
-                sorted(glob(f"{conf.path.run_path}/checkpoint_*"))[-1]
-            )
+
+        if conf.command in ["test", "generate"] or not conf.debug:
+            if conf.ray:
+                self.load_ray_checkpoint(
+                    sorted(glob(f"{conf.path.run_path}/checkpoint_*"))[-1]
+                )
+            else:
+                self.load_checkpoint()
 
         # # Hack to move the optim parameters to the correct device
         # # https://github.com/pytorch/pytorch/issues/8741
