@@ -132,6 +132,7 @@ layer_options:
 
 model_param_options:
   gen_deeptree:
+    sample_until_full: False
     dim_red_in_branching: True
     n_global: 10
     n_cond: ${sum:${loader.cond_gen_features}}

@@ -31,6 +31,7 @@ class ModelClass(nn.Module):
         final_layer_scaler: bool,
         connect_all_ancestors: bool,
         dim_red_in_branching: bool,
+        sample_until_full: bool,
         pruning: str,
         **kwargs,
     ):
@@ -43,6 +44,7 @@ class ModelClass(nn.Module):
         self.child_mpl = child_mpl
         self.dim_red_in_branching = dim_red_in_branching
         self.pruning = pruning
+        self.sample_until_full = sample_until_full
 
         self.features: list[int] = list(OmegaConf.to_container(conf.tree.features))
         self.branches: list[int] = list(OmegaConf.to_container(conf.tree.branches))
@@ -282,6 +284,55 @@ class ModelClass(nn.Module):
 
         return batch
 
+    def _sample_until_full(self, batch, n_pointsv):
+        from fgsim.loaders.calochallange.voxelize import (
+            _scatter_sort,
+            cell_occ_per_hit,
+        )
+
+        batch_size = int(batch.batch[-1] + 1)
+        hite = batch.x[..., conf.loader.x_ftx_energy_pos]
+
+        cell_occ = cell_occ_per_hit(batch)
+        if self.pruning == "topk":
+            # todo make it faster, because it's irregular
+            hite, tidx = _scatter_sort(hite, batch.batch)
+            batch.x = batch.x[tidx]
+            cell_occ = cell_occ[tidx]
+
+        aggr_hits = (1 / cell_occ.reshape(batch_size, self.output_points)).cumsum(1)
+        enough_points_mat = aggr_hits >= n_pointsv.unsqueeze(-1)
+        batch_non_dum, n_nondub = enough_points_mat.nonzero().T
+
+        # get the min pos with enough non dublicate hits
+        # if it's not enough, take all
+        from torch_scatter import scatter_min
+
+        n_pointsv_nodub = torch.ones_like(n_pointsv).long() * (self.output_points)
+        scatter_min(n_nondub, batch_non_dum, out=n_pointsv_nodub)
+        assert (n_pointsv_nodub >= n_pointsv).all() and (
+            n_pointsv_nodub <= self.output_points
+        ).all()
+
+        # we, widx = torch.sort(hite.reshape(batch_size, self.output_points), dim=1)
+        # we == hite.reshape(batch_size,
+        #  self.output_points)[widx.T[:, 0], widx.T[:, 1]]
+        # print("foo")
+
+        #
+        #     shift = 0
+        #     for xe, ne in zip(x, n_pointsv):
+        #         idxs = (
+        #             xe[..., conf.loader.x_ftx_energy_pos]
+        #             .topk(k=int(ne), dim=0, largest=True, sorted=False)
+        #             .indices
+        #         ) + shift
+        #         gidx[idxs] = True
+        #         shift += self.output_points
+        #     return gidx
+
+        return batch, n_pointsv_nodub
+
     def construct_batch(self, graph_tree: TreeGraph, n_pointsv: torch.Tensor):
         device = graph_tree.tftx.device
         batch_size = self.batch_size
@@ -295,12 +346,16 @@ class ModelClass(nn.Module):
         batch = self.presaved_batch.clone()
         batch.x = graph_tree.tftx_by_level(-1)[self.presaved_batch_indexing]
 
-        x = batch.x.reshape(self.output_points, batch_size, n_features).transpose(
-            0, 1
+        if self.sample_until_full:
+            batch, n_points_nodub = self._sample_until_full(batch, n_pointsv)
+        else:
+            n_points_nodub = n_pointsv
+        sel_point_idx = self.get_sel_idxs(
+            batch.x.reshape(self.output_points, batch_size, n_features).transpose(
+                0, 1
+            ),
+            n_points_nodub,
         )
-
-        sel_point_idx = self.get_sel_idxs(x, n_pointsv)
-
         batch.x, batch.xnot = batch.x[sel_point_idx], batch.x[~sel_point_idx]
         batch.batch, batch.batchnot = (
             batch.batch[sel_point_idx],
@@ -311,17 +366,17 @@ class ModelClass(nn.Module):
         batch._slice_dict["x"] = torch.concat(
             [torch.zeros(1, device=device), n_pointsv.cumsum(0)]
         )
-        batch._slice_dict["xnot"] = torch.concat(
-            [
-                torch.zeros(1, device=device),
-                (self.output_points - n_pointsv).cumsum(0),
-            ]
-        )
+        # batch._slice_dict["xnot"] = torch.concat(
+        #     [
+        #         torch.zeros(1, device=device),
+        #         (self.output_points - n_pointsv).cumsum(0),
+        #     ]
+        # )
         batch._inc_dict["x"] = torch.zeros(self.batch_size, device=device)
-        batch._inc_dict["xnot"] = torch.zeros(self.batch_size, device=device)
-        batch.ptr = torch.hstack(
-            [torch.zeros(1, device=device, dtype=torch.long), n_pointsv.cumsum(0)]
-        )
+        # batch._inc_dict["xnot"] = torch.zeros(self.batch_size, device=device)
+        # batch.ptr = torch.hstack(
+        #     [torch.zeros(1, device=device, dtype=torch.long), n_pointsv.cumsum(0)]
+        # )
         batch.num_nodes = len(batch.x)
 
         assert (
