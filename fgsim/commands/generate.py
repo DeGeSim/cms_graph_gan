@@ -3,7 +3,6 @@ Given a trained model, it will generate a set of random events
 and compare the generated events to the simulated events.
 """
 
-import os
 from pathlib import Path
 from subprocess import PIPE, CalledProcessError, Popen
 
@@ -55,11 +54,9 @@ def generate_procedure() -> None:
 def __run_classifiers(dspath):
     resd = {}
 
-    os.chdir("/home/mscham/fgsim/")
     rpath = Path(conf.path.run_path).absolute()
     outdir = rpath / "cc_eval/"
     test_path = "/home/mscham/fgsim/data/calochallange2/dataset_2_2.hdf5"
-    os.chdir("/home/mscham/homepage/code/")
     for classifer in "cls-high", "cls-low", "cls-low-normed":
         logger.info(f"Running classifier {classifer}")
         cmd = (
@@ -70,7 +67,11 @@ def __run_classifiers(dspath):
 
         lines = []
         with Popen(
-            cmd.split(" "), stdout=PIPE, bufsize=1, universal_newlines=True
+            cmd.split(" "),
+            stdout=PIPE,
+            bufsize=1,
+            universal_newlines=True,
+            cwd="/home/mscham/homepage/code/",
         ) as p:
             for line in p.stdout:
                 lines.append(line)
