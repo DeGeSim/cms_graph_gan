@@ -6,7 +6,7 @@
                 "--hash",
                 "040f723",
                 // "--ray",
-                "--debug",
+                // "--debug",
                 "generate"
             ],
             "cwd": "/home/mscham/fgsim",

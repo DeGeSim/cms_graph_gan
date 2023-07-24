@@ -69,10 +69,12 @@ def __run_classifiers(dspath):
         )
 
         lines = []
-        with Popen(cmd, stdout=PIPE, bufsize=1, universal_newlines=True) as p:
+        with Popen(
+            cmd.split(" "), stdout=PIPE, bufsize=1, universal_newlines=True
+        ) as p:
             for line in p.stdout:
                 lines.append(line)
-                print(line, end="")  # process line here
+                print(line, end="")
 
         if p.returncode != 0:
             raise CalledProcessError(p.returncode, p.args)
@@ -90,8 +92,8 @@ def __write_dataset(holder, dspath):
     x_l = []
     E_l = []
 
-    for batch in tqdm(loader.eval_batches):
-        sim_batch = batch.to(device)
+    for sim_batch in tqdm(loader.eval_batches):
+        sim_batch = sim_batch.clone().to(device)
         batch_size = conf.loader.batch_size
         cond_gen_features = conf.loader.cond_gen_features
 

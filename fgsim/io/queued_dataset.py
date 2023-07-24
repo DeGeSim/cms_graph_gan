@@ -9,7 +9,7 @@ import numpy as np
 import queueflow as qf
 import torch
 
-from fgsim.config import conf, device
+from fgsim.config import conf
 from fgsim.io import LoaderInfo
 from fgsim.io.chunks import compute_chucks
 from fgsim.io.preprocessed_seq import preprocessed_seq
@@ -126,7 +126,7 @@ must queue an epoch via `queue_epoch()` and iterate over the instance of the cla
         if not hasattr(self, "_validation_batches"):
             logger.debug("Validation batches not loaded, loading from disk.")
             self._validation_batches = torch.load(
-                conf.path.validation, map_location=device
+                conf.path.validation, map_location=torch.device("cpu")
             )
             logger.debug(
                 f"Finished loading. Type is {type(self._validation_batches)}"
