@@ -56,7 +56,7 @@ def invscale_add_position(batch):
         pos_l.append(
             torch.tensor(
                 scaler.transfs_x[iftx].inverse_transform(
-                    batch.x[:, [iftx]].detach().cpu().numpy()
+                    batch.x[:, [iftx]].detach().cpu().double().numpy()
                 )
             ).to(batch.x.device)
         )
@@ -70,7 +70,7 @@ def cell_occ_per_hit(batch):
     fulldim = (batch_size, *dims)
     empty = torch.zeros(fulldim, dtype=torch.int, device=x.device)
 
-    invscale_add_position(batch).int()
+    invscale_add_position(batch)
     indices = torch.hstack((batch.batch.unsqueeze(1), batch.pos))
     moritz = (
         torch.arange(batch_size * dims[0] * dims[1] * dims[2])
