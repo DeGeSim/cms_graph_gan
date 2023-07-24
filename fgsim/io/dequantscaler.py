@@ -8,26 +8,32 @@ from .idxscale import IdxToScale
 
 
 def dequant(x):
+    assert x.dtype in [np.float64, np.int64]
     noise = np.random.rand(*x.shape)
-    return x.astype("float") + noise
+    xnew = x.astype("float64") + np.clip(noise, 1e-7, 1 - 1e-7)
+    assert np.all(x == np.floor(xnew))
+    return xnew
 
 
 def requant(x):
+    assert x.dtype == np.float64
     x_copy = x.copy()
-    edgecase = (x.astype("int") == x).squeeze()
-    x[edgecase] -= 1
-    x[~edgecase] = np.floor(x[~edgecase])
-    assert np.all(x.astype("int") == x)
-    delta = x_copy - x
-    assert (delta >= 0).all() and (delta <= 1).all()
+    x = np.floor(x)
+    # with the clip in dequant, the input must change
+    x[x == x_copy] -= 1
+    # assert np.all(x.astype("int") == x)
+    delta = np.abs((x_copy - x))
+    assert (delta > 0).all() and (delta <= 1).all()
     return x
 
 
 def forward(x, lower, dist):
+    assert x.dtype == np.float64
     return (x - lower) / dist
 
 
 def backward(x, lower, dist):
+    assert x.dtype == np.float64
     return x * dist + lower
 
 
