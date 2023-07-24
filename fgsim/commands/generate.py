@@ -3,6 +3,7 @@ Given a trained model, it will generate a set of random events
 and compare the generated events to the simulated events.
 """
 
+import os
 from pathlib import Path
 
 import h5py
@@ -15,6 +16,9 @@ from fgsim.io.sel_loader import loader_info
 from fgsim.loaders.calochallange.voxelize import voxelize
 from fgsim.ml.eval import postprocess
 from fgsim.ml.holder import Holder
+from fgsim.monitoring import logger
+
+conf.command = "test"
 
 
 def generate_procedure() -> None:
@@ -25,22 +29,46 @@ def generate_procedure() -> None:
         __write_dataset(holder, dspath)
     else:
         with h5py.File(dspath, "r") as ds:
+            if "hash" not in ds.attrs or "grad_step" not in ds.attrs:
+                __write_dataset(holder, dspath)
             assert ds.attrs["hash"] == conf.hash
             if ds.attrs["grad_step"] != holder.state["grad_step"]:
                 __write_dataset(holder, dspath)
 
-    import os
+    ## compute the aucs
+    resd = {}
 
+    os.chdir("/home/mscham/fgsim/")
+    rpath = Path(conf.path.run_path).absolute()
+    outdir = rpath / "cc_eval/"
+    dspath = rpath / "out.hdf5"
+    test_path = "/home/mscham/fgsim/data/calochallange2/dataset_2_2.hdf5"
     os.chdir("/home/mscham/homepage/code/")
-    pathstr = f"{conf.tag}/{conf.hash}"
-    for classifer in "cls-low", "cls-high", "cls-low-normed":
+    for classifer in "cls-high", "cls-low", "cls-low-normed":
+        logger.info(f"Running classifier {classifer}")
         command = (
-            f"python evaluate.py -i {dspath} -m {classifer} -r"
-            " ~/fgsim/data/calochallange2/dataset_2_2.hdf5 -d 2 --output_dir"
-            f" ~/fgsim/wd/{pathstr}/cc_eval/"
+            f"/dev/shm/mscham/fgsim/bin/python evaluate.py -i {dspath} -m"
+            f" {classifer} -r {test_path} -d 2"
+            f" --output_dir {outdir}"
         )
-        os.system(command)
+        # print("Command:")
+        # print(command)
+        stream = os.popen(command)
+        lines = []
+        for line in stream.readlines():
+            lines.append(line)
+            print(line)
+        aucidx = lines.index("Final result of classifier test (AUC / JSD):") + 1
+        auc = float(lines[aucidx].split("/")[0].rstrip())
+        resd[classifer] = auc
+        logger.info(f"Classifier {classifer} AUC {auc}")
 
+    holder.train_log.log_metrics(
+        resd,
+        prefix="/".join(["test", "best"]),
+        step=holder.state["grad_step"],
+        epoch=holder.state["epoch"],
+    )
     exit(0)
 
 
@@ -72,7 +100,7 @@ def __write_dataset(holder, dspath):
     your_energies = torch.hstack(E_l)
     your_showers = torch.vstack(x_l)
 
-    with h5py.File(dspath, "w") as ds:
+    with h5py.File(dspath.absolute(), "w") as ds:
         ds.create_dataset(
             "incident_energies",
             data=your_energies.reshape(len(your_energies), -1),
