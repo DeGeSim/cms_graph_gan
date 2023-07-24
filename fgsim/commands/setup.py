@@ -32,6 +32,12 @@ def setup_procedure() -> str:
         ignore=lambda d, files: [f for f in files if filter_paths(d, f)],
         dirs_exist_ok=True,
     )
+    copytree(
+        "fgbackup",
+        srcpath,
+        ignore=lambda d, files: [f for f in files if filter_paths(d, f)],
+        dirs_exist_ok=True,
+    )
 
     setup_experiment()
     return conf.hash
