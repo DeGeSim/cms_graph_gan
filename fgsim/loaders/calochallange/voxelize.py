@@ -87,7 +87,7 @@ def cell_occ_per_hit(batch):
     return batch_occ
 
 
-def sum_dublicate_hits(batch):
+def sum_dublicate_hits(batch, forbid_dublicates=False):
     old_dev = batch.x.device
     batch = batch.to("cpu")
     dev = batch.x.device
@@ -118,15 +118,21 @@ def sum_dublicate_hits(batch):
     _, invidx, counts = torch.unique_consecutive(
         cell_idx_per_hit, return_inverse=True, return_counts=True
     )
+    if forbid_dublicates:
+        assert (counts - 1 == 0).all()
 
     hitE_new = scatter_add(hitE, invidx)
     sel_new_idx = counts.cumsum(-1) - 1
+    if forbid_dublicates:
+        assert (sel_new_idx == torch.arange(len(batch.x))).all()
 
     batchidx_new = batchidx[sel_new_idx]
     pos_new = pos[sel_new_idx]
 
     # count the cells, that have been hit multiple times
     n_multihit = scatter_add(counts - 1, batchidx_new)
+    if forbid_dublicates:
+        assert (n_multihit == 0).all()
     new_counts = torch.unique_consecutive(batchidx_new, return_counts=True)[1]
 
     x_new = torch.hstack([hitE_new.reshape(-1, 1), pos_new])
@@ -143,6 +149,12 @@ def sum_dublicate_hits(batch):
     #     scatter_add(pos_new * hitE_new.unsqueeze(-1), batchidx_new, -2),
     #     scatter_add(pos * hitE.unsqueeze(-1), batchidx, -2),
     # )
+    if forbid_dublicates:
+        assert (n_multihit == 0).all()
+        assert (batch.batch == batchidx_new).all()
+        assert (batch.n_pointsv == new_counts).all()
+        for i in range(4):
+            assert torch.allclose(batch.x.T[i][index_perm], x_new.T[i])
 
     batch.n_multihit = n_multihit
     batch.batch = batchidx_new

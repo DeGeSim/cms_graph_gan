@@ -44,9 +44,11 @@ def gen_res_from_sim_batches(batches: list[Batch], holder: Holder):
 
     logger.info("Postprocessing")
     gen_batch.y = sim_batch.y.clone()
-    sim_batch = postprocess(sim_batch)
-    gen_batch = postprocess(gen_batch)
+    sim_batch = postprocess(sim_batch, "sim")
+    gen_batch = postprocess(gen_batch, "gen")
     logger.info("Postprocessing done")
+    assert gen_batch.x.shape <= sim_batch.x.shape
+    assert (sim_batch.n_pointsv == gen_batch.n_pointsv + gen_batch.n_multihit).all()
 
     results_d = {
         "sim_batch": sim_batch,
@@ -58,7 +60,7 @@ def gen_res_from_sim_batches(batches: list[Batch], holder: Holder):
     return results_d
 
 
-def postprocess(batch: Batch) -> Batch:
+def postprocess(batch: Batch, sim_or_gen: str) -> Batch:
     batch.x_scaled = batch.x.clone()
     batch.x = scaler.inverse_transform(batch.x, "x")
     if "y" in batch.keys:
@@ -73,7 +75,7 @@ def postprocess(batch: Batch) -> Batch:
     if conf.dataset_name == "calochallange":
         from fgsim.loaders.calochallange import postprocess
 
-        batch = postprocess(batch)
+        batch = postprocess(batch, sim_or_gen)
     return batch
 
 

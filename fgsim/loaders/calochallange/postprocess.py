@@ -12,7 +12,7 @@ alphapos = conf.loader.x_features.index("alpha")
 num_alpha = 16
 
 
-def postprocess(batch: Batch) -> Batch:
+def postprocess(batch: Batch, sim_or_gen: str) -> Batch:
     alphas = batch.x[..., alphapos].clone()
 
     shift = torch.randint(0, num_alpha, (batch.batch[-1] + 1,)).to(alphas.device)[
@@ -23,7 +23,7 @@ def postprocess(batch: Batch) -> Batch:
 
     batch.x[..., alphapos] = alphas
 
-    batch = sum_dublicate_hits(batch)
+    batch = sum_dublicate_hits(batch, forbid_dublicates=sim_or_gen == "sim")
     batch = batch_to_Exyz(batch)
     metrics: list[str] = conf.training.val.metrics
     if "sphereratio" in metrics:
