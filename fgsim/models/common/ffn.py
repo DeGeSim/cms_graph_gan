@@ -28,7 +28,15 @@ class FFN(nn.Module):
             self.norm = conf.ffn.norm
         else:
             self.norm = norm
-        allnorms = {"snbn", "batchnorm", "spectral", "weight", "bwn", "graph"}
+        allnorms = {
+            "none",
+            "snbn",
+            "batchnorm",
+            "spectral",
+            "weight",
+            "bwn",
+            "graph",
+        }
         assert self.norm in allnorms
         if dropout is None:
             dropout = conf.ffn.dropout
