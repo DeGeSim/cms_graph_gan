@@ -110,7 +110,9 @@ class Holder:
         self.device = device
         self.models = self.models
         self.swa_models = {
-            k: AveragedModel(v).to(device) for k, v in self.models.parts.items()
+            k: AveragedModel(v).to(device)
+            for k, v in self.models.parts.items()
+            if conf.models[k].scheduler.name == "SWA"
         }
         if conf.command == "train":
             self.optims.to(device)
