@@ -20,7 +20,6 @@ class LossGen:
     ):
         assert gen_batch.x.requires_grad
 
-        dev = sim_batch.x.device
         posidx = [i for i in range(gen_batch.x.shape[-1]) if i != eidx]
 
         loss = torch.tensor(0.0).to(gen_batch.x.device)
@@ -31,11 +30,12 @@ class LossGen:
             if fridx == [eidx]:
                 loss += wmse(nnd_sim_scaled, nnd_gen_scaled)
             else:
-                sw = self.inv_scale_hitE(sim_batch).to(dev)
-                gw = self.inv_scale_hitE(gen_batch).to(dev)
+                #  sw = self.inv_scale_hitE(sim_batch).to(dev)
+                #  gw = self.inv_scale_hitE(gen_batch).to(dev)
 
-                assert (sw > 0).all() and (gw > 0).all()
-                loss += wmse(nnd_sim_scaled, nnd_gen_scaled, sw, gw)
+                #  assert (sw > 0).all() and (gw > 0).all()
+                #  loss += wmse(nnd_sim_scaled, nnd_gen_scaled, sw, gw)
+                loss += wmse(nnd_sim_scaled, nnd_gen_scaled)
 
         return loss
 
