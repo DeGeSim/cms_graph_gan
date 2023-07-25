@@ -13,28 +13,27 @@ def gethash_procedure() -> None:
 
 
 def setup_procedure() -> str:
-    srcpath = Path(conf.path.run_path) / "fgsim"
+    rpath = Path(conf.path.run_path)
+
     # If the experiment has been setup, exit directly
-    if Path(conf.path.run_path).is_dir():
+    if rpath.is_dir():
         return conf.hash
 
     os.makedirs(conf.path.run_path, exist_ok=True)
 
-    OmegaConf.save(conf, Path(conf.path.run_path) / "conf.yaml")
-    OmegaConf.save(
-        hyperparameters, Path(conf.path.run_path) / "hyperparameters.yaml"
-    )
+    OmegaConf.save(conf, rpath / "conf.yaml")
+    OmegaConf.save(hyperparameters, rpath / "hyperparameters.yaml")
 
     # Backup the python files
     copytree(
         "fgsim",
-        srcpath,
+        rpath / "fgsim",
         ignore=lambda d, files: [f for f in files if filter_paths(d, f)],
         dirs_exist_ok=True,
     )
     copytree(
-        "fgbackup",
-        srcpath,
+        "fgsim",
+        rpath / "fgbackup",
         ignore=lambda d, files: [f for f in files if filter_paths(d, f)],
         dirs_exist_ok=True,
     )
