@@ -33,7 +33,7 @@ def init_batch(batch_idx: torch.Tensor):
 
     batch = Batch(batch=batch_idx)
 
-    batch.ptr = __ptr_from_batchidx(batch_idx)
+    batch.ptr = ptr_from_batchidx(batch_idx)
     batch._num_graphs = int(batch.batch.max() + 1)
 
     batch._slice_dict = defaultdict(dict)
@@ -41,7 +41,7 @@ def init_batch(batch_idx: torch.Tensor):
     return batch
 
 
-def __ptr_from_batchidx(batch_idx):
+def ptr_from_batchidx(batch_idx):
     # Construct the ptr to adress single graphs
     # graph[idx].x= batch.x[batch.ptr[idx]:batch.ptr[idx]+1]
     # Get delta with diff

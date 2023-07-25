@@ -16,6 +16,7 @@ from fgsim.models.common.deeptree import (
 )
 from fgsim.monitoring import logger
 from fgsim.utils import check_tensor
+from fgsim.utils.batch import ptr_from_batchidx
 
 # from fgsim.plot.model_plotter import model_plotter
 
@@ -31,8 +32,8 @@ class ModelClass(nn.Module):
         final_layer_scaler: bool,
         connect_all_ancestors: bool,
         dim_red_in_branching: bool,
-        sample_until_full: bool,
         pruning: str,
+        sample_until_full: bool = False,
         **kwargs,
     ):
         super().__init__()
@@ -350,18 +351,25 @@ class ModelClass(nn.Module):
             batch, n_points_nodub = self._sample_until_full(batch, n_pointsv)
         else:
             n_points_nodub = n_pointsv
-        sel_point_idx = self.get_sel_idxs(
-            batch.x.reshape(self.output_points, batch_size, n_features).transpose(
-                0, 1
-            ),
-            n_points_nodub,
+        # sel_point_idx = self.get_sel_idxs(
+        #     batch.x.reshape(self.output_points, batch_size, n_features).transpose(
+        #         0, 1
+        #     ),
+        #     n_points_nodub,
+        # )
+
+        x = batch.x.reshape(self.output_points, batch_size, n_features).transpose(
+            0, 1
         )
+        sel_point_idx = self.get_sel_idxs(x, n_points_nodub)
+
         batch.x, batch.xnot = batch.x[sel_point_idx], batch.x[~sel_point_idx]
         batch.batch, batch.batchnot = (
             batch.batch[sel_point_idx],
             batch.batch[~sel_point_idx],
         )
 
+        batch.ptr = ptr_from_batchidx(batch.batch)
         # Set the slice_dict to allow splitting the batch again
         batch._slice_dict["x"] = torch.concat(
             [torch.zeros(1, device=device), n_pointsv.cumsum(0)]
@@ -374,9 +382,7 @@ class ModelClass(nn.Module):
         # )
         batch._inc_dict["x"] = torch.zeros(self.batch_size, device=device)
         # batch._inc_dict["xnot"] = torch.zeros(self.batch_size, device=device)
-        # batch.ptr = torch.hstack(
-        #     [torch.zeros(1, device=device, dtype=torch.long), n_pointsv.cumsum(0)]
-        # )
+
         batch.num_nodes = len(batch.x)
 
         assert (

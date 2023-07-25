@@ -5,7 +5,7 @@ from torch_scatter import scatter_add
 
 from fgsim.config import conf, device
 from fgsim.io.batch_tools import fix_slice_dict_nodeattr
-from fgsim.utils.batch import __ptr_from_batchidx
+from fgsim.utils.batch import ptr_from_batchidx
 
 from .objcol import scaler
 
@@ -161,7 +161,7 @@ def sum_dublicate_hits(batch, forbid_dublicates=False):
     batch.x = x_new
     batch.n_pointsv = new_counts
     # need to shift the ptr by the number of removed hits
-    batch.ptr = __ptr_from_batchidx(batchidx_new)
+    batch.ptr = ptr_from_batchidx(batchidx_new)
 
     batch.nhits = {
         "n": batch.n_pointsv,
