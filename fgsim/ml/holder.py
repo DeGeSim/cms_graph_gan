@@ -146,7 +146,7 @@ class Holder:
         self.best_model_state = checkpoint["best_model"]
 
         if "swa_model" in checkpoint:
-            for pname, part in self.swa_models:
+            for pname, part in self.swa_models.items():
                 part.load_state_dict(checkpoint["swa_model"][pname])
             self.best_swa_model_state = checkpoint["best_swa_model"]
 
@@ -165,7 +165,7 @@ class Holder:
             return
         self.models.load_state_dict(self.best_model_state)
         self.models = self.models.float().to(self.device)
-        if len(self.swa_models):
+        if len(self.swa_models.keys()):
             for n, p in self.swa_models.items():
                 p.load_state_dict(self.best_model_state[n])
                 self.swa_models[n] = self.swa_models[n].float().to(self.device)
@@ -183,9 +183,9 @@ class Holder:
             "history": self.history,
         }
 
-        if len(self.swa_models):
+        if len(self.swa_models.keys()):
             safed["swa_model"] = {}
-            for pname, part in self.swa_models:
+            for pname, part in self.swa_models.items():
                 safed["swa_model"][pname] = part.state_dict()
             safed["best_swa_model"] = self.best_swa_model_state
 
