@@ -105,7 +105,7 @@ def __write_dataset(holder, dspath):
         gen_batch = holder.generate(cond, sim_batch.n_pointsv)
 
         gen_batch.y = sim_batch.y.clone()
-        gen_batch = postprocess(gen_batch)
+        gen_batch = postprocess(gen_batch, "gen")
 
         # __recur_transpant_dict(gen_batch, sim_batch)
         # __recur_transpant_dict(gen_batch._slice_dict, sim_batch._slice_dict)
