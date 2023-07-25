@@ -28,7 +28,6 @@ class OptimAndSchedulerCol:
         self.metric_aggr = MetricAggregator()
         self._optimizers: Dict[str, torch.optim.Optimizer] = {}
         self._schedulers: Dict[str, torch.optim.lr_scheduler._LRScheduler] = {}
-        # self._swa_schedulers: Dict[str, SWALR] = {}
 
         submodelpar_dict = models.get_par_dict()
 
@@ -55,7 +54,7 @@ class OptimAndSchedulerCol:
             if submodelconf.scheduler.name == "NullScheduler":
                 continue
             elif submodelconf.scheduler.name == "SWA":
-                self._schedulers[name] = SWALR(optim, optimparams["lr"])
+                self._schedulers[name] = SWALR(optim, swa_lr=optimparams["lr"] * 20)
             else:
                 schedulerparams = (
                     submodelconf.scheduler.params
@@ -101,20 +100,16 @@ class OptimAndSchedulerCol:
         if pname not in self._schedulers:
             return
         scheduler = self._schedulers[pname]
-        # SWA after X epochs
+
         if not isinstance(scheduler, SWALR):
             try:
                 scheduler.step()
             except ValueError:
                 pass
             lrs = scheduler.get_last_lr()
-        else:
-            self.swa_models[pname].update_parameters(self.models.parts[pname])
-            scheduler.step()
-            lrs = scheduler.get_last_lr()
 
-        assert len(lrs) == 1
-        self.metric_aggr.append_dict({pname: lrs[0]})
+            assert len(lrs) == 1
+            self.metric_aggr.append_dict({pname: lrs[0]})
 
     def __getitem__(self, subnetworkname: str) -> torch.optim.Optimizer:
         return self._optimizers[subnetworkname]

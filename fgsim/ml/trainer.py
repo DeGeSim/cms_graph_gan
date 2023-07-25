@@ -132,6 +132,11 @@ class Trainer:
         self.holder.state.grad_step += 1
 
     def validation_step(self):
+        if self.holder.state["epoch"] > 10:
+            for pname, part in self.holder.swa_models.items():
+                part.update_parameters(self.holder.models.parts[pname])
+                self.holder.optims._schedulers[pname].step()
+
         if not conf.debug:
             logger.info("Validating")
             validate(self.holder, self.loader)

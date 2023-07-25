@@ -109,10 +109,9 @@ class Holder:
     def to(self, device):
         self.device = device
         self.models = self.models
-        # self.swa_models = {k: v.to(device) for k, v in self.swa_models.items()}
-        # self.swa_models = {
-        #     k: AveragedModel(v).to(device) for k, v in self.models.parts.items()
-        # }
+        self.swa_models = {
+            k: AveragedModel(v).to(device) for k, v in self.models.parts.items()
+        }
         if conf.command == "train":
             self.optims.to(device)
 
@@ -146,6 +145,11 @@ class Holder:
             self.optims.load_state_dict(checkpoint["optims"])
         self.best_model_state = checkpoint["best_model"]
 
+        if "swa_model" in checkpoint:
+            for pname, part in self.swa_models:
+                part.load_state_dict(checkpoint["swa_model"][pname])
+            self.best_swa_model_state = checkpoint["best_swa_model"]
+
         self.history.update(checkpoint["history"])
         self.state.update(OmegaConf.load(state_path))
         self.checkpoint_loaded = True
@@ -161,6 +165,10 @@ class Holder:
             return
         self.models.load_state_dict(self.best_model_state)
         self.models = self.models.float().to(self.device)
+        if len(self.swa_models):
+            for n, p in self.swa_models.items():
+                p.load_state_dict(self.best_model_state[n])
+                self.swa_models[n] = self.swa_models[n].float().to(self.device)
 
     def save_checkpoint(
         self,
@@ -168,15 +176,21 @@ class Holder:
         if conf.debug:
             return
         push_to_old(conf.path.checkpoint, conf.path.checkpoint_old)
-        torch.save(
-            {
-                "models": self.models.state_dict(),
-                "optims": cylerlr_workaround(self.optims.state_dict()),
-                "best_model": self.best_model_state,
-                "history": self.history,
-            },
-            conf.path.checkpoint,
-        )
+        safed = {
+            "models": self.models.state_dict(),
+            "optims": cylerlr_workaround(self.optims.state_dict()),
+            "best_model": self.best_model_state,
+            "history": self.history,
+        }
+
+        if len(self.swa_models):
+            safed["swa_model"] = {}
+            for pname, part in self.swa_models:
+                safed["swa_model"][pname] = part.state_dict()
+            safed["best_swa_model"] = self.best_swa_model_state
+
+        torch.save(safed, conf.path.checkpoint)
+
         push_to_old(conf.path.state, conf.path.state_old)
         OmegaConf.save(config=self.state, f=conf.path.state)
         self._last_checkpoint_time = datetime.now()
@@ -225,10 +239,10 @@ class Holder:
 
         self.models.eval()
 
-        if conf["models"]["gen"]["scheduler"]["name"] == "SWA":
-            gen = self.swa_models["gen"]
-        else:
-            gen = self.models.gen
+        gen = self.models.gen
+        if self.state["epoch"] > 10:
+            if conf["models"]["gen"]["scheduler"]["name"] == "SWA":
+                gen = self.swa_models["gen"]
 
         # generate the random vector
         z = torch.randn(
@@ -264,15 +278,14 @@ class Holder:
         else:
             self.models.train()
 
-        if eval and conf["models"]["gen"]["scheduler"]["name"] == "SWA":
-            gen = self.swa_models["gen"]
-        else:
-            gen = self.models.gen
+        gen = self.models.gen
+        disc = self.models.disc
+        if self.state["epoch"] > 10 and eval:
+            if conf["models"]["gen"]["scheduler"]["name"] == "SWA":
+                gen = self.swa_models["gen"]
 
-        if eval and conf["models"]["disc"]["scheduler"]["name"] == "SWA":
-            disc = self.swa_models["disc"]
-        else:
-            disc = self.models.disc
+            if conf["models"]["disc"]["scheduler"]["name"] == "SWA":
+                disc = self.swa_models["disc"]
 
         # generate the random vector
         z = torch.randn(
