@@ -7,8 +7,16 @@ from tqdm import tqdm
 from fgsim.config import compute_conf, conf
 
 compute_conf(conf, {"dataset_name": "calochallange", "command": "test"})
+step = 1_000
+conf.loader.scaling_fit_size //= 10
+conf.loader.batch_size = step
 
-
+from fgsim.io.dequantscaler import (  # noqa: E402
+    FunctionTransformer,
+    dequant,
+    requant,
+    scipy,
+)
 from fgsim.loaders.calochallange.objcol import (  # noqa: E402
     contruct_graph_from_row,
     file_manager,
@@ -21,8 +29,18 @@ from fgsim.loaders.calochallange.voxelize import (  # noqa: E402
     voxelize,
 )
 
-# %%
-step = 1000
+# scaler.fit(True)
+# print("fit done")
+
+for iftx in range(1, 4):
+    sel_tf = scaler.transfs_x[iftx]
+    sel_tf.steps[0][1].func = dequant
+    sel_tf.steps[0][1].inverse_func = requant
+
+    sel_tf.steps[2][1].func = scipy.special.logit
+    sel_tf.steps[2][1].inverse_func = scipy.special.expit
+
+
 fpos = np.arange(0, 100_000, step)
 for i in tqdm(fpos):
     pcs = read_chunks([(file_manager.files[0], i, i + step)])
@@ -34,24 +52,66 @@ for i in tqdm(fpos):
             .int()
             .reshape(-1)
         )
-        graph.x = graph.x.double()
-        graph.y = graph.y.double()
 
         gl.append(graph)
 
     batch = Batch.from_data_list(gl)
     batch_untf = batch.clone()
-    batch.x = scaler.transform(batch.x, "x").double()
-    batch.y = scaler.transform(batch.y, "y").double()
+    batch.y = scaler.transform(batch.y, "y")
 
+    ## Manual scaling
+    # maxscaler = 1
+    maxscaler = 5
+    x = batch.x.clone()
+    # forward
+    for iftx in range(4):
+        ix = x[:, [iftx]].double().numpy()
+        sel_tf = scaler.transfs_x[iftx]
+        tfsteps = [e[1] for e in sel_tf.steps][: maxscaler + 1]
+
+        for itf in tfsteps:
+            x_tf = itf.transform(ix)
+            x_tf_inv = itf.inverse_transform(x_tf)
+            assert np.allclose(x_tf_inv, ix)
+            ix = x_tf
+        x[:, [iftx]] = torch.tensor(ix).float()
+
+    x_forward = x.clone()
+
+    # backward
+    for iftx in range(4):
+        ix = x[:, [iftx]].double().numpy()
+        sel_tf = scaler.transfs_x[iftx]
+        tfsteps = [e[1] for e in sel_tf.steps][: maxscaler + 1]
+
+        for itf in tfsteps[::-1]:
+            x_tf = itf.inverse_transform(ix)
+            x_tf_inv = itf.transform(x_tf)
+
+            if isinstance(itf, FunctionTransformer) and itf.func == dequant:
+                assert np.allclose(x_tf_inv.astype("int"), ix.astype("int"))
+            else:
+                assert np.allclose(x_tf_inv, ix)
+            ix = x_tf
+        x[:, [iftx]] = torch.tensor(ix).float()
+
+    assert torch.allclose(x, batch_untf.x)
+
+    # batch.x = x
+    batch.y = scaler.inverse_transform(batch.y, "y")
+
+    ## Scaler scaling
+    batch.x = scaler.transform(batch_untf.x.clone(), "x")
     batch_scaled = batch.clone()
+    _inv = scaler.inverse_transform(batch.x, "x")
+    assert torch.allclose(_inv, x)
+    assert torch.allclose(_inv, batch_untf.x)
+    batch.x = _inv
+
     # alphapos = conf.loader.x_features.index("alpha")
     # batch.x[..., alphapos] = rotate_alpha(
     #     batch.x[..., alphapos].clone(), batch.batch, True
     # )
-    assert (batch.x == batch_scaled.x).all()
-    batch.x = scaler.inverse_transform(batch.x, "x").double()
-    batch.y = scaler.inverse_transform(batch.y, "y").double()
 
     delta = (batch.x - batch_untf.x).abs()
     idx = torch.where(delta == delta.max())
@@ -76,8 +136,8 @@ for i in tqdm(fpos):
             backward_res_step.append(
                 _tf.inverse_transform(backward_res_step[-1].copy())
             )
-            a = backward_res_step[-1]
-            b = forward_res_step[-2 - itf]
+            a = backward_res_step[-1].squeeze()
+            b = forward_res_step[-2 - itf].squeeze()
             print(a, b, "out of", _tf)
 
         raise Exception()
@@ -95,7 +155,7 @@ for i in tqdm(fpos):
     # alphas[alphas > num_alpha - 1] -= num_alpha
     # batch.x[..., alphapos] = alphas
 
-    batch = sum_dublicate_hits(batch)
+    batch = sum_dublicate_hits(batch, True)
     assert torch.allclose(batch.x, batch_untf.x)
 
     # batch = batch_to_Exyz(batch)

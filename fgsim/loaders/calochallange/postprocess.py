@@ -13,15 +13,16 @@ num_alpha = 16
 
 
 def postprocess(batch: Batch, sim_or_gen: str) -> Batch:
-    alphas = batch.x[..., alphapos].clone()
+    if sim_or_gen == "gen":
+        alphas = batch.x[..., alphapos].clone()
 
-    shift = torch.randint(0, num_alpha, (batch.batch[-1] + 1,)).to(alphas.device)[
-        batch.batch
-    ]
-    alphas = alphas.clone() + shift.float()
-    alphas[alphas > num_alpha - 1] -= num_alpha
+        shift = torch.randint(0, num_alpha, (batch.batch[-1] + 1,)).to(
+            alphas.device
+        )[batch.batch]
+        alphas = alphas.clone() + shift.float()
+        alphas[alphas > num_alpha - 1] -= num_alpha
 
-    batch.x[..., alphapos] = alphas
+        batch.x[..., alphapos] = alphas
 
     batch = sum_dublicate_hits(batch, forbid_dublicates=sim_or_gen == "sim")
     batch = batch_to_Exyz(batch)

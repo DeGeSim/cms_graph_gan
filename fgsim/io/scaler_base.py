@@ -77,7 +77,10 @@ class ScalerBase:
         n_features = len(conf.loader[x_or_y + "_features"])
         assert pcs.shape[1] == n_features
         dev = pcs.device
-        pcs = pcs.cpu().numpy().astype("float64")
+
+        if pcs.dtype == torch.float:
+            pcs = pcs.double()
+        pcs = pcs.cpu().numpy()
 
         transfs = self.transfs_x if x_or_y == "x" else self.transfs_y
         res = np.hstack(
@@ -95,7 +98,9 @@ class ScalerBase:
         n_features = len(conf.loader[x_or_y + "_features"])
         assert pcs.shape[1] == n_features
         dev = pcs.device
-        pcs = pcs.cpu().numpy().astype("float64")
+        if pcs.dtype == torch.float:
+            pcs = pcs.double()
+        pcs = pcs.cpu().numpy()
 
         transfs = self.transfs_x if x_or_y == "x" else self.transfs_y
         res = np.hstack(
