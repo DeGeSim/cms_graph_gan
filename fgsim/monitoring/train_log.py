@@ -23,8 +23,10 @@ class TrainLog:
         # This code block is formatting the hyperparameters
         # for the experiment and creating a list of tags.
         self.state: DictConfig = state
-        default_log = conf.command in ["train", "test"] and not conf.debug
-        if conf.command == "test":
+        default_log = (
+            conf.command in ["train", "test", "generate"] and not conf.debug
+        )
+        if conf.command in ["test", "generate"]:
             default_log = True
         self.use_tb = default_log
         self.use_wandb = default_log

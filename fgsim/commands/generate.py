@@ -47,6 +47,10 @@ def generate_procedure() -> None:
             step=holder.state["grad_step"],
             epoch=holder.state["epoch"],
         )
+        holder.train_log.wandb_run.summary.update(
+            {"/".join(["m", "test", best_or_last, k]): v for k, v in resd.items()}
+        )
+        logger.info(resd)
         holder.train_log.flush()
     exit(0)
 
@@ -75,7 +79,7 @@ def __run_classifiers(dspath):
         ) as p:
             for line in p.stdout:
                 lines.append(line)
-                print(line, end="")
+                # print(line, end="")
 
         if p.returncode != 0:
             raise CalledProcessError(p.returncode, p.args)
