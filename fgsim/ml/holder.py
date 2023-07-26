@@ -138,18 +138,19 @@ class Holder:
 
     def _load_checkpoint_path(self, state_path, checkpoint_path):
         checkpoint = torch.load(checkpoint_path, map_location=self.device)
+        strict = not conf.training.implant_checkpoint
 
         assert not contains_nans(checkpoint["models"])[0]
         assert not contains_nans(checkpoint["best_model"])[0]
 
-        self.models.load_state_dict(checkpoint["models"])
+        self.models.load_state_dict(checkpoint["models"], strict)
         if conf.command == "train":
             self.optims.load_state_dict(checkpoint["optims"])
         self.best_model_state = checkpoint["best_model"]
 
         if "swa_model" in checkpoint:
             for pname, part in self.swa_models.items():
-                part.load_state_dict(checkpoint["swa_model"][pname])
+                part.load_state_dict(checkpoint["swa_model"][pname], strict)
             self.best_swa_model_state = checkpoint["best_swa_model"]
 
         self.history.update(checkpoint["history"])
@@ -165,11 +166,12 @@ class Holder:
     def select_best_model(self):
         if conf.ray and conf.command == "test":
             return
-        self.models.load_state_dict(self.best_model_state)
+        strict = not conf.training.implant_checkpoint
+        self.models.load_state_dict(self.best_model_state, strict)
         self.models = self.models.float().to(self.device)
         if len(self.swa_models.keys()):
             for n, p in self.swa_models.items():
-                p.load_state_dict(self.best_model_state[n])
+                p.load_state_dict(self.best_model_state[n], strict)
                 self.swa_models[n] = self.swa_models[n].float().to(self.device)
 
     def save_checkpoint(

@@ -399,6 +399,7 @@ training:
   log_interval: 100
   max_epochs: 10000
   val: ${mergedefault:${dataset_options},${dataset_name},validation}
+  implant_checkpoint: True
 
 path:
   dataset: "${loader.dataset_path}"
