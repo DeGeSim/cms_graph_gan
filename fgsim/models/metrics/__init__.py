@@ -1,5 +1,6 @@
 from .auc import auc
 from .calo import (
+    cyratio,
     fpc,
     marginal,
     marginalEw,

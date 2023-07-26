@@ -1,6 +1,10 @@
 import torch
 from torch_geometric.data import Batch
-from torch_geometric.nn.pool import global_add_pool, global_max_pool
+from torch_geometric.nn.pool import (
+    global_add_pool,
+    global_max_pool,
+    global_mean_pool,
+)
 from torch_scatter import scatter_std
 
 from fgsim.config import conf
@@ -77,25 +81,71 @@ def analyze_layers(batch: Batch) -> dict[str, torch.Tensor]:
 def sphereratio(batch: Batch) -> dict[str, torch.Tensor]:
     batchidx = batch.batch
     Ehit = batch.x[:, conf.loader.x_ftx_energy_pos].reshape(-1, 1)
+
+    e_small, e_large = __dist_fration(Ehit, batch.xyz, batchidx, 0.3, 0.8)
+
+    return {
+        "small": e_small,
+        "large": e_large,
+        "ratio": e_small / e_large,
+    }
+
+
+def cyratio(batch: Batch) -> dict[str, torch.Tensor]:
+    batchidx = batch.batch
+    Ehit = batch.x[:, conf.loader.x_ftx_energy_pos].reshape(-1, 1)
+
+    e_small, e_large = __dist_fration(
+        Ehit, batch.xyz[:, [0, 1]], batchidx, 0.2, 0.6
+    )
+
+    return {
+        "small": e_small,
+        "large": e_large,
+        "ratio": e_small / e_large,
+    }
+
+
+def __dist_fration(Ehit, pos, batchidx, small, large, center_energy_weighted=True):
     Esum = global_add_pool(Ehit, batchidx).reshape(-1, 1)
 
     # get the center, weighted by energy
-    center = global_add_pool(batch.xyz * Ehit, batchidx) / Esum
-    std = scatter_std(batch.xyz * Ehit, batchidx, dim=-2)
+    if center_energy_weighted:
+        center = global_add_pool(pos * Ehit, batchidx) / Esum
+    else:
+        center = global_mean_pool(pos, batchidx)
+    std = scatter_std(pos, batchidx, dim=-2)
     # hit distance to center
-    delta = (((batch.xyz - center[batchidx]) / std[batchidx]) ** 2).mean(-1).sqrt()
+    delta = (((pos - center[batchidx]) / std[batchidx]) ** 2).mean(-1).sqrt()
     del center, std
     # energy fraction inside circle around center
     e_small = (
-        global_add_pool(Ehit.squeeze() * (delta < 0.03).float(), batchidx)
+        global_add_pool(Ehit.squeeze() * (delta < small).float(), batchidx)
         / Esum.squeeze()
     )
     e_large = (
-        global_add_pool(Ehit.squeeze() * (delta < 0.5).float(), batchidx)
+        global_add_pool(Ehit.squeeze() * (delta < large).float(), batchidx)
         / Esum.squeeze()
     )
+    # __plot_frac(e_small, e_large, small, large)
+    return e_small, e_large
 
-    return {"0.03σ": e_small, "0.05σ": e_large, "0.03_by_0.05σ": e_small / e_large}
+
+# def __plot_frac(e_small, e_large, small, large):
+#     from matplotlib import pyplot as plt
+
+#     ax: plt.Axes
+#     fig, axes = plt.subplots(3, 1)
+#     for ax, arr, title in zip(
+#         axes,
+#         [e_small, e_large, e_small / e_large],
+#         [f"small {small}", f"large {large}", "ratio"],
+#     ):
+#         ax.hist(arr.cpu().numpy(), bins=100)
+#         ax.set_title(title)
+#     fig.tight_layout()
+#     fig.savefig("wd/fig.pdf")
+#     plt.close("all")
 
 
 def response(batch: Batch) -> torch.Tensor:

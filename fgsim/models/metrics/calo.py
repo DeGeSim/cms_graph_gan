@@ -127,6 +127,10 @@ def sphereratio(
     return run_dists(sim_batch, gen_batch, k="sphereratio")
 
 
+def cyratio(gen_batch: Batch, sim_batch: Batch, **kwargs) -> dict[str, np.float32]:
+    return run_dists(sim_batch, gen_batch, k="cyratio")
+
+
 def response(gen_batch: Batch, sim_batch: Batch, **kwargs) -> dict[str, np.float32]:
     return run_dists(sim_batch, gen_batch, k="response")
 
