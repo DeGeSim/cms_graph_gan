@@ -44,14 +44,8 @@ class BipartPool(nn.Module):
                 concat=True,
                 add_self_loops=False,
                 dropout=dropout,
+                spectral_norm=self.spectral_norm,
             )
-            if self.spectral_norm:
-                self.mpl.lin_l = nn.utils.parametrizations.spectral_norm(
-                    self.mpl.lin_l
-                )
-                self.mpl.lin_r = nn.utils.parametrizations.spectral_norm(
-                    self.mpl.lin_r
-                )
 
     def forward(self, x: Tensor, batch: Tensor) -> tuple[Tensor, torch.LongTensor]:
         n_features = x.shape[-1]

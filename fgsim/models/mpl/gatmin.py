@@ -130,6 +130,7 @@ class GATv2MinConv(MessagePassing):
         fill_value: Union[float, Tensor, str] = "mean",
         bias: bool = True,
         share_weights: bool = False,
+        spectral_norm: bool = False,
         **kwargs,
     ):
         super().__init__(node_dim=0, **kwargs)
@@ -176,6 +177,12 @@ class GATv2MinConv(MessagePassing):
                     heads * out_channels,
                     bias=bias,
                     weight_initializer="glorot",
+                )
+        if spectral_norm:
+            self.lin_l = torch.nn.utils.parametrizations.spectral_norm(self.lin_l)
+            if share_weights:
+                self.lin_r = torch.nn.utils.parametrizations.spectral_norm(
+                    self.lin_r
                 )
 
         self.att = Parameter(torch.Tensor(1, heads, out_channels))
