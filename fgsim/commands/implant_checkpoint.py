@@ -47,13 +47,13 @@ def recur_update(cp_dict, model_dict):
 
 recur_update(checkpoint["models"], holder.models.state_dict())
 holder.models.load_state_dict(checkpoint["models"])
-recur_update(checkpoint["best_model"], holder.models.state_dict())
-holder.models.load_state_dict(checkpoint["best_model"])
+checkpoint["best_model"] = checkpoint["models"]
 
 if len(holder.swa_models):
     for pname, part in holder.swa_models.items():
         recur_update(checkpoint["swa_model"][pname], part.state_dict())
-        recur_update(checkpoint["best_swa_model"][pname], part.state_dict())
+        part.load_state_dict(checkpoint["swa_model"][pname])
+    checkpoint["best_swa_model"] = checkpoint["swa_model"]
 
 for part in ["gen", "disc"]:
     recur_update(
@@ -66,5 +66,4 @@ for part in ["gen", "disc"]:
             holder.optims._schedulers[part].state_dict(),
         )
 holder.optims.load_state_dict(checkpoint["optims"])
-
 torch.save(checkpoint, Path(conf.path.checkpoint))
