@@ -3,9 +3,8 @@ from typing import Optional, Tuple, Union
 import torch
 import torch.nn.functional as F
 from torch import Tensor
-from torch.nn import Parameter
+from torch.nn import Linear, Parameter
 from torch_geometric.nn.conv import MessagePassing
-from torch_geometric.nn.dense.linear import Linear
 from torch_geometric.nn.inits import glorot, zeros
 from torch_geometric.typing import (
     Adj,
@@ -147,41 +146,24 @@ class GATv2MinConv(MessagePassing):
         self.share_weights = share_weights
 
         if isinstance(in_channels, int):
-            _lin_l = Linear(
-                in_channels,
-                heads * out_channels,
-                bias=bias,
-                weight_initializer="glorot",
-            )
-            if share_weights:
-                _lin_r = _lin_l
-            else:
-                _lin_r = Linear(
-                    in_channels,
-                    heads * out_channels,
-                    bias=bias,
-                    weight_initializer="glorot",
-                )
+            _in_l = in_channels
+            _in_r = in_channels
         else:
-            _lin_l = Linear(
-                in_channels[0],
-                heads * out_channels,
-                bias=bias,
-                weight_initializer="glorot",
-            )
-            if share_weights:
-                _lin_r = _lin_l
-            else:
-                _lin_r = Linear(
-                    in_channels[1],
-                    heads * out_channels,
-                    bias=bias,
-                    weight_initializer="glorot",
-                )
+            _in_l = in_channels[0]
+            _in_r = in_channels[1]
+
+        _lin_l = Linear(_in_l, heads * out_channels, bias=bias)
+
+        if share_weights:
+            _lin_r = _lin_l
+        else:
+            _lin_r = Linear(_in_r, heads * out_channels, bias=bias)
+
         if spectral_norm:
             _lin_l = torch.nn.utils.parametrizations.spectral_norm(_lin_l)
-            if share_weights:
+            if not share_weights:
                 _lin_r = torch.nn.utils.parametrizations.spectral_norm(_lin_r)
+
         self.lin_l = _lin_l
         self.lin_r = _lin_r
 

@@ -5,6 +5,7 @@ and compare the generated events to the simulated events.
 
 
 from pathlib import Path
+from typing import Union
 
 import torch
 
@@ -35,14 +36,19 @@ def recur_update(cp_dict, model_dict):
         elif isinstance(model_dict[k], torch.Tensor):
             if model_dict[k].shape != cp_dict[k].shape:
                 cp_dict[k] = model_dict[k]
+        elif isinstance(model_dict[k], Union[int, float]):
+            pass
+        elif cp_dict[k] == model_dict[k]:
+            pass
         else:
             raise Exception()
     assert set(cp_dict.keys()) == set(valid_keys)
 
 
 recur_update(checkpoint["models"], holder.models.state_dict())
+holder.models.load_state_dict(checkpoint["models"])
 recur_update(checkpoint["best_model"], holder.models.state_dict())
-
+holder.models.load_state_dict(checkpoint["best_model"])
 
 if len(holder.swa_models):
     for pname, part in holder.swa_models.items():
@@ -59,6 +65,6 @@ for part in ["gen", "disc"]:
             checkpoint["optims"]["schedulers"][part],
             holder.optims._schedulers[part].state_dict(),
         )
-
+holder.optims.load_state_dict(checkpoint["optims"])
 
 torch.save(checkpoint, Path(conf.path.checkpoint))
