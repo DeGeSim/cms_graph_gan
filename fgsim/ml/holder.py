@@ -90,8 +90,6 @@ class Holder:
         self.gen_points: Batch = None
         self.gen_points_w_grad: Batch = None
 
-        self.saved_first_checkpoint = False
-
         # import torcheck
         # for partname, model in self.models.parts.items():
         #     torcheck.register(self.optims[partname])

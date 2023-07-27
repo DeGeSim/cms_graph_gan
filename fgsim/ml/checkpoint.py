@@ -16,6 +16,7 @@ class CheckPointManager:
         self.holder = holder
         self._last_checkpoint_time = datetime.now()
         self._training_start_time = datetime.now()
+        self.saved_first_checkpoint = False
 
     def load_checkpoint(self):
         if not (
