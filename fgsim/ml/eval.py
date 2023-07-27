@@ -19,7 +19,7 @@ def gen_res_from_sim_batches(batches: list[Batch], holder: Holder):
         "gen_crit": [],
     }
     for batch in tqdm(
-        batches, "Generating eval batches", miniters=5, mininterval=2.0
+        batches, "Generating eval batches", miniters=20, mininterval=5.0
     ):
         batch = batch.clone().to(device)
         ires_d = holder.pass_batch_through_model(batch, eval=True)
