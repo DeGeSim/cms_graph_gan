@@ -126,7 +126,7 @@ class Trainer:
             self.train_log.write_trainstep_logs(conf.training.log_interval)
 
         if not conf.ray:
-            self.holder.checkpoint_after_time()
+            self.holder.checkpoint_manager.checkpoint_after_time()
         self.holder.state.time_train_step_start = time.time()
         self.train_log.flush()
         self.holder.state.grad_step += 1
@@ -153,7 +153,7 @@ class Trainer:
         self.holder.state.complete = True
         self.train_log.end()
         if not conf.ray:
-            self.holder.save_checkpoint()
+            self.holder.checkpoint_manager.save_checkpoint()
 
     def tqdmkw(self):
         kws = dict()

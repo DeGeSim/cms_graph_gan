@@ -4,13 +4,15 @@
         {
             "args": [
                 "--hash",
-                "040f723",
+                "1628a88",
                 // "--ray",
                 // "--debug",
-                "generate"
+                // "train"
+                "test"
+                // "implant_checkpoint"
             ],
             "cwd": "/home/mscham/fgsim",
-            "justMyCode": false,
+            // "justMyCode": false,
             "module": "fgsim",
             "name": "hash",
             "request": "launch",

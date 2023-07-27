@@ -61,7 +61,9 @@ class MyTrainable(tune.Trainable):
         self.trainer.loader.qfseq.stop()
 
     def save_checkpoint(self, tmp_checkpoint_dir):
-        return self.holder.save_ray_checkpoint(tmp_checkpoint_dir)
+        return self.holder.checkpoint_manager.save_ray_checkpoint(
+            tmp_checkpoint_dir
+        )
 
     def load_checkpoint(self, checkpoint):
-        return self.holder.load_ray_checkpoint(checkpoint)
+        return self.holder.checkpoint_manager.load_ray_checkpoint(checkpoint)

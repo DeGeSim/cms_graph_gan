@@ -25,7 +25,7 @@ def generate_procedure() -> None:
     holder: Holder = Holder(device)
     for best_or_last in ["last", "best"]:
         if best_or_last == "best":
-            holder.select_best_model()
+            holder.checkpoint_manager.select_best_model()
 
         dspath = Path(conf.path.run_path).absolute() / f"out_{best_or_last}.hdf5"
         if not dspath.exists():

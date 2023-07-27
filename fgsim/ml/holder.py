@@ -4,12 +4,9 @@ imported, depending on the config. Contains the code for checkpointing of model
 and optimzer status."""
 
 
-import os
 from collections import defaultdict
 from contextlib import contextmanager
-from datetime import datetime
 from glob import glob
-from pathlib import Path
 
 import torch
 from omegaconf import OmegaConf
@@ -24,8 +21,8 @@ from fgsim.ml.network import SubNetworkCollector
 from fgsim.ml.optim import OptimAndSchedulerCol
 from fgsim.monitoring import TrainLog, logger
 from fgsim.utils import check_tensor
-from fgsim.utils.check_for_nans import contains_nans
-from fgsim.utils.push_to_old import push_to_old
+
+from .checkpoint import CheckPointManager
 
 
 class Holder:
@@ -50,6 +47,7 @@ class Holder:
             "val": defaultdict(list),
         }
         self.train_log = TrainLog(self.state)
+        self.checkpoint_manager = CheckPointManager(self)
 
         self.models: SubNetworkCollector = SubNetworkCollector(conf.models)
         # For SWA the models need to be on the right device before initializing
@@ -75,11 +73,11 @@ class Holder:
             conf.command != "train" or not conf.debug
         ) and conf.command != "implant_checkpoint":
             if conf.ray:
-                self.load_ray_checkpoint(
+                self.checkpoint_manager.load_ray_checkpoint(
                     sorted(glob(f"{conf.path.run_path}/checkpoint_*"))[-1]
                 )
             else:
-                self.load_checkpoint()
+                self.checkpoint_manager.load_checkpoint()
 
         # # Hack to move the optim parameters to the correct device
         # # https://github.com/pytorch/pytorch/issues/8741
@@ -92,8 +90,6 @@ class Holder:
         self.gen_points: Batch = None
         self.gen_points_w_grad: Batch = None
 
-        self._last_checkpoint_time = datetime.now()
-        self._training_start_time = datetime.now()
         self.saved_first_checkpoint = False
 
         # import torcheck
@@ -120,125 +116,6 @@ class Holder:
             self.optims.to(device)
 
         return self
-
-    def load_checkpoint(self):
-        if not (
-            os.path.isfile(conf.path.state) and os.path.isfile(conf.path.checkpoint)
-        ):
-            if conf.command != "train":
-                raise FileNotFoundError("Could not find checkpoint")
-            logger.warning("Proceeding without loading checkpoint.")
-            return
-        self._load_checkpoint_path(
-            Path(conf.path.state), Path(conf.path.checkpoint)
-        )
-
-    def load_ray_checkpoint(self, ray_tmp_checkpoint_path: str):
-        checkpoint_path = Path(ray_tmp_checkpoint_path) / "cp.pth"
-        state_path = Path(ray_tmp_checkpoint_path) / "state.pth"
-        self._load_checkpoint_path(state_path, checkpoint_path)
-
-    def _load_checkpoint_path(self, state_path, checkpoint_path):
-        checkpoint = torch.load(checkpoint_path, map_location=self.device)
-        strict = not conf.training.implant_checkpoint
-
-        assert not contains_nans(checkpoint["models"])[0]
-        assert not contains_nans(checkpoint["best_model"])[0]
-
-        self.models.load_state_dict(checkpoint["models"], strict)
-        if conf.command == "train":
-            self.optims.load_state_dict(checkpoint["optims"])
-        self.best_model_state = checkpoint["best_model"]
-
-        if "swa_model" in checkpoint:
-            for pname, part in self.swa_models.items():
-                part.load_state_dict(checkpoint["swa_model"][pname], strict)
-            self.best_swa_model_state = checkpoint["best_swa_model"]
-
-        self.history.update(checkpoint["history"])
-        self.state.update(OmegaConf.load(state_path))
-        self.checkpoint_loaded = True
-
-        logger.warning(
-            "Loaded model from checkpoint at"
-            + f" epoch {self.state['epoch']}"
-            + f" grad_step {self.state['grad_step']}."
-        )
-
-    def select_best_model(self):
-        if conf.ray and conf.command == "test":
-            return
-        strict = not conf.training.implant_checkpoint
-        self.models.load_state_dict(self.best_model_state, strict)
-        self.models = self.models.float().to(self.device)
-        if len(self.swa_models.keys()):
-            for n, p in self.swa_models.items():
-                p.load_state_dict(self.best_swa_model_state[n], strict)
-                self.swa_models[n] = self.swa_models[n].float().to(self.device)
-
-    def save_checkpoint(
-        self,
-    ):
-        if conf.debug:
-            return
-        push_to_old(conf.path.checkpoint, conf.path.checkpoint_old)
-        safed = {
-            "models": self.models.state_dict(),
-            "optims": cylerlr_workaround(self.optims.state_dict()),
-            "best_model": self.best_model_state,
-            "history": self.history,
-        }
-
-        if len(self.swa_models.keys()):
-            safed["swa_model"] = {}
-            for pname, part in self.swa_models.items():
-                safed["swa_model"][pname] = part.state_dict()
-            safed["best_swa_model"] = self.best_swa_model_state
-
-        torch.save(safed, conf.path.checkpoint)
-
-        push_to_old(conf.path.state, conf.path.state_old)
-        OmegaConf.save(config=self.state, f=conf.path.state)
-        self._last_checkpoint_time = datetime.now()
-        logger.warning(
-            f"{self._last_checkpoint_time.strftime('%d/%m/%Y, %H:%M:%S')}"
-            f"Checkpoint saved to {conf.path.checkpoint}"
-        )
-
-    def save_ray_checkpoint(self, ray_tmp_checkpoint_path: str):
-        checkpoint_path = Path(ray_tmp_checkpoint_path) / "cp.pth"
-        state_path = Path(ray_tmp_checkpoint_path) / "state.pth"
-        torch.save(
-            {
-                "models": self.models.state_dict(),
-                "optims": cylerlr_workaround(self.optims.state_dict()),
-                "best_model": self.best_model_state,
-                "history": self.history,
-            },
-            checkpoint_path,
-        )
-        OmegaConf.save(config=self.state, f=state_path)
-        self._last_checkpoint_time = datetime.now()
-        logger.warning(
-            f"{self._last_checkpoint_time.strftime('%d/%m/%Y, %H:%M:%S')}"
-            f"Checkpoint saved to {ray_tmp_checkpoint_path}"
-        )
-        return ray_tmp_checkpoint_path
-
-    def checkpoint_after_time(self):
-        now = datetime.now()
-        time_since_last_checkpoint = (
-            now - self._last_checkpoint_time
-        ).seconds // 60
-        interval = conf.training.checkpoint_minutes
-
-        if time_since_last_checkpoint > interval:
-            self.save_checkpoint()
-
-        time_since_training_start = (now - self._training_start_time).seconds // 60
-        if time_since_training_start > 5 and not self.saved_first_checkpoint:
-            self.saved_first_checkpoint = True
-            self.save_checkpoint()
 
     def generate(self, cond: torch.Tensor, n_pointsv: torch.Tensor):
         check_tensor(cond, n_pointsv)
@@ -392,10 +269,3 @@ def with_grad(condition):
             yield
     else:
         yield
-
-
-def cylerlr_workaround(sd):
-    for pname in sd["schedulers"]:
-        if "_scale_fn_ref" in sd["schedulers"][pname]:
-            del sd["schedulers"][pname]["_scale_fn_ref"]
-    return sd

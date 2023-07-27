@@ -96,7 +96,7 @@ def get_testing_datasets(holder: Holder, best_or_last) -> TestDataset:
         # Check if we need to rerun the model
         # if yes, pickle it
         if best_or_last == "best":
-            holder.select_best_model()
+            holder.checkpoint_manager.select_best_model()
 
         res_d = gen_res_from_sim_batches(loader.testing_batches, holder)
 

@@ -48,9 +48,9 @@ class SigTermHander:
 
     def handle(self, _signo, _stack_frame):
         print("SIGTERM detected, stopping qfseq")
-        #  self.holder.save_checkpoint()
+        #  self.holder.checkpoint_manager.save_checkpoint()
         self.qfseq.stop()
-        self.holder.save_checkpoint()
+        self.holder.checkpoint_manager.save_checkpoint()
         if not conf.debug:
             wandb.mark_preempting()
 
