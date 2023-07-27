@@ -147,43 +147,43 @@ class GATv2MinConv(MessagePassing):
         self.share_weights = share_weights
 
         if isinstance(in_channels, int):
-            self.lin_l = Linear(
+            _lin_l = Linear(
                 in_channels,
                 heads * out_channels,
                 bias=bias,
                 weight_initializer="glorot",
             )
             if share_weights:
-                self.lin_r = self.lin_l
+                _lin_r = _lin_l
             else:
-                self.lin_r = Linear(
+                _lin_r = Linear(
                     in_channels,
                     heads * out_channels,
                     bias=bias,
                     weight_initializer="glorot",
                 )
         else:
-            self.lin_l = Linear(
+            _lin_l = Linear(
                 in_channels[0],
                 heads * out_channels,
                 bias=bias,
                 weight_initializer="glorot",
             )
             if share_weights:
-                self.lin_r = self.lin_l
+                _lin_r = _lin_l
             else:
-                self.lin_r = Linear(
+                _lin_r = Linear(
                     in_channels[1],
                     heads * out_channels,
                     bias=bias,
                     weight_initializer="glorot",
                 )
         if spectral_norm:
-            self.lin_l = torch.nn.utils.parametrizations.spectral_norm(self.lin_l)
+            _lin_l = torch.nn.utils.parametrizations.spectral_norm(_lin_l)
             if share_weights:
-                self.lin_r = torch.nn.utils.parametrizations.spectral_norm(
-                    self.lin_r
-                )
+                _lin_r = torch.nn.utils.parametrizations.spectral_norm(_lin_r)
+        self.lin_l = _lin_l
+        self.lin_r = _lin_r
 
         self.att = Parameter(torch.Tensor(1, heads, out_channels))
 
