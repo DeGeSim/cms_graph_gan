@@ -125,6 +125,9 @@ def main():
 
             generate_procedure()
 
+        case "implant_checkpoint":
+            import fgsim.commands.implant_checkpoint
+
         case "loadfile":
             file_name = str(conf.file_to_load)
             import re

@@ -63,7 +63,7 @@ class Holder:
             if conf.models[k].scheduler.name == "SWA"
         }
 
-        if conf.command == "train":
+        if conf.command in ["train", "implant_checkpoint"]:
             self.optims: OptimAndSchedulerCol = OptimAndSchedulerCol(
                 conf.models, self.models, self.swa_models, self.train_log
             )
@@ -71,7 +71,9 @@ class Holder:
         # try to load a check point
         self.checkpoint_loaded = False
 
-        if conf.command in ["test", "generate"] or not conf.debug:
+        if (
+            conf.command != "train" or not conf.debug
+        ) and conf.command != "implant_checkpoint":
             if conf.ray:
                 self.load_ray_checkpoint(
                     sorted(glob(f"{conf.path.run_path}/checkpoint_*"))[-1]

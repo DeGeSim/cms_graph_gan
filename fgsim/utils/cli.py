@@ -43,6 +43,7 @@ commands = [
     "dump",
     "overwrite",
     "loadfile",
+    "implant_checkpoint",
 ]
 subparsers = parser.add_subparsers(help="Available Commands", dest="command")
 

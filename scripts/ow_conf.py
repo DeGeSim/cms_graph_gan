@@ -1,10 +1,14 @@
 # %%
 from glob import glob
+from os import chdir
 
 import yaml
 
+chdir("/home/mscham/fgsim")
 # %%
-files = glob("wd/cc*/*/conf.yaml")
+files = glob("wd/cc_*/*/conf.yaml")
+print(files)
+# %%
 for e in files:
     with open(e, "r") as f:
         cont = yaml.safe_load(f)
