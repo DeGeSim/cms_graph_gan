@@ -5,7 +5,7 @@ from fgsim.config import conf
 
 from .convcoord import batch_to_Exyz
 from .pca import fpc_from_batch
-from .shower import analyze_layers, response, sphereratio
+from .shower import analyze_layers, cyratio, response, sphereratio
 from .voxelize import sum_dublicate_hits
 
 alphapos = conf.loader.x_features.index("alpha")
@@ -29,6 +29,8 @@ def postprocess(batch: Batch, sim_or_gen: str) -> Batch:
     metrics: list[str] = conf.training.val.metrics
     if "sphereratio" in metrics:
         batch["sphereratio"] = sphereratio(batch)
+    if "cyratio" in metrics:
+        batch["cyratio"] = cyratio(batch)
     if "fpc" in metrics:
         batch["fpc"] = fpc_from_batch(batch)
     if "showershape" in metrics:

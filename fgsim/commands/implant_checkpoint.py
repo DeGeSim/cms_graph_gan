@@ -17,41 +17,48 @@ holder = Holder()
 checkpoint = torch.load(Path(conf.path.checkpoint))
 
 
-def filter_dict(d, valid_keys):
-    d = {k: v for k, v in d.items() if k in valid_keys}
-    if "spectral_norm" in conf.models.disc.params.bipart_param:
-        if conf.models.disc.params.bipart_param.spectral_norm:
-            d = {
-                k: v
-                for k, v in d.items()
-                if k
-                not in [
-                    "disc.pools.0.mpl.lin_l.weight",
-                    "disc.pools.1.mpl.lin_l.weight",
-                    "disc.pools.2.mpl.lin_l.weight",
-                ]
-            }
-    assert set(d.keys()).issubset(set(valid_keys))
-    return d
+def recur_update(cp_dict, model_dict):
+    valid_keys = model_dict.keys()
+
+    for k in list(cp_dict.keys()):
+        if k not in valid_keys:
+            del cp_dict[k]
+    for k in valid_keys:
+        if k not in cp_dict:
+            cp_dict[k] = model_dict[k]
+        elif isinstance(model_dict[k], dict):
+            assert isinstance(cp_dict[k], dict)
+            recur_update(cp_dict[k], model_dict[k])
+        elif isinstance(model_dict[k], list):
+            assert isinstance(cp_dict[k], list)
+            assert len(cp_dict[k]) == len(model_dict[k])
+        elif isinstance(model_dict[k], torch.Tensor):
+            if model_dict[k].shape != cp_dict[k].shape:
+                cp_dict[k] = model_dict[k]
+        else:
+            raise Exception()
+    assert set(cp_dict.keys()) == set(valid_keys)
 
 
-valid_keys_model = holder.models.state_dict().keys()
-
-checkpoint["models"] = filter_dict(checkpoint["models"], valid_keys_model)
-checkpoint["best_model"] = filter_dict(checkpoint["best_model"], valid_keys_model)
+recur_update(checkpoint["models"], holder.models.state_dict())
+recur_update(checkpoint["best_model"], holder.models.state_dict())
 
 
 if len(holder.swa_models):
     for pname, part in holder.swa_models.items():
-        valid_keys = part.state_dict().keys()
-        checkpoint["swa_model"][pname] = filter_dict(
-            checkpoint["swa_model"][pname], valid_keys
-        )
-        checkpoint["best_swa_model"][pname] = filter_dict(
-            checkpoint["best_swa_model"][pname], valid_keys
+        recur_update(checkpoint["swa_model"][pname], part.state_dict())
+        recur_update(checkpoint["best_swa_model"][pname], part.state_dict())
+
+for part in ["gen", "disc"]:
+    recur_update(
+        checkpoint["optims"]["optimizers"][part],
+        holder.optims._optimizers[part].state_dict(),
+    )
+    if part in holder.optims._schedulers:
+        recur_update(
+            checkpoint["optims"]["schedulers"][part],
+            holder.optims._schedulers[part].state_dict(),
         )
 
 
-valid_keys_optim = holder.optims.state_dict().keys()
-checkpoint["optims"] = filter_dict(checkpoint["optims"], valid_keys_optim)
 torch.save(checkpoint, Path(conf.path.checkpoint))
