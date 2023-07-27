@@ -173,7 +173,7 @@ class Holder:
         self.models = self.models.float().to(self.device)
         if len(self.swa_models.keys()):
             for n, p in self.swa_models.items():
-                p.load_state_dict(self.best_model_state[n], strict)
+                p.load_state_dict(self.best_swa_model_state[n], strict)
                 self.swa_models[n] = self.swa_models[n].float().to(self.device)
 
     def save_checkpoint(
