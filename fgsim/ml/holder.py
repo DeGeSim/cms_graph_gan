@@ -263,6 +263,24 @@ class Holder:
             gen_batch = gen(z, cond, n_pointsv)
         return gen_batch
 
+    def _check_gen_batch(self, gen_batch, sim_batch):
+        check_tensor(gen_batch.x)
+        assert not torch.isnan(gen_batch.x).any()
+        assert sim_batch.x.shape[-1] == gen_batch.x.shape[-1]
+        if conf.models.gen.params.sample_until_full:
+            assert (gen_batch.ptr >= sim_batch.ptr).all()
+        else:
+            assert (gen_batch.ptr == sim_batch.ptr).all()
+
+    def _check_sim_batch(self, sim_batch):
+        assert not torch.isnan(sim_batch.x).any()
+        assert sim_batch.y.shape[-1] == len(conf.loader.y_features)
+        assert sim_batch.x.shape[-1] == len(conf.loader.x_features)
+        check_tensor(sim_batch.x, sim_batch.y)
+        assert (
+            sim_batch.n_pointsv == (sim_batch.ptr[1:] - sim_batch.ptr[:-1])
+        ).all()
+
     def pass_batch_through_model(
         self,
         sim_batch,
@@ -272,10 +290,8 @@ class Holder:
     ):
         assert not (train_gen and train_disc)
         assert not (eval and (train_gen or train_disc))
-        assert not torch.isnan(sim_batch.x).any()
-        assert sim_batch.y.shape[-1] == len(conf.loader.y_features)
-        assert sim_batch.x.shape[-1] == len(conf.loader.x_features)
-        check_tensor(sim_batch.x, sim_batch.y)
+        self._check_sim_batch(sim_batch)
+
         batch_size = conf.loader.batch_size
         cond_gen_features = conf.loader.cond_gen_features
         cond_critic_features = conf.loader.cond_critic_features
@@ -308,20 +324,12 @@ class Holder:
         if sum(cond_critic_features) > 0:
             cond_critic = sim_batch.y[..., cond_critic_features]
 
-        assert (
-            sim_batch.n_pointsv == (sim_batch.ptr[1:] - sim_batch.ptr[:-1])
-        ).all()
-
         with with_grad(train_gen):
             z.requires_grad = train_gen
             gen_batch = gen(z, cond_gen, sim_batch.n_pointsv)
-            # make sure the number of points is the same
-            assert (gen_batch.ptr == sim_batch.ptr).all()
-            # assert (gen_batch.batch == sim_batch.batch).all()
-            assert gen_batch.x.shape == sim_batch.x.shape
 
-        assert not torch.isnan(gen_batch.x).any()
-        assert sim_batch.x.shape[-1] == gen_batch.x.shape[-1]
+        self._check_gen_batch(gen_batch, sim_batch)
+
         # if train_gen or train_disc:
         gen_batch = self.postprocess(gen_batch)
         # sim_batch = self.postprocess(sim_batch)
@@ -333,7 +341,6 @@ class Holder:
                 disc(self.disc_preprocess(gen_batch), cond_critic), "gen_"
             )
 
-        # assert res["gen_crit"].shape == (conf.loader.batch_size, 1)
         assert not torch.isnan(res["gen_crit"]).any()
 
         # we dont need to compute sim_crit if only the generator is trained
@@ -370,13 +377,6 @@ class Holder:
             pt_pos = conf.loader.x_ftx_energy_pos
             pts = batch.x[..., pt_pos].clone()
             batch.x[..., pt_pos] = norm_pt_sum(pts, batch.batch).clone()
-        # if conf.dataset_name == "calochallange":
-        #     from fgsim.loaders.calochallange.alpharot import rotate_alpha
-
-        #     alphapos = conf.loader.x_features.index("alpha")
-        #     batch.x[..., alphapos] = rotate_alpha(
-        #         batch.x[..., alphapos].clone(), batch.batch
-        #     )
 
         return batch
 
