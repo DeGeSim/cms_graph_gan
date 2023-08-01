@@ -4,10 +4,11 @@ from typing import Dict, List
 
 import pytest
 import torch
-from torch import nn
+
+from fgsim.config import conf, defaultconf
 
 # install_import_hook("fgsim")
-from fgsim.models.common import FFN, DynHLVsLayer
+from fgsim.models.common import DynHLVsLayer
 from fgsim.models.common.deeptree import (
     BranchingBase,
     DeepConv,
@@ -16,6 +17,11 @@ from fgsim.models.common.deeptree import (
     get_br_layer,
 )
 
+conf.ffn.norm = "none"
+conf.ffn.dropout = 0.0
+
+defaultconf.ffn.norm = "none"
+defaultconf.ffn.dropout = 0.0
 # from typeguard.importhook import install_import_hook
 
 
@@ -115,10 +121,10 @@ def object_gen(props: Dict[str, int]) -> DTColl:
     # If we want to check the gradients for independence,
     # we need to disable batchnorm
 
-    for brl in branchings:
-        recur_remove_ffnorm(brl)
-    recur_remove_ffnorm(dyn_hlvs_layer)
-    recur_remove_ffnorm(ancestor_conv_layer)
+    # for brl in branchings:
+    #     recur_remove_ffnorm(brl)
+    # recur_remove_ffnorm(dyn_hlvs_layer)
+    # recur_remove_ffnorm(ancestor_conv_layer)
 
     return DTColl(
         props=props,
@@ -183,7 +189,7 @@ def branching_objects(request, static_props):
         ).to(device)
         for level in range(static_props["n_levels"] - 1)
     ]
-    recur_remove_ffnorm(objs.branchings)
+    # recur_remove_ffnorm(objs.branchings)
     return objs
 
 
@@ -198,15 +204,15 @@ def dyn_objects(dyn_props):
 
 
 # remove batchnorm for testing to avoid grradient contamination
-def recur_remove_ffnorm(m):
-    if isinstance(m, list):
-        for sm in m:
-            recur_remove_ffnorm(sm)
-    if isinstance(m, FFN):
-        m.seq = nn.Sequential(
-            *[sm for sm in m.seq if type(sm) not in [nn.BatchNorm1d, nn.LayerNorm]]
-        )
-    elif isinstance(m, nn.Module):
-        for sm in m.children():
-            recur_remove_ffnorm(sm)
-    return
+# def recur_remove_ffnorm(m):
+#     if isinstance(m, list):
+#         for sm in m:
+#             recur_remove_ffnorm(sm)
+#     if isinstance(m, FFN):
+#         m.seq = nn.Sequential(
+#             *[sm for sm in m.seq if type(sm) not in [nn.BatchNorm1d, nn.LayerNorm]]
+#         )
+#     elif isinstance(m, nn.Module):
+#         for sm in m.children():
+#             recur_remove_ffnorm(sm)
+#     return
