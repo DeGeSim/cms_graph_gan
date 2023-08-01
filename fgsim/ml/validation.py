@@ -39,7 +39,9 @@ def validate(holder: Holder, loader: QueuedDataset) -> None:
     if max(holder.history["score"]) == holder.history["score"][-1]:
         holder.state.best_step = holder.state["grad_step"]
         holder.state.best_epoch = holder.state["epoch"]
-        holder.best_model_state = deepcopy(holder.models.state_dict())
+        holder.checkpoint_manager.best_model_state = deepcopy(
+            holder.models.state_dict()
+        )
         if len(holder.swa_models):
             holder.best_swa_model_state = {
                 n: deepcopy(p.state_dict()) for n, p in holder.swa_models.items()
