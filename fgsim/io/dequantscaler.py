@@ -19,13 +19,13 @@ def dequant(x):
 
 def requant(x):
     assert x.dtype == np.float64
-    # x_copy = x.copy()
+    x_copy = x.copy()
     x = np.floor(x).astype("int32")
     # with the clip in dequant, the input must change
-    # x[x == x_copy] -= 1
-    # assert np.all(x.astype("int") == x)
-    # delta = np.abs((x_copy - x))
-    # assert (delta > 0).all() and (delta <= 1).all()
+    x[(x == x_copy) & (x > 0)] -= 1
+    assert np.all(x.astype("int") == x)
+    delta = np.abs((x_copy - x))
+    assert ((delta > 0) | (x == 0)).all() and (delta <= 1).all()
     return x
 
 
@@ -60,8 +60,8 @@ def dequant_stdscale(inputrange=None) -> list:
         FunctionTransformer(dequant, requant, check_inverse=True, validate=True),
         scaletf,
         FunctionTransformer(
-            scipy.special.logit,  # scipy.special.erf,  # ,
-            scipy.special.expit,  # scipy.special.erfinv,  #
+            scipy.special.logit,  # scipy.stats.norm.ppf
+            scipy.special.expit,  # scipy.stats.norm.cdf
             check_inverse=True,
             validate=True,
         ),
