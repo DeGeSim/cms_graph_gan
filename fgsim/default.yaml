@@ -147,6 +147,7 @@ model_param_options:
       res_mean: False
       res_final_layer: True
       dim_red_skip: False
+      gated_cond: False
     connect_all_ancestors: True
     ancestor_mpl:
       n_mpl: 1
@@ -214,6 +215,8 @@ model_param_options:
       dropout: 0.5
       norm: "spectral"
       equallr: false
+      activation_first: False
+      final_linear: False
     cnu_param:
       norm: "spectral"
     emb_param:

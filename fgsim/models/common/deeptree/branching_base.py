@@ -3,7 +3,7 @@ from math import prod
 import torch
 import torch.nn as nn
 
-from fgsim.models.common import FFN
+from fgsim.models.common import FFN, GatedCondition
 from fgsim.utils import check_tensor
 
 from .tree import Tree
@@ -41,6 +41,7 @@ class BranchingBase(nn.Module):
         dim_red: bool,
         res_mean: bool,
         res_final_layer: bool,
+        gated_cond: bool,
         dim_red_skip: bool,
     ):
         super().__init__()
@@ -57,6 +58,7 @@ class BranchingBase(nn.Module):
         self.dim_red_skip = dim_red_skip
         self.res_mean = res_mean
         self.res_final_layer = res_final_layer
+        self.gated_cond = gated_cond
         self.n_branches = self.tree.branches[level]
         self.n_features_source = self.tree.features[level]
         self.n_features_target = self.tree.features[level + int(self.dim_red)]
@@ -86,6 +88,19 @@ class BranchingBase(nn.Module):
                 norm=self.norm,
                 bias=False,
                 final_linear=self.final_linear or self.lastlayer,
+            )
+        if self.gated_cond:
+            self.parent_GCU = GatedCondition(
+                self.n_features_source,
+                self.n_features_source,
+                self.n_features_source,
+                False,
+            )
+            self.cond_GCU = GatedCondition(
+                self.n_features_source,
+                self.n_cond + self.n_global,
+                self.n_features_source,
+                False,
             )
 
     def reshape_features(self, *args, **kwargs):
@@ -119,7 +134,12 @@ class BranchingBase(nn.Module):
                 n_features=self.n_features_source,
             ).reshape(batch_size * n_parents * n_branches, self.n_features_source)
             # assert (parents_ftxs_full == parents_ftxs.repeat(n_branches, 1)).all()
-            children_ftxs += parents_ftxs_full
+            if self.gated_cond:
+                children_ftxs = children_ftxs.clone() + self.parent_GCU(
+                    children_ftxs.clone(), parents_ftxs_full
+                )
+            else:
+                children_ftxs += parents_ftxs_full
             if self.res_mean:
                 children_ftxs /= 2
         return children_ftxs

@@ -10,7 +10,9 @@ from .graph_tree import TreeGraph
 class BranchingMat(BranchingBase):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        proj_in = self.n_features_source + self.n_global + self.n_cond
+        proj_in = self.n_features_source
+        if not self.gated_cond:
+            proj_in += self.n_global + self.n_cond
         proj_out = self.n_features_source * self.n_branches
         self.proj_nn = FFN(
             proj_in,
@@ -31,7 +33,7 @@ class BranchingMat(BranchingBase):
 
         assert graph.cur_level == self.level
 
-        parents_ftxs = graph.tftx[self.tree.idxs_by_level[self.level]]
+        parents_ftxs = graph.tftx[self.tree.idxs_by_level[self.level]].clone()
 
         # Compute the new feature vectors:
         # for the parents indices generate a matrix where
@@ -47,9 +49,15 @@ class BranchingMat(BranchingBase):
         # (n_parents * n_event) x (n_features*n_branches) matrix
         # [[parent1], -> [[child1-1 child1-2],
         #   parent2]]     [child2-1 child2-2]]
-        proj_ftx = self.proj_nn(
-            torch.hstack([parents_ftxs, cond_global, parent_global])
-        )
+        if self.gated_cond:
+            parents_ftxs += self.cond_GCU(
+                parents_ftxs.clone(), torch.hstack([cond_global, parent_global])
+            )
+            proj_ftx = self.proj_nn(parents_ftxs)
+        else:
+            proj_ftx = self.proj_nn(
+                torch.hstack([parents_ftxs, cond_global, parent_global])
+            )
         check_tensor(proj_ftx)
         assert parents_ftxs.shape[-1] == self.n_features_source
         assert proj_ftx.shape[-1] == self.n_features_source * self.n_branches

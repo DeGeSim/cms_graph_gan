@@ -131,7 +131,9 @@ class TSumTDisc(nn.Module):
                 for _ in range(n_updates)
             ]
         )
-        self.red = FFN(1 + 3 * n_ftx + n_cond, 1, **ffn_param, final_linear=True)
+        self.red = FFN(
+            1 + 3 * n_ftx + n_cond, 1, **(ffn_param | {"final_linear": True})
+        )
 
     def forward(self, x, batch, condition):
         for layer in self.emb:
@@ -151,7 +153,9 @@ class CentralNodeUpdate(nn.Module):
         self.emb = FFN(n_ftx_in, n_ftx_latent, **ffn_param)
         self.glob = FFN(1 + n_ftx_latent * 3, n_global, **ffn_param)
         self.out = FFN(
-            n_ftx_latent + n_global, n_ftx_in, final_linear=True, **ffn_param
+            n_ftx_latent + n_global,
+            n_ftx_in,
+            **(ffn_param | {"final_linear": True}),
         )
 
     def forward(self, x, batch=None):
@@ -196,8 +200,7 @@ class Embedding(nn.Module):
         self.inemb = FFN(
             self.n_ftx_in,
             self.n_ftx_out,
-            **(ffn_param | {"bias": True, "norm": norm}),
-            final_linear=True,
+            **(ffn_param | {"bias": True, "norm": norm, "final_linear": True}),
         )
         self.cnu = CentralNodeUpdate(
             n_ftx_in=self.n_ftx_out,
