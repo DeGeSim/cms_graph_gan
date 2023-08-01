@@ -21,6 +21,7 @@ class FFN(nn.Module):
         n_layers: Optional[int] = None,
         final_linear: bool = False,
         bias: bool = False,
+        activation_first: bool = False,
         hidden_layer_size: Optional[int] = None,
         equallr: Optional[bool] = None,
     ) -> None:
@@ -78,55 +79,22 @@ class FFN(nn.Module):
         # in dimensionality, because otherwise it
 
         seqtmp = []
+        if activation_first:
+            _normf = self._get_norm(features, -1)
+            if _normf is not None:
+                seqtmp.append(_normf)
+            seqtmp.append((activation_function(), "x->x"))
         for ilayer in range(n_layers):
-            if self.norm == "bwn":
-                m = WeightNormalizedLinear(
-                    features[ilayer],
-                    features[ilayer + 1],
-                    bias=bias,
-                    scale=True,
-                    init_scale=0.5,
-                    init_factor=0.5,
-                )
-            else:
-                if equallr:
-                    m = EqualLinear(
-                        features[ilayer], features[ilayer + 1], bias=bias
-                    )
-                else:
-                    m = nn.Linear(features[ilayer], features[ilayer + 1], bias=bias)
-                if self.norm in ["spectral", "snbn"]:
-                    m = nn.utils.parametrizations.spectral_norm(m)
-                elif self.norm == "weight":
-                    m = nn.utils.weight_norm(m)
-
+            m = self._get_linear(features, ilayer, bias, equallr)
             seqtmp.append((m, "x->x"))
             if ilayer == n_layers - 1 and final_linear:
                 continue
             else:
                 if dropout:
                     seqtmp.append((nn.Dropout(dropout), "x->x"))
-                if self.norm in ["batchnorm", "snbn"]:
-                    seqtmp.append(
-                        (
-                            nn.BatchNorm1d(
-                                features[ilayer + 1],
-                                affine=False,
-                                track_running_stats=False,
-                            ),
-                            "x->x",
-                        )
-                    )
-                elif self.norm == "graph":
-                    seqtmp.append(
-                        (GraphOrBatch(features[ilayer + 1]), "x, batch -> x")
-                    )
-                elif self.norm == "layernorm":
-                    seqtmp.append((nn.LayerNorm(features[ilayer + 1]), "x->x"))
-                elif self.norm in ("none", "spectral", "weight", "bwn"):
-                    pass
-                else:
-                    raise Exception
+                _normf = self._get_norm(features, ilayer)
+                if _normf is not None:
+                    seqtmp.append(_normf)
                 seqtmp.append((activation_function(), "x->x"))
 
         self.seq = gnn.Sequential("x, batch", seqtmp)
@@ -140,6 +108,46 @@ class FFN(nn.Module):
         self.bias = bias
         if not equallr:
             self.reset_parameters()
+
+    def _get_linear(self, features, ilayer, bias, equallr):
+        if self.norm == "bwn":
+            m = WeightNormalizedLinear(
+                features[ilayer],
+                features[ilayer + 1],
+                bias=bias,
+                scale=True,
+                init_scale=0.5,
+                init_factor=0.5,
+            )
+        else:
+            if equallr:
+                m = EqualLinear(features[ilayer], features[ilayer + 1], bias=bias)
+            else:
+                m = nn.Linear(features[ilayer], features[ilayer + 1], bias=bias)
+            if self.norm in ["spectral", "snbn"]:
+                m = nn.utils.parametrizations.spectral_norm(m)
+            elif self.norm == "weight":
+                m = nn.utils.weight_norm(m)
+        return m
+
+    def _get_norm(self, features, ilayer):
+        if self.norm in ["batchnorm", "snbn"]:
+            return (
+                nn.BatchNorm1d(
+                    features[ilayer + 1],
+                    affine=False,
+                    track_running_stats=False,
+                ),
+                "x->x",
+            )
+        elif self.norm == "graph":
+            return (GraphOrBatch(features[ilayer + 1]), "x, batch -> x")
+        elif self.norm == "layernorm":
+            return (nn.LayerNorm(features[ilayer + 1]), "x->x")
+        elif self.norm in ("none", "spectral", "weight", "bwn"):
+            return None
+        else:
+            raise Exception
 
     def forward(self, x, batchidx=None):
         oldshape = x.shape

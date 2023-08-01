@@ -110,6 +110,8 @@ ffn:
   norm: batchnorm
   dropout: 0.0
   equallr: false
+  activation_first: False
+  final_linear: False
 
 layer_options:
   DeepConv:
