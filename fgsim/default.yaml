@@ -154,6 +154,7 @@ model_param_options:
       n_hidden_nodes: 100
       conv_name: GINConv
       skip_connecton: True
+      gated_cond: False
       layer_param: ${layer_options[${model_param_options.gen_deeptree.ancestor_mpl.conv_name}]}
     child_mpl:
       n_mpl: 0

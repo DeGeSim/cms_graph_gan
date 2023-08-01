@@ -1,9 +1,9 @@
 from typing import Optional
 
 import torch
-from torch_geometric.nn import EdgeConv, GINConv, GravNetConv, Sequential
+from torch_geometric.nn import EdgeConv, GINConv, GravNetConv
 
-from fgsim.models.common import FFN, GINCConv
+from fgsim.models.common import FFN, GatedCondition, GINCConv
 from fgsim.models.common.deeptree import DeepConv
 from fgsim.models.mpl.gatmin import GATv2MinConv
 
@@ -25,6 +25,7 @@ class MPLSeq(torch.nn.Module):
         n_mpl: int,
         n_hidden_nodes: int,
         skip_connecton: bool,
+        gated_cond: bool,
         layer_param: dict,
     ):
         super().__init__()
@@ -34,6 +35,7 @@ class MPLSeq(torch.nn.Module):
         self.in_features = in_features
         self.out_features = out_features
         self.n_hidden_nodes = n_hidden_nodes
+        self.gated_cond = gated_cond
 
         if n_mpl == 0:
             # assert in_features == out_features
@@ -55,12 +57,24 @@ class MPLSeq(torch.nn.Module):
                     for n_ftx in range(len(self.features) - 1)
                 ]
             )
+        if self.gated_cond:
+            self.cond_GCU = GatedCondition(
+                in_features, self.n_cond + self.n_global, in_features, False
+            )
+            if self.skip_connecton:
+                self.skip_GCU = GatedCondition(
+                    out_features, in_features, out_features, False
+                )
 
     def wrap_layer_init(self, conv_name, in_features, out_features, layer_param):
         if conv_name == "GINCConv":
             return GINCConv(
                 FFN(
-                    in_features + self.n_cond + self.n_global,
+                    (
+                        in_features + self.n_cond + self.n_global
+                        if not self.gated_cond
+                        else in_features
+                    ),
                     out_features,
                     **layer_param,
                     hidden_layer_size=self.n_hidden_nodes,
@@ -69,7 +83,11 @@ class MPLSeq(torch.nn.Module):
         if conv_name == "EdgeConv":
             return EdgeConv(
                 FFN(
-                    in_features * 2 + self.n_cond + self.n_global,
+                    (
+                        in_features * 2 + self.n_cond + self.n_global
+                        if not self.gated_cond
+                        else in_features * 2
+                    ),
                     out_features,
                     **layer_param,
                     hidden_layer_size=self.n_hidden_nodes,
@@ -78,7 +96,11 @@ class MPLSeq(torch.nn.Module):
         elif conv_name == "GINConv":
             return GINConv(
                 FFN(
-                    in_features + self.n_cond + self.n_global,
+                    (
+                        in_features + self.n_cond + self.n_global
+                        if not self.gated_cond
+                        else in_features
+                    ),
                     out_features,
                     **layer_param,
                     hidden_layer_size=self.n_hidden_nodes,
@@ -99,23 +121,14 @@ class MPLSeq(torch.nn.Module):
                 **layer_param,
             )
         elif conv_name == "GATv2MinConv":
-            return Sequential(
-                "x, edge_index",
-                [
-                    (
-                        GATv2MinConv(
-                            in_channels=in_features + self.n_cond + self.n_global,
-                            out_channels=out_features,
-                            **layer_param,
-                        ),
-                        "x, edge_index -> x",
-                    ),
-                    torch.nn.utils.parametrizations.spectral_norm(
-                        torch.nn.Linear(
-                            out_features * layer_param["heads"], out_features
-                        )
-                    ),
-                ],
+            return GATv2MinConv(
+                in_channels=(
+                    in_features + self.n_cond + self.n_global
+                    if not self.gated_cond
+                    else in_features
+                ),
+                out_channels=out_features,
+                **layer_param,
             )
 
         else:
@@ -124,6 +137,8 @@ class MPLSeq(torch.nn.Module):
     def wrap_mpl(
         self, *, layer, x, cond, edge_index, edge_attr, batch, global_features
     ):
+        if self.gated_cond:
+            return layer(x, edge_index)
         if isinstance(layer, GINCConv):
             return layer(
                 x,
@@ -191,8 +206,7 @@ class MPLSeq(torch.nn.Module):
         assert x.shape[-1] == self.in_features
         if len(self.mpls) == 0:
             return x[..., : self.out_features]
-        if self.skip_connecton:
-            x_clone = x.clone()
+
         batch_size = batch[-1] + 1
         if cond is None:
             assert self.n_cond == 0
@@ -202,6 +216,14 @@ class MPLSeq(torch.nn.Module):
             global_features = torch.empty(
                 (batch_size, 0), dtype=torch.float, device=x.device
             )
+
+        if self.gated_cond:
+            x = x.clone() + self.cond_GCU(
+                x.clone(), torch.hstack([cond[batch], global_features[batch]])
+            )
+        if self.skip_connecton:
+            x_clone = x.clone()
+
         for conv in self.mpls:
             x = self.wrap_mpl(
                 layer=conv,
@@ -215,5 +237,8 @@ class MPLSeq(torch.nn.Module):
 
         assert x.shape[-1] == self.out_features
         if self.skip_connecton:
-            x[..., : self.in_features] += x_clone[..., : self.out_features]
+            if self.gated_cond:
+                x = x.clone() + self.skip_GCU(x.clone(), x_clone)
+            else:
+                x[..., : self.in_features] += x_clone[..., : self.out_features]
         return x
