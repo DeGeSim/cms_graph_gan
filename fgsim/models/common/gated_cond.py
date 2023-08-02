@@ -4,7 +4,7 @@ from torch.nn.utils import parametrizations
 
 class GatedCondition(Module):
     def __init__(
-        self, x_dim: int, res_dim: int, out_dim: int, spectral_norm: bool
+        self, x_dim: int, res_dim: int, out_dim: int, spectral_norm: bool = True
     ) -> None:
         super().__init__()
         self.x_dim = x_dim
