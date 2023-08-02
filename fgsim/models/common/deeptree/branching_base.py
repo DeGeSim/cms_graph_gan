@@ -94,13 +94,13 @@ class BranchingBase(nn.Module):
                 self.n_features_source,
                 self.n_features_source,
                 self.n_features_source,
-                False,
+                True,
             )
             self.cond_GCU = GatedCondition(
                 self.n_features_source,
                 self.n_cond + self.n_global,
                 self.n_features_source,
-                False,
+                True,
             )
 
     def reshape_features(self, *args, **kwargs):

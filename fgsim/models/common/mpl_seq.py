@@ -59,11 +59,11 @@ class MPLSeq(torch.nn.Module):
             )
         if self.gated_cond:
             self.cond_GCU = GatedCondition(
-                in_features, self.n_cond + self.n_global, in_features, False
+                in_features, self.n_cond + self.n_global, in_features, True
             )
             if self.skip_connecton:
                 self.skip_GCU = GatedCondition(
-                    out_features, in_features, out_features, False
+                    out_features, in_features, out_features, True
                 )
 
     def wrap_layer_init(self, conv_name, in_features, out_features, layer_param):
