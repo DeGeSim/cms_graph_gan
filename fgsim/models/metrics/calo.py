@@ -1,16 +1,15 @@
 import numpy as np
 import torch
+from caloutils.distances import (
+    calc_cdf_dist,
+    calc_hist_dist,
+    calc_sW1_dist,
+    calc_wcdf_dist,
+)
 from torch_geometric.data import Batch
 
 from fgsim.config import conf
 from fgsim.plot import binborders_wo_outliers, var_to_bins
-
-from .distutils import (
-    calc_cdf_dist,
-    calc_hist_dist,
-    calc_scaled1d_dist,
-    calc_wcdf_dist,
-)
 
 
 def run_dists(sim_batch, gen_batch, k, bins=None):
@@ -55,7 +54,7 @@ def run_dists(sim_batch, gen_batch, k, bins=None):
         distname: fct(r=real, f=fake, bins=bins)
         for distname, fct in zip(
             ["cdf", "sw1", "histd"],
-            [calc_cdf_dist, calc_scaled1d_dist, calc_hist_dist],
+            [calc_cdf_dist, calc_sW1_dist, calc_hist_dist],
         )
     }
     res_d = {}
@@ -106,7 +105,7 @@ def marginalEw(
     }
 
     cdfdist = calc_wcdf_dist(**kwargs)
-    sw1dist = calc_scaled1d_dist(**kwargs)
+    sw1dist = calc_sW1_dist(**kwargs)
     histdist = calc_hist_dist(**kwargs)
     distnames = ["cdf", "sw1", "histd"]
     distarrays = [cdfdist, sw1dist, histdist]

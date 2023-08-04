@@ -8,12 +8,12 @@ from subprocess import PIPE, CalledProcessError, Popen
 
 import h5py
 import torch
+from caloutils.processing import pc_to_voxel
 from tqdm import tqdm
 
 from fgsim.config import conf, device
 from fgsim.io.queued_dataset import QueuedDataset
 from fgsim.io.sel_loader import loader_info
-from fgsim.loaders.calochallange.voxelize import voxelize
 from fgsim.ml.eval import postprocess
 from fgsim.ml.holder import Holder
 from fgsim.monitoring import logger
@@ -114,7 +114,7 @@ def __write_dataset(holder, dspath):
         # __recur_transpant_dict(gen_batch, sim_batch)
         # __recur_transpant_dict(gen_batch._slice_dict, sim_batch._slice_dict)
         # __recur_transpant_dict(gen_batch._inc_dict, sim_batch._inc_dict)
-        x_l.append(voxelize(gen_batch).cpu())
+        x_l.append(pc_to_voxel(gen_batch).cpu())
         E_l.append(gen_batch.y.T[0].clone().cpu())
         del sim_batch
 

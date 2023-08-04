@@ -1,4 +1,5 @@
 import torch
+from caloutils.processing import sum_multi_hits
 from torch_geometric.data import Batch
 
 from fgsim.config import conf
@@ -6,7 +7,6 @@ from fgsim.config import conf
 from .convcoord import batch_to_Exyz
 from .pca import fpc_from_batch
 from .shower import analyze_layers, cyratio, response, sphereratio
-from .voxelize import sum_dublicate_hits
 
 alphapos = conf.loader.x_features.index("alpha")
 num_alpha = 16
@@ -24,7 +24,7 @@ def postprocess(batch: Batch, sim_or_gen: str) -> Batch:
 
         batch.x[..., alphapos] = alphas
 
-    batch = sum_dublicate_hits(batch, forbid_dublicates=sim_or_gen == "sim")
+    batch = sum_multi_hits(batch, forbid_dublicates=sim_or_gen == "sim")
     batch = batch_to_Exyz(batch)
     metrics: list[str] = conf.training.val.metrics
     if "sphereratio" in metrics:

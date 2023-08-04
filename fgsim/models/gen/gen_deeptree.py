@@ -3,10 +3,15 @@ from typing import Dict, Optional
 
 import torch
 import torch.nn as nn
+from caloutils.processing import nhits_in_same_cell
+from caloutils.processing.utils import scatter_sort
 from omegaconf import OmegaConf
 from torch_geometric.data import Batch
 
 from fgsim.config import conf
+
+# from fgsim.plot.model_plotter import model_plotter
+from fgsim.loaders.calochallange.add_position import add_position
 from fgsim.models.common import DynHLVsLayer, FtxScaleLayer, MPLSeq
 from fgsim.models.common.deeptree import (
     BranchingBase,
@@ -17,8 +22,6 @@ from fgsim.models.common.deeptree import (
 from fgsim.monitoring import logger
 from fgsim.utils import check_tensor
 from fgsim.utils.batch import ptr_from_batchidx
-
-# from fgsim.plot.model_plotter import model_plotter
 
 
 class ModelClass(nn.Module):
@@ -286,18 +289,14 @@ class ModelClass(nn.Module):
         return batch
 
     def _sample_until_full(self, batch, n_pointsv):
-        from fgsim.loaders.calochallange.voxelize import (
-            _scatter_sort,
-            cell_occ_per_hit,
-        )
-
         batch_size = int(batch.batch[-1] + 1)
         hite = batch.x[..., conf.loader.x_ftx_energy_pos]
 
-        cell_occ = cell_occ_per_hit(batch)
+        add_position(batch)
+        cell_occ = nhits_in_same_cell(batch)
         if self.pruning == "topk":
             # todo make it faster, because it's irregular
-            hite, tidx = _scatter_sort(hite, batch.batch)
+            hite, tidx = scatter_sort(hite, batch.batch)
             batch.x = batch.x[tidx]
             cell_occ = cell_occ[tidx]
 

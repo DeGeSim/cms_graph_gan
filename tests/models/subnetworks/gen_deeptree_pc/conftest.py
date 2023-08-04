@@ -90,6 +90,7 @@ def object_gen(props: Dict[str, int]) -> DTColl:
             res_final_layer=False,
             res_mean=False,
             dim_red_skip=True,
+            gated_cond=False,
             mode="mat",
         ).to(device)
         for level in range(n_levels - 1)

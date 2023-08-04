@@ -6,8 +6,11 @@ should be passed the qfseq.
 
 import sys
 
+import caloutils
+
 from .postprocess import postprocess
 
+caloutils.init_calorimeter("cc_ds2")
 if "pytest" not in sys.modules:
     from torch_geometric.data import Batch
 

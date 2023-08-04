@@ -23,10 +23,10 @@ from fgsim.loaders.calochallange.objcol import (  # noqa: E402
     read_chunks,
     scaler,
 )
-from fgsim.loaders.calochallange.voxelize import (  # noqa: E402
+from fgsim.loaders.calochallange.pc_to_voxel import (  # noqa: E402
     dims,
-    sum_dublicate_hits,
-    voxelize,
+    pc_to_voxel,
+    sum_multi_hits,
 )
 
 # scaler.fit(True)
@@ -155,7 +155,7 @@ for i in tqdm(fpos):
     # alphas[alphas > num_alpha - 1] -= num_alpha
     # batch.x[..., alphapos] = alphas
 
-    batch = sum_dublicate_hits(batch, True)
+    batch = sum_multi_hits(batch, True)
     assert torch.allclose(batch.x, batch_untf.x)
 
     # batch = batch_to_Exyz(batch)
@@ -170,6 +170,6 @@ for i in tqdm(fpos):
     #     batch["response"] = response(batch)
 
     assert torch.allclose(batch.x, batch_untf.x)
-    pcs_out = voxelize(batch)
+    pcs_out = pc_to_voxel(batch)
     input_images = torch.stack([e[1].reshape(*dims) for e in pcs], 0)
     assert torch.allclose(pcs_out.float(), input_images)
