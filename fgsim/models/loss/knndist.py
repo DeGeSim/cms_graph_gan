@@ -1,5 +1,5 @@
 import torch
-from caloutils.distances import scale_b_to_a, wmse
+from caloutils.distances import energy_distance, scale_b_to_a
 from torch_geometric.data import Batch
 from torch_geometric.nn import global_add_pool, knn_graph
 
@@ -29,14 +29,14 @@ class LossGen:
             nndelta_gen = self.nndist(gen_batch, fridx)
             nnd_sim_scaled, nnd_gen_scaled = scale_b_to_a(nndelta_sim, nndelta_gen)
             if fridx == [eidx]:
-                loss += wmse(nnd_sim_scaled, nnd_gen_scaled)
+                loss += energy_distance(nnd_sim_scaled, nnd_gen_scaled)
             else:
                 #  sw = self.inv_scale_hitE(sim_batch).to(dev)
                 #  gw = self.inv_scale_hitE(gen_batch).to(dev)
 
                 #  assert (sw > 0).all() and (gw > 0).all()
-                #  loss += wmse(nnd_sim_scaled, nnd_gen_scaled, sw, gw)
-                loss += wmse(nnd_sim_scaled, nnd_gen_scaled)
+                #  loss += energy_distance(nnd_sim_scaled, nnd_gen_scaled, sw, gw)
+                loss += energy_distance(nnd_sim_scaled, nnd_gen_scaled)
 
         return loss
 
