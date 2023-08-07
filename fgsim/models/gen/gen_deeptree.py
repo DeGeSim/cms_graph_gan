@@ -9,9 +9,6 @@ from omegaconf import OmegaConf
 from torch_geometric.data import Batch
 
 from fgsim.config import conf
-
-# from fgsim.plot.model_plotter import model_plotter
-from fgsim.loaders.calochallange.add_position import add_position
 from fgsim.models.common import DynHLVsLayer, FtxScaleLayer, MPLSeq
 from fgsim.models.common.deeptree import (
     BranchingBase,
@@ -22,6 +19,8 @@ from fgsim.models.common.deeptree import (
 from fgsim.monitoring import logger
 from fgsim.utils import check_tensor
 from fgsim.utils.batch import ptr_from_batchidx
+
+# from fgsim.plot.model_plotter import model_plotter
 
 
 class ModelClass(nn.Module):
@@ -291,6 +290,7 @@ class ModelClass(nn.Module):
     def _sample_until_full(self, batch, n_pointsv):
         batch_size = int(batch.batch[-1] + 1)
         hite = batch.x[..., conf.loader.x_ftx_energy_pos]
+        from fgsim.loaders.calochallange.add_position import add_position
 
         add_position(batch)
         cell_occ = nhits_in_same_cell(batch)

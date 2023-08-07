@@ -167,11 +167,11 @@ def dyn_props(request):
 
 @pytest.fixture(
     params=product(
-        ["mat", "equivar", "noise", "bppool"], [False, True], [False, True]
+        ["mat", "equivar", "noise"], [False, True], [False, True], [False, True]
     )
 )
 def branching_objects(request, static_props):
-    (mode, dim_red, residual) = request.param
+    (mode, dim_red, residual, gated_cond) = request.param
     objs = object_gen(static_props)
     objs.branchings = [
         get_br_layer(
@@ -186,6 +186,7 @@ def branching_objects(request, static_props):
             residual=residual,
             res_final_layer=False,
             res_mean=False,
+            gated_cond=gated_cond,
             mode=mode,
         ).to(device)
         for level in range(static_props["n_levels"] - 1)
