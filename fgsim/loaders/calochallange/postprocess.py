@@ -1,5 +1,5 @@
 import torch
-from caloutils.processing import sum_multi_hits
+from caloutils.processing import shift_sum_multi_hits
 from torch_geometric.data import Batch
 
 from fgsim.config import conf
@@ -24,7 +24,7 @@ def postprocess(batch: Batch, sim_or_gen: str) -> Batch:
 
         batch.x[..., alphapos] = alphas
 
-    batch = sum_multi_hits(batch, forbid_dublicates=sim_or_gen == "sim")
+    batch = shift_sum_multi_hits(batch, forbid_dublicates=sim_or_gen == "sim")
     batch = batch_to_Exyz(batch)
     metrics: list[str] = conf.training.val.metrics
     if "sphereratio" in metrics:
