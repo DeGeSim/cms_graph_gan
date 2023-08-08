@@ -13,6 +13,7 @@ num_alpha = 16
 
 
 def postprocess(batch: Batch, sim_or_gen: str) -> Batch:
+    batch = shift_sum_multi_hits(batch, forbid_dublicates=sim_or_gen == "sim")
     if sim_or_gen == "gen":
         alphas = batch.x[..., alphapos].clone()
 
@@ -24,7 +25,6 @@ def postprocess(batch: Batch, sim_or_gen: str) -> Batch:
 
         batch.x[..., alphapos] = alphas
 
-    batch = shift_sum_multi_hits(batch, forbid_dublicates=sim_or_gen == "sim")
     batch = batch_to_Exyz(batch)
     metrics: list[str] = conf.training.val.metrics
     if "sphereratio" in metrics:

@@ -9,6 +9,9 @@
     "folders": [
         {
             "path": "."
+        },
+        {
+            "path": "../caloutils"
         }
     ],
     "settings": {
@@ -17,11 +20,12 @@
                 // "source.organizeImports": true,
                 // "source.fixAll": true
             },
-            "editor.formatOnSave": true
+            "editor.formatOnSave": true,
+            "editor.defaultFormatter": "ms-python.black-formatter"
         },
         "debug.console.closeOnEnd": true,
         "debug.terminal.clearBeforeReusing": true,
-        "docwriter.style": "Google",
+        "docwriter.style": "NumPy",
         "editor.formatOnSave": true,
         "files.exclude": {
             "**/.*": true,
@@ -55,8 +59,7 @@
         "python.analysis.typeCheckingMode": "basic",
         "python.defaultInterpreterPath": "/dev/shm/mscham/fgsim/bin/python",
         "python.envFile": "~/fgsim/.env",
-        "python.formatting.blackPath": "/dev/shm/mscham/fgsim/bin/black",
-        "python.formatting.provider": "black",
+        "python.formatting.provider": "none",
         "python.languageServer": "Pylance",
         "python.linting.enabled": true,
         "python.linting.flake8Enabled": true,
@@ -87,5 +90,11 @@
                 "path": "${env:HOME}/.apps/CentOSLinux7/bin/zsh",
             }
         },
+        "docwriter.progress.trackMethods": false,
+        "docwriter.progress.trackFunctions": false,
+        "black-formatter.path": [
+            "/dev/shm/mscham/fgsim/bin/black"
+        ],
+        "black-formatter.importStrategy": "fromEnvironment",
     },
 }
