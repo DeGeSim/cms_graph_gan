@@ -1,10 +1,11 @@
 #!/usr/bin/bash
 ulimit -n `ulimit -H -n`
 
-RAMPATH=/dev/shm/$USER/fgsim
-TIMESTAMP_FILE=$RAMPATH/tsfile
-LOCKFILE=/dev/shm/$USER-ramenv.lock
-TARBALL=~/fgsim/env.tar
+export RAMPATH=/dev/shm/$USER/fgsim
+export TIMESTAMP_FILE=$RAMPATH/tsfile
+export LOCKFILE=/dev/shm/$USER-ramenv.lock
+export TARBALL=~/fgsim/env.tar
+export CONDA_DIR=~/dust/miniconda
 
 # # Get the file descript and lock the file
 # LOCKPATH=/dev/shm/${USER}/ramenv.lock
@@ -39,7 +40,6 @@ if alias ls &>/dev/null ; then
 fi
 
 # Init conda and mamba by hand
-export CONDA_DIR=~/beegfs/conda/miniconda
 eval "$(${CONDA_DIR}/bin/conda shell.bash hook 2> /dev/null)"
 source ${CONDA_DIR}/etc/profile.d/mamba.sh
 mamba activate fgsim

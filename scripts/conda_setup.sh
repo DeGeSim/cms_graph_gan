@@ -1,7 +1,7 @@
 #!/bin/env bash
 set -ex
 
-export CONDA_DIR=~/beegfs/conda/miniconda
+export CONDA_DIR=~/dust/miniconda
 export RAMDIR=/dev/shm/${USER}/fgsim
 export TARBALL=~/fgsim/env.tar
 export PYTHON_VERSION=3.10
@@ -19,7 +19,10 @@ fi
 if [[ ! -f  ${CONDA_DIR}/bin/activate ]]; then
     mkdir -p ${CONDA_DIR}
     echo "Installing Conda"
-    curl https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh | sh -b -s -p ${CONDA_DIR}
+    tmpfile="$(mktemp).sh"
+    wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh  -O ${tmpfile}
+    bash ${tmpfile} -b -s -p ${CONDA_DIR}
+    rm ${tmpfile}
 fi
 
 set +x
