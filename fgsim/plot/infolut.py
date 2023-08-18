@@ -1,6 +1,7 @@
 from typing import Dict, Optional, Union
 
 import numpy as np
+from caloutils import calorimeter
 
 from fgsim.config import conf
 
@@ -46,9 +47,12 @@ def var_to_bins(v: Union[str, int]) -> Optional[np.ndarray]:
         and "calochallange2" in conf.loader.dataset_path
     ):
         return {
-            "E": np.linspace(0, 6000, 100 + 1) - 0.5,  # E
-            "z": np.linspace(0, 45, 45 + 1) - 0.5,  # z
-            "alpha": np.linspace(0, 16, 16 + 1) - 0.5,  # alpha
-            "r": np.linspace(0, 9, 9 + 1) - 0.5,  # r
+            "E": np.linspace(0, 6000, 100 + 1) - 0.5,
+            "z": np.linspace(0, calorimeter.num_z, calorimeter.num_z + 1) - 0.5,
+            "alpha": (
+                np.linspace(0, calorimeter.num_alpha, calorimeter.num_alpha + 1)
+                - 0.5
+            ),
+            "r": np.linspace(0, calorimeter.num_r, calorimeter.num_r + 1) - 0.5,
         }[vname]
     return None

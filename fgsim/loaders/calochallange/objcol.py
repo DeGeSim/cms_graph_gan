@@ -4,6 +4,7 @@ from typing import List, Tuple
 import h5py
 import numpy as np
 import torch
+from caloutils import calorimeter
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import (
     FunctionTransformer,
@@ -57,17 +58,16 @@ def read_chunks(
 
 def contruct_graph_from_row(chk: Tuple[torch.Tensor, torch.Tensor]) -> Data:
     E, shower = chk[0].clone(), chk[1].clone()
-    num_z = 45
-    num_alpha = 16
-    num_r = 9
-    shower = shower.reshape(num_z, num_alpha, num_r)
+
+    shower = shower.reshape(*calorimeter.dims)
     idxs = torch.where(shower)
     h_energy = shower[idxs]
     z, alpha, r = idxs
 
     pc = torch.stack([h_energy, z, alpha, r]).T
     assert not pc.isnan().any()
-    num_hits = torch.tensor(idxs[0].shape).float()
+    # clip to the maximum number our model can generate
+    num_hits = torch.tensor(idxs[0].shape).clip(None, conf.loader.n_points).float()
     res = Data(x=pc, y=torch.concat([E, num_hits, E / num_hits]).reshape(1, 3))
     return res
 

@@ -8,9 +8,17 @@ import sys
 
 import caloutils
 
+from fgsim.config import conf
+
 from .postprocess import postprocess
 
-caloutils.init_calorimeter("cc_ds2")
+if "dataset_2" in conf.loader.dataset_glob:
+    caloutils.init_calorimeter("cc_ds2")
+elif "dataset_3" in conf.loader.dataset_glob:
+    caloutils.init_calorimeter("cc_ds3")
+else:
+    raise Exception("No such dataset")
+
 if "pytest" not in sys.modules:
     from torch_geometric.data import Batch
 

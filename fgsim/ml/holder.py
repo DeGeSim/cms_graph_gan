@@ -152,9 +152,9 @@ class Holder:
         assert sim_batch.y.shape[-1] == len(conf.loader.y_features)
         assert sim_batch.x.shape[-1] == len(conf.loader.x_features)
         check_tensor(sim_batch.x, sim_batch.y)
-        assert (
-            sim_batch.n_pointsv == (sim_batch.ptr[1:] - sim_batch.ptr[:-1])
-        ).all()
+        assert torch.allclose(
+            sim_batch.n_pointsv.long(), (sim_batch.ptr[1:] - sim_batch.ptr[:-1])
+        )
 
     def pass_batch_through_model(
         self,

@@ -8,13 +8,13 @@ from sklearn.utils.validation import FLOAT_DTYPES
 class IdxToScale(MinMaxScaler):
     """Same as MinMaxScaler but fits min to the floor and Max to the roof"""
 
-    # _parameter_constraints: dict = {
-    #     "feature_range": [tuple],
-    #     "copy": ["boolean"],
-    #     "clip": ["boolean"],
-    # }
+    _parameter_constraints: dict = {
+        "feature_range": [tuple],
+        "copy": ["boolean"],
+        "clip": ["boolean"],
+    }
 
-    def __init__(self, feature_range=(0, 1), *, copy=True, clip=False):
+    def __init__(self, feature_range=(0, 1), *, copy=True, clip=True):
         self.feature_range = feature_range
         self.copy = copy
         self.clip = clip

@@ -1,6 +1,6 @@
 import numpy as np
 import torch
-from caloutils.distances import calc_cdf_dist, calc_hist_dist, calc_sw1_dist
+from caloutils.distances import calc_ecdf_dist, calc_hist_dist, calc_sw1_dist
 from torch_geometric.data import Batch
 
 from fgsim.config import conf
@@ -45,13 +45,16 @@ def run_dists(sim_batch, gen_batch, k, bins=None):
         idx = torch.randperm(real.shape[0])[: fake.shape[0]]
         real = real[idx]
 
-    dists_d = {
-        distname: fct(r=real, f=fake, bins=bins)
-        for distname, fct in zip(
-            ["cdf", "sw1", "histd"],
-            [calc_cdf_dist, calc_sw1_dist, calc_hist_dist],
-        )
-    }
+    dists_d = {}
+    for distname, fct in zip(
+        ["cdf", "sw1", "histd"],
+        [calc_ecdf_dist, calc_sw1_dist, calc_hist_dist],
+    ):
+        if distname == "histd":
+            dists_d[distname] = fct(r=real, f=fake, bins=bins)
+        else:
+            dists_d[distname] = fct(r=real, f=fake)
+
     res_d = {}
     for dname, darr in dists_d.items():
         if len(ftxnames) == 0:
@@ -94,14 +97,15 @@ def marginalEw(
     kwargs = {
         "r": real,
         "f": fake,
-        "bins": [torch.tensor(var_to_bins(i)).float() for i in range(1, 4)],
         "rw": rw,
         "fw": fw,
     }
 
-    cdfdist = calc_cdf_dist(**kwargs)
+    cdfdist = calc_ecdf_dist(**kwargs)
     sw1dist = calc_sw1_dist(**kwargs)
-    histdist = calc_hist_dist(**kwargs)
+    histdist = calc_hist_dist(
+        **kwargs, bins=[torch.tensor(var_to_bins(i)).float() for i in range(1, 4)]
+    )
     distnames = ["cdf", "sw1", "histd"]
     distarrays = [cdfdist, sw1dist, histdist]
     for iftx, k in enumerate(conf.loader.x_features[1:]):

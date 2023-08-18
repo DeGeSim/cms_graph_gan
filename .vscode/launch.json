@@ -4,11 +4,12 @@
         {
             "args": [
                 "--hash",
-                "1628a88",
+                "4dc693f",
                 // "--ray",
                 // "--debug",
-                // "train"
-                "test"
+                "train"
+                // "generate"
+                // "test"
                 // "implant_checkpoint"
             ],
             "cwd": "/home/mscham/fgsim",
@@ -21,7 +22,7 @@
         {
             "args": [
                 "--tag",
-                "cc_marsw1",
+                "cc3",
                 "--debug",
                 "train"
             ],
@@ -35,7 +36,7 @@
         {
             "args": [
                 "--tag",
-                "cc_marsw1",
+                "cc3",
                 "--debug",
                 "test"
             ],
@@ -49,12 +50,12 @@
         {
             "args": [
                 "--tag",
-                "cc_marsw1",
+                "cc3",
                 "--debug",
                 "preprocess"
             ],
             "cwd": "/home/mscham/fgsim",
-            // "justMyCode": false,
+            "justMyCode": false,
             "module": "fgsim",
             "name": "preprocess",
             "request": "launch",
@@ -77,7 +78,7 @@
             "type": "python",
             "args": [
                 "--tag",
-                "cc_marsw1",
+                "cc3",
                 "--debug",
                 "train"
             ],
@@ -90,7 +91,7 @@
             "type": "python",
             "args": [
                 "--tag",
-                "cc_marsw1",
+                "cc3",
                 // "--debug",
                 "setup"
             ],
@@ -103,7 +104,7 @@
             "type": "python",
             "args": [
                 "--tag",
-                "cc_marsw1",
+                "cc3",
                 // "--debug",
                 "generate"
             ],

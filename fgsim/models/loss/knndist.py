@@ -1,5 +1,6 @@
 import torch
-from caloutils.distances import energy_distance, scale_b_to_a
+from caloutils.distances import energy_distance
+from caloutils.utils import scale_b_to_a
 from torch_geometric.data import Batch
 from torch_geometric.nn import global_add_pool, knn_graph
 

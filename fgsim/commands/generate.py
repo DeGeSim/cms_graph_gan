@@ -97,7 +97,7 @@ def __write_dataset(holder, dspath):
     x_l = []
     E_l = []
 
-    for sim_batch in tqdm(loader.eval_batches):
+    for sim_batch in tqdm(loader.eval_batches, miniters=100, mininterval=5.0):
         sim_batch = sim_batch.clone().to(device)
         batch_size = conf.loader.batch_size
         cond_gen_features = conf.loader.cond_gen_features

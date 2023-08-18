@@ -40,7 +40,6 @@ def readpath(
     end: int,
 ) -> Tuple[torch.Tensor, torch.Tensor]:
     particle_data, jet_data = get_jn(fn)
-    # with h5py.File(fn, "r") as f:
     res = (
         torch.tensor(jet_data[start:end], dtype=torch.float),
         torch.tensor(particle_data[start:end], dtype=torch.float),
