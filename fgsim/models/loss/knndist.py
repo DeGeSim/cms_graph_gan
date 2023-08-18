@@ -51,7 +51,7 @@ class LossGen:
     def nndist(self, batch, slice):
         x = batch.x[:, slice]
         batchidx = batch.batch
-        ei = knn_graph(x.clone(), k=3, batch=batchidx, loop=False)
+        ei = knn_graph(x.clone(), k=1, batch=batchidx, loop=False)
         delta = (x[ei[0]] - x[ei[1]]).abs().mean(1)
         delta_aggr = global_add_pool(delta, ei[1])
         return delta_aggr
