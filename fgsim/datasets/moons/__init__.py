@@ -7,7 +7,6 @@ should be passed the qfseq.
 import sys
 
 if "pytest" not in sys.modules:
-
     from torch_geometric.data import Batch
 
     from fgsim.io.loader import LoaderInfo
