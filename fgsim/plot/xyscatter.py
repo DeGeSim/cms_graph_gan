@@ -8,7 +8,6 @@ import torch
 from matplotlib.figure import Figure
 
 from fgsim.plot.binborders import bounds_wo_outliers
-from fgsim.utils.torchtonp import wrap_torch_to_np
 
 np.set_printoptions(formatter={"float_kind": "{:.3g}".format})
 
@@ -22,7 +21,6 @@ def to_np(arr) -> np.ndarray:
         raise TypeError
 
 
-@wrap_torch_to_np
 def gausstr(sim: np.ndarray, gen: np.ndarray):
     mean_sim = np.around(np.mean(sim, axis=0), 2)
     cov_sim = str(np.around(np.cov(sim, rowvar=0), 2)).replace("\n", "")
@@ -82,7 +80,6 @@ def xyscatter(
     return g.figure
 
 
-@wrap_torch_to_np
 def xyscatter_faint(
     sim: np.ndarray,
     gen: np.ndarray,
@@ -141,7 +138,6 @@ def xyscatter_faint(
     return g.figure
 
 
-@wrap_torch_to_np
 def simranges(sim: np.ndarray):
     xrange = bounds_wo_outliers(sim[:, 0])
     yrange = bounds_wo_outliers(sim[:, 1])

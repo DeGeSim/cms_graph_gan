@@ -5,13 +5,11 @@ import mplhep
 import numpy as np
 from matplotlib.axes import Axes
 from matplotlib.figure import Figure
-
-from fgsim.utils.torchtonp import wrap_torch_to_np
+from matplotlib.ticker import ScalarFormatter
 
 from .binborders import binborders_wo_outliers, bincenters
 
 
-@wrap_torch_to_np
 def ratioplot(
     sim: np.ndarray,
     gen: np.ndarray,
@@ -28,6 +26,13 @@ def ratioplot(
     gen_hist, _ = np.histogram(gen, bins=bins, weights=genw)
     sim_error = np.sqrt(sim_hist)
     gen_error = np.sqrt(gen_hist)
+
+    scale_factor = 1  # int(np.floor(np.log10(max(sim_hist.max(), gen_hist.max()))))
+
+    sim_hist = sim_hist * (10**-scale_factor)
+    gen_hist = gen_hist * (10**-scale_factor)
+    sim_error = sim_error * (10**-scale_factor)
+    gen_error = gen_error * (10**-scale_factor)
 
     plt.close("all")
     ax: Axes
@@ -52,25 +57,31 @@ def ratioplot(
         ax.vlines(
             x=bins[0] - factor * delta,
             ymin=0,
-            ymax=(arr < bins[0]).sum(),
+            ymax=(arr < bins[0]).sum() * (10**-scale_factor),
             color=color,
             **kwstyle,
         )
         ax.vlines(
             x=bins[-1] + factor * delta,
             ymin=0,
-            ymax=(arr > bins[-1]).sum(),
+            ymax=(arr > bins[-1]).sum() * (10**-scale_factor),
             color=color,
             **kwstyle,
         )
 
     if (sim_hist > (sim_hist.max() / 10)).mean() < 0.1:
         ax.set_yscale("log")
-    ax.set_ylabel("Frequency", fontsize=16)
+    else:
+        formatter = ScalarFormatter(useMathText=True)
+        formatter.set_scientific(True)
+        formatter.set_powerlimits((-1, 1))
+        ax.yaxis.set_major_formatter(formatter)
+        ax.yaxis.get_offset_text().set_fontsize(13)
+    ax.set_ylabel("Counts/Bin", fontsize=17)
 
     ax.legend(fontsize=16, loc="best")
-    ax.tick_params(axis="both", which="major", labelsize=12)
-    ax.tick_params(axis="both", which="minor", labelsize=10)
+    ax.tick_params(axis="both", which="major", labelsize=14)
+    ax.tick_params(axis="both", which="minor", labelsize=11)
 
     # ratioplot
     with np.errstate(divide="ignore", invalid="ignore"):
@@ -94,7 +105,7 @@ def ratioplot(
         markersize=2,
     )
 
-    axrat.set_ylim(0.5, 1.5)
+    axrat.set_ylim(0.0, 1.52)
     axrat.xaxis.tick_top()
     for iax in [ax, axrat]:
         for spline in iax.spines.values():
@@ -102,7 +113,7 @@ def ratioplot(
             spline.set_color("black")
     if simw is not None:
         title += " weighted"
-    fig.suptitle(title, fontsize=23)
+    fig.suptitle(title, fontsize=28)
     plt.tight_layout()
     # fig.savefig("wd/fig.pdf")
     return fig

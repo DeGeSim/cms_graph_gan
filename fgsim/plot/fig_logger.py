@@ -26,7 +26,7 @@ class FigLogger:
         self.epoch = epoch
 
     def __call__(self, figure: Figure, filename):
-        figure.tight_layout()
+        figure.set_tight_layout(True)
         texts = [
             f"@{conf.tag}",
             f"Step {self.step}",
@@ -61,5 +61,5 @@ class FigLogger:
             step=self.step,
             epoch=self.epoch,
         )
-        logger.info(filename)
+        logger.debug(filename)
         plt.close(figure)

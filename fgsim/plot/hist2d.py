@@ -2,19 +2,16 @@ from typing import Optional
 
 import matplotlib.pyplot as plt
 import numpy as np
-import seaborn as sns
 from matplotlib.axes import Axes
 from matplotlib.colors import LogNorm, Normalize
 from matplotlib.figure import Figure
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 from fgsim.plot.binborders import binborders_wo_outliers, chip_to_binborders
-from fgsim.utils.torchtonp import wrap_torch_to_np
 
 np.set_printoptions(formatter={"float_kind": "{:.3g}".format})
 
 
-@wrap_torch_to_np
 def hist2d(
     sim: np.ndarray,
     gen: np.ndarray,
@@ -30,7 +27,6 @@ def hist2d(
     plt.close("all")
     plt.cla()
     plt.clf()
-    sns.set()
     fig: Figure
     sim_axes: Axes
     gen_axes: Axes
@@ -79,12 +75,10 @@ def hist2d(
     if step is not None:
         title += f"\nStep {step}"
     fig.suptitle(title)
-    fig.tight_layout()
 
     cax = make_axes_locatable(plt.gca()).append_axes("right", "5%", pad="3%")
 
     fig.colorbar(mesh, cax)
-    fig.tight_layout()
     # fig.savefig("wd/fig.pdf")
     return fig
 
