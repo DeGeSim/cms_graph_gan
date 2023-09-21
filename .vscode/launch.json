@@ -22,9 +22,9 @@
         {
             "args": [
                 "--tag",
-                "testjn150",
-                // "--debug",
-                "setup"
+                "jn_ccconf_equivarfixed",
+                "--debug",
+                "train"
             ],
             "cwd": "/home/mscham/fgsim",
             // "justMyCode": false,

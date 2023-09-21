@@ -110,8 +110,8 @@ ffn:
   norm: batchnorm
   dropout: 0.0
   equallr: false
-  activation_first: False
-  final_linear: False
+  activation_first: True
+  final_linear: True
 
 layer_options:
   DeepConv:
@@ -137,7 +137,6 @@ model_param_options:
     sample_until_full: False
     dim_red_in_branching: True
     n_global: 10
-    n_cond: ${sum:${loader.cond_gen_features}}
     pruning: "cut"
     branching_param:
       mode: "mat"
@@ -147,7 +146,7 @@ model_param_options:
       res_mean: False
       res_final_layer: True
       dim_red_skip: False
-      gated_cond: False
+      gated_cond: True
     connect_all_ancestors: True
     ancestor_mpl:
       n_mpl: 1
