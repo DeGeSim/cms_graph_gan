@@ -15,7 +15,7 @@ class ScalerBase:
         files: List[Path],
         len_dict: Dict,
         read_chunk: Callable,
-        transform_wo_scaling: Callable,
+        events_to_batch: Callable,
         transfs_x,
         transfs_y,
     ) -> None:
@@ -24,33 +24,30 @@ class ScalerBase:
         self.transfs_x = transfs_x
         self.transfs_y = transfs_y
         self.read_chunk = read_chunk
-        self.transform_wo_scaling = transform_wo_scaling
+        self.events_to_batch = events_to_batch
         self.scalerpath = Path(conf.path.dataset_processed) / "scaler.gz"
 
         assert len(self.transfs_x) == len(conf.loader.x_features)
         assert len(self.transfs_y) == len(conf.loader.y_features)
 
-        if conf.command != "preprocess" and conf.loader.preprocess_training:
-            if not self.scalerpath.is_file():
-                raise FileNotFoundError(f"No scalar found at {self.scalerpath}")
-            else:
-                self.transfs_x, self.transfs_y = joblib.load(self.scalerpath)
+        if not self.scalerpath.is_file():
+            self.save_scaler()
+        else:
+            self.transfs_x, self.transfs_y = joblib.load(self.scalerpath)
 
     def fit(self, saveplots=False):
         assert self.len_dict[self.files[0]] >= conf.loader.scaling_fit_size
         chk = self.read_chunk(
             [(Path(self.files[0]), 0, conf.loader.scaling_fit_size)]
         )
-        event_list = [self.transform_wo_scaling(e) for e in chk]
+        batch = self.events_to_batch(chk)
 
         # The features need to be converted to numpy immediatly
         # otherwise the queuflow afterwards doesnt work
         for x_or_y in ["x", "y"]:
-            pcs = np.vstack([e[x_or_y].clone().numpy() for e in event_list]).astype(
-                "float64"
-            )
-            if hasattr(event_list[0], "mask"):
-                mask = np.hstack([e.mask.clone().numpy() for e in event_list])
+            pcs = batch[x_or_y].clone().numpy().astype("float64")
+            if hasattr(batch, "mask"):
+                mask = np.hstack([e.mask.clone().numpy() for e in batch])
                 pcs = pcs[mask]
 
             if saveplots:

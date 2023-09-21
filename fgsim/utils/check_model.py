@@ -73,4 +73,5 @@ def check_chain_for_nans(chain):
 #         torch.tensor([2, 2]),
 #     )
 # )
-#  should raise ERROR - Nan in elem number 0 in the chain of type <class 'torch.Tensor'>  .
+#  should raise ERROR - Nan in elem number 0 in the
+#  chain of type <class 'torch.Tensor'>  .

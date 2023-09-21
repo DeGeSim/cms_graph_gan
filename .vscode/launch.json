@@ -4,9 +4,9 @@
         {
             "args": [
                 "--hash",
-                "4dc693f",
+                "2e16287",
                 // "--ray",
-                // "--debug",
+                "--debug",
                 "train"
                 // "generate"
                 // "test"
@@ -22,9 +22,9 @@
         {
             "args": [
                 "--tag",
-                "cc3",
-                "--debug",
-                "train"
+                "testjn150",
+                // "--debug",
+                "setup"
             ],
             "cwd": "/home/mscham/fgsim",
             // "justMyCode": false,
@@ -36,7 +36,7 @@
         {
             "args": [
                 "--tag",
-                "cc3",
+                "testjn150",
                 "--debug",
                 "test"
             ],
@@ -50,7 +50,7 @@
         {
             "args": [
                 "--tag",
-                "cc3",
+                "testjn150",
                 "--debug",
                 "preprocess"
             ],
@@ -72,64 +72,15 @@
         },
         {
             "cwd": "/home/mscham/fgsim",
-            "name": "file",
-            "request": "launch",
-            "program": "fgsim/__main__.py",
-            "type": "python",
-            "args": [
-                "--tag",
-                "cc3",
-                "--debug",
-                "train"
-            ],
-        },
-        {
-            "cwd": "/home/mscham/fgsim",
             "name": "setup",
             "request": "launch",
             "program": "fgsim/__main__.py",
             "type": "python",
             "args": [
                 "--tag",
-                "cc3",
+                "testjn150",
                 // "--debug",
                 "setup"
-            ],
-        },
-        {
-            "cwd": "/home/mscham/fgsim",
-            "name": "setup",
-            "request": "launch",
-            "program": "fgsim/__main__.py",
-            "type": "python",
-            "args": [
-                "--tag",
-                "cc3",
-                // "--debug",
-                "generate"
-            ],
-        },
-        {
-            "cwd": "/home/mscham/fgsim",
-            "name": "discstudies",
-            "request": "launch",
-            "program": "/home/mscham/standalone_scripts/discstudies.py",
-            "type": "python",
-            "args": [],
-            "justMyCode": false
-        },
-        {
-            "name": "run.py",
-            "type": "python",
-            "request": "launch",
-            "cwd": "/home/mscham/fgsim",
-            "program": "/home/mscham/fgsim/scripts/run.py",
-            "console": "integratedTerminal",
-            "args": [
-                "--hash",
-                "86e1439",
-                "--remote",
-                "test"
             ],
         },
         {

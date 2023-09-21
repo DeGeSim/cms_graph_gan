@@ -4,7 +4,7 @@ import torch
 from tqdm import tqdm
 
 from fgsim.config import conf, device
-from fgsim.datasets import Dataset as QueuedDataset
+from fgsim.datasets import Dataset
 from fgsim.ml.early_stopping import early_stopping
 from fgsim.ml.holder import Holder
 from fgsim.ml.validation import validate
@@ -16,7 +16,7 @@ class Trainer:
         self.holder = holder
         self.train_log: TrainLog = self.holder.train_log
 
-        self.loader: QueuedDataset = QueuedDataset()
+        self.loader = Dataset()
         self.val_interval = conf.training.val_interval
 
         if torch.cuda.is_available():

@@ -247,7 +247,7 @@ class Holder:
 
     def postprocess(self, batch: Batch) -> Batch:
         if conf.dataset_name == "jetnet" and conf.loader.n_points == 150:
-            from fgsim.datasets.jetnet.readin import norm_pt_sum
+            from fgsim.datasets.jetnet.post_gen_transfrom import norm_pt_sum
 
             pt_pos = conf.loader.x_ftx_energy_pos
             pts = batch.x[..., pt_pos].clone()

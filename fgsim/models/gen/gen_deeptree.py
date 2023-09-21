@@ -5,6 +5,7 @@ import torch
 import torch.nn as nn
 from caloutils.processing import nhits_in_same_cell
 from caloutils.processing.utils import scatter_sort
+from caloutils.utils.batch import ptr_from_batchidx
 from omegaconf import OmegaConf
 from torch_geometric.data import Batch
 
@@ -18,7 +19,6 @@ from fgsim.models.common.deeptree import (
 )
 from fgsim.monitoring import logger
 from fgsim.utils import check_tensor
-from fgsim.utils.batch import ptr_from_batchidx
 
 # from fgsim.plot.model_plotter import model_plotter
 

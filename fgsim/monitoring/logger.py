@@ -1,20 +1,19 @@
 import logging
 from logging.handlers import RotatingFileHandler
 
-# from multiprocessing_logging import install_mp_handler
-from queueflow.logger import logger as qf_logger
 from rich.logging import RichHandler
 from tqdm.contrib.logging import logging_redirect_tqdm
 
 from fgsim.config import conf
 
 logger = logging.getLogger("fgsim")
+logger.setLevel(logging.DEBUG)
 
 
 def init_logger():
     if not logger.handlers:
         log_path = f"{conf.path.run_path}/{conf.command}.log"
-        loader_log = f"{conf.path.run_path}/{conf.command}_loader.log"
+
         format = logging.Formatter(
             fmt="%(asctime)s - %(levelname)s - %(message)s",
             datefmt="%y-%m-%d %H:%M",
@@ -25,33 +24,27 @@ def init_logger():
         )
 
         stream_handler = RichHandler()
-        # stream_handler = RichHandler(highlighter=NullHighlighter())
-        # stream_handler = logging.StreamHandler()
         stream_handler.setFormatter(format_plain)
-        logger.setLevel(logging.DEBUG if conf.debug else conf.loglevel)
+        stream_handler.setLevel(logging.DEBUG if conf.debug else conf.loglevel)
         logger.addHandler(stream_handler)
 
         if not conf.debug:
             file_handler = RotatingFileHandler(filename=log_path, backupCount=10)
             file_handler.setFormatter(format)
             file_handler.setLevel(logging.DEBUG)
+            file_handler.doRollover()
             logger.addHandler(file_handler)
 
         # qf logger
-        qf_stream_handler = RichHandler()
-        # qf_stream_handler = RichHandler(highlighter=NullHighlighter())
-        # qf_stream_handler = logging.StreamHandler()
-        qf_stream_handler.setFormatter(format_plain)
-        qf_stream_handler.setLevel(conf.loglevel_qf)
-        qf_logger.addHandler(qf_stream_handler)
-        if not conf.debug:
-            qf_file_handler = RotatingFileHandler(
-                filename=loader_log, backupCount=10
-            )
-            qf_file_handler.setFormatter(format)
-            qf_file_handler.setLevel(min(logging.INFO, conf.loglevel_qf))
-            qf_logger.addHandler(qf_file_handler)
+        # qf_stream_handler = RichHandler()
+        # qf_stream_handler.setFormatter(format_plain)
+        # qf_stream_handler.setLevel(conf.loglevel_qf)
+        # if not conf.debug:
+        #     loader_log = f"{conf.path.run_path}/{conf.command}_loader.log"
+        #     qf_file_handler = RotatingFileHandler(
+        #         filename=loader_log, backupCount=10
+        #     )
+        #     qf_file_handler.setFormatter(format)
+        #     qf_file_handler.setLevel(min(logging.INFO, conf.loglevel_qf))
 
-        logging_redirect_tqdm([logger, qf_logger])
-        # install_mp_handler(logger)
-        # install_mp_handler(qf_logger)
+        logging_redirect_tqdm([logger])

@@ -7,12 +7,11 @@ import torch
 from matplotlib.figure import Figure
 from omegaconf import DictConfig
 from torch.utils.tensorboard import SummaryWriter
-from typeguard import typechecked
 
 import wandb
 from fgsim.config import conf
 from fgsim.monitoring import logger
-from fgsim.monitoring.monitor import exp_orga_wandb
+from fgsim.monitoring.experiment_organizer import exp_orga_wandb
 
 
 class TrainLog:
@@ -95,7 +94,6 @@ class TrainLog:
             for name, value in md.items():
                 self.writer.add_scalar(name, value, step, new_style=True)
 
-    @typechecked
     def _log_metrics_wandb(self, md: dict, step: int, epoch: int):
         if self.use_wandb:
             self._set_wandb_state(step, epoch)
@@ -114,7 +112,7 @@ class TrainLog:
     def flush(self):
         if self.use_wandb:
             if len(self._wandb_tmp):
-                logger.info("Wandb flush")
+                logger.debug("Wandb flush")
                 if conf.command == "test":
                     self._flush_test_wandb()
                 else:
@@ -145,7 +143,6 @@ class TrainLog:
         #         case _:
         #             pass
 
-    @typechecked
     def log_figure(
         self,
         figure_name: str,

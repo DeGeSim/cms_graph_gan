@@ -4,7 +4,7 @@ import torch
 from torch_geometric.data import Batch
 
 from fgsim.config import conf
-from fgsim.utils.jetnetutils import to_stacked_mask
+from fgsim.datasets.jetnet.utils import to_stacked_mask
 
 
 def w1m(gen_batch: Batch, sim_batch: Batch, **kwargs) -> tuple[float, float]:

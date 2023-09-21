@@ -11,7 +11,7 @@ import numpy as np
 import torch
 
 from fgsim.config import conf, device
-from fgsim.datasets import Dataset as QueuedDataset
+from fgsim.datasets import Dataset
 from fgsim.ml.eval import eval_res_d, gen_res_from_sim_batches
 from fgsim.ml.holder import Holder
 from fgsim.monitoring import logger
@@ -97,7 +97,7 @@ def get_testing_datasets(holder: Holder, best_or_last) -> TestDataset:
 
     if reprocess:
         # Make sure the batches are loaded
-        loader = QueuedDataset()
+        loader = Dataset()
 
         # Check if we need to rerun the model
         # if yes, pickle it
