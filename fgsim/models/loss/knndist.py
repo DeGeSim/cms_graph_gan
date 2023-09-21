@@ -5,7 +5,6 @@ from torch_geometric.data import Batch
 from torch_geometric.nn import global_add_pool, knn_graph
 
 from fgsim.config import conf
-from fgsim.io.sel_loader import scaler
 
 eidx = conf.loader.x_ftx_energy_pos
 
@@ -41,12 +40,14 @@ class LossGen:
 
         return loss
 
-    def inv_scale_hitE(self, batch):
-        return torch.tensor(
-            scaler.transfs_x[eidx].inverse_transform(
-                batch.x[:, [eidx]].detach().cpu().numpy()
-            )
-        ).squeeze()
+    # def inv_scale_hitE(self, batch):
+    #     from fgsim.io.sel_loader import scaler
+
+    #     return torch.tensor(
+    #         scaler.transfs_x[eidx].inverse_transform(
+    #             batch.x[:, [eidx]].detach().cpu().numpy()
+    #         )
+    #     ).squeeze()
 
     def nndist(self, batch, slice):
         x = batch.x[:, slice]
