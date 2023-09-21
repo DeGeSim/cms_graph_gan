@@ -3,7 +3,7 @@ import shutil
 from glob import glob
 
 import wandb
-from fgsim.monitoring.monitor import exp_orga_wandb
+from fgsim.monitoring.experiment_organizer import exp_orga_wandb
 from fgsim.utils.cli import get_args
 
 

@@ -38,3 +38,6 @@ class ExperimentOrganizer:
         ) as db:
             keys = list(db.keys())
         return keys
+
+
+exp_orga_wandb = ExperimentOrganizer("wandb")
