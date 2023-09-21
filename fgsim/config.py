@@ -4,6 +4,7 @@ from glob import glob
 from pathlib import Path
 
 import numpy as np
+import torch
 from matplotlib import pyplot as plt
 from omegaconf import DictConfig, OmegaConf
 
@@ -12,14 +13,6 @@ from fgsim.utils.oc_resolvers import register_resolvers
 from fgsim.utils.oc_utils import dict_to_keylist, gethash, removekeys
 
 register_resolvers()
-
-
-defaultconf = OmegaConf.load(Path("~/fgsim/fgsim/default.yaml").expanduser())
-# Load the default settings, overwrite them
-# witht the tag-specific settings and then
-# overwrite those with cli arguments.
-conf: DictConfig = defaultconf.copy()
-hyperparameters: DictConfig = DictConfig({})
 
 
 def compute_conf(default, *confs):
@@ -35,11 +28,11 @@ def compute_conf(default, *confs):
                 f" Difference:\n{c_key_set - default_key_set}"
             )
 
-    newconf = OmegaConf.merge(*(default, *confs))
+    conf = OmegaConf.merge(*(default, *confs))
 
     # remove the dependency on hash and loader hash to be able to resolve
     conf_without_paths = removekeys(
-        newconf,
+        conf,
         [
             "path",
         ],
@@ -51,11 +44,11 @@ def compute_conf(default, *confs):
     # dataset is safed to ensure the parameters dont change
     # Exclude the keys that do not affect the training
     exclude_keys = ["preprocess_training", "debug"] + [
-        x for x in newconf["loader"] if "n_workers" in x
+        x for x in conf["loader"] if "n_workers" in x
     ]
 
     loader_params = removekeys(conf_without_paths["loader"], exclude_keys)
-    newconf["loader_hash"] = gethash(loader_params)
+    conf["loader_hash"] = gethash(loader_params)
 
     hyperparameters = removekeys(
         conf_without_paths,
@@ -70,20 +63,27 @@ def compute_conf(default, *confs):
             "ray",
             "hash",
         ]
-        + [key for key in newconf.keys() if key.endswith("_options")],
+        + [key for key in conf.keys() if key.endswith("_options")],
     )
 
-    newconf["hash"] = gethash(hyperparameters)
+    conf["hash"] = gethash(hyperparameters)
     # Infer the parameters here
-    OmegaConf.resolve(newconf)
-    for k in newconf.path:
-        newconf.path[k] = str(Path(newconf.path[k]).expanduser())
+    OmegaConf.resolve(conf)
+    for k in conf.path:
+        conf.path[k] = str(Path(conf.path[k]).expanduser())
     # remove the options:
-    for key in list(newconf.keys()):
+    for key in list(conf.keys()):
         if key.endswith("_options"):
-            del newconf[key]
-    conf.update(newconf)
-    return newconf, hyperparameters
+            del conf[key]
+    return conf, hyperparameters
+
+
+defaultconf = OmegaConf.load(Path("fgsim/default.yaml").expanduser())
+# Load the default settings, overwrite them
+# witht the tag-specific settings and then
+# overwrite those with cli arguments.
+conf: DictConfig = defaultconf.copy()
+hyperparameters: DictConfig({})
 
 
 def parse_arg_conf(args=None):
@@ -101,8 +101,10 @@ def parse_arg_conf(args=None):
             raise IndexError(f"No experiement with hash {args.hash} is set up.")
         conf = OmegaConf.load(folder / "conf.yaml")
         hyperparameters = OmegaConf.load(folder / "hyperparameters.yaml")
-        conf["debug"] = args.debug
-        conf["command"] = args.command
+
+        conf["command"] = str(args.command)
+
+        return conf, hyperparameters
     else:
         fn = f"wd/{args.tag}/conf.yaml"
         if os.path.isfile(fn):
@@ -113,31 +115,25 @@ def parse_arg_conf(args=None):
             else:
                 raise FileNotFoundError(f"Tag {args.tag} has no conf.yaml file.")
         conf, hyperparameters = compute_conf(defaultconf, tagconf, vars(args))
-    if conf.command in ["train", "test", "generate"]:
-        setup_ml()
-    return conf, hyperparameters
-
-
-device = None
-
-
-np.set_printoptions(formatter={"float_kind": "{:.3g}".format})
-#  np.seterr(all="raise")
-plt.rcParams["savefig.bbox"] = "tight"
-# plt.rcParams["backend"] = "Agg"
-plt.rcParams["figure.dpi"] = 150
-
-
-def setup_ml():
-    import torch
 
     torch.manual_seed(conf.seed)
     np.random.seed(conf.seed)
     random.seed(conf.seed)
+    return conf, hyperparameters
 
+
+def get_device():
     # Select the CPU/GPU
-    global device
     if torch.cuda.is_available():
-        device = torch.device("cuda:0")
+        device = torch.device("cuda:" + str(torch.cuda.device_count() - 1))
     else:
         device = torch.device("cpu")
+    return device
+
+
+device = get_device()
+
+plt.rcParams["savefig.bbox"] = "tight"
+plt.rcParams["backend"] = "Agg"
+plt.rcParams["figure.dpi"] = 150
+np.set_printoptions(formatter={"float_kind": "{:.3g}".format})
