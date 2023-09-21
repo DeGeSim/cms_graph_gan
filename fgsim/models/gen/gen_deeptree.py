@@ -27,7 +27,6 @@ class ModelClass(nn.Module):
     def __init__(
         self,
         n_global: int,
-        n_cond: int,
         ancestor_mpl: Dict,
         child_mpl: Dict,
         branching_param: Dict,
@@ -40,7 +39,7 @@ class ModelClass(nn.Module):
     ):
         super().__init__()
         self.n_global = n_global
-        self.n_cond = n_cond
+        self.n_cond = sum(conf.loader.cond_gen_features)
         self.batch_size = conf.loader.batch_size
         self.final_layer_scaler = final_layer_scaler
         self.ancestor_mpl = ancestor_mpl
