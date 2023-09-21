@@ -4,8 +4,6 @@ import signal
 import sys
 import traceback
 
-from queueflow import Sequence
-
 import wandb
 from fgsim.config import conf, device
 from fgsim.ml import Holder, Trainer
@@ -16,7 +14,7 @@ from fgsim.utils.senderror import send_error, send_exit
 def training_procedure() -> None:
     holder = Holder(device)
     trainer = Trainer(holder)
-    term_handler = SigTermHander(holder, trainer.loader.qfseq)
+    term_handler = SigTermHander(holder, trainer.loader)
     # Regular run
     if sys.gettrace() is not None or conf.debug:
         trainer.training_loop()
@@ -33,25 +31,23 @@ def training_procedure() -> None:
             logger.error(tb)
         finally:
             logger.error("Error detected, stopping qfseq.")
-            if trainer.loader.qfseq.started:
+            if hasattr(trainer.loader, "qfseq") and trainer.loader.qfseq.started:
                 trainer.loader.qfseq.stop()
             exit(exitcode)
     del term_handler
 
 
 class SigTermHander:
-    def __init__(self, holder: Holder, qfseq: Sequence) -> None:
-        self.qfseq = qfseq
+    def __init__(self, holder: Holder, loader) -> None:
         self.holder = holder
+        self.loader = loader
         signal.signal(signal.SIGTERM, self.handle)
         signal.signal(signal.SIGINT, self.handle)
 
     def handle(self, _signo, _stack_frame):
-        print("SIGTERM detected, stopping qfseq")
-        #  self.holder.checkpoint_manager.save_checkpoint()
-        self.qfseq.stop()
         self.holder.checkpoint_manager.save_checkpoint()
+        if hasattr(self.loader, "qfseq"):
+            self.loader.qfseq.stop()
         if not conf.debug:
             wandb.mark_preempting()
-
         exit()
