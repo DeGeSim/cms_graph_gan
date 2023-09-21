@@ -69,16 +69,6 @@ def main():
 
             dump_procedure()
 
-        case "overwrite":
-            from fgsim.commands.overwrite import overwrite_procedure
-
-            overwrite_procedure()
-
-        case "preprocess":
-            from fgsim.commands.preprocess import preprocess_procedure
-
-            preprocess_procedure()
-
         case "train":
             from fgsim.commands.training import training_procedure
 
@@ -92,6 +82,11 @@ def main():
             from fgsim.commands.generate import generate_procedure
 
             generate_procedure()
+
+        case "overwrite":
+            from fgsim.commands.overwrite import overwrite_procedure
+
+            overwrite_procedure()
 
         case "implant_checkpoint":
             import fgsim.commands.implant_checkpoint
