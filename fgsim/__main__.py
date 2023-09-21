@@ -13,39 +13,6 @@ sys.path.append(os.path.dirname(os.path.realpath(".")))
 
 
 def main():
-    # # always reload the local modules
-    # # so that
-    # # `ipython >>> %run -m fgsim train`
-    # # works
-    # local_package_name = "fgsim"
-    # local_modules = {e for e in sys.modules if e.startswith(local_package_name)}
-    # do_not_reload = {
-    #     # Never remove the upper packages
-    #     "fgsim",
-    #     # "fgsim.geo",
-    #     # "fgsim.model",
-    #     # Always reload cli and config
-    #     # "fgsim.cli",
-    #     # "fgsim.config",
-    #     # utils dont change frequently
-    #     "fgsim.utils",
-    #     "fgsim.plot",
-    #     # The rest
-    #     "fgsim.geo.mapper",
-    #     "fgsim.train.train",
-    #     "fgsim.train.model",
-    #     "fgsim.data_loader",
-    #     "fgsim.train.holder",
-    #     # Currently working on:
-    #     # "fgsim.data_dumper",
-    #     # "fgsim.geo.mapback",
-    #     # "fgsim.train.generate",
-    # }
-    # for modulename in local_modules - do_not_reload:
-    #     logger.info(f"Unloading {modulename}")
-    #     del sys.modules[modulename]
-    # logger.info("Unloading complete")
-
     from fgsim.utils.cli import get_args
 
     args = get_args()
@@ -55,12 +22,15 @@ def main():
 
     import fgsim.config
 
+    # Overwrite the config with the one from tag or hash
     (
         fgsim.config.conf,
         fgsim.config.hyperparameters,
     ) = fgsim.config.parse_arg_conf()
 
-    # If it is called by the hash, manipulate then
+    # IFF started with hash and not debug:
+    # Move python path to wd/tag/hash/fgsim
+    # for persisetent models
     overwrite_path_bool = (
         args.command not in ["gethash", "setup", "dump", "overwrite"]
         and not args.debug
@@ -69,6 +39,7 @@ def main():
     if overwrite_path_bool:
         old_path, new_fgsim_path = overwrite_path()
 
+    # Logger setup
     if args.command not in ["gethash", "setup", "dump", "overwrite"]:
         from fgsim.config import conf
         from fgsim.monitoring.logger import init_logger, logger
@@ -82,21 +53,18 @@ def main():
         )
         logger.info(f"Running command {args.command}")
 
+    # Select command
     match args.command:
-        case "gethash":
-            if args.hash is not None:
-                raise Exception
-            from fgsim.commands.setup import gethash_procedure
-
-            gethash_procedure()
-
         case "setup":
             if args.hash is not None:
                 raise Exception
             from fgsim.commands.setup import setup_procedure
 
             print(setup_procedure())
+
         case "dump":
+            if args.hash is None:
+                raise Exception
             from fgsim.commands.dump import dump_procedure
 
             dump_procedure()
