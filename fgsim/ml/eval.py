@@ -3,7 +3,8 @@ from torch_geometric.data import Batch
 from tqdm import tqdm
 
 from fgsim.config import conf, device
-from fgsim.io.sel_loader import scaler
+from fgsim.datasets import postprocess as dataset_postprocess
+from fgsim.datasets import scaler
 from fgsim.ml.holder import Holder
 from fgsim.monitoring import logger
 from fgsim.plot.eval_plots import eval_plots
@@ -48,7 +49,8 @@ def gen_res_from_sim_batches(batches: list[Batch], holder: Holder):
     gen_batch = postprocess(gen_batch, "gen")
     logger.info("Postprocessing done")
     assert gen_batch.x.shape <= sim_batch.x.shape
-    assert (sim_batch.n_pointsv == gen_batch.n_pointsv + gen_batch.n_multihit).all()
+    # assert (sim_batch.n_pointsv == gen_batch.n_pointsv
+    #  + gen_batch.n_multihit).all()
 
     results_d = {
         "sim_batch": sim_batch,
@@ -67,15 +69,7 @@ def postprocess(batch: Batch, sim_or_gen: str) -> Batch:
         batch.y_scaled = batch.y.clone()
         batch.y = scaler.inverse_transform(batch.y, "y")
 
-    if len({"kpd", "fgd"} & set(conf.training.val.metrics)):
-        from fgsim.utils.jetnetutils import to_efp
-
-        batch = to_efp(batch)
-
-    if conf.dataset_name == "calochallange":
-        from fgsim.loaders.calochallange import postprocess
-
-        batch = postprocess(batch, sim_or_gen)
+    batch = dataset_postprocess(batch)
     return batch
 
 
@@ -87,7 +81,7 @@ def eval_res_d(
     mode: list["str"],
     plot_path=None,
 ):
-    plot = step % conf.training.val.plot_interval == 0 or conf.command == "test"
+    plot = step % conf.training.plot_interval == 0 or conf.command == "test"
     # plot = True
 
     # evaluate the validation metrics

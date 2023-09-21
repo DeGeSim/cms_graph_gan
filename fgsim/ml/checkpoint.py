@@ -7,8 +7,7 @@ from omegaconf import OmegaConf
 
 from fgsim.config import conf
 from fgsim.monitoring import logger
-from fgsim.utils.check_for_nans import contains_nans
-from fgsim.utils.push_to_old import push_to_old
+from fgsim.utils.check_model import contains_nans
 
 
 class CheckPointManager:
@@ -145,3 +144,10 @@ def cylerlr_workaround(sd):
         if "_scale_fn_ref" in sd["schedulers"][pname]:
             del sd["schedulers"][pname]["_scale_fn_ref"]
     return sd
+
+
+def push_to_old(path_new, path_old):
+    if os.path.isfile(path_new):
+        if os.path.isfile(path_old):
+            os.remove(path_old)
+        os.rename(path_new, path_old)

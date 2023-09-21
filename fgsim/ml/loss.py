@@ -10,7 +10,7 @@ from fgsim.config import conf, device
 from fgsim.monitoring.metrics_aggr import GradHistAggregator, MetricAggregator
 from fgsim.monitoring.train_log import TrainLog
 from fgsim.plot.modelgrads import get_grad_dict
-from fgsim.utils.check_for_nans import contains_nans
+from fgsim.utils import check_tensor
 
 
 class LossFunction(Protocol):
@@ -69,7 +69,8 @@ class SubNetworkLoss:
                     )
             else:
                 raise Exception
-        contains_nans(losses_dict)
+        for v in losses_dict.values():
+            check_tensor(v)
 
         partloss: torch.Tensor = sum(losses_dict.values())
         if conf.models[self.name].retain_graph_on_backprop:

@@ -4,11 +4,9 @@ import torch
 from tqdm import tqdm
 
 from fgsim.config import conf, device
-from fgsim.io.queued_dataset import QueuedDataset
-from fgsim.io.sel_loader import loader_info
+from fgsim.datasets import Dataset as QueuedDataset
 from fgsim.ml.early_stopping import early_stopping
 from fgsim.ml.holder import Holder
-from fgsim.ml.smoothing import smooth_features
 from fgsim.ml.validation import validate
 from fgsim.monitoring import TrainLog, logger
 
@@ -18,14 +16,11 @@ class Trainer:
         self.holder = holder
         self.train_log: TrainLog = self.holder.train_log
 
-        self.loader: QueuedDataset = QueuedDataset(loader_info)
-        self.val_interval = (
-            conf.training.val.debug_interval
-            if conf.debug
-            else conf.training.val.interval
-        )
-        # log_model(holder)
-        logger.info(f"Device: {torch.cuda.get_device_name()}")
+        self.loader: QueuedDataset = QueuedDataset()
+        self.val_interval = conf.training.val_interval
+
+        if torch.cuda.is_available():
+            logger.info(f"Device: {torch.cuda.get_device_name()}")
 
     def training_loop(self):
         max_epochs = conf.training.max_epochs
@@ -43,7 +38,7 @@ class Trainer:
 
     def train_epoch(self):
         self.pre_epoch()
-        tbar = tqdm(self.loader.qfseq, **self.tqdmkw())
+        tbar = tqdm(self.loader.training_batches, **self.tqdmkw())
         for batch in tbar:
             step = self.holder.state.grad_step
             if step % self.val_interval == 0 and step != 0:
@@ -57,8 +52,6 @@ class Trainer:
         self.post_epoch()
 
     def pre_training_step(self, batch):
-        if conf.training.smoothing.active:
-            batch.x = smooth_features(batch.x, self.holder.state.grad_step)
         batch = batch.to(device)
         self.holder.state.time_io_end = time.time()
         return batch
@@ -157,10 +150,11 @@ class Trainer:
 
     def tqdmkw(self):
         kws = dict()
+        n_grad_steps_per_epoch = self.loader.chunk_manager.n_grad_steps_per_epoch
         kws["initial"] = (
             self.holder.state.processed_events
             // conf.loader.batch_size
-            % self.loader.n_grad_steps_per_epoch
+            % n_grad_steps_per_epoch
         )
         if conf.debug:
             kws["miniters"] = 5
@@ -171,6 +165,6 @@ class Trainer:
         else:
             kws["miniters"] = 1000
             kws["mininterval"] = 20.0
-        kws["total"] = self.loader.n_grad_steps_per_epoch
+        kws["total"] = n_grad_steps_per_epoch
         kws["desc"] = f"Epoch {self.holder.state.epoch}"
         return kws

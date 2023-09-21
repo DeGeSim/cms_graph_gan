@@ -30,7 +30,8 @@ def early_stopping(holder) -> bool:
     #     model_loss_dict = history["losses"][k]
     #     if len(model_loss_dict) == 0:
     #         break
-    #     # first we need to find out how many times losses have been recorded for this model
+    #     # first we need to find out how many times losses
+    #     # have been recorded for this model
     #     for lname, lossd in model_loss_dict.items():
     #         if isinstance(lossd, dict):
     #             for _, sublossd in lossd.items():
@@ -53,7 +54,7 @@ def early_stopping(holder) -> bool:
     return all(
         [
             is_minimized(np.array(history["val"][metric]))
-            for metric in conf.training.val.use_for_stopping
+            for metric in conf.metrics.stopping
         ]
     )
 
@@ -90,7 +91,7 @@ def is_minimized(arr: np.ndarray):
     growth = 1 - (min(stop_metric[-valsteps:]) / min(stop_metric[:-valsteps]))
 
     logger.info(
-        f"""Relative Improvement in the last {valsteps} validation steps: {growth}%"""
+        f"Relative Improvement in the last {valsteps} validation steps: {growth}%"
     )
     if growth < conf.training.early_stopping.improvement:
         return True
