@@ -91,7 +91,7 @@ class BranchingEquivar(BranchingBase):
 
         assert proj_single.shape == proj_aggr.shape
         # proj_single
-        children_ftxs = self.proj_cat(torch.cat([proj_single, proj_single], -1))
+        children_ftxs = self.proj_cat(torch.cat([proj_aggr, proj_single], -1))
 
         # If this branching layer reduces the dimensionality,
         # we need to slice the parent_ftxs for the residual connection
