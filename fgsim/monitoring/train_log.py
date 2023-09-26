@@ -60,7 +60,7 @@ class TrainLog:
                 )
             wandb.define_metric("grad_step")
             wandb.define_metric("*", step_metric="grad_step")
-            wandb.define_metric("m/*", goal="minimize")
+            wandb.define_metric("val/*", goal="minimize")
             self._wandb_tmp: dict[str, float] = {}
             self._wandb_step = None
             self._wandb_epoch = None
@@ -97,7 +97,6 @@ class TrainLog:
     def _log_metrics_wandb(self, md: dict, step: int, epoch: int):
         if self.use_wandb:
             self._set_wandb_state(step, epoch)
-            md = {"m/" + k: v for k, v in md.items()}
             self._wandb_tmp.update(md)
 
     def _set_wandb_state(self, step: int, epoch: int):
