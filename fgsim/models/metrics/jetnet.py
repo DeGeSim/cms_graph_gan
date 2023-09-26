@@ -27,7 +27,7 @@ def w1p(gen_batch: Batch, sim_batch: Batch, **kwargs) -> tuple[float, float]:
     mask1, mask2 = (jets1[..., -1], jets2[..., -1])
 
     score = jetnet.evaluation.gen_metrics.w1p(
-        jets1=jf1, jets2=jf2, mask1=mask1, mask2=mask2, **jnkw
+        jets1=jf1, jets2=jf2, mask1=mask1, mask2=mask2, exclude_zeros=True, **jnkw
     )
     #  array of length num_particle_features
     # containing average W1 scores for each feature.
