@@ -18,4 +18,5 @@ def to_stacked_mask(batch: Union[Data, Batch]) -> torch.Tensor:
 
 def to_efp(batch: Batch) -> Batch:
     jets = to_stacked_mask(batch).detach().cpu().numpy()
-    return get_fpd_kpd_jet_features(jets, efp_jobs=10)
+    efps = get_fpd_kpd_jet_features(jets, efp_jobs=4)
+    return torch.from_numpy(efps).to(batch.x.device)

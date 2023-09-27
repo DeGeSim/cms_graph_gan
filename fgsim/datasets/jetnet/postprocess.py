@@ -1,14 +1,13 @@
 from jetnet.utils import jet_features
 
 from fgsim.config import conf
-from fgsim.datasets.jetnet.utils import to_stacked_mask
+from fgsim.datasets.jetnet.utils import to_efp, to_stacked_mask
 
 
 def postprocess(batch):
-    if len({"kpd", "fgd"} & set(conf.metrics.val)):
-        from fgsim.datasets.jetnet.utils import to_efp
-
-        batch = to_efp(batch)
+    metrics = conf.metrics.val if conf.command == "train" else conf.metrics.test
+    if len({"kpd", "fpd"} & set(metrics)) and "efps" not in batch.keys:
+        batch["efps"] = to_efp(batch)
     if "hlv" not in batch:
         batch["hlv"] = {}
     jn_dict = jet_features(to_stacked_mask(batch).cpu().numpy()[..., :3])
