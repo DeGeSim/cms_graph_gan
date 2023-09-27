@@ -1,12 +1,17 @@
 from itertools import combinations
 
 from fgsim.config import conf
-from fgsim.plot import FigLogger, hist1d, hist2d, var_to_bins, var_to_label
+from fgsim.plot import (
+    FigLogger,
+    hist1d,
+    hist2d,
+    ratioplot,
+    var_to_bins,
+    var_to_label,
+)
 
-from .ratioplot import ratioplot
 
-
-def eval_plots(fig_logger: FigLogger, res: dict):
+def eval_plots(fig_logger, res: dict):
     make_1d_plots(res, fig_logger, False)
     make_1d_plots(res, fig_logger, False, True)
     make_2d_plots(res, fig_logger, False)
@@ -23,7 +28,7 @@ def eval_plots(fig_logger: FigLogger, res: dict):
 
 
 def make_1d_plots(
-    res: dict, fig_logger: FigLogger, scaled: bool, energy_weighted=False
+    res: dict, fig_logger, scaled: bool, energy_weighted=False
 ) -> None:
     ftxname = "x_scaled" if scaled else "x"
     fig_logger.prefixes.append("1D_" + ("scaled" if scaled else "unscaled"))
