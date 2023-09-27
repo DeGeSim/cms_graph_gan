@@ -13,7 +13,7 @@ sys.path.append(os.path.dirname(os.path.realpath(".")))
 
 
 def main():
-    from fgsim.utils.cli import get_args
+    from fgsim.cli import get_args
 
     args = get_args()
 
@@ -28,6 +28,10 @@ def main():
         fgsim.config.hyperparameters,
     ) = fgsim.config.parse_arg_conf()
 
+    # unload utils
+    import sys
+
+    del sys.modules["fgsim.utils"]
     # IFF started with hash and not debug:
     # Move python path to wd/tag/hash/fgsim
     # for persisetent models
@@ -38,6 +42,9 @@ def main():
     )
     if overwrite_path_bool:
         old_path, new_fgsim_path = overwrite_path()
+
+    # from importlib import reload
+    # reload(fgsim.utils)
 
     # Logger setup
     if args.command not in ["gethash", "setup", "dump", "overwrite"]:

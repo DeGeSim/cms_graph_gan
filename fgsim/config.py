@@ -8,7 +8,7 @@ import torch
 from matplotlib import pyplot as plt
 from omegaconf import DictConfig, OmegaConf
 
-from fgsim.utils.cli import get_args
+from fgsim.cli import get_args
 from fgsim.utils.oc_resolvers import register_resolvers
 from fgsim.utils.oc_utils import dict_to_keylist, gethash, removekeys
 
