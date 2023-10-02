@@ -26,6 +26,7 @@ class BaseDS:
                     pickle_path, map_location=torch.device("cpu")
                 )
             else:
+                logger.info(f"Processing {attr_name} for {pickle_path}")
                 batch_list = self.__process_ds(chunks)
                 torch.save(batch_list, pickle_path)
             setattr(self, attr_name, batch_list)
@@ -57,7 +58,9 @@ class BaseDS:
         return batch_list
 
     def __process_ds(self, chunks_list):
-        batch_list = [self._chunk_to_batch(e) for e in tqdm(chunks_list)]
+        batch_list = [
+            self._chunk_to_batch(e) for e in tqdm(chunks_list, postfix="Batches")
+        ]
         # batch_list = []
         # with Pool(2) as p:
         #     with tqdm(total=len(chunks_list)) as pbar:

@@ -6,7 +6,7 @@ from sklearn.preprocessing import (
 
 from fgsim.io import ScalerBase
 
-from .graph_transform import events_to_batch
+from .graph_transform import events_to_batch_unscaled
 from .readin import file_manager, read_chunks
 
 
@@ -34,5 +34,5 @@ scaler = ScalerBase(
         DummyTransformer(),  # num_particles
     ],
     read_chunk=read_chunks,
-    events_to_batch=events_to_batch,
+    events_to_batch=events_to_batch_unscaled,
 )
