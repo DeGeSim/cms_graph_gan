@@ -84,13 +84,11 @@ def setup_experiment() -> None:
         settings={
             "quiet": True,
             "disable_job_creation": True,
-            "code_dir": f"./{conf.path.run_path}/fgsim/models",
         },
     )
-
-    codepath = Path(conf.path.run_path) / "fgsim/models"
+    codepath = (Path(conf.path.run_path) / "fgsim/").absolute()
     assert codepath.is_dir()
-    run_train.log_code(codepath.absolute())
+    run_train.log_code(str(codepath), conf.hash)
 
     exp_orga_wandb[conf["hash"]] = run_train.id
 
