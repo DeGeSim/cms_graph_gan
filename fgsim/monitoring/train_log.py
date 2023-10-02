@@ -30,12 +30,14 @@ class TrainLog:
         self.use_tb = default_log
         self.use_wandb = default_log
 
-        _epoch = self.state["epoch"]
-        _step = self.state["grad_step"]
-
         if self.use_tb:
             self.writer: SummaryWriter = SummaryWriter(conf.path.tensorboard)
-            self.writer.add_scalar("epoch", _epoch, _step, new_style=True)
+            self.writer.add_scalar(
+                "epoch",
+                self.state["epoch"],
+                self.state["grad_step"],
+                new_style=True,
+            )
 
         if self.use_wandb:
             if not conf.ray:
@@ -69,8 +71,9 @@ class TrainLog:
 
     def log_cmd_time(self):
         if self.use_wandb:
-            dstr = datetime.now().strftime("%y-%m-%d-%H:%M")
-            self.wandb_run.summary[f"time/{conf.command}"] = dstr
+            self.wandb_run.summary[
+                f"time/{conf.command}"
+            ] = datetime.now().strftime("%y-%m-%d-%H:%M")
 
     def log_model_graph(self, model):
         if self.use_wandb:
@@ -79,25 +82,34 @@ class TrainLog:
     def log_metrics(
         self,
         metrics_dict: dict[str, Union[float, torch.Tensor, np.float32]],
-        step,
-        epoch,
+        step=None,
+        epoch=None,
         prefix=None,
     ):
+        if conf.debug and conf.command != "test":
+            return
+        if step is None:
+            step = self.state["grad_step"]
+            epoch = self.state["epoch"]
+        if epoch is None:
+            raise Exception
+
         if prefix is not None:
             metrics_dict = {f"{prefix}/{k}": v for k, v in metrics_dict.items()}
 
-        self._log_metrics_tb(metrics_dict, step, epoch)
-        self._log_metrics_wandb(metrics_dict, step, epoch)
+        for k in list(metrics_dict.keys()):
+            v = metrics_dict[k]
+            if isinstance(v, tuple) and len(v) == 2:
+                metrics_dict[k] = v[0]
+                metrics_dict[k + "δ"] = v[1]
 
-    def _log_metrics_tb(self, md: dict, step: int, epoch: int):
         if self.use_tb:
-            for name, value in md.items():
+            for name, value in metrics_dict.items():
                 self.writer.add_scalar(name, value, step, new_style=True)
 
-    def _log_metrics_wandb(self, md: dict, step: int, epoch: int):
         if self.use_wandb:
             self._set_wandb_state(step, epoch)
-            self._wandb_tmp.update(md)
+            self._wandb_tmp.update(metrics_dict)
 
     def _set_wandb_state(self, step: int, epoch: int):
         if self._wandb_step is None and self._wandb_epoch is None:
@@ -127,48 +139,33 @@ class TrainLog:
                 self._wandb_epoch = None
 
     def _flush_test_wandb(self):
-        pass
-        # wandb.log(
-        #     {k: v for k, v in self._wandb_tmp.items() if "/best/" in k}
-        #     | {"epoch": self._wandb_epoch},
-        # )
-        # for k, v in self._wandb_tmp:
-        #     karr = k.split("/")
-        #     match karr[0]:
-        #         case "m":
-        #             self.wandb_run.summary["/".join(karr[1:])] = v
-        #         case "p":
-        #             pass
-        #         case _:
-        #             pass
+        wandb.log(
+            {k: v for k, v in self._wandb_tmp.items() if "/best/" in k}
+            | {"epoch": self._wandb_epoch},
+        )
+        for k, v in self._wandb_tmp:
+            karr = k.split("/")
+            match karr[0]:
+                case "m":
+                    self.wandb_run.summary["/".join(karr[1:])] = v
+                case "p":
+                    pass
+                case _:
+                    pass
 
     def log_figure(
         self,
         figure_name: str,
         figure: Figure,
-        step: int,
-        epoch: int,
+        step: int = None,
     ):
+        if step is None:
+            step = self.state["grad_step"]
         if self.use_tb:
             self.writer.add_figure(tag=figure_name, figure=figure, global_step=step)
         if self.use_wandb:
-            self._set_wandb_state(step, epoch)
             self._wandb_tmp.update({f"p/{figure_name}": wandb.Image(figure)})
         plt.close(figure)
-
-    # def log_test_metrics(
-    #     self,
-    #     metrics_dict: dict[str, Union[float, torch.Tensor]],
-    #     step: int,
-    #     epoch: int,
-    #     prefix: str,
-    # ):
-    #     metrics_dict = {f"{prefix}/{k}": v for k, v in metrics_dict.items()}
-    #     self._log_metrics_tb(metrics_dict, step, epoch)
-    #     self._log_metrics_wandb(metrics_dict, step, epoch)
-    #     if self.use_wandb:
-    #         for k, v in metrics_dict.items():
-    #             self.wandb_run.summary[k] = v
 
     def write_trainstep_logs(self, interval) -> None:
         if not all(
@@ -208,6 +205,11 @@ class TrainLog:
                 self.state["epoch"],
                 self.state["grad_step"],
                 new_style=True,
+            )
+        if self.use_wandb:
+            wandb.log(
+                data={"epoch": self.state["epoch"]},
+                step=self.state["grad_step"],
             )
 
     def __del__(self):
