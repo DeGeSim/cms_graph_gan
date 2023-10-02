@@ -6,8 +6,8 @@ from pathlib import Path
 
 from rich.console import Console
 
+from fgsim.cli import parser
 from fgsim.config import parse_arg_conf
-from fgsim.utils.cli import parser
 
 console = Console()
 
