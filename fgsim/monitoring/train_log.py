@@ -27,7 +27,7 @@ class TrainLog:
         )
         if conf.command in ["test", "generate"]:
             default_log = True
-        self.use_tb = default_log
+        self.use_tb = False
         self.use_wandb = default_log
 
         if self.use_tb:
