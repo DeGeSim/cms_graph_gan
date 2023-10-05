@@ -37,10 +37,9 @@ class ScalerBase:
 
     def fit(self, saveplots=False):
         assert self.len_dict[self.files[0]] >= conf.loader.scaling_fit_size
-        chk = self.read_chunk(
+        batch = self.events_to_batch(
             [(Path(self.files[0]), 0, conf.loader.scaling_fit_size)]
         )
-        batch = self.events_to_batch(chk)
 
         # The features need to be converted to numpy immediatly
         # otherwise the queuflow afterwards doesnt work

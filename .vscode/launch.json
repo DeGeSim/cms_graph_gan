@@ -4,7 +4,7 @@
         {
             "args": [
                 "--hash",
-                "f286448",
+                "102ec23",
                 // "--debug",
                 "train"
             ],
@@ -18,7 +18,7 @@
         {
             "args": [
                 "--tag",
-                "jn_ccconf_equivarfixed",
+                "cc_test",
                 "--debug",
                 "train"
             ],
@@ -32,7 +32,7 @@
         {
             "args": [
                 "--tag",
-                "testjn150",
+                "cc_test",
                 "--debug",
                 "test"
             ],
@@ -46,7 +46,7 @@
         {
             "args": [
                 "--tag",
-                "testjn150",
+                "cc_test",
                 "--debug",
                 "preprocess"
             ],
@@ -74,7 +74,7 @@
             "type": "python",
             "args": [
                 "--tag",
-                "testjn150",
+                "cc_test",
                 // "--debug",
                 "setup"
             ],

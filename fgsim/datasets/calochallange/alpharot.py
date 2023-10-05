@@ -4,7 +4,7 @@ from torch_scatter import scatter_mean
 from fgsim.config import conf
 from fgsim.utils import check_tensor
 
-from .objcol import scaler
+from .scaler import scaler
 
 
 def rotate_alpha(alphas, batchidx, fake=False, center=False):

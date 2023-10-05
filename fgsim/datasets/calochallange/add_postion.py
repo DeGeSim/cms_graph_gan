@@ -4,7 +4,7 @@ from fgsim.config import conf
 
 
 def add_position(batch):
-    from .objcol import scaler
+    from .scaler import scaler
 
     if batch.pos is not None:
         if len(batch.x) == len(batch.pos):
