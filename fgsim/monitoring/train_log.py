@@ -143,7 +143,7 @@ class TrainLog:
             {k: v for k, v in self._wandb_tmp.items() if "/best/" in k}
             | {"epoch": self._wandb_epoch},
         )
-        for k, v in self._wandb_tmp:
+        for k, v in self._wandb_tmp.items():
             karr = k.split("/")
             match karr[0]:
                 case "m":
