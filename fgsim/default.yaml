@@ -505,22 +505,14 @@ dataset_options:
         batch_size: 50
         validation_set_size: 10_000
         test_set_size: 50_000
-      validation:
-        interval: 2_000
+      val_interval:
+        val_interval: 2_000
         plot_interval: 4_000
-        use_for_stopping:
-          ["marginalEw", "showershape", "fpc", "sphereratio", "nhits"]
-        metrics:
-          [
-            "marginal",
-            "marginalEw",
-            "showershape",
-            "fpc",
-            "sphereratio",
-            "response",
-            "nhits",
-          ]
-        debug_metrics: ["marginalEw"]
+      metrics:
+        debug: ["marginalEw"]
+        stopping: ["marginalEw", "showershape", "fpc", "sphereratio", "nhits"]
+        test: ["marginal","marginalEw","showershape","fpc","sphereratio","response","nhits"]
+        val: ["marginal","marginalEw","showershape","fpc","sphereratio","response","nhits"]
     hgcal_soham:
       loader:
         dataset_path: "~/fgsim/data/soham_pi0"

@@ -27,7 +27,7 @@ def postprocess(batch: Batch, sim_or_gen: str) -> Batch:
         batch.x[..., alphapos] = alphas
 
     batch = batch_to_Exyz(batch)
-    metrics: list[str] = conf.training.val.metrics
+    metrics: list[str] = conf.metrics.val
     if "sphereratio" in metrics:
         batch["sphereratio"] = sphereratio(batch)
     if "cyratio" in metrics:

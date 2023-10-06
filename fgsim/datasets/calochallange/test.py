@@ -159,7 +159,7 @@ for i in tqdm(fpos):
     assert torch.allclose(batch.x, batch_untf.x)
 
     # batch = batch_to_Exyz(batch)
-    # metrics: list[str] = conf.training.val.metrics
+    # metrics: list[str] = conf.metrics.val
     # if "sphereratio" in metrics:
     #     batch["sphereratio"] = sphereratio(batch)
     # if "fpc" in metrics:

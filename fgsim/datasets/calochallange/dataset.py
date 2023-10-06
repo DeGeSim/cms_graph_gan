@@ -1,3 +1,5 @@
+from caloutils.utils.batch import add_graph_attr
+
 from fgsim.config import conf
 
 from ..base_dataset import BaseDS
@@ -15,12 +17,13 @@ class Dataset(BaseDS):
         return batch
 
 
-def scale_event(graph):
-    graph.n_pointsv = (
-        graph.y[..., conf.loader.y_features.index("num_particles")]
+def scale_event(batch):
+    n_pointsv = (
+        batch.y[..., conf.loader.y_features.index("num_particles")]
         .int()
         .reshape(-1)
     )
-    graph.x = scaler.transform(graph.x, "x")
-    graph.y = scaler.transform(graph.y, "y")
-    return graph
+    add_graph_attr(batch, "n_pointsv", n_pointsv)
+    batch.x = scaler.transform(batch.x, "x")
+    batch.y = scaler.transform(batch.y, "y")
+    return batch

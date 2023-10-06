@@ -69,7 +69,7 @@ def postprocess(batch: Batch, sim_or_gen: str) -> Batch:
         batch.y_scaled = batch.y.clone()
         batch.y = scaler.inverse_transform(batch.y, "y")
 
-    batch = dataset_postprocess(batch)
+    batch = dataset_postprocess(batch, sim_or_gen)
     return batch
 
 

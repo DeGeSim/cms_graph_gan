@@ -12,8 +12,7 @@ from caloutils.processing import pc_to_voxel
 from tqdm import tqdm
 
 from fgsim.config import conf, device
-from fgsim.io.queued_dataset import QueuedDataset
-from fgsim.io.sel_loader import loader_info
+from fgsim.datasets import Dataset
 from fgsim.ml.eval import postprocess
 from fgsim.ml.holder import Holder
 from fgsim.monitoring import logger
@@ -92,7 +91,7 @@ def __run_classifiers(dspath):
 
 
 def __write_dataset(holder, dspath):
-    loader = QueuedDataset(loader_info)
+    loader = Dataset()
 
     x_l = []
     E_l = []
