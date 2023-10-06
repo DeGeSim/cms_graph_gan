@@ -92,9 +92,10 @@ def parse_arg_conf(args=None):
     if args.hash is not None:
         try:
             if args.ray:
-                globstr = f"wd/ray/*/{args.hash}/"
+                globstr = f"{args.work_dir}/ray/*/{args.hash}/"
             else:
-                globstr = f"wd/*/{args.hash}/"
+                globstr = f"{args.work_dir}/*/{args.hash}/"
+            globstr = str(Path(globstr).expanduser())
             folder = Path(glob(globstr)[0])
             assert folder.is_dir()
         except IndexError:
@@ -104,9 +105,8 @@ def parse_arg_conf(args=None):
 
         conf["command"] = str(args.command)
 
-        return conf, hyperparameters
     else:
-        fn = f"wd/{args.tag}/conf.yaml"
+        fn = f"{args.work_dir}/{args.tag}/conf.yaml"
         if os.path.isfile(fn):
             tagconf = OmegaConf.load(fn)
         else:
@@ -119,6 +119,11 @@ def parse_arg_conf(args=None):
     torch.manual_seed(conf.seed)
     np.random.seed(conf.seed)
     random.seed(conf.seed)
+
+    # replace workdir
+    if conf.path.run_path.startswith("$WD"):
+        conf.path.run_path = conf.path.run_path.replace("$WD", str(args.work_dir))
+
     return conf, hyperparameters
 
 

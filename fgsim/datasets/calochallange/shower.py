@@ -127,25 +127,7 @@ def __dist_fration(Ehit, pos, batchidx, small, large, center_energy_weighted=Tru
         global_add_pool(Ehit.squeeze() * (delta < large).float(), batchidx)
         / Esum.squeeze()
     )
-    # __plot_frac(e_small, e_large, small, large)
     return e_small, e_large
-
-
-# def __plot_frac(e_small, e_large, small, large):
-#     from matplotlib import pyplot as plt
-
-#     ax: plt.Axes
-#     fig, axes = plt.subplots(3, 1)
-#     for ax, arr, title in zip(
-#         axes,
-#         [e_small, e_large, e_small / e_large],
-#         [f"small {small}", f"large {large}", "ratio"],
-#     ):
-#         ax.hist(arr.cpu().numpy(), bins=100)
-#         ax.set_title(title)
-#     fig.tight_layout()
-#     fig.savefig("wd/fig.pdf")
-#     plt.close("all")
 
 
 def response(batch: Batch) -> torch.Tensor:

@@ -14,7 +14,7 @@ def postprocess(batch: Batch, sim_or_gen: str) -> Batch:
     alphapos = conf.loader.x_features.index("alpha")
     num_alpha = calorimeter.num_alpha
 
-    batch = shift_sum_multi_hits(batch, forbid_dublicates=sim_or_gen == "sim")
+    batch = shift_sum_multi_hits(batch, forbid_dublicates=False)
     if sim_or_gen == "gen":
         alphas = batch.x[..., alphapos].clone()
 

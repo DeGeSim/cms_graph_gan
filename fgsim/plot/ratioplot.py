@@ -115,5 +115,4 @@ def ratioplot(
         title += " weighted"
     fig.suptitle(title, fontsize=28)
     plt.tight_layout()
-    # fig.savefig("wd/fig.pdf")
     return fig

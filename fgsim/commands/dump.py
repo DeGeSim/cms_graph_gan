@@ -25,7 +25,7 @@ def dump_procedure():
             del exp_orga_wandb[s]
 
     # local
-    paths = glob(f"wd/*/{args.hash}")
+    paths = glob(f"{args.work_dir}/*/{args.hash}")
     if len(paths) == 1:
         assert os.path.isdir(paths[0])
         shutil.rmtree(paths[0])

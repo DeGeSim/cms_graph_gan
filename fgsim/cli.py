@@ -1,16 +1,17 @@
 """Console script for fgsim."""
 import argparse
-import pathlib
 import sys
+from pathlib import Path
+
+
+def expandpath(s: str) -> Path:
+    return Path(s).expanduser()
+
 
 parser = argparse.ArgumentParser()
 group = parser.add_mutually_exclusive_group()
 
-group.add_argument(
-    "-t",
-    "--tag",
-    default="default",
-)
+group.add_argument("-t", "--tag", default="default")
 group.add_argument("--hash")
 
 parser.add_argument(
@@ -34,6 +35,8 @@ parser.add_argument(
     default=False,
     required=False,
 )
+parser.add_argument("--work_dir", default="./wd", type=expandpath)
+
 commands = [
     "setup",
     "gethash",
@@ -55,7 +58,7 @@ commandparsers["loadfile"].add_argument(
     help="python file to load",
 )
 
-commandparsers["generate"].add_argument("--output_dir", type=pathlib.Path)
+commandparsers["generate"].add_argument("--output_dir", type=expandpath)
 commandparsers["generate"].add_argument("--batch_size", type=int)
 
 

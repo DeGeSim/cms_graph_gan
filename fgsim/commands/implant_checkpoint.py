@@ -14,8 +14,8 @@ from fgsim.ml.holder import Holder
 
 holder = Holder()
 
-
-checkpoint = torch.load(Path(conf.path.checkpoint))
+cppath = Path(conf.path.run_path) / "checkpoint.torch"
+checkpoint = torch.load(cppath)
 
 
 def recur_update(cp_dict, model_dict):
@@ -66,4 +66,4 @@ for part in ["gen", "disc"]:
             holder.optims._schedulers[part].state_dict(),
         )
 holder.optims.load_state_dict(checkpoint["optims"])
-torch.save(checkpoint, Path(conf.path.checkpoint))
+torch.save(checkpoint, cppath)

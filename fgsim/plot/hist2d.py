@@ -79,7 +79,6 @@ def hist2d(
     cax = make_axes_locatable(plt.gca()).append_axes("right", "5%", pad="3%")
 
     fig.colorbar(mesh, cax)
-    # fig.savefig("wd/fig.pdf")
     return fig
 
 

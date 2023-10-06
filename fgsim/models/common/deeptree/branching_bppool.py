@@ -128,7 +128,6 @@ class BranchingBPPool(BranchingBase):
         #     f"branching level{self.level} out_nn output",
         #     children_ftxs,
         # )
-        # model_plotter.plot_model_outputs().savefig("wd/act.pdf")
         # exit()
 
         children_ftxs = self.add_parent_skip(children_ftxs, parents_ftxs)

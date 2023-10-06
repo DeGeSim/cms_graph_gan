@@ -104,7 +104,6 @@ def fig_grads(grad_aggr: GradHistAggregator, partname: str) -> Figure:
 
     fig.suptitle(f"{partname} Model Means")
     fig.tight_layout()
-    # fig.savefig("wd/modelgrads.pdf")
 
     return fig
 

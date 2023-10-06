@@ -16,18 +16,18 @@ class CheckPointManager:
         self._last_checkpoint_time = datetime.now()
         self._training_start_time = datetime.now()
         self.saved_first_checkpoint = False
+        self.state_path = Path(conf.path.run_path) / "state.yaml"
+        self.state_path_old = Path(conf.path.run_path) / "state_old.yaml"
+        self.checkpoint_path = Path(conf.path.run_path) / "checkpoint.torch"
+        self.checkpoint_path_old = Path(conf.path.run_path) / "checkpoint_old.torch"
 
     def load_checkpoint(self):
-        if not (
-            os.path.isfile(conf.path.state) and os.path.isfile(conf.path.checkpoint)
-        ):
+        if not (self.state_path.is_file() and (self.checkpoint_path).is_file()):
             if conf.command != "train":
                 raise FileNotFoundError("Could not find checkpoint")
             logger.warning("Proceeding without loading checkpoint.")
             return
-        self._load_checkpoint_path(
-            Path(conf.path.state), Path(conf.path.checkpoint)
-        )
+        self._load_checkpoint_path(self.state_path, self.checkpoint_path)
 
     def load_ray_checkpoint(self, ray_tmp_checkpoint_path: str):
         checkpoint_path = Path(ray_tmp_checkpoint_path) / "cp.pth"
@@ -79,7 +79,7 @@ class CheckPointManager:
     ):
         if conf.debug:
             return
-        push_to_old(conf.path.checkpoint, conf.path.checkpoint_old)
+        push_to_old(self.checkpoint_path, self.checkpoint_path_old)
         safed = {
             "models": self.holder.models.state_dict(),
             "optims": cylerlr_workaround(self.holder.optims.state_dict()),
@@ -93,14 +93,14 @@ class CheckPointManager:
                 safed["swa_model"][pname] = part.state_dict()
             safed["best_swa_model"] = self.best_swa_model_state
 
-        torch.save(safed, conf.path.checkpoint)
+        torch.save(safed, self.checkpoint_path)
 
-        push_to_old(conf.path.state, conf.path.state_old)
-        OmegaConf.save(config=self.holder.state, f=conf.path.state)
+        push_to_old(self.state_path, self.state_path_old)
+        OmegaConf.save(config=self.holder.state, f=self.state_path)
         self._last_checkpoint_time = datetime.now()
         logger.warning(
             f"{self._last_checkpoint_time.strftime('%d/%m/%Y, %H:%M:%S')}"
-            f"Checkpoint saved to {conf.path.checkpoint}"
+            f"Checkpoint saved to {self.checkpoint_path}"
         )
 
     def save_ray_checkpoint(self, ray_tmp_checkpoint_path: str):

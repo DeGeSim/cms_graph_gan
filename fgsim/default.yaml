@@ -398,20 +398,8 @@ metrics: ${mergedefault:${dataset_options},${dataset_name},metrics}
 
 path:
     dataset: "${loader.dataset_path}"
-    dataset_processed: "${path.dataset}/pkl_${dataset_name}_${loader_hash}"
-    ds_lenghts: "${path.dataset_processed}/filelengths.yaml"
-    training: "${path.dataset_processed}/training"
-    validation: "${path.dataset_processed}/validation.pt"
-    test: "${path.dataset_processed}/test.pt"
-    training_glob: "*.pt"
     geo_lup: "data/geo_hgcal/DetIdLUT.root"
-    run_path: "wd/${tag}/${hash}"
-    tensorboard: "${path.run_path}/tb"
-    checkpoint: "${path.run_path}/checkpoint.torch"
-    checkpoint_old: "${path.run_path}/checkpoint_old.torch"
-    state: "${path.run_path}/state.yaml"
-    state_old: "${path.run_path}/state_old.yaml"
-    comet_exp_key: "${path.run_path}/comet_experiment_key"
+    run_path: "$WD/${tag}/${hash}"
 
 loader: ${mergedefault:${dataset_options},${dataset_name},loader}
 dataset_name: jetnet

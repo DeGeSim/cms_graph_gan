@@ -12,6 +12,13 @@ class FileManager:
     def __init__(
         self, path_to_len: Callable[[Path], int], files: Optional[List[Path]] = None
     ) -> None:
+        path_dataset_processed = (
+            Path(conf.path.dataset) / f"pkl_{conf.dataset_name}_${conf.loader_hash}"
+        )
+        if not path_dataset_processed.is_dir():
+            path_dataset_processed.mkdir()
+        self.path_ds_lenghts = path_dataset_processed / "filelengths.yaml"
+
         self._path_to_len = path_to_len
         self.files = files
         if self.files is None:
@@ -27,9 +34,9 @@ class FileManager:
         return [f for f in files]
 
     def _load_len_dict(self) -> Dict[Path, int]:
-        if not Path(conf.path.ds_lenghts).is_file():
+        if not self.path_ds_lenghts.is_file():
             self.save_len_dict()
-        with open(conf.path.ds_lenghts, "r") as f:
+        with open(self.path_ds_lenghts, "r") as f:
             len_dict: Dict[Path, int] = {
                 Path(k): int(v)
                 for k, v in yaml.load(f, Loader=yaml.SafeLoader).items()
@@ -40,8 +47,5 @@ class FileManager:
         self.len_dict = {}
         for fn in self.files:
             self.len_dict[str(fn)] = self._path_to_len(fn)
-        ds_processed = Path(conf.path.dataset_processed)
-        if not ds_processed.is_dir():
-            ds_processed.mkdir()
-        with open(conf.path.ds_lenghts, "w") as f:
+        with open(self.path_ds_lenghts, "w") as f:
             yaml.dump(self.len_dict, f, Dumper=yaml.SafeDumper)

@@ -1,4 +1,5 @@
 from datetime import datetime
+from pathlib import Path
 from typing import Union
 
 import matplotlib.pyplot as plt
@@ -29,7 +30,9 @@ class TrainLog:
         self.use_wandb = default_log
 
         if self.use_tb:
-            self.writer: SummaryWriter = SummaryWriter(conf.path.tensorboard)
+            self.writer: SummaryWriter = SummaryWriter(
+                Path(conf.path.run_path) / "tb"
+            )
             self.writer.add_scalar(
                 "epoch",
                 self.state["epoch"],

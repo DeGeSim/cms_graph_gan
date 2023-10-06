@@ -14,7 +14,11 @@ class BaseDS:
 
     def _provide_batches(self, dsname):
         attr_name = f"_{dsname}_batches"
-        pickle_path = Path(conf.path.dataset_processed) / f"{dsname}.pt"
+        pickle_path = (
+            Path(conf.path.dataset)
+            / f"pkl_{conf.dataset_name}_{conf.loader_hash}"
+            / f"{dsname}.pt"
+        )
         chunks = getattr(self.chunk_manager, f"{dsname}_chunks")
         return self._provide_batches_args(attr_name, pickle_path, chunks)
 
@@ -49,7 +53,11 @@ class BaseDS:
         batch_list = self.validation_batches + self.testing_batches
         if conf.loader.eval_glob is None:
             return batch_list
-        rest_eval_path = Path(conf.path.dataset_processed) / "rest_eval.pt"
+        rest_eval_path = (
+            Path(conf.path.dataset)
+            / f"pkl_{conf.dataset_name}_${conf.loader_hash}"
+            / "rest_eval.pt"
+        )
 
         rest_eval_chunks = (
             set(self.chunk_manager.eval_chunks)

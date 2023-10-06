@@ -25,7 +25,11 @@ class ScalerBase:
         self.transfs_y = transfs_y
         self.read_chunk = read_chunk
         self.events_to_batch = events_to_batch
-        self.scalerpath = Path(conf.path.dataset_processed) / "scaler.gz"
+        self.scalerpath = (
+            Path(conf.path.dataset)
+            / f"pkl_{conf.dataset_name}_${conf.loader_hash}"
+            / "scaler.gz"
+        )
 
         assert len(self.transfs_x) == len(conf.loader.x_features)
         assert len(self.transfs_y) == len(conf.loader.y_features)
@@ -117,7 +121,10 @@ class ScalerBase:
         for k, v in zip(feature_names, pcs.T):
             fig, ax = plt.subplots(figsize=(10, 7))
             ax.hist(v, bins=500)
-            fn = Path(conf.path.dataset_processed)
+            fn = (
+                Path(conf.path.dataset)
+                / f"pkl_{conf.dataset_name}_${conf.loader_hash}"
+            )
             if post:
                 fn = fn / f"{x_or_y}_{k}_post.pdf"
             else:
