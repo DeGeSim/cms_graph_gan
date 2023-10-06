@@ -4,7 +4,7 @@ from typing import List, Tuple
 from fgsim.config import conf
 from fgsim.monitoring import logger
 
-ChunkType = List[Tuple[Path, int, int]]
+ChunkType = Tuple[Tuple[Path, int, int]]
 chunk_size = conf.loader.batch_size
 batch_size = conf.loader.batch_size
 
@@ -41,7 +41,8 @@ def compute_chucks(files, len_dict) -> List[ChunkType]:
             chunk_coords,
         )
     )
-    return chunk_coords
+    # convert to list of tuple to make chunks hashable
+    return [tuple(e) for e in chunk_coords]
 
 
 class ChunkManager:

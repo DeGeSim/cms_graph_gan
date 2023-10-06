@@ -50,10 +50,16 @@ class BaseDS:
         if conf.loader.eval_glob is None:
             return batch_list
         rest_eval_path = Path(conf.path.dataset_processed) / "rest_eval.pt"
+
+        rest_eval_chunks = (
+            set(self.chunk_manager.eval_chunks)
+            - set(self.chunk_manager.testing_chunks)
+            - set(self.chunk_manager.validation_chunks)
+        )
         batch_list += self._provide_batches_args(
             "_rest_eval_batches",
             rest_eval_path,
-            self.chunk_manager.rest_eval_chunks,
+            rest_eval_chunks,
         )
         return batch_list
 
