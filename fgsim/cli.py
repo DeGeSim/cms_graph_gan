@@ -1,5 +1,6 @@
 """Console script for fgsim."""
 import argparse
+import pathlib
 import sys
 
 parser = argparse.ArgumentParser()
@@ -53,6 +54,9 @@ commandparsers["loadfile"].add_argument(
     "file_to_load",
     help="python file to load",
 )
+
+commandparsers["generate"].add_argument("--output_dir", type=pathlib.Path)
+commandparsers["generate"].add_argument("--batch_size", type=int)
 
 
 def get_args():

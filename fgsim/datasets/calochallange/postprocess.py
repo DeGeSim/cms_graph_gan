@@ -46,6 +46,10 @@ def postprocess(batch: Batch, sim_or_gen: str) -> Batch:
     if "showershape" in metrics:
         batch["showershape"] = analyze_layers(batch)
     if "response" in metrics:
+        batch.nhits = {
+            "n": batch.n_pointsv,
+            "n_by_E": batch.n_pointsv / batch.y[:, 0],
+        }
         batch["response"] = response(batch)
 
     return batch

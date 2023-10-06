@@ -28,13 +28,13 @@ class EvaluationMetrics:
         self.metric_aggr_val = MetricAggregator()
         self.history = history
 
-        if conf.command == "train":
-            if conf.debug:
-                metrics = conf.metrics.debug
-            else:
-                metrics = conf.metrics.val
-        elif conf.command == "test":
-            metrics = conf.metrics.test
+        match conf.command:
+            case "train":
+                metrics = conf.metrics.debug if conf.debug else conf.metrics.val
+            case "test":
+                metrics = conf.metrics.test
+            case _:
+                metrics = []
 
         for metric_name in metrics:
             assert metric_name != "parts"

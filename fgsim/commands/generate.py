@@ -10,30 +10,43 @@ import torch
 from caloutils.processing import pc_to_voxel
 from tqdm import tqdm
 
+from fgsim.cli import get_args
 from fgsim.config import conf, device
 from fgsim.datasets import Dataset
 from fgsim.ml.eval import postprocess
 from fgsim.ml.holder import Holder
 
-conf.command = "test"
-
 
 def generate_procedure() -> None:
+    ds = Dataset()
+    args = get_args()
+
+    batch_size = (
+        args.batch_size if args.batch_size is not None else conf.loader.batch_size
+    )
+    conf.loader.batch_size = batch_size
+
+    # init holder once batch_size is overwritten
     holder: Holder = Holder(device)
+
+    outdir = args.output_dir if args.output_dir is not None else conf.path.run_path
+    outdir = Path(outdir).expanduser().absolute()
+    outdir.mkdir(exist_ok=True, parents=True)
+
     for best_or_last in ["best"]:
         if best_or_last == "best":
             holder.checkpoint_manager.select_best_model()
 
-        dspath = Path(conf.path.run_path).absolute() / f"out_{best_or_last}.hdf5"
+        dspath = Path(outdir).absolute() / f"out_{best_or_last}.hdf5"
         if not dspath.exists():
-            __write_dataset(holder, dspath)
+            __write_dataset(holder, ds, dspath)
         else:
             with h5py.File(dspath, "r") as ds:
                 if "hash" not in ds.attrs or "grad_step" not in ds.attrs:
-                    __write_dataset(holder, dspath)
+                    __write_dataset(holder, ds, dspath)
                 assert ds.attrs["hash"] == conf.hash
                 if ds.attrs["grad_step"] != holder.state["grad_step"]:
-                    __write_dataset(holder, dspath)
+                    __write_dataset(holder, ds, dspath)
 
         ## compute the aucs
         # resd = __run_classifiers(dspath)
@@ -90,32 +103,36 @@ def generate_procedure() -> None:
 #     return resd
 
 
-def __write_dataset(holder, dspath):
-    loader = Dataset()
+def __write_dataset(holder, ds, dspath):
+    batch_size = conf.loader.batch_size
+
+    y = torch.stack([batch.y for batch in ds.eval_batches])
+    n_pointsv = torch.stack([batch.n_pointsv for batch in ds.eval_batches])
+
+    assert (
+        len(y) % batch_size == 0
+    ), f"Batch size {batch_size} not a multiple of the dataset size {len(y)}"
+    y = y.reshape(-1, batch_size, y.shape[-1])
+    n_pointsv = n_pointsv.reshape(-1, batch_size)
 
     x_l = []
     E_l = []
 
-    for sim_batch in tqdm(loader.eval_batches, miniters=100, mininterval=5.0):
-        sim_batch = sim_batch.clone().to(device)
-        batch_size = conf.loader.batch_size
+    for ye, e_pointsv in tqdm(
+        zip(y, n_pointsv), miniters=100, mininterval=5.0, total=y.shape[0]
+    ):
         cond_gen_features = conf.loader.cond_gen_features
 
         if sum(cond_gen_features) > 0:
-            cond = sim_batch.y[..., cond_gen_features].clone()
+            cond = ye[..., cond_gen_features].clone()
         else:
-            cond = torch.empty((batch_size, 0)).float().to(device)
-        gen_batch = holder.generate(cond, sim_batch.n_pointsv)
+            cond = torch.empty((batch_size, 0)).float()
+        gen_batch = holder.generate(cond.to(device), e_pointsv.to(device))
 
-        gen_batch.y = sim_batch.y.clone()
         gen_batch = postprocess(gen_batch, "gen")
 
-        # __recur_transpant_dict(gen_batch, sim_batch)
-        # __recur_transpant_dict(gen_batch._slice_dict, sim_batch._slice_dict)
-        # __recur_transpant_dict(gen_batch._inc_dict, sim_batch._inc_dict)
         x_l.append(pc_to_voxel(gen_batch).cpu())
-        E_l.append(gen_batch.y.T[0].clone().cpu())
-        del sim_batch
+        E_l.append(ye.T[0].clone().cpu())
 
     your_energies = torch.hstack(E_l)
     your_showers = torch.vstack(x_l)
