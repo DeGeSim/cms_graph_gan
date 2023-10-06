@@ -4,7 +4,6 @@ and compare the generated events to the simulated events.
 """
 
 from pathlib import Path
-from subprocess import PIPE, CalledProcessError, Popen
 
 import h5py
 import torch
@@ -15,14 +14,13 @@ from fgsim.config import conf, device
 from fgsim.datasets import Dataset
 from fgsim.ml.eval import postprocess
 from fgsim.ml.holder import Holder
-from fgsim.monitoring import logger
 
 conf.command = "test"
 
 
 def generate_procedure() -> None:
     holder: Holder = Holder(device)
-    for best_or_last in ["last", "best"]:
+    for best_or_last in ["best"]:
         if best_or_last == "best":
             holder.checkpoint_manager.select_best_model()
 
@@ -38,56 +36,58 @@ def generate_procedure() -> None:
                     __write_dataset(holder, dspath)
 
         ## compute the aucs
-        resd = __run_classifiers(dspath)
+        # resd = __run_classifiers(dspath)
 
-        holder.train_log.log_metrics(
-            resd,
-            prefix="/".join(["test", best_or_last]),
-            step=holder.state["grad_step"],
-            epoch=holder.state["epoch"],
-        )
-        holder.train_log.wandb_run.summary.update(
-            {"/".join(["m", "test", best_or_last, k]): v for k, v in resd.items()}
-        )
-        logger.info(resd)
-        holder.train_log.flush()
+        # holder.train_log.log_metrics(
+        #     resd,
+        #     prefix="/".join(["test", best_or_last]),
+        #     step=holder.state["grad_step"],
+        #     epoch=holder.state["epoch"],
+        # )
+        # holder.train_log.wandb_run.summary.update(
+        #     {"/".join(["m", "test", best_or_last, k]): v for k, v in resd.items()}
+        # )
+        # logger.info(resd)
+        # holder.train_log.flush()
     exit(0)
 
 
-def __run_classifiers(dspath):
-    resd = {}
+# from subprocess import PIPE, CalledProcessError, Popen
+# def __run_classifiers(dspath):
+#     resd = {}
 
-    rpath = Path(conf.path.run_path).absolute()
-    outdir = rpath / "cc_eval/"
-    test_path = "/home/mscham/fgsim/data/calochallange2/dataset_2_2.hdf5"
-    for classifer in "cls-high", "cls-low", "cls-low-normed":
-        logger.info(f"Running classifier {classifer}")
-        cmd = (
-            f"/dev/shm/mscham/fgsim/bin/python evaluate.py -i {dspath} -m"
-            f" {classifer} -r {test_path} -d 2"
-            f" --output_dir {outdir}"
-        )
+#     rpath = Path(conf.path.run_path).absolute()
+#     outdir = rpath / "cc_eval/"
+#     test_path = "/home/mscham/fgsim/data/calochallange2/dataset_2_2.hdf5"
+#     for classifer in "cls-high", "cls-low", "cls-low-normed":
+#         logger.info(f"Running classifier {classifer}")
+#         cmd = (
+#             f"/dev/shm/mscham/fgsim/bin/python evaluate.py -i {dspath} -m"
+#             f" {classifer} -r {test_path} -d 2"
+#             f" --output_dir {outdir}"
+#         )
 
-        lines = []
-        with Popen(
-            cmd.split(" "),
-            stdout=PIPE,
-            bufsize=1,
-            universal_newlines=True,
-            cwd="/home/mscham/homepage/code/",
-        ) as p:
-            for line in p.stdout:
-                lines.append(line)
-                # print(line, end="")
+#         lines = []
+#         with Popen(
+#             cmd.split(" "),
+#             stdout=PIPE,
+#             bufsize=1,
+#             universal_newlines=True,
+#             cwd="/home/mscham/homepage/code/",
+#         ) as p:
+#             for line in p.stdout:
+#                 lines.append(line)
+#                 # print(line, end="")
 
-        if p.returncode != 0:
-            raise CalledProcessError(p.returncode, p.args)
+#         if p.returncode != 0:
+#             raise CalledProcessError(p.returncode, p.args)
 
-        # aucidx = lines.index("Final result of classifier test (AUC / JSD):\n") + 1
-        auc = float(lines[-1].split("/")[0].rstrip())
-        resd[classifer] = auc
-        logger.info(f"Classifier {classifer} AUC {auc}")
-    return resd
+#         # aucidx =
+#               lines.index("Final result of classifier test (AUC / JSD):\n") + 1
+#         auc = float(lines[-1].split("/")[0].rstrip())
+#         resd[classifer] = auc
+#         logger.info(f"Classifier {classifer} AUC {auc}")
+#     return resd
 
 
 def __write_dataset(holder, dspath):
