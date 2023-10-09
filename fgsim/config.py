@@ -90,16 +90,18 @@ def parse_arg_conf(args=None):
     if args is None:
         args = get_args()
     if args.hash is not None:
+        if args.ray:
+            globstr = f"{args.work_dir}/ray/*/{args.hash}/"
+        else:
+            globstr = f"{args.work_dir}/*/{args.hash}/"
+        globstr = str(Path(globstr).expanduser())
         try:
-            if args.ray:
-                globstr = f"{args.work_dir}/ray/*/{args.hash}/"
-            else:
-                globstr = f"{args.work_dir}/*/{args.hash}/"
-            globstr = str(Path(globstr).expanduser())
             folder = Path(glob(globstr)[0])
             assert folder.is_dir()
         except IndexError:
-            raise IndexError(f"No experiement with hash {args.hash} is set up.")
+            raise IndexError(
+                f"No experiement with hash {args.hash} is set up in {globstr}."
+            )
         conf = OmegaConf.load(folder / "conf.yaml")
         hyperparameters = OmegaConf.load(folder / "hyperparameters.yaml")
 
