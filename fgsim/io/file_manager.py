@@ -13,7 +13,7 @@ class FileManager:
         self, path_to_len: Callable[[Path], int], files: Optional[List[Path]] = None
     ) -> None:
         path_dataset_processed = (
-            Path(conf.path.dataset) / f"pkl_{conf.dataset_name}_${conf.loader_hash}"
+            Path(conf.path.dataset) / f"pkl_{conf.dataset_name}_{conf.loader_hash}"
         )
         if not path_dataset_processed.is_dir():
             path_dataset_processed.mkdir()

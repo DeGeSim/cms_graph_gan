@@ -55,7 +55,7 @@ class BaseDS:
             return batch_list
         rest_eval_path = (
             Path(conf.path.dataset)
-            / f"pkl_{conf.dataset_name}_${conf.loader_hash}"
+            / f"pkl_{conf.dataset_name}_{conf.loader_hash}"
             / "rest_eval.pt"
         )
 

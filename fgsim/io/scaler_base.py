@@ -27,7 +27,7 @@ class ScalerBase:
         self.events_to_batch = events_to_batch
         self.scalerpath = (
             Path(conf.path.dataset)
-            / f"pkl_{conf.dataset_name}_${conf.loader_hash}"
+            / f"pkl_{conf.dataset_name}_{conf.loader_hash}"
             / "scaler.gz"
         )
 
@@ -123,7 +123,7 @@ class ScalerBase:
             ax.hist(v, bins=500)
             fn = (
                 Path(conf.path.dataset)
-                / f"pkl_{conf.dataset_name}_${conf.loader_hash}"
+                / f"pkl_{conf.dataset_name}_{conf.loader_hash}"
             )
             if post:
                 fn = fn / f"{x_or_y}_{k}_post.pdf"
