@@ -93,8 +93,8 @@ def eval_res_d(
         up_metrics_d, prefix="/".join(mode), step=step, epoch=epoch
     )
 
-    if conf.debug:
-        return score
+    # if conf.debug:
+    #     return score
 
     if not plot:
         return score

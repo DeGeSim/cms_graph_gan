@@ -130,9 +130,8 @@ class Trainer:
                 part.update_parameters(self.holder.models.parts[pname])
                 self.holder.optims._schedulers[pname].step()
 
-        if not conf.debug:
-            logger.info("Validating")
-            validate(self.holder, self.loader)
+        logger.info("Validating")
+        validate(self.holder, self.loader)
 
         self.holder.state.time_train_step_start = time.time()
 

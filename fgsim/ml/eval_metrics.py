@@ -104,8 +104,8 @@ class EvaluationMetrics:
                 )
             logstr += "  "
         logger.info(logstr)
-        if conf.debug:
-            return dict(), list()
+        # if conf.debug:
+        #     return dict(), list()
 
         score = self.__compute_score_per_val(up_metrics_d)
         self.history["score"] = score
