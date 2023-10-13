@@ -9,21 +9,20 @@ from fgsim.plot import binborders_wo_outliers, var_to_bins
 
 def run_dists(sim_batch, gen_batch, k, bins=None):
     if k is not None:
-        if isinstance(sim_batch[k], dict):
-            ftxnames = sim_batch[k].keys()
-        else:
-            ftxnames = []
+        ftxnames = [e for e in sim_batch.hlv.keys() if e.startswith(k)]
+        sim = sim_batch.hlv
     else:
         ftxnames = conf.loader.x_features
+        sim = sim_batch.x
 
     if bins is None:
         bins = []
         if len(ftxnames) == 0:
-            arr = sim_batch[k].cpu().numpy()
+            arr = sim.cpu().numpy()
             bins.append(torch.tensor(binborders_wo_outliers(arr, bins=300)).float())
         else:
             for fn in ftxnames:
-                arr = sim_batch[k][fn].cpu().numpy()
+                arr = sim[fn].cpu().numpy()
                 bins.append(
                     torch.tensor(binborders_wo_outliers(arr, bins=300)).float()
                 )
@@ -31,12 +30,8 @@ def run_dists(sim_batch, gen_batch, k, bins=None):
         real = sim_batch.x
         fake = gen_batch.x
     else:
-        if len(ftxnames) == 0:
-            real = sim_batch[k].unsqueeze(-1)
-            fake = gen_batch[k].unsqueeze(-1)
-        else:
-            real = torch.stack([sim_batch[k][ftxn] for ftxn in ftxnames], -1)
-            fake = torch.stack([gen_batch[k][ftxn] for ftxn in ftxnames], -1)
+        real = torch.stack([sim_batch.hlv[ftxn] for ftxn in ftxnames], -1)
+        fake = torch.stack([gen_batch.hlv[ftxn] for ftxn in ftxnames], -1)
 
     assert real.shape[-1] == fake.shape[-1]
     assert real.shape[0] >= fake.shape[0]

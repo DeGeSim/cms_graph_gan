@@ -40,13 +40,17 @@ def postprocess(batch: Batch, sim_or_gen: str) -> Batch:
     if "hlv" not in batch:
         batch["hlv"] = {}
     if "sphereratio" in metrics:
-        batch["hlv"] |= {f"sphereratio/{k}": v for k, v in sphereratio(batch)}
+        batch["hlv"] |= {
+            f"sphereratio/{k}": v for k, v in sphereratio(batch).items()
+        }
     if "cyratio" in metrics:
-        batch["hlv"] |= {f"cyratio/{k}": v for k, v in cyratio(batch)}
+        batch["hlv"] |= {f"cyratio/{k}": v for k, v in cyratio(batch).items()}
     if "fpc" in metrics:
-        batch["hlv"] |= {f"fpc/{k}": v for k, v in fpc_from_batch(batch)}
+        batch["hlv"] |= {f"fpc/{k}": v for k, v in fpc_from_batch(batch).items()}
     if "showershape" in metrics:
-        batch["hlv"] |= {f"showershape/{k}": v for k, v in analyze_layers(batch)}
+        batch["hlv"] |= {
+            f"showershape/{k}": v for k, v in analyze_layers(batch).items()
+        }
     if "response" in metrics:
         batch["hlv"] |= {
             "nhits/n": batch.n_pointsv,
