@@ -37,19 +37,21 @@ def postprocess(batch: Batch, sim_or_gen: str) -> Batch:
         case _:
             metrics = []
 
+    if "hlv" not in batch:
+        batch["hlv"] = {}
     if "sphereratio" in metrics:
-        batch["sphereratio"] = sphereratio(batch)
+        batch["hlv"] |= {f"sphereratio/{k}": v for k, v in sphereratio(batch)}
     if "cyratio" in metrics:
-        batch["cyratio"] = cyratio(batch)
+        batch["hlv"] |= {f"cyratio/{k}": v for k, v in cyratio(batch)}
     if "fpc" in metrics:
-        batch["fpc"] = fpc_from_batch(batch)
+        batch["hlv"] |= {f"fpc/{k}": v for k, v in fpc_from_batch(batch)}
     if "showershape" in metrics:
-        batch["showershape"] = analyze_layers(batch)
+        batch["hlv"] |= {f"showershape/{k}": v for k, v in analyze_layers(batch)}
     if "response" in metrics:
-        batch.nhits = {
-            "n": batch.n_pointsv,
-            "n_by_E": batch.n_pointsv / batch.y[:, 0],
+        batch["hlv"] |= {
+            "nhits/n": batch.n_pointsv,
+            "nhits/n_by_E": batch.n_pointsv / batch.y[:, 0],
         }
-        batch["response"] = response(batch)
+        batch["hlv"]["response"] = response(batch)
 
     return batch
