@@ -189,8 +189,8 @@ class TrainLog:
         self.log_metrics(
             {
                 "batchtime": traintime / interval,
-                "utilisation": utilisation / interval,
-                "processed_events": self.state.processed_events / interval,
+                "utilisation": utilisation,
+                "processed_events": self.state.processed_events,
             },
             self.state["grad_step"],
             self.state["epoch"],
