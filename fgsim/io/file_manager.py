@@ -46,6 +46,6 @@ class FileManager:
     def save_len_dict(self) -> None:
         self.len_dict = {}
         for fn in self.files:
-            self.len_dict[str(fn)] = self._path_to_len(fn)
+            self.len_dict[str(fn.absolute())] = self._path_to_len(fn)
         with open(self.path_ds_lenghts, "w") as f:
             yaml.dump(self.len_dict, f, Dumper=yaml.SafeDumper)
