@@ -22,7 +22,12 @@ def w1p(gen_batch: Batch, sim_batch: Batch, **kwargs) -> tuple[float, float]:
     jf1, mask1 = get_jf_mask(gen_batch)
     jf2, mask2 = get_jf_mask(sim_batch)
     res = gen_metrics.w1p(
-        jets1=jf1, jets2=jf2, mask1=mask1, mask2=mask2, exclude_zeros=True, **jnkw
+        jets1=jf1,
+        jets2=jf2,
+        mask1=mask1,
+        mask2=mask2,
+        exclude_zeros=True,
+        **(jnkw | {"num_batches": 5}),
     )
     score, error = std_weighted_mean(res)
     return bound_res([score, error])
