@@ -51,10 +51,18 @@ def hist2d(
     for iax, (ax, arr, weights) in enumerate(
         zip([sim_axes, gen_axes], [sim, gen], [simw, genw])
     ):
+        x = arr[:, 0]
+        y = arr[:, 1]
+        if len(x) > 500_000:
+            sel = np.random.choice(x.shape[0], 500_000)
+            x = x[sel]
+            y = y[sel]
+            if weights is not None:
+                weights = weights[sel]
         mesh, norm = _2dhist_with_autonorm(
             ax=ax,
-            x=chip_to_binborders(arr[:, 0], xedges),
-            y=chip_to_binborders(arr[:, 1], yedges),
+            x=chip_to_binborders(x, xedges),
+            y=chip_to_binborders(y, yedges),
             bins=[xedges, yedges],
             cmap=plt.cm.hot,
             norm=norm,

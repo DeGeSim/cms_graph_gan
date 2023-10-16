@@ -1,5 +1,7 @@
 from itertools import combinations
 
+import torch
+
 from fgsim.config import conf
 from fgsim.plot import (
     FigLogger,
@@ -9,6 +11,10 @@ from fgsim.plot import (
     var_to_bins,
     var_to_label,
 )
+
+
+def to_np(a: torch.Tensor):
+    return a.detach().cpu().numpy()
 
 
 def eval_plots(fig_logger, res: dict):
@@ -37,7 +43,11 @@ def make_1d_plots(
     else:
         bins = None
     for title, fig in hist1d(
-        res["sim_batch"], res["gen_batch"], ftxname, bins, energy_weighted
+        res["sim_batch"],
+        res["gen_batch"],
+        ftxname,
+        bins,
+        energy_weighted,
     ).items():
         fig_logger(fig, title)
     fig_logger.prefixes.pop()
@@ -60,7 +70,9 @@ def make_high_level_plots(res: dict, fig_logger: FigLogger) -> None:
             metric_dict[mname] = (sim_obj, gen_obj)
 
     for ftn, (sim_arr, gen_arr) in metric_dict.items():
-        fig = ratioplot(sim=sim_arr, gen=gen_arr, title=var_to_label(ftn))
+        fig = ratioplot(
+            sim=to_np(sim_arr), gen=to_np(gen_arr), title=var_to_label(ftn)
+        )
         fig_logger(fig, f"hlv_{ftn}.pdf")
 
     fig_logger.prefixes.pop()
@@ -97,14 +109,14 @@ def make_2d_plots(
 
     for v1, v2 in combinations(ftxidxs, 2):
         if energy_weighted:
-            simw = res["sim_batch"][ftxname][:, epos].cpu().numpy()
-            genw = res["gen_batch"][ftxname][:, epos].cpu().numpy()
+            simw = to_np(res["sim_batch"][ftxname][:, epos])
+            genw = to_np(res["gen_batch"][ftxname][:, epos])
         else:
             simw = None
             genw = None
         figure = hist2d(
-            sim=res["sim_batch"][ftxname][:, [v1, v2]].cpu().numpy(),
-            gen=res["gen_batch"][ftxname][:, [v1, v2]].cpu().numpy(),
+            sim=to_np(res["sim_batch"][ftxname][:, [v1, v2]]),
+            gen=to_np(res["gen_batch"][ftxname][:, [v1, v2]]),
             title=title,
             v1name=var_to_label(v1),
             v2name=var_to_label(v2),
@@ -139,8 +151,8 @@ def make_critics_plots(res: dict, fig_logger: FigLogger) -> None:
         )
     ):
         fig = ratioplot(
-            sim=sim_crit.reshape(-1).cpu().numpy(),
-            gen=gen_crit.reshape(-1).cpu().numpy(),
+            sim=to_np(sim_crit.reshape(-1)),
+            gen=to_np(gen_crit.reshape(-1)),
             title=f"Critic #{icritic} Score",
         )
         fig_logger(
