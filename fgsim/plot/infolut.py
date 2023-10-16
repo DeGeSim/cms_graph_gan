@@ -5,16 +5,19 @@ import numpy as np
 from fgsim.config import conf
 
 labels_dict: Dict[str, str] = {
-    "etarel": "$\\eta_\\mathrm{rel}$",
-    "phirel": "$\\phi_\\mathrm{rel}$",
-    "ptrel": "$p^\\mathrm{T}_\\mathrm{rel}$",
+    "etarel": "$\\eta_\\textrm{rel}$",
+    "phirel": "$\\phi_\\textrm{rel}$",
+    "ptrel": "$p^\\textrm{T}_\\textrm{rel}$",
     "mass": "$m_{rel}$",
     "phi": "$Σ ϕ_{rel}$",
     "pt": "$Σp_{T}^{rel}$",
     "eta": "$Ση_{rel}$",
     "response": "Response ($E/\\sum_i {E}_i$)",
     "showershape_peak_layer": "Peak Layer",
-    "showershape_psr": "Ratio Δ(Turnon(/off), Peak) Layer",
+    "showershape_psr": (
+        "$\\frac{|\\textrm{Layer}^\\textrm{Peak}-\\textrm{Layer}^\\textrm{Turnoff}|+1}"
+        "{\\textrm{Layer}^\\textrm{Peak}-\\textrm{Layer}^\\textrm{Turnon}|+1}$"
+    ),
     "showershape_turnon_layer": "Turnon Layer",
     "sphere_ratio": "$\\sum_i {E}_i$ Sphere(Δ0.3) / $\\sum_i {E}_i$ Sphere(Δ0.8)",
     "sphere_small": "$\\sum_i {E}_i$ Sphere(Δ0.3)",
