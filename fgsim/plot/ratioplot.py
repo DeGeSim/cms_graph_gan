@@ -19,7 +19,7 @@ def ratioplot(
     genw: Optional[np.ndarray] = None,
 ) -> Figure:
     if bins is None:
-        bins = binborders_wo_outliers(np.array([e for e in sim if not np.isnan(e)]))
+        bins = binborders_wo_outliers(sim)
     n_bins = len(bins) - 1
 
     sim_hist, _ = np.histogram(sim, bins=bins, weights=simw)
