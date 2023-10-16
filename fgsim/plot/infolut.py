@@ -12,15 +12,24 @@ labels_dict: Dict[str, str] = {
     "phi": "$Σ ϕ_{rel}$",
     "pt": "$Σp_{T}^{rel}$",
     "eta": "$Ση_{rel}$",
-    "response": "Response (E/ΣE)",
+    "response": "Response ($E/\\sum_i {E}_i$)",
     "showershape_peak_layer": "Peak Layer",
     "showershape_psr": "Ratio Δ(Turnon(/off), Peak) Layer",
     "showershape_turnon_layer": "Turnon Layer",
-    "sphereratio": "Sphere(Δ=0.2)/Sphere(Δ=0.3)",
+    "sphere_ratio": "$\\sum_i {E}_i$ Sphere(Δ0.3) / $\\sum_i {E}_i$ Sphere(Δ0.8)",
+    "sphere_small": "$\\sum_i {E}_i$ Sphere(Δ0.3)",
+    "sphere_large": "$\\sum_i {E}_i$ Sphere(Δ0.8)",
+    "cyratio_ratio": (
+        "$\\sum_i {E}_i$ Cylinder(Δ0.3)/ $\\sum_i {E}_i$ Cylinder(Δ0.8)"
+    ),
+    "cyratio_small": "$\\sum_i {E}_i$ Cylinder(Δ0.3)",
+    "cyratio_large": "$\\sum_i {E}_i$ Cylinder(Δ0.8)",
     "fpc_x": "First PCA vector x",
     "fpc_y": "First PCA vector y",
     "fpc_z": "First PCA vector z",
     "fpc_eval": "First PCA Eigenvalue",
+    "nhits_n": "Number of Hits",
+    "nhits_n_by_E": "Number of Hits / Shower Energy",
 }
 
 

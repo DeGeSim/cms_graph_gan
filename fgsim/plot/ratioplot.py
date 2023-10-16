@@ -113,6 +113,6 @@ def ratioplot(
             spline.set_color("black")
     if simw is not None:
         title += " weighted"
-    fig.suptitle(title, fontsize=28)
+    fig.suptitle(title, fontsize=26)
     plt.tight_layout()
     return fig

@@ -41,20 +41,20 @@ def postprocess(batch: Batch, sim_or_gen: str) -> Batch:
         batch["hlv"] = {}
     if "sphereratio" in metrics:
         batch["hlv"] |= {
-            f"sphereratio/{k}": v for k, v in sphereratio(batch).items()
+            f"sphereratio_{k}": v for k, v in sphereratio(batch).items()
         }
     if "cyratio" in metrics:
-        batch["hlv"] |= {f"cyratio/{k}": v for k, v in cyratio(batch).items()}
+        batch["hlv"] |= {f"cyratio_{k}": v for k, v in cyratio(batch).items()}
     if "fpc" in metrics:
-        batch["hlv"] |= {f"fpc/{k}": v for k, v in fpc_from_batch(batch).items()}
+        batch["hlv"] |= {f"fpc_{k}": v for k, v in fpc_from_batch(batch).items()}
     if "showershape" in metrics:
         batch["hlv"] |= {
-            f"showershape/{k}": v for k, v in analyze_layers(batch).items()
+            f"showershape_{k}": v for k, v in analyze_layers(batch).items()
         }
     if "response" in metrics:
         batch["hlv"] |= {
-            "nhits/n": batch.n_pointsv,
-            "nhits/n_by_E": batch.n_pointsv / batch.y[:, 0],
+            "nhits_n": batch.n_pointsv,
+            "nhits_n_by_E": batch.n_pointsv / batch.y[:, 0],
         }
         batch["hlv"]["response"] = response(batch)
 
