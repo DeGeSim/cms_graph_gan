@@ -100,13 +100,13 @@ class ScalerBase:
         dev = pcs.device
         if pcs.dtype == torch.float:
             pcs = pcs.double()
-        pcs = pcs.cpu().numpy()
+        nparr = pcs.cpu().numpy()
 
         transfs = self.transfs_x if x_or_y == "x" else self.transfs_y
         res = np.hstack(
             [
                 transf.inverse_transform(arr.reshape(-1, 1))
-                for arr, transf in zip(pcs.T, transfs)
+                for arr, transf in zip(nparr.T, transfs)
             ]
         )
         if not np.isfinite(res).all():

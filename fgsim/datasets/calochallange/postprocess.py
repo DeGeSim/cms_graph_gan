@@ -31,9 +31,9 @@ def postprocess(batch: Batch, sim_or_gen: str) -> Batch:
 
     match conf.command:
         case "train":
-            metrics = conf.metrics.val
+            metrics = list(conf.metrics.val)
         case "test":
-            metrics = conf.metrics.test
+            metrics = list(conf.metrics.test)
         case _:
             metrics = []
 

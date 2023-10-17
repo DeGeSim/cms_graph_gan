@@ -47,7 +47,7 @@ class BipartPool(nn.Module):
                 spectral_norm=self.spectral_norm,
             )
 
-    def forward(self, x: Tensor, batch: Tensor) -> tuple[Tensor, torch.LongTensor]:
+    def forward(self, x: Tensor, batch: Tensor) -> tuple[Tensor, Tensor]:
         n_features = x.shape[-1]
         batch_size = batch[-1] + 1
         x_aggrs = self.aggrs.repeat(batch_size, 1)
@@ -94,7 +94,7 @@ class BipartPool(nn.Module):
             xcent = self.mpl(
                 x=(x, x_aggrs),
                 edge_index=ei_o2c,
-                size=(len(x), self.ratio * batch_size),
+                size=(len(x), self.ratio * int(batch_size)),
             )
 
         return (

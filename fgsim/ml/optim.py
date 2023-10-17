@@ -40,14 +40,13 @@ class OptimAndSchedulerCol:
                 else {}
             )
 
-            optim: torch.optim
+            optim: torch.optim.Optimizer
             if submodelconf.optim.name == "FakeOptimizer":
                 optim = FakeOptimizer()
             else:
                 # Import the python file containing the models with dynamically
-                optim = getattr(torch.optim, submodelconf.optim.name)(
-                    submodelpar_dict[name], **optimparams
-                )
+                optimClass = getattr(torch.optim, submodelconf.optim.name)
+                optim = optimClass(submodelpar_dict[name], **optimparams)
             self._optimizers[name] = optim
 
             # Setup the scheduler

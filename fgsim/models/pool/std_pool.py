@@ -5,7 +5,9 @@ from torch import Tensor
 from torch_geometric.nn import pool
 
 
-def global_mad_pool(x: Tensor, batchidx: Optional[Tensor] = None) -> tuple[Tensor]:
+def global_mad_pool(
+    x: Tensor, batchidx: Optional[Tensor] = None
+) -> tuple[Tensor, Tensor, Tensor]:
     if x.dim() not in (2, 3):
         raise Exception
     if x.dim() == 2:
@@ -23,7 +25,9 @@ def global_mad_pool(x: Tensor, batchidx: Optional[Tensor] = None) -> tuple[Tenso
     return counts, means, widths
 
 
-def global_mad_pool2(x: Tensor, batchidx: Optional[Tensor] = None) -> tuple[Tensor]:
+def global_mad_pool2(
+    x: Tensor, batchidx: Optional[Tensor] = None
+) -> tuple[Tensor, Tensor, Tensor, Tensor]:
     if x.dim() not in (2, 3):
         raise Exception
     if x.dim() == 2:

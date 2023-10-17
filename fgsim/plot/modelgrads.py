@@ -2,7 +2,6 @@ from collections import OrderedDict
 
 import matplotlib.pyplot as plt
 import numpy as np
-from matplotlib.axes import Axes
 from matplotlib.colors import LogNorm
 from matplotlib.figure import Figure
 
@@ -56,11 +55,6 @@ def fig_grads(grad_aggr: GradHistAggregator, partname: str) -> Figure:
     nparts, ntimesteps = ave_grads.shape
 
     plt.clf()
-    fig: Figure
-    ax1: Axes
-    ax2: Axes
-    ax3: Axes
-    ax4: Axes
     fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(
         2,
         2,

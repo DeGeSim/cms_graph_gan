@@ -1,5 +1,6 @@
 from itertools import combinations
 
+import numpy as np
 import torch
 
 from fgsim.config import conf
@@ -13,7 +14,7 @@ from fgsim.plot import (
 )
 
 
-def to_np(a: torch.Tensor):
+def to_np(a: torch.Tensor) -> np.ndarray:
     return a.detach().cpu().numpy()
 
 
@@ -68,9 +69,7 @@ def make_high_level_plots(res: dict, fig_logger: FigLogger) -> None:
             metric_dict[mname] = (sim_obj, gen_obj)
 
     for ftn, (sim_arr, gen_arr) in metric_dict.items():
-        fig = ratioplot(
-            sim=to_np(sim_arr), gen=to_np(gen_arr), title=var_to_label(ftn)
-        )
+        fig = ratioplot(sim=sim_arr, gen=gen_arr, title=var_to_label(ftn))
         fig_logger(fig, f"hlv_{ftn}.pdf")
 
     fig_logger.prefixes.pop()

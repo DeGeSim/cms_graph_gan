@@ -10,7 +10,7 @@ batch_size = conf.loader.batch_size
 
 
 def compute_chucks(files, len_dict) -> List[ChunkType]:
-    chunk_coords: List[ChunkType] = [[]]
+    chunk_coords: list[list] = [[]]
     ifile = 0
     ielement = 0
     current_chunck_elements = 0

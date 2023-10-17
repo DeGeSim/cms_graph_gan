@@ -41,7 +41,7 @@ def w1efp(gen_batch: Batch, sim_batch: Batch, **kwargs) -> tuple[float, float]:
     return bound_res([score, error], 1e5)
 
 
-def fpnd(gen_batch: Batch, **kwargs) -> float:
+def fpnd(gen_batch: Batch, **kwargs) -> tuple[float, float]:
     jets = to_stacked_mask(gen_batch)[:, :, :3]
     if conf.loader.n_points != 30:
         pts = jets[..., conf.loader.x_ftx_energy_pos]
