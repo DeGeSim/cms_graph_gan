@@ -7,7 +7,7 @@ from fgsim.config import conf
 from fgsim.plot import binborders_wo_outliers, var_to_bins
 
 
-def run_dists(sim_batch, gen_batch, k, bins=None):
+def run_dists(sim_batch, gen_batch, k, bins=None) -> dict[str, np.float32]:
     if k is not None:
         ftxnames = [e for e in sim_batch.hlv.keys() if e.startswith(k)]
         sim = sim_batch.hlv
@@ -53,10 +53,10 @@ def run_dists(sim_batch, gen_batch, k, bins=None):
     res_d = {}
     for dname, darr in dists_d.items():
         if len(ftxnames) == 0:
-            res_d[f"{dname}"] = darr[0]
+            res_d[f"{dname}"] = darr[0].numpy()
             continue
         for iftx, ftxname in enumerate(ftxnames):
-            res_d[f"{ftxname}/{dname}"] = darr[iftx]
+            res_d[f"{ftxname}/{dname}"] = darr[iftx].numpy()
 
     return res_d
 
@@ -89,29 +89,25 @@ def marginalEw(
         real = real[idx]
         rw = rw[idx]
 
-    kwargs = {
+    kw = {
         "r": real,
         "f": fake,
         "rw": rw,
         "fw": fw,
     }
 
-    cdfdist = calc_ecdf_dist(**kwargs)
-    sw1dist = calc_sw1_dist(**kwargs)
+    cdfdist = calc_ecdf_dist(**kw)
+    sw1dist = calc_sw1_dist(**kw)
     histdist = calc_hist_dist(
-        **kwargs, bins=[torch.tensor(var_to_bins(i)).float() for i in range(1, 4)]
+        **kw, bins=[torch.tensor(var_to_bins(i)).float() for i in range(1, 4)]
     )
     distnames = ["cdf", "sw1", "histd"]
     distarrays = [cdfdist, sw1dist, histdist]
     for iftx, k in enumerate(conf.loader.x_features[1:]):
         for distname, arr in zip(distnames, distarrays):
-            res_d[f"{k}/{distname}"] = arr[iftx]
+            res_d[f"{k}/{distname}"] = arr[iftx].numpy()
 
     return res_d
-
-
-# global variables
-# Marginal Variables
 
 
 def sphereratio(
