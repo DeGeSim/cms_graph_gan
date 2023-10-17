@@ -53,10 +53,10 @@ def run_dists(sim_batch, gen_batch, k, bins=None) -> dict[str, np.float32]:
     res_d = {}
     for dname, darr in dists_d.items():
         if len(ftxnames) == 0:
-            res_d[f"{dname}"] = darr[0].numpy()
+            res_d[f"{dname}"] = darr[0]
             continue
         for iftx, ftxname in enumerate(ftxnames):
-            res_d[f"{ftxname}/{dname}"] = darr[iftx].numpy()
+            res_d[f"{ftxname}/{dname}"] = darr[iftx]
 
     return res_d
 
@@ -105,7 +105,7 @@ def marginalEw(
     distarrays = [cdfdist, sw1dist, histdist]
     for iftx, k in enumerate(conf.loader.x_features[1:]):
         for distname, arr in zip(distnames, distarrays):
-            res_d[f"{k}/{distname}"] = arr[iftx].numpy()
+            res_d[f"{k}/{distname}"] = arr[iftx]
 
     return res_d
 

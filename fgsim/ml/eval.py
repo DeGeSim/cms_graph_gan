@@ -78,7 +78,7 @@ def eval_res_d(
     holder: Holder,
     step: int,
     epoch: int,
-    mode: list["str"],
+    mode: list[str],
     plot_path=None,
 ):
     plot = step % conf.training.plot_interval == 0 or conf.command == "test"

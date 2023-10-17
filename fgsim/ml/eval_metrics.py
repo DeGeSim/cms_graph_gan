@@ -77,7 +77,7 @@ class EvaluationMetrics:
         else:
             self.test_md = mval
 
-    def get_metrics(self) -> tuple[dict, list]:
+    def get_metrics(self) -> tuple[dict, Optional[list]]:
         """
         The function takes the validation metrics and computes the fraction
         of times that the value of this metric is smaller then the other runs
