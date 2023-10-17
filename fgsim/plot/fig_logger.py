@@ -34,7 +34,7 @@ class FigLogger:
             datetime.now().strftime("%Y-%m-%d %H:%M"),
         ]
         if hasattr(conf, "hash"):
-            texts.append(f"#{conf.hash}")
+            texts.append(f"\\#{conf.hash}")
         xposv = np.linspace(0.05, 0.95, len(texts))
         for x, t in zip(xposv, texts):
             figure.text(

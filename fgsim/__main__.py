@@ -4,21 +4,21 @@ import os
 import sys
 from pathlib import Path
 
+import pretty_errors  # noqa
+
 # Add the project to the path, -> `import fgsim.x`
 sys.path.append(os.path.dirname(os.path.realpath(".")))
 
-#  from typeguard.importhook import install_import_hook
-#
-#  install_import_hook("fgsim")
+# from typeguard import install_import_hook
+
+# install_import_hook("fgsim")
+# install_import_hook("caloutils")
 
 
 def main():
     from fgsim.cli import get_args
 
     args = get_args()
-
-    if args.command not in ["setup", "dump", "overwrite"]:
-        import pretty_errors  # noqa
 
     import fgsim.config
 

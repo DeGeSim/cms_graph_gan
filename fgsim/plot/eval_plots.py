@@ -24,10 +24,8 @@ def eval_plots(fig_logger, res: dict):
     make_2d_plots(res, fig_logger, False, True)
 
     if conf.dataset_name == "calochallange":
-        fig_logger.prefixes.append("scaled")
-        make_1d_plots(res, fig_logger, "x_scaled")
-        make_2d_plots(res, fig_logger, "x_scaled")
-        fig_logger.prefixes.pop()
+        make_1d_plots(res, fig_logger, False)
+        make_2d_plots(res, fig_logger, False)
 
     make_high_level_plots(res, fig_logger)
     make_critics_plots(res, fig_logger)
@@ -153,7 +151,7 @@ def make_critics_plots(res: dict, fig_logger: FigLogger) -> None:
         fig = ratioplot(
             sim=to_np(sim_crit.reshape(-1)),
             gen=to_np(gen_crit.reshape(-1)),
-            title=f"Critic #{icritic} Score",
+            title=f"Critic \\#{icritic} Score",
         )
         fig_logger(
             fig,

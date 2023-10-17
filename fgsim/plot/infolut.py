@@ -9,24 +9,38 @@ labels_dict: Dict[str, str] = {
     "phirel": "$\\phi_\\mathrm{rel}$",
     "ptrel": "$p^\\mathrm{T}_\\mathrm{rel}$",
     "mass": "$m_{rel}$",
-    "phi": "$Σ ϕ_{rel}$",
-    "pt": "$Σp_{T}^{rel}$",
-    "eta": "$Ση_{rel}$",
-    "response": "Response ($E/\\sum_i {E}_i$)",
+    "phi": "$\\sum  ϕ_{rel}$",
+    "pt": "$\\sum p_{T}^{rel}$",
+    "eta": "$\\sum η_{rel}$",
+    "response": "Response ($E/\\textstyle\\sum\\nolimits_i \\mathrm{E_i}$)",
     "showershape_peak_layer": "Peak Layer",
     "showershape_psr": (
-        "$\\frac{|\\mathrm{Layer}^\\mathrm{Peak}-\\mathrm{Layer}^\\mathrm{Turnoff}|+1}"
-        "{\\mathrm{Layer}^\\mathrm{Peak}-\\mathrm{Layer}^\\mathrm{Turnon}|+1}$"
+        "$\\textstyle \\frac{|\\mathrm{Layer}^\\mathrm{Peak}-"
+        "\\mathrm{Layer}^\\mathrm{Turnoff}|+1}{|\\mathrm{Layer}^\\mathrm{Peak}"
+        "-\\mathrm{Layer}^\\mathrm{Turnon}|+1}$"
     ),
     "showershape_turnon_layer": "Turnon Layer",
-    "sphere_ratio": "$\\sum_i {E}_i$ Sphere(Δ0.3) / $\\sum_i {E}_i$ Sphere(Δ0.8)",
-    "sphere_small": "$\\sum_i {E}_i$ Sphere(Δ0.3)",
-    "sphere_large": "$\\sum_i {E}_i$ Sphere(Δ0.8)",
-    "cyratio_ratio": (
-        "$\\sum_i {E}_i$ Cylinder(Δ0.3)/ $\\sum_i {E}_i$ Cylinder(Δ0.8)"
+    "sphereratio_ratio": (
+        "$\\frac{\\sum\\nolimits_i^{\\mathrm{Sphere}(σ=0.3)}"
+        " \\mathrm{E_i}}{\\sum\\nolimits_i^{\\mathrm{Sphere}(σ=0.8)}\\mathrm{E_i}}$"
     ),
-    "cyratio_small": "$\\sum_i {E}_i$ Cylinder(Δ0.3)",
-    "cyratio_large": "$\\sum_i {E}_i$ Cylinder(Δ0.8)",
+    "sphereratio_small": (
+        "$\\sum\\nolimits_i^{\\mathrm{Sphere}(σ=0.3)} \\mathrm{E_i}$"
+    ),
+    "sphereratio_large": (
+        "$\\sum\\nolimits_i^{\\mathrm{Sphere}(σ=0.8)} \\mathrm{E_i}$"
+    ),
+    "cyratio_ratio": (
+        "$\\frac{\\sum\\nolimits_i^{\\mathrm{Cylinder}(σ=0.2)}"
+        " \\mathrm{E_i}}{\\sum\\nolimits_i^{\\mathrm{Cylinder}(σ=0.6)}"
+        "\\mathrm{E_i}}$"
+    ),
+    "cyratio_small": (
+        "$\\sum\\nolimits_i^{\\mathrm{Cylinder}(σ=0.2)} \\mathrm{E_i}$"
+    ),
+    "cyratio_large": (
+        "$\\sum\\nolimits_i^{\\mathrm{Cylinder}(σ=0.6)} \\mathrm{E_i}$"
+    ),
     "fpc_x": "First PCA vector x",
     "fpc_y": "First PCA vector y",
     "fpc_z": "First PCA vector z",

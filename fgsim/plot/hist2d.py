@@ -30,7 +30,7 @@ def hist2d(
     fig: Figure
     sim_axes: Axes
     gen_axes: Axes
-    fig, axes = plt.subplots(1, 2, sharex=True, sharey=True)  # , figsize=(20, 12)
+    fig, axes = plt.subplots(1, 2, sharex=True, sharey=True, figsize=(4.5, 3.7))
     (sim_axes, gen_axes) = axes
     if v1bins is None:
         xedges = binborders_wo_outliers(sim[:, 0])

@@ -145,7 +145,31 @@ def get_device():
 
 device = get_device()
 
-plt.rcParams["savefig.bbox"] = "tight"
-plt.rcParams["backend"] = "Agg"
-plt.rcParams["figure.dpi"] = 150
+plt.rcParams.update(
+    {
+        "savefig.bbox": "tight",
+        "figure.dpi": 150,
+        "font.family": "Libertinus Sans",
+        "backend": "pgf",
+        # "backend": "Agg",
+        # "text.usetex": True,  # use inline math for ticks
+        # "text.latex.preamble": r"\usepackage{libertinus}",
+        "pgf.texsystem": "lualatex",
+        "pgf.rcfonts": False,
+        "pgf.preamble": "\n".join(
+            [
+                # r"\usepackage[T1]{fontenc}",
+                # r"\usepackage[utf8]{inputenc}",
+                # r"\usepackage{libertine}",
+                r"\AtBeginDocument{\catcode`\&=12\catcode`\#=12}",
+                r"\usepackage{unicode-math}",
+                r"\setmathfont{Libertinus Math}",
+                r"\setmathrm{Libertinus Serif}",
+                r"\usepackage{fontspec}",
+                r"\setmainfont{Libertinus Sans}",
+                r"\setsansfont{Libertinus Sans}",
+            ]
+        ),
+    }
+)
 np.set_printoptions(formatter={"float_kind": "{:.3g}".format})
