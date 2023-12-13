@@ -25,7 +25,8 @@ class Trainer:
     def training_loop(self):
         max_epochs = conf.training.max_epochs
         state = self.holder.state
-        if state.epoch < max_epochs and not early_stopping(self.holder):
+        # if state.epoch < max_epochs and not early_stopping(self.holder):
+        if state.grad_step == 0:
             self.validation_step()
         while state.epoch < max_epochs and not early_stopping(self.holder):
             self.train_epoch()
