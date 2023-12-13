@@ -7,7 +7,12 @@ from fgsim.config import conf
 from fgsim.datasets.jetnet.utils import to_stacked_mask
 
 num_batches = 1 if conf.command == "train" else 5
-num_eval_samples = 50_000 if conf.command == "train" else 25_000
+# num_eval_samples = 50_000 if conf.command == "train" else 25_000
+num_eval_samples = (
+    conf.loader.validation_set_size
+    if conf.command == "train"
+    else conf.loader.test_set_size
+)
 jnkw = {"num_batches": num_batches, "num_eval_samples": num_eval_samples}
 
 

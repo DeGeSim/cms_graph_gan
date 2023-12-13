@@ -434,8 +434,8 @@ dataset_options:
             preprocess_training: True
             chunk_size: 1000
             batch_size: 200
-            validation_set_size: 10000
-            test_set_size: 50000
+            validation_set_size: 25_000
+            test_set_size: 50_000
             scaling_fit_size: 10000
             events_per_file: 10000
             prefetch_batches: 10
