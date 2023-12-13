@@ -147,18 +147,17 @@ device = get_device()
 
 plt.rcParams.update(
     {
-        "savefig.bbox": "tight",
+        # "savefig.bbox": "tight",
         "figure.dpi": 300,
-        "font.family": "Libertinus Sans",
+        "figure.figsize": [448.13 / 72.0 / 3.0, 636.6 / 72.0 / 3.0],
+        "text.usetex": True,  # use inline math for ticks
         "backend": "pgf",
         "pgf.texsystem": "lualatex",
         "pgf.rcfonts": False,
         "pgf.preamble": "\n".join(
             [
-                # r"\usepackage[T1]{fontenc}",
-                # r"\usepackage[utf8]{inputenc}",
-                # r"\usepackage{libertine}",
                 r"\AtBeginDocument{\catcode`\&=12\catcode`\#=12}",
+                # r"\usepackage[fontsize=10pt]{scrextend}",
                 r"\usepackage{unicode-math}",
                 r"\setmathfont{Libertinus Math}",
                 r"\setmathrm{Libertinus Serif}",

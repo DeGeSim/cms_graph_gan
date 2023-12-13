@@ -54,6 +54,7 @@ class FigLogger:
             folder = self.plot_path / prefix
             folder.mkdir(parents=True, exist_ok=True)
             figure.savefig((folder / filename).with_suffix(".pdf"))
+            figure.savefig((folder / filename).with_suffix(".pgf"))
 
         self.train_log.log_figure(
             figure_name=f"{prefix}/{filename}",
