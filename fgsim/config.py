@@ -65,6 +65,7 @@ def compute_conf(default, *confs):
             "remote",
             "path",
             "project_name",
+            "work_dir",
             "ray",
             "hash",
         ]
@@ -130,6 +131,8 @@ def parse_arg_conf(args=None):
     # replace workdir
     if conf.path.run_path.startswith("$WD"):
         conf.path.run_path = conf.path.run_path.replace("$WD", str(args.work_dir))
+    if "work_dir" in conf:
+        del conf["work_dir"]
 
     return conf, hyperparameters
 
