@@ -3,7 +3,7 @@ from pathlib import Path
 import torch
 from tqdm import tqdm
 
-from fgsim.config import conf
+from fgsim.config import conf, device
 from fgsim.io.chunks import ChunkManager
 from fgsim.monitoring import logger
 
@@ -33,6 +33,8 @@ class BaseDS:
                 logger.info(f"Processing {attr_name} for {pickle_path}")
                 batch_list = self.__process_ds(chunks)
                 torch.save(batch_list, pickle_path)
+            if attr_name != "testing" and conf.dataset_name == "jetnet":
+                batch_list = [e.to(device) for e in batch_list]
             setattr(self, attr_name, batch_list)
         return getattr(self, attr_name)
 
