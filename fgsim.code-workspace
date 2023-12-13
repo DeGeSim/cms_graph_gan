@@ -20,7 +20,7 @@
                 "source.fixAll": true
             },
             "editor.formatOnSave": true,
-            "editor.defaultFormatter": "charliermarsh.ruff"
+            "editor.defaultFormatter": "ms-python.black-formatter"
         },
         "debug.console.closeOnEnd": true,
         "debug.terminal.clearBeforeReusing": true,
@@ -68,9 +68,13 @@
                 "path": "${env:HOME}/.apps/CentOSLinux7/bin/zsh",
             }
         },
+        "black-formatter.interpreter":["/dev/shm/mscham/fgsim/bin/python"],
         "black-formatter.path": [
             "/dev/shm/mscham/fgsim/bin/black"
         ],
         "black-formatter.importStrategy": "fromEnvironment",
+        "ruff.interpreter": [
+            "/dev/shm/mscham/fgsim/bin/python"
+        ],
     },
 }
