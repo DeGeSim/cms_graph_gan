@@ -26,7 +26,6 @@ class FigLogger:
         self.epoch = epoch
 
     def __call__(self, figure: Figure, filename):
-        figure.set_tight_layout(True)
         texts = [
             f"@{conf.tag}",
             f"Step {self.step}",
@@ -35,7 +34,7 @@ class FigLogger:
         ]
         if hasattr(conf, "hash"):
             texts.append(f"\\#{conf.hash}")
-        xposv = np.linspace(0.05, 0.95, len(texts))
+        xposv = np.linspace(0.10, 0.95, len(texts))
         for x, t in zip(xposv, texts):
             figure.text(
                 x,
@@ -45,6 +44,7 @@ class FigLogger:
                 verticalalignment="bottom",
                 fontsize=5,
             )
+        figure.set_tight_layout(True)
 
         prefix = "/".join(self.prefixes)
 

@@ -12,7 +12,7 @@ labels_dict: Dict[str, str] = {
     "phi": "$\\sum  ϕ_{rel}$",
     "pt": "$\\sum p_{T}^{rel}$",
     "eta": "$\\sum η_{rel}$",
-    "response": "Response ($E/\\textstyle\\sum\\nolimits_i \\mathrm{E_i}$)",
+    "response": "Response ($\\textstyle\\sum\\nolimits_i \\mathrm{E_i}/E$)",
     "showershape_peak_layer": "Peak Layer",
     "showershape_psr": (
         "$\\textstyle \\frac{|\\mathrm{Layer}^\\mathrm{Peak}-"
@@ -21,25 +21,25 @@ labels_dict: Dict[str, str] = {
     ),
     "showershape_turnon_layer": "Turnon Layer",
     "sphereratio_ratio": (
-        "$\\frac{\\sum\\nolimits_i^{\\mathrm{Sphere}(σ=0.3)}"
-        " \\mathrm{E_i}}{\\sum\\nolimits_i^{\\mathrm{Sphere}(σ=0.8)}\\mathrm{E_i}}$"
+        "$\\sum\\nolimits_i^{\\mathrm{Sphere}(0.3 σ)\\mathrm{E_i} /"
+        " \\sum\\nolimits_i^{\\mathrm{Sphere}(0.8 σ)}\\mathrm{E_i}$"
     ),
     "sphereratio_small": (
-        "$\\sum\\nolimits_i^{\\mathrm{Sphere}(σ=0.3)} \\mathrm{E_i}$"
+        "$\\sum\\nolimits_i^{\\mathrm{Sphere}(0.3 σ)} \\mathrm{E_i}$"
     ),
     "sphereratio_large": (
-        "$\\sum\\nolimits_i^{\\mathrm{Sphere}(σ=0.8)} \\mathrm{E_i}$"
+        "$\\sum\\nolimits_i^{\\mathrm{Sphere}(0.8 σ)} \\mathrm{E_i}$"
     ),
     "cyratio_ratio": (
-        "$\\frac{\\sum\\nolimits_i^{\\mathrm{Cylinder}(σ=0.2)}"
-        " \\mathrm{E_i}}{\\sum\\nolimits_i^{\\mathrm{Cylinder}(σ=0.6)}"
+        "$\\frac{\\sum\\nolimits_i^{\\mathrm{Cylinder}(0.2 σ)}"
+        " \\mathrm{E_i}}{\\sum\\nolimits_i^{\\mathrm{Cylinder}(0.6 σ)}"
         "\\mathrm{E_i}}$"
     ),
     "cyratio_small": (
-        "$\\sum\\nolimits_i^{\\mathrm{Cylinder}(σ=0.2)} \\mathrm{E_i}$"
+        "$\\sum\\nolimits_i^{\\mathrm{Cylinder}(0.2 σ)} \\mathrm{E_i}$"
     ),
     "cyratio_large": (
-        "$\\sum\\nolimits_i^{\\mathrm{Cylinder}(σ=0.6)} \\mathrm{E_i}$"
+        "$\\sum\\nolimits_i^{\\mathrm{Cylinder}(0.6 σ)} \\mathrm{E_i}$"
     ),
     "fpc_x": "First PCA vector x",
     "fpc_y": "First PCA vector y",

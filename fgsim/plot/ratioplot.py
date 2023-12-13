@@ -80,8 +80,10 @@ def ratioplot(
     ax.set_ylabel("Counts/Bin", fontsize=17)
 
     ax.legend(fontsize=16, loc="best")
-    ax.tick_params(axis="both", which="major", labelsize=14)
-    ax.tick_params(axis="both", which="minor", labelsize=11)
+    ax.tick_params(axis="both", which="major", labelsize=15)
+    ax.tick_params(axis="both", which="minor", labelsize=13)
+    axrat.tick_params(axis="both", which="major", labelsize=15)
+    axrat.tick_params(axis="both", which="minor", labelsize=13)
 
     # ratioplot
     with np.errstate(divide="ignore", invalid="ignore"):
@@ -92,6 +94,7 @@ def ratioplot(
         frac_error_x = np.array([(bins[1] - bins[0]) / 2.0] * n_bins)
         frac_mask = (frac != 0) & np.invert(np.isnan(frac_error_y))
     axrat.axhline(1, color="grey")
+    axrat.set_ylabel(r"$\frac{\text{Model}}{\text{Simulation}}$", fontsize=14)
 
     axrat.errorbar(
         x=bincenters(bins)[frac_mask],
@@ -105,8 +108,9 @@ def ratioplot(
         markersize=2,
     )
 
-    axrat.set_ylim(0.0, 1.52)
+    axrat.set_ylim(0.48, 1.52)
     axrat.xaxis.tick_top()
+
     for iax in [ax, axrat]:
         for spline in iax.spines.values():
             spline.set_linewidth(1)

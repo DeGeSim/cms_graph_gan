@@ -2,8 +2,7 @@
     "extensions": {
         "recommendations": [
             "ms-python.python",
-            "richie5um2.vscode-sort-json",
-            "timonwong.shellcheck"
+            "charliermarsh.ruff",
         ]
     },
     "folders": [
@@ -17,16 +16,14 @@
     "settings": {
         "[python]": {
             "editor.codeActionsOnSave": {
-                // "source.organizeImports": true,
-                // "source.fixAll": true
+                "source.organizeImports": true,
+                "source.fixAll": true
             },
             "editor.formatOnSave": true,
-            "editor.defaultFormatter": "ms-python.black-formatter"
+            "editor.defaultFormatter": "charliermarsh.ruff"
         },
         "debug.console.closeOnEnd": true,
         "debug.terminal.clearBeforeReusing": true,
-        "docwriter.style": "NumPy",
-        "editor.formatOnSave": false,
         "files.exclude": {
             "**/.*": true,
             "**/CVS": true,
@@ -59,27 +56,8 @@
         "python.analysis.typeCheckingMode": "basic",
         "python.defaultInterpreterPath": "/dev/shm/mscham/fgsim/bin/python",
         "python.envFile": "~/fgsim/.env",
-        "python.formatting.provider": "none",
         "python.languageServer": "Pylance",
-        "python.linting.enabled": true,
-        "python.linting.flake8Enabled": true,
-        "python.linting.flake8Path": "/dev/shm/mscham/fgsim/bin/pflake8",
-        "python.linting.ignorePatterns": [
-            "**/site-packages/**/*.py",
-            ".vscode/*.py",
-            "wd/**"
-        ],
-        "python.linting.lintOnSave": true,
-        "python.linting.mypyEnabled": false,
-        "python.linting.mypyPath": "/dev/shm/mscham/fgsim/bin/mypy",
-        "python.linting.pylintArgs": [
-            "--generated-members=numpy.* ,torch.*",
-            "--disable=E0402,C0116,logging-fstring-interpolation"
-        ],
-        "python.linting.pylintEnabled": false,
-        "python.linting.pylintPath": "/dev/shm/mscham/fgsim/bin/pylint",
         "python.terminal.activateEnvironment": false,
-        // "python.pipenvPath": "/dev/shm/mscham/fgsim/bin/pipenv",
         "python.testing.pytestEnabled": true,
         "python.testing.pytestPath": "/dev/shm/mscham/fgsim/bin/pytest",
         "python.testing.unittestEnabled": false,
@@ -90,8 +68,6 @@
                 "path": "${env:HOME}/.apps/CentOSLinux7/bin/zsh",
             }
         },
-        "docwriter.progress.trackMethods": false,
-        "docwriter.progress.trackFunctions": false,
         "black-formatter.path": [
             "/dev/shm/mscham/fgsim/bin/black"
         ],

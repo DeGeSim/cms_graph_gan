@@ -3,7 +3,6 @@ from pathlib import Path
 from typing import Union
 
 import matplotlib.pyplot as plt
-import numpy as np
 import torch
 from matplotlib.figure import Figure
 from omegaconf import DictConfig
@@ -82,7 +81,7 @@ class TrainLog:
 
     def log_metrics(
         self,
-        metrics_dict: dict[str, Union[float, torch.Tensor, np.float32]],
+        metrics_dict: dict[str, Union[tuple, float, torch.Tensor]],
         step=None,
         epoch=None,
         prefix=None,

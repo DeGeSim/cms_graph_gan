@@ -148,12 +148,9 @@ device = get_device()
 plt.rcParams.update(
     {
         "savefig.bbox": "tight",
-        "figure.dpi": 150,
+        "figure.dpi": 300,
         "font.family": "Libertinus Sans",
         "backend": "pgf",
-        # "backend": "Agg",
-        # "text.usetex": True,  # use inline math for ticks
-        # "text.latex.preamble": r"\usepackage{libertinus}",
         "pgf.texsystem": "lualatex",
         "pgf.rcfonts": False,
         "pgf.preamble": "\n".join(
