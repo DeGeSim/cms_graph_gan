@@ -5,7 +5,7 @@ from fgsim.config import conf
 from fgsim.monitoring import logger
 
 ChunkType = Tuple[Tuple[Path, int, int]]
-chunk_size = conf.loader.batch_size
+chunk_size = conf.loader.chunk_size
 batch_size = conf.loader.batch_size
 
 
@@ -52,7 +52,7 @@ class ChunkManager:
         # Get access to the postprocess switch for computing the validation dataset
         self.__assign_chunks(files, len_dict)
 
-        self.n_training_events = conf.loader.chunk_size * len(self.training_chunks)
+        self.n_training_events = chunk_size * len(self.training_chunks)
         self.n_grad_steps_per_epoch = self.n_training_events // batch_size
 
     def __assign_chunks(self, files, len_dict):
