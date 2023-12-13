@@ -1,4 +1,5 @@
 from itertools import combinations
+from typing import Union
 
 import numpy as np
 import torch
@@ -14,7 +15,9 @@ from fgsim.plot import (
 )
 
 
-def to_np(a: torch.Tensor) -> np.ndarray:
+def to_np(a: Union[torch.Tensor, np.ndarray]) -> np.ndarray:
+    if isinstance(a, np.ndarray):
+        return a
     return a.detach().cpu().numpy()
 
 
