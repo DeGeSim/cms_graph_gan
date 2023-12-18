@@ -13,6 +13,7 @@ from omegaconf import OmegaConf
 from omegaconf.dictconfig import DictConfig
 from torch.optim.swa_utils import AveragedModel
 from torch_geometric.data import Batch
+from torchinfo import summary
 
 from fgsim.config import conf
 from fgsim.ml.eval_metrics import EvaluationMetrics
@@ -20,7 +21,7 @@ from fgsim.ml.loss import LossesCol
 from fgsim.ml.network import SubNetworkCollector
 from fgsim.ml.optim import OptimAndSchedulerCol
 from fgsim.monitoring import TrainLog, logger
-from fgsim.utils import check_tensor, log_model
+from fgsim.utils import check_tensor
 
 from .checkpoint import CheckPointManager
 
@@ -55,7 +56,8 @@ class Holder:
         # if not conf.debug:
         #     self.models = torch.compile(self.models)
         # self.train_log.log_model_graph(self.models)
-        log_model(self)
+        self._log_summary()
+
         self.swa_models = {
             k: AveragedModel(v)
             for k, v in self.models.parts.items()
@@ -255,6 +257,21 @@ class Holder:
             batch.x[..., pt_pos] = norm_pt_sum(pts, batch.batch).clone()
 
         return batch
+
+    def _log_summary(self):
+        for partname, model in self.models.parts.items():
+            try:
+                logger.info(f"Model {partname} Summary")
+                logger.info(
+                    summary(
+                        model,
+                        row_settings=["depth", "var_names"],
+                        verbose=0,
+                        depth=2,
+                    )
+                )
+            except Exception:
+                pass
 
 
 def prepend_to_key(d: dict, s: str) -> dict:
