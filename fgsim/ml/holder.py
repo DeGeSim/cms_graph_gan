@@ -20,7 +20,7 @@ from fgsim.ml.loss import LossesCol
 from fgsim.ml.network import SubNetworkCollector
 from fgsim.ml.optim import OptimAndSchedulerCol
 from fgsim.monitoring import TrainLog, logger
-from fgsim.utils import check_tensor
+from fgsim.utils import check_tensor, log_model
 
 from .checkpoint import CheckPointManager
 
@@ -55,6 +55,7 @@ class Holder:
         # if not conf.debug:
         #     self.models = torch.compile(self.models)
         # self.train_log.log_model_graph(self.models)
+        log_model(self)
         self.swa_models = {
             k: AveragedModel(v)
             for k, v in self.models.parts.items()
