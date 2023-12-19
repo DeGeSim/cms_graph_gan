@@ -1,15 +1,15 @@
 {
-    "version": "0.2.0",
     "configurations": [
         {
             "args": [
                 "--hash",
-                "102ec23",
+                "54a37a8",
                 // "--debug",
                 "train"
             ],
             "cwd": "/home/mscham/fgsim",
             // "justMyCode": false,
+            "envFile": "${workspaceFolder}/.env",
             "module": "fgsim",
             "name": "hash",
             "request": "launch",
@@ -23,6 +23,7 @@
                 "train"
             ],
             "cwd": "/home/mscham/fgsim",
+            "envFile": "${workspaceFolder}/.env",
             // "justMyCode": false,
             "module": "fgsim",
             "name": "train",
@@ -37,6 +38,7 @@
                 "test"
             ],
             "cwd": "/home/mscham/fgsim",
+            "envFile": "${workspaceFolder}/.env",
             // "justMyCode": false,
             "module": "fgsim",
             "name": "test",
@@ -51,6 +53,7 @@
                 "preprocess"
             ],
             "cwd": "/home/mscham/fgsim",
+            "envFile": "${workspaceFolder}/.env",
             "justMyCode": false,
             "module": "fgsim",
             "name": "preprocess",
@@ -59,33 +62,28 @@
         },
         {
             "cwd": "/home/mscham/fgsim",
-            "name": "ray",
-            "request": "launch",
+            "envFile": "${workspaceFolder}/.env",
             "justMyCode": false,
+            "name": "ray",
             "program": "raytune/tune.py",
-            "type": "python",
-            "envFile": "${workspaceFolder}/.env"
+            "request": "launch",
+            "type": "python"
         },
         {
-            "cwd": "/home/mscham/fgsim",
-            "name": "setup",
-            "request": "launch",
-            "program": "fgsim/__main__.py",
-            "type": "python",
             "args": [
                 "--tag",
-                "cc_test",
-                // "--debug",
+                "abil_crit.bbp.gatplus",
+                "--debug",
                 "setup"
             ],
+            "cwd": "/home/mscham/fgsim",
+            "envFile": "${workspaceFolder}/.env",
+            "name": "setup",
+            "program": "fgsim/__main__.py",
+            "request": "launch",
+            "type": "python"
         },
         {
-            "name": "cc eval",
-            "type": "python",
-            "request": "launch",
-            "cwd": "/home/mscham/homepage/code",
-            "program": "/home/mscham/homepage/code/evaluate.py",
-            "console": "integratedTerminal",
             "args": [
                 "-i",
                 "~/fgsim/wd/cc_knnloss/040f723/out.hdf5",
@@ -98,20 +96,13 @@
                 "--output_dir",
                 "~/fgsim/wd/cc_knnloss/040f723/cc_eval/"
             ],
-        },
-        // {
-        //     "args": [],
-        //     "command": "pytest",
-        //     "group": {
-        //         "isDefault": true,
-        //         "kind": "test"
-        //     },
-        //     "isBackground": false,
-        //     "label": "Run test",
-        //     "options": {
-        //         "cwd": "${workspaceFolder}"
-        //     },
-        //     "type": "shell"
-        // }
-    ]
+            "console": "integratedTerminal",
+            "cwd": "/home/mscham/homepage/code",
+            "name": "cc eval",
+            "program": "/home/mscham/homepage/code/evaluate.py",
+            "request": "launch",
+            "type": "python"
+        }
+    ],
+    "version": "0.2.0"
 }
