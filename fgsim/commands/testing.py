@@ -4,6 +4,7 @@ and compare the generated events to the simulated events.
 """
 
 from dataclasses import dataclass
+from datetime import datetime
 from pathlib import Path
 from typing import Dict, Optional
 
@@ -104,7 +105,16 @@ def get_testing_datasets(holder: Holder, best_or_last) -> TestDataset:
         if best_or_last == "best":
             holder.checkpoint_manager.select_best_model()
 
+        start = datetime.now()
         res_d = gen_res_from_sim_batches(loader.testing_batches, holder)
+        delta = (datetime.now() - start).microseconds / conf.loader.test_set_size
+        holder.train_log.log_summary(
+            {
+                "event_gen_time": delta,
+            },
+            prefix="speed",
+        )
+        logger.info(f"{delta}ms per events")
 
         test_data = TestDataset(
             res_d=res_d,

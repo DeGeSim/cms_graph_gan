@@ -1,3 +1,4 @@
+import pprint
 from datetime import datetime
 from pathlib import Path
 from typing import Union
@@ -6,12 +7,13 @@ import matplotlib.pyplot as plt
 import torch
 from matplotlib.figure import Figure
 from omegaconf import DictConfig
-from torch.utils.tensorboard import SummaryWriter
+from torch.utils.tensorboard.writer import SummaryWriter
 
 import wandb
 from fgsim.config import conf
 from fgsim.monitoring import logger
 from fgsim.monitoring.experiment_organizer import exp_orga_wandb
+from wandb.sdk.wandb_run import Run
 
 
 class TrainLog:
@@ -39,6 +41,7 @@ class TrainLog:
                 new_style=True,
             )
 
+        self.wandb_run: Run
         if self.use_wandb:
             if not conf.ray:
                 wandb_name = f"{conf['hash']}_{conf.command}"
@@ -49,7 +52,7 @@ class TrainLog:
                 else:
                     raise NotImplementedError
 
-                self.wandb_run = wandb.init(
+                run = wandb.init(
                     id=wandb_id,
                     resume="must",
                     name=wandb_name,
@@ -60,10 +63,12 @@ class TrainLog:
                     allow_val_change=True,
                     settings={"quiet": True},
                 )
+                assert isinstance(run, Run)
+                self.wandb_run = run
             wandb.define_metric("grad_step")
             wandb.define_metric("*", step_metric="grad_step")
-            wandb.define_metric("val/*", goal="minimize")
-            self._wandb_tmp: dict[str, float] = {}
+            wandb.define_metric("val/*", summary="min", goal="minimize")
+            self._wandb_tmp = {}
             self._wandb_step = None
             self._wandb_epoch = None
 
@@ -79,6 +84,37 @@ class TrainLog:
         if self.use_wandb:
             wandb.watch(model)
 
+    def _pre_log_dict(
+        self,
+        metrics_dict: dict[str, Union[tuple, float, torch.Tensor]],
+        prefix=None,
+    ):
+        if prefix is not None:
+            metrics_dict = {f"{prefix}/{k}": v for k, v in metrics_dict.items()}
+
+        for k in list(metrics_dict.keys()):
+            v = metrics_dict[k]
+            if isinstance(v, tuple) and len(v) == 2:
+                metrics_dict[k] = v[0]
+                metrics_dict[k + "δ"] = v[1]
+
+        logger.info(f"Logging wandb:\n{pprint.pformat(metrics_dict)}")
+
+        return metrics_dict
+
+    def log_summary(
+        self,
+        metrics_dict: dict[str, Union[tuple, float, torch.Tensor]],
+        prefix=None,
+    ):
+        if conf.debug and conf.command != "test":
+            return
+        metrics_dict = self._pre_log_dict(metrics_dict, prefix)
+        if self.use_wandb:
+            for k, v in metrics_dict.items():
+                self.wandb_run.summary[k] = v
+            self.wandb_run.summary.update()
+
     def log_metrics(
         self,
         metrics_dict: dict[str, Union[tuple, float, torch.Tensor]],
@@ -88,20 +124,12 @@ class TrainLog:
     ):
         if conf.debug and conf.command != "test":
             return
+        metrics_dict = self._pre_log_dict(metrics_dict, prefix)
         if step is None:
             step = self.state["grad_step"]
             epoch = self.state["epoch"]
         if epoch is None:
             raise Exception
-
-        if prefix is not None:
-            metrics_dict = {f"{prefix}/{k}": v for k, v in metrics_dict.items()}
-
-        for k in list(metrics_dict.keys()):
-            v = metrics_dict[k]
-            if isinstance(v, tuple) and len(v) == 2:
-                metrics_dict[k] = v[0]
-                metrics_dict[k + "δ"] = v[1]
 
         if self.use_tb:
             for name, value in metrics_dict.items():
@@ -121,6 +149,8 @@ class TrainLog:
             return
 
     def flush(self):
+        if self.use_tb:
+            self.writer.flush()
         if self.use_wandb:
             if len(self._wandb_tmp):
                 logger.debug("Wandb flush")
@@ -157,9 +187,9 @@ class TrainLog:
         self,
         figure_name: str,
         figure: Figure,
-        step: int = None,
+        step: int = -1,
     ):
-        if step is None:
+        if step == -1:
             step = self.state["grad_step"]
         if self.use_tb:
             self.writer.add_figure(tag=figure_name, figure=figure, global_step=step)
@@ -213,8 +243,8 @@ class TrainLog:
             )
 
     def __del__(self):
+        self.flush()
         if self.use_tb:
-            self.writer.flush()
             self.writer.close()
 
     def end(self) -> None:

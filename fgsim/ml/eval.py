@@ -22,7 +22,7 @@ def gen_res_from_sim_batches(batches: list[Batch], holder: Holder):
     for batch in tqdm(
         batches, "Generating eval batches", miniters=20, mininterval=5.0
     ):
-        batch = batch.clone().to(device)
+        batch = batch.to(device)
         ires_d = holder.pass_batch_through_model(batch, eval=True)
 
         for k, val in ires_d.items():
@@ -89,12 +89,12 @@ def eval_res_d(
         holder.eval_metrics(**results_d)
     up_metrics_d, score = holder.eval_metrics.get_metrics()
 
-    holder.train_log.log_metrics(
-        up_metrics_d, prefix="/".join(mode), step=step, epoch=epoch
-    )
-
-    # if conf.debug:
-    #     return score
+    if conf.command != "test":
+        holder.train_log.log_metrics(
+            up_metrics_d, prefix="/".join(mode), step=step, epoch=epoch
+        )
+    else:
+        holder.train_log.log_summary(up_metrics_d, prefix="/".join(mode))
 
     if not plot:
         return score

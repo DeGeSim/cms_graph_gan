@@ -86,7 +86,6 @@ class EvaluationMetrics:
         # validation batches.
         if conf.command == "test":
             up_metrics_d = self.test_md
-            logger.info(up_metrics_d)
             return up_metrics_d, None
 
         # score calculatation if during training
