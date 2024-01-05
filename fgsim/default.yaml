@@ -12,7 +12,7 @@ models:
     params: ${model_param_options[${models.gen.name}]}
     losses: "${optionlist:${loss_options},${models.gen.losses_list}}"
     losses_list: ${listadd:${gan_mode_options[${training.gan_mode}][gen]},${models.gen.additional_losses_list}}
-    additional_losses_list: []
+    additional_losses_list: ["feature_matching"]
     optim:
       name: Adam
       params: ${optim_options[gen][${models.gen.optim.name}]}
@@ -99,6 +99,7 @@ ffn:
   activation: LeakyReLU
   hidden_layer_size: 100
   n_layers: 3
+  bias: false
   activation_params:
     LeakyReLU:
       negative_slope: 0.1
@@ -110,8 +111,8 @@ ffn:
   norm: batchnorm
   dropout: 0.0
   equallr: false
-  activation_first: True
-  final_linear: True
+  activation_first: false
+  final_linear: false
 
 layer_options:
   DeepConv:
@@ -128,6 +129,9 @@ layer_options:
     bias: False
   GINCConv:
     final_linear: True
+  GATv2Conv:
+    heads: 8
+    concat: True
   GATv2MinConv:
     heads: 8
     concat: True
@@ -146,7 +150,7 @@ model_param_options:
       res_mean: False
       res_final_layer: True
       dim_red_skip: False
-      gated_cond: True
+      gated_cond: False
     connect_all_ancestors: True
     ancestor_mpl:
       n_mpl: 1
@@ -221,7 +225,7 @@ model_param_options:
       norm: "spectral"
     emb_param:
       n_ftx_latent: 40
-      norm: "batchnorm"
+      norm: batchnorm
     bipart_param:
       n_heads: 16
       mode: "mpl"
@@ -417,7 +421,7 @@ dataset_options:
         training:
             implant_checkpoint: False
             gan_mode: Hinge
-            disc_steps_per_gen_step: 2
+            disc_steps_per_gen_step: 1
             early_stopping:
                 validation_steps: 1000
                 improvement: 0.05
@@ -466,9 +470,9 @@ dataset_options:
             y_features: ["type","pt", "eta", "mass", "num_particles"]
             x_ftx_energy_pos: 2
             cond_gen_features: [False, False, False, False, True]
-            cond_critic_features: [True, True, True, True, True]
+            cond_critic_features: [false, True, True, True, false]
             jettype: "t"
-            chunk_size: 5000
+            chunk_size: 200
             batch_size: 200
         metrics:
             debug: ["w1m"]
