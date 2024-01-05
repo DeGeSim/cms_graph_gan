@@ -45,7 +45,7 @@ def run_args(args):
         cmd = [
             "sbatch",
             "--partition=allgpu,maxgpu",
-            "--time=48:00:00",
+            "--time=88:00:00",
             "--nodes=1",
             "--constraint=V100|A100",
             f"--output={slurm_log_path}",

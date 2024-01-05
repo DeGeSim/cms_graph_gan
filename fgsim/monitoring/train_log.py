@@ -113,7 +113,6 @@ class TrainLog:
         if self.use_wandb:
             for k, v in metrics_dict.items():
                 self.wandb_run.summary[k] = v
-            self.wandb_run.summary.update()
 
     def log_metrics(
         self,
