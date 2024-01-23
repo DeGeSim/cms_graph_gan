@@ -478,7 +478,7 @@ dataset_options:
             debug: ["w1m"]
             val: ["w1m","w1p","fpnd","auc","w1disc"]
             stopping: ["w1m","w1p","fpnd"]
-            test: ["w1m","w1p","w1efp","fpnd"]
+            test: ["w1m","w1p","w1efp","fpd","fpnd"]
     calochallange:
       tree:
         branches: [2, 3, 4, 5, 5, 10]

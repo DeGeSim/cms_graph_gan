@@ -3,9 +3,10 @@
         {
             "args": [
                 "--hash",
-                "54a37a8",
+                "fccb15e",
                 // "--debug",
-                "train"
+                "--remote",
+                "test"
             ],
             "cwd": "/home/mscham/fgsim",
             // "justMyCode": false,
