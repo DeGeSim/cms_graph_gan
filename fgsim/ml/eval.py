@@ -30,24 +30,36 @@ def gen_res_from_sim_batches(batches: list[Batch], holder: Holder):
         "sim_crit": [],
         "gen_crit": [],
     }
-    with catchtime() as td:
-        for batch in tqdm(
-            batches, "Generating eval batches", miniters=20, mininterval=5.0
-        ):
-            batch = batch.to(device)
-            ires_d = holder.pass_batch_through_model(batch, eval=True)
+    gen_time = timedelta(0)
+    crit_time = timedelta(0)
 
-            for k, val in ires_d.items():
-                if k in ["sim_batch", "gen_batch"]:
-                    for e in val.to_data_list():
-                        res_d_l[k].append(e)
-                elif k in ["sim_crit", "gen_crit"]:
-                    res_d_l[k].append(val)
+    for batch in tqdm(
+        batches, "Generating eval batches", miniters=20, mininterval=5.0
+    ):
+        batch = batch.to(device)
+        res = {"sim_batch": batch}
+        with catchtime() as td:
+            res = holder.pass_batch_through_gen(res, eval=True)
+        gen_time += td.delta
+
+        with catchtime() as td:
+            res = holder.pass_batch_through_crit(res, eval=True)
+        crit_time += td.delta
+
+        for k, val in res.items():
+            if k in ["sim_batch", "gen_batch"]:
+                for e in val.to_data_list():
+                    res_d_l[k].append(e)
+            elif k in ["sim_crit", "gen_crit"]:
+                res_d_l[k].append(val)
 
     if conf.command == "test":
         holder.train_log.log_summary(
             {
-                "event_gen_time": td.delta
+                "event_gen_time": gen_time
+                / timedelta(milliseconds=1)
+                / conf.loader.test_set_size,
+                "event_crit_time": crit_time
                 / timedelta(milliseconds=1)
                 / conf.loader.test_set_size,
             },

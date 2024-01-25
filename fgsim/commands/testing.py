@@ -59,8 +59,6 @@ def test_procedure() -> None:
         )
         holder.train_log.flush()
 
-    exit(0)
-
 
 def get_testing_datasets(holder: Holder, best_or_last) -> TestDataset:
     ds_path = Path(conf.path.run_path) / f"test_{best_or_last}" / "testdata.pt"

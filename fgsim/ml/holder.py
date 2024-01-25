@@ -166,26 +166,44 @@ class Holder:
         train_disc: bool = False,
         eval=False,
     ):
+        res = self.pass_batch_through_gen(
+            {"sim_batch": sim_batch},
+            train_gen=train_gen,
+            train_disc=train_disc,
+            eval=eval,
+        )
+        res = self.pass_batch_through_crit(
+            res, train_gen=train_gen, train_disc=train_disc, eval=eval
+        )
+        return res
+
+    def pass_batch_through_gen(
+        self,
+        res: dict,
+        train_gen: bool = False,
+        train_disc: bool = False,
+        eval: bool = False,
+    ):
         assert not (train_gen and train_disc)
         assert not (eval and (train_gen or train_disc))
+
+        sim_batch = res["sim_batch"]
         self._check_sim_batch(sim_batch)
 
-        batch_size = conf.loader.batch_size
-        cond_gen_features = conf.loader.cond_gen_features
-        cond_critic_features = conf.loader.cond_critic_features
-        if eval:
-            self.models.eval()
-        else:
-            self.models.train()
-
         gen = self.models.gen
-        disc = self.models.disc
         if self.state["epoch"] > 10 and eval:
             if conf["models"]["gen"]["scheduler"]["name"] == "SWA":
                 gen = self.swa_models["gen"]
+        if eval:
+            gen.eval()
+        else:
+            gen.train()
 
-            if conf["models"]["disc"]["scheduler"]["name"] == "SWA":
-                disc = self.swa_models["disc"]
+        batch_size = conf.loader.batch_size
+        cond_gen_features = conf.loader.cond_gen_features
+        cond_gen = torch.empty((batch_size, 0)).float().to(self.device)
+        if sum(cond_gen_features) > 0:
+            cond_gen = sim_batch.y[..., cond_gen_features]
 
         # generate the random vector
         z = torch.randn(
@@ -194,24 +212,40 @@ class Holder:
             dtype=torch.float,
             device=self.device,
         )
-
-        cond_gen = torch.empty((batch_size, 0)).float().to(self.device)
-        cond_critic = torch.empty((batch_size, 0)).float().to(self.device)
-        if sum(cond_gen_features) > 0:
-            cond_gen = sim_batch.y[..., cond_gen_features]
-        if sum(cond_critic_features) > 0:
-            cond_critic = sim_batch.y[..., cond_critic_features]
-
         with with_grad(train_gen):
             z.requires_grad = train_gen
             gen_batch = gen(z, cond_gen, sim_batch.n_pointsv)
 
         self._check_gen_batch(gen_batch, sim_batch)
 
-        # if train_gen or train_disc:
         gen_batch = self.postprocess(gen_batch)
-        # sim_batch = self.postprocess(sim_batch)
         res = {"sim_batch": sim_batch, "gen_batch": gen_batch}
+        return res
+
+    def pass_batch_through_crit(
+        self,
+        res: dict,
+        train_gen: bool = False,
+        train_disc: bool = False,
+        eval: bool = False,
+    ):
+        sim_batch = res["sim_batch"]
+        gen_batch = res["gen_batch"]
+
+        disc = self.models.disc
+        if self.state["epoch"] > 10 and eval:
+            if conf["models"]["disc"]["scheduler"]["name"] == "SWA":
+                disc = self.swa_models["disc"]
+        if eval:
+            disc.eval()
+        else:
+            disc.train()
+
+        batch_size = conf.loader.batch_size
+        cond_critic_features = conf.loader.cond_critic_features
+        cond_critic = torch.empty((batch_size, 0)).float().to(self.device)
+        if sum(cond_critic_features) > 0:
+            cond_critic = sim_batch.y[..., cond_critic_features]
 
         # In both cases the gradient needs to pass though gen_crit
         with with_grad(train_gen or train_disc):
@@ -224,11 +258,12 @@ class Holder:
         # we dont need to compute sim_crit if only the generator is trained
         # but we need it for the validation
         # and for the feature matching loss
-        if (
+        run_disc_for_sim = (
             train_disc
             or (train_disc == train_gen)
             or ("feature_matching" in conf.models.gen.losses and train_gen)
-        ):
+        )
+        if run_disc_for_sim:
             with with_grad(train_disc):
                 sim_batch_disc_input = self.disc_preprocess(sim_batch)
                 res |= prepend_to_key(

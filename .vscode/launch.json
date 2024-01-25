@@ -3,9 +3,9 @@
         {
             "args": [
                 "--hash",
-                "fccb15e",
+                "970e2fc",
                 // "--debug",
-                "--remote",
+                // "--remote",
                 "test"
             ],
             "cwd": "/home/mscham/fgsim",
