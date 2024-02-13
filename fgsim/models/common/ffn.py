@@ -62,9 +62,7 @@ class FFN(nn.Module):
             raise RuntimeError()
 
         def activation_function():
-            return getattr(nn, activation)(
-                **conf.ffn.activation_params[conf.ffn.activation]
-            )
+            return getattr(nn, activation)(**conf.ffn.activation_params[activation])
 
         super().__init__()
         # +2 for input and output

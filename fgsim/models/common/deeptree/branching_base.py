@@ -110,13 +110,13 @@ class BranchingBase(nn.Module):
     def add_parent_skip(self, children_ftxs, parents_ftxs):
         batch_size = self.batch_size
         n_branches = self.n_branches
-        n_features_target = self.n_features_target
+        # n_features_target = self.n_features_target
         parents = self.tree.tree_lists[self.level]
         n_parents = len(parents)
         # If this branching layer reduces the dimensionality,
         # we need to slice the parent_ftxs for the residual connection
-        if not self.dim_red:
-            parents_ftxs = parents_ftxs[..., :n_features_target]
+        # if not self.dim_red:
+        #     parents_ftxs = parents_ftxs[..., :n_features_target]
         # If residual, add the features of the parent to the children
         if self.residual and (
             self.res_final_layer or self.level + 1 != self.tree.n_levels - 1
