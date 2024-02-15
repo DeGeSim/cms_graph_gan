@@ -28,7 +28,7 @@ def norm_pt_sum(pts, batchidx):
         if idx_to_large.float().mean() > 0.1:
             raise Exception("To many points cant be scaled.")
     else:
-        if len(idx_to_large) > 0.1:
+        if idx_to_large.float().mean() > 0.01:
             raise Exception("To many points cant be scaled.")
     offset = pts[idx_to_large].detach() - 30
     pts[idx_to_large] = pts[idx_to_large] - offset
