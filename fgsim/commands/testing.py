@@ -90,6 +90,9 @@ def get_testing_datasets(holder: Holder, best_or_last) -> TestDataset:
                 f"New step available, reprocessing {best_or_last} Dataset"
             )
             reprocess = True
+        if len({"kpd", "fpd"} & set(conf.metrics.test)):
+            if "efps" not in test_data.res_d["sim_batch"].keys:
+                reprocess = True
     else:
         reprocess = True
 
