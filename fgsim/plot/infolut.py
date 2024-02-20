@@ -5,6 +5,16 @@ import numpy as np
 from fgsim.config import conf
 
 labels_dict: Dict[str, str] = {
+    "w1p": r"\wop ($\times 10^{3}$)",
+    "w1m": r"\wom ($\times 10^{3}$)",
+    "w1efp": r"\woefp ($\times 10^{5}$)",
+    "fpnd": r"FPND ($\times 10^{5}$)",
+    "fpd": r"FPD ($\times 10^{4}$)",
+    "num_particles": "Number of Constituents",
+    "speed": r"Model Time/Event [ms]",
+    "speed_gen": r"Generator Time/Event [ms]",
+    "speed_crit": r"Critic Time/Event [ms]",
+    "mean": r"$\overline{\mathrm{Metrics}}$",
     "etarel": "$\\eta_\\mathrm{rel}$",
     "phirel": "$\\phi_\\mathrm{rel}$",
     "ptrel": "$p^\\mathrm{T}_\\mathrm{rel}$",

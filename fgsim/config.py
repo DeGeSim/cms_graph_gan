@@ -84,7 +84,7 @@ def compute_conf(default, *confs):
     return conf, hyperparameters
 
 
-defaultconf = OmegaConf.load(Path("fgsim/default.yaml").expanduser())
+defaultconf = OmegaConf.load(Path("~/fgsim/fgsim/default.yaml").expanduser())
 # Load the default settings, overwrite them
 # witht the tag-specific settings and then
 # overwrite those with cli arguments.
