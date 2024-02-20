@@ -134,7 +134,7 @@ class FFN(nn.Module):
                 nn.BatchNorm1d(
                     features[ilayer + 1],
                     affine=False,
-                    track_running_stats=False,
+                    # track_running_stats=False,
                 ),
                 "x->x",
             )
