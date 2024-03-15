@@ -10,7 +10,13 @@
             "path": "."
         },
         {
-            "path": "../caloutils"
+            "path": "../thesis_scripts"
+        },
+        {
+            "path": "wd/uc_t_dmp/fea87f9"
+        },
+        {
+            "path": "wd/scan_cdr5_fullcopy/af5e229"
         }
     ],
     "settings": {
@@ -36,6 +42,9 @@
             "*.tar": true,
             "*.sqlite": true,
             "performance/*": true,
+            "**/fgbackup/*": true,
+            "**/*.pdf": true,
+            "**/*.pgf": true,
         },
         "files.watcherExclude": {
             "**/.*": true,
@@ -50,7 +59,10 @@
             "*.sqlite": true,
             "performance/*": true,
             "**/.git": true,
-            "**/node_modules/*/**": true
+            "**/node_modules/*/**": true,
+            "**/fgbackup/*": true,
+            "**/*.pdf": true,
+            "**/*.pgf": true,
         },
         "jupyter.jupyterLaunchRetries": 1,
         "python.analysis.typeCheckingMode": "basic",
@@ -76,5 +88,6 @@
         "ruff.interpreter": [
             "/dev/shm/mscham/fgsim/bin/python"
         ],
+        "jupyter.debugJustMyCode": true,
     },
 }

@@ -30,7 +30,7 @@ def hist2d(
     fig: Figure
     sim_axes: Axes
     gen_axes: Axes
-    fig, axes = plt.subplots(1, 2, sharex=True, sharey=True, figsize=(4.5, 3.7))
+    fig, axes = plt.subplots(1, 2, sharex=True, sharey=True, figsize=(7, 4))
     (sim_axes, gen_axes) = axes
     if v1bins is None:
         xedges = binborders_wo_outliers(sim[:, 0])
@@ -64,7 +64,7 @@ def hist2d(
             x=chip_to_binborders(x, xedges),
             y=chip_to_binborders(y, yedges),
             bins=[xedges, yedges],
-            cmap=plt.cm.hot,
+            # cmap=plt.cm.hot,
             norm=norm,
             linewidths=2,
             weights=weights,
@@ -74,19 +74,19 @@ def hist2d(
             spline.set_color("black")
 
         if iax == 0:
-            ax.set_ylabel(v2name)
-        ax.set_xlabel(v1name)
+            ax.set_ylabel(v2name, fontsize=15)
+        ax.set_xlabel(v1name, fontsize=15)
 
     sim_axes.set_title("Simulation")
     gen_axes.set_title("Model")
 
-    if step is not None:
-        title += f"\nStep {step}"
-    fig.suptitle(title)
+    # if step is not None:
+    #     title += f"\nStep {step}"
+    # fig.suptitle(title)
 
     cax = make_axes_locatable(plt.gca()).append_axes("right", "5%", pad="3%")
-
-    fig.colorbar(mesh, cax)
+    cbar = fig.colorbar(mesh, cax)
+    cbar.set_label("Counts/Bin")
     return fig
 
 

@@ -1,7 +1,7 @@
 import numpy as np
 
 
-def binborders_wo_outliers(points: np.ndarray, bins=50) -> np.ndarray:
+def binborders_wo_outliers(points: np.ndarray, bins=50, cut_qt=0.05) -> np.ndarray:
     assert len(points.shape) == 1
     if len(points) > 10_000:
         points = np.random.choice(points, 10_000)
@@ -13,7 +13,21 @@ def binborders_wo_outliers(points: np.ndarray, bins=50) -> np.ndarray:
             delta = (uniques[1] - uniques[0]) / 2
             return np.concatenate([uniques[0:1] - delta, uniques + delta])
 
-    return np.linspace(*bounds_wo_outliers(points), num=bins, endpoint=True)
+    return np.linspace(
+        -upper_limit(-points, cut_higher=1 - cut_qt, cut_lower=1 - cut_qt * 4),
+        upper_limit(points, cut_higher=1 - cut_qt, cut_lower=1 - cut_qt * 4),
+        num=bins,
+        endpoint=True,
+    )
+
+
+def upper_limit(points: np.ndarray, cut_higher=0.95, cut_lower=0.8) -> float:
+    assert 1 >= cut_higher > cut_lower > 0
+    higher, lower = np.quantile(points, [cut_higher, cut_lower])
+    delta = higher - lower
+
+    lexpol = lower + delta * (cut_higher / cut_lower) * 2
+    return min(lexpol, np.max(points))
 
 
 def bincenters(bins: np.ndarray) -> np.ndarray:
@@ -43,4 +57,5 @@ def bounds_wo_outliers(points: np.ndarray) -> tuple:
 
 
 def chip_to_binborders(arr, binborders):
-    return np.clip(arr, binborders[0], binborders[-1])
+    eps = (binborders[-1] - binborders[0]) / 1e6
+    return np.clip(arr, binborders[0] + eps, binborders[-1] - eps)

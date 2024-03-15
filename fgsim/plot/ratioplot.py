@@ -69,8 +69,8 @@ def ratioplot(
             **kwstyle,
         )
 
-    if (sim_hist > (sim_hist.max() / 10)).mean() < 0.1:
-        ax.set_yscale("log")
+    # if (sim_hist > (sim_hist.max() / 10)).mean() < 0.1:
+    #     ax.set_yscale("log")
     else:
         formatter = ScalarFormatter(useMathText=True)
         formatter.set_scientific(True)
@@ -80,10 +80,14 @@ def ratioplot(
     ax.set_ylabel("Counts/Bin", fontsize=17)
 
     ax.legend(fontsize=16, loc="best")
-    ax.tick_params(axis="both", which="major", labelsize=15)
-    ax.tick_params(axis="both", which="minor", labelsize=13)
-    axrat.tick_params(axis="both", which="major", labelsize=15)
-    axrat.tick_params(axis="both", which="minor", labelsize=13)
+    ax.tick_params(axis="both", which="both", labelsize=15)
+    ax.grid(True, "major", "y")
+    axrat.tick_params(axis="both", which="both", labelsize=15)
+
+    # ax.tick_params(axis="both", which="major", labelsize=15)
+    # ax.tick_params(axis="both", which="minor", labelsize=13)
+    # axrat.tick_params(axis="both", which="major", labelsize=15)
+    # axrat.tick_params(axis="both", which="minor", labelsize=13)
 
     # ratioplot
     with np.errstate(divide="ignore", invalid="ignore"):

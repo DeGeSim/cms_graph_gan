@@ -160,13 +160,9 @@ plt.rcParams.update(
         "pgf.preamble": "\n".join(
             [
                 r"\AtBeginDocument{\catcode`\&=12\catcode`\#=12}",
-                # r"\usepackage[fontsize=10pt]{scrextend}",
-                r"\usepackage{unicode-math}",
-                r"\setmathfont{Libertinus Math}",
-                r"\setmathrm{Libertinus Serif}",
-                r"\usepackage{fontspec}",
-                r"\setmainfont{Libertinus Sans}",
-                r"\setsansfont{Libertinus Sans}",
+                r"\usepackage{amsfonts}",
+                r"\usepackage{mofonthep}",
+                r"\usepackage{thesisshortcuts}",
             ]
         ),
     }
