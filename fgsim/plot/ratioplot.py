@@ -38,7 +38,11 @@ def ratioplot(
     ax: Axes
     axrat: Axes
     fig, (ax, axrat) = plt.subplots(
-        2, 1, figsize=(6, 7), gridspec_kw={"height_ratios": [2, 0.7]}, sharex="col"
+        2,
+        1,
+        figsize=(5.5, 6),
+        gridspec_kw={"height_ratios": [2, 0.7]},
+        sharex="col",
     )
 
     mplhep.histplot(
