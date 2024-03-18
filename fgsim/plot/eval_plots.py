@@ -24,15 +24,12 @@ def to_np(a: Union[torch.Tensor, np.ndarray]) -> np.ndarray:
 def eval_plots(fig_logger, res: dict):
     make_1d_plots(res, fig_logger, False)
     make_1d_plots(res, fig_logger, False, True)
-    make_2d_plots(res, fig_logger, False)
-    make_2d_plots(res, fig_logger, False, True)
-
-    if conf.dataset_name == "calochallange":
-        make_1d_plots(res, fig_logger, False)
-        make_2d_plots(res, fig_logger, False)
 
     make_high_level_plots(res, fig_logger)
     make_critics_plots(res, fig_logger)
+
+    make_2d_plots(res, fig_logger, False)
+    make_2d_plots(res, fig_logger, False, True)
 
 
 def make_1d_plots(

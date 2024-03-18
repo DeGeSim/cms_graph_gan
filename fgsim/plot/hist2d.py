@@ -25,7 +25,6 @@ def hist2d(
     genw: Optional[np.ndarray] = None,
     step: Optional[int] = None,
 ) -> Figure:
-    plt.close("all")
     plt.cla()
     plt.clf()
 
