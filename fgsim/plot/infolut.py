@@ -93,7 +93,7 @@ def var_to_bins(v: Union[str, int]) -> Optional[np.ndarray]:
             "r": np.linspace(0, calorimeter.num_r, calorimeter.num_r + 1) - 0.5,
         }[vname]
     elif conf.dataset_name == "jetnet":
-        nbins = 100
+        nbins = 50
         bin_d = {
             "num_particles": np.linspace(
                 0, conf.loader.n_points, conf.loader.n_points, endpoint=True
