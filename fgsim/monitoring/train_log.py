@@ -28,7 +28,7 @@ class TrainLog:
             conf.command == "train" and not conf.debug
         )
         self.use_tb = False
-        self.use_wandb = default_log
+        self.use_wandb = default_log and (conf.loader.n_points != 30)
 
         if self.use_tb:
             self.writer: SummaryWriter = SummaryWriter(
