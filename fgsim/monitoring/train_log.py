@@ -57,6 +57,9 @@ class TrainLog:
                     resume="must",
                     name=wandb_name,
                     group=conf["hash"],
+                    entity="mscham"
+                    if conf.project_name == "calochallange"
+                    else "hamgen",
                     dir=conf.path.run_path,
                     project=conf.project_name,
                     job_type=conf.command,

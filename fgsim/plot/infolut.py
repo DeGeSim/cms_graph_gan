@@ -31,7 +31,7 @@ labels_dict: Dict[str, str] = {
     ),
     "showershape_turnon_layer": "Turnon Layer",
     "sphereratio_ratio": (
-        "$\\sum\\nolimits_i^{\\mathrm{Sphere}(0.3 σ)\\mathrm{E_i} /"
+        "$\\sum\\nolimits_i^{\\mathrm{Sphere}(0.3 σ)}\\mathrm{E_i} /"
         " \\sum\\nolimits_i^{\\mathrm{Sphere}(0.8 σ)}\\mathrm{E_i}$"
     ),
     "sphereratio_small": (
@@ -73,9 +73,7 @@ def var_to_label(v: Union[str, int]) -> str:
 
 def var_to_bins(v: Union[str, int]) -> Optional[np.ndarray]:
     if isinstance(v, int):
-        vname = conf.loader.x_features[v]
-    else:
-        vname = v
+        v = conf.loader.x_features[v]
 
     if (
         conf.dataset_name == "calochallange"
@@ -83,7 +81,7 @@ def var_to_bins(v: Union[str, int]) -> Optional[np.ndarray]:
     ):
         from caloutils import calorimeter
 
-        return {
+        bin_d = {
             "E": np.linspace(0, 6000, 100 + 1) - 0.5,
             "z": np.linspace(0, calorimeter.num_z, calorimeter.num_z + 1) - 0.5,
             "alpha": (
@@ -91,7 +89,9 @@ def var_to_bins(v: Union[str, int]) -> Optional[np.ndarray]:
                 - 0.5
             ),
             "r": np.linspace(0, calorimeter.num_r, calorimeter.num_r + 1) - 0.5,
-        }[vname]
+        }
+        if v in bin_d:
+            return bin_d[v]
     elif conf.dataset_name == "jetnet":
         nbins = 50
         bin_d = {
