@@ -5,15 +5,15 @@ import numpy as np
 from fgsim.config import conf
 
 labels_dict: Dict[str, str] = {
-    "w1p": r"\wop ($\times 10^{3}$)",
-    "w1m": r"\wom ($\times 10^{3}$)",
-    "w1efp": r"\woefp ($\times 10^{5}$)",
-    "fpnd": r"FPND ($\times 10^{5}$)",
-    "fpd": r"FPD ($\times 10^{4}$)",
+    "w1p": "\\wop ($\\times 10^{3}$)",
+    "w1m": "\\wom ($\\times 10^{3}$)",
+    "w1efp": "\\woefp ($\\times 10^{5}$)",
+    "fpnd": "FPND ($\\times 10^{5}$)",
+    "fpd": "FPD ($\\times 10^{4}$)",
     "num_particles": "Number of Constituents",
-    "speed": r"Model Time/Event [ms]",
-    "speed_gen": r"Generator Time/Event [ms]",
-    "speed_crit": r"Critic Time/Event [ms]",
+    "speed": "Model Time/Event [ms]",
+    "speed_gen": "Generator Time/Event [ms]",
+    "speed_crit": "Critic Time/Event [ms]",
     "mean": "\\mavg",
     "etarel": "\\etarel",
     "phirel": "\\phirel",
@@ -57,6 +57,13 @@ labels_dict: Dict[str, str] = {
     "fpc_eval": "First PCA Eigenvalue",
     "nhits_n": "Number of Hits",
     "nhits_n_by_E": "Number of Hits / Shower Energy",
+    "E": "Hit Energy",
+    "alpha": "$\\alpha$",
+    "alpha_Ew": "$\\alpha$ weighted",
+    "r": "$r$",
+    "r_Ew": "$r$ weighted",
+    "z": "$z$",
+    "z_Ew": "$z$ weighted",
 }
 
 
