@@ -57,7 +57,7 @@ labels_dict: Dict[str, str] = {
     "fpc_eval": "First PCA Eigenvalue",
     "nhits_n": "Number of Hits",
     "nhits_n_by_E": "Number of Hits / Shower Energy",
-    "E": "Hit Energy",
+    "E": "Hit Energy [GeV]",
     "alpha": "$\\alpha$",
     "alpha_Ew": "$\\alpha$ weighted",
     "r": "$r$",

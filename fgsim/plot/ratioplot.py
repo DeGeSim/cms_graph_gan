@@ -75,8 +75,8 @@ def ratioplot(
             **kwstyle,
         )
 
-    # if (sim_hist > (sim_hist.max() / 10)).mean() < 0.1:
-    #     ax.set_yscale("log")
+    if (sim_hist > (sim_hist.max() / 10)).mean() < 0.1:
+        ax.set_yscale("log")
     else:
         formatter = ScalarFormatter(useMathText=True)
         formatter.set_scientific(True)
