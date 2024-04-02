@@ -7,6 +7,8 @@ from matplotlib.axes import Axes
 from matplotlib.figure import Figure
 from matplotlib.ticker import ScalarFormatter
 
+from fgsim.plot.infolut import var_to_label
+
 from .binborders import binborders_wo_outliers, bincenters
 from .infolut import var_to_bins
 
@@ -14,15 +16,16 @@ from .infolut import var_to_bins
 def ratioplot(
     sim: np.ndarray,
     gen: np.ndarray,
-    title: str,
+    ftn: str,
     bins: Optional[np.ndarray] = None,
     simw: Optional[np.ndarray] = None,
     genw: Optional[np.ndarray] = None,
 ) -> Figure:
     if bins is None:
-        bins = var_to_bins(title.strip(r"\\"))
+        bins = var_to_bins(ftn)
         if bins is None:
             bins = binborders_wo_outliers(sim)
+    title = var_to_label(ftn)
     n_bins = len(bins) - 1
 
     sim_hist, _ = np.histogram(sim, bins=bins, weights=simw)

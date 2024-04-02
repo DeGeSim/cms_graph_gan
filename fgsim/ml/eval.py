@@ -56,12 +56,14 @@ def gen_res_from_sim_batches(batches: list[Batch], holder: Holder):
     if conf.command == "test":
         holder.train_log.log_summary(
             {
-                "event_gen_time": gen_time
-                / timedelta(milliseconds=1)
-                / conf.loader.test_set_size,
-                "event_crit_time": crit_time
-                / timedelta(milliseconds=1)
-                / conf.loader.test_set_size,
+                "event_gen_time": (
+                    gen_time / timedelta(milliseconds=1) / conf.loader.test_set_size
+                ),
+                "event_crit_time": (
+                    crit_time
+                    / timedelta(milliseconds=1)
+                    / conf.loader.test_set_size
+                ),
             },
             prefix="speed",
         )
@@ -83,9 +85,9 @@ def gen_res_from_sim_batches(batches: list[Batch], holder: Holder):
     if conf.command == "test":
         holder.train_log.log_summary(
             {
-                "event_pp_time": td.delta
-                / timedelta(milliseconds=1)
-                / conf.loader.test_set_size,
+                "event_pp_time": (
+                    td.delta / timedelta(milliseconds=1) / conf.loader.test_set_size
+                ),
             },
             prefix="speed",
         )
@@ -127,8 +129,6 @@ def eval_res_d(
     plot_path=None,
 ):
     plot = step % conf.training.plot_interval == 0 or conf.command == "test"
-    if conf.command == "test":
-        plot = False
 
     # evaluate the validation metrics
     with torch.no_grad():

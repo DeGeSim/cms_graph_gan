@@ -3,7 +3,6 @@ from typing import Dict
 from matplotlib.figure import Figure
 
 from fgsim.config import conf
-from fgsim.plot.infolut import var_to_label
 
 from .ratioplot import ratioplot
 
@@ -28,7 +27,7 @@ def hist1d(
         plots_d[f"marginal_{ftn}{fext}.pdf"] = ratioplot(
             sim=sim_features[ftn],
             gen=gen_features[ftn],
-            title=var_to_label(ftn),
+            ftn=ftn,
             bins=b,
             simw=simw,
             genw=genw,

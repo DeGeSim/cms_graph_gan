@@ -86,19 +86,19 @@ def var_to_bins(v: Union[str, int]) -> Optional[np.ndarray]:
         conf.dataset_name == "calochallange"
         and "calochallange2" in conf.loader.dataset_path
     ):
-        from caloutils import calorimeter
+        from caloutils import calorimeter as calo
 
-        bin_d = {
-            "E": np.linspace(0, 6000, 100 + 1) - 0.5,
-            "z": np.linspace(0, calorimeter.num_z, calorimeter.num_z + 1) - 0.5,
-            "alpha": (
-                np.linspace(0, calorimeter.num_alpha, calorimeter.num_alpha + 1)
-                - 0.5
-            ),
-            "r": np.linspace(0, calorimeter.num_r, calorimeter.num_r + 1) - 0.5,
-        }
-        if v in bin_d:
-            return bin_d[v]
+        match v:
+            case "E":
+                return np.linspace(0, 5020, 100 + 1) - 0.5
+            case "z":
+                return np.linspace(0, calo.num_z, calo.num_z + 1) - 0.5
+            case "alpha":
+                return np.linspace(0, calo.num_alpha, calo.num_alpha + 1) - 0.5
+            case "r":
+                return np.linspace(0, calo.num_r, calo.num_r + 1) - 0.5
+            case _:
+                pass
     elif conf.dataset_name == "jetnet":
         nbins = 50
         bin_d = {

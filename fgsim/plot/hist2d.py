@@ -52,10 +52,9 @@ def hist2d(
         gen = gen[:, (1, 0)]
         v1bins, v2bins = v2bins, v1bins
         v1name, v2name = v2name, v1name
-    lim = [xedges, yedges]
 
     pagewh = [448.13 / 72.0, 636.6 / 72.0]
-    width, height = pagewh[0] / 3.0 * 1.5, pagewh[1] / 3.0 * 1.5
+    width, height = pagewh[0] / 3.0, pagewh[1] / 3.0
     fig, axs = plt.subplots(
         2, 3, figsize=(width * 3, height), height_ratios=[1, 0.05]
     )
@@ -69,6 +68,8 @@ def hist2d(
     axcol: Axes = fig.add_subplot(gs[1, :2])
     axrcol: Axes = axs[1, 2]
 
+    diff_lim = 0
+
     hists = []
     ax: Axes
     norm = None
@@ -76,10 +77,12 @@ def hist2d(
         zip([ax1, ax2], [sim, gen], [simw, genw], ("Simulation", "Model"))
     ):
         x, y = arr.T
+        x = chip_to_binborders(x, xedges)
+        y = chip_to_binborders(y, yedges)
         h, mesh, norm = _2dhist_with_autonorm(
             ax=ax,
-            x=chip_to_binborders(x, xedges),
-            y=chip_to_binborders(y, yedges),
+            x=x,
+            y=y,
             bins=[xedges, yedges],
             # cmap=plt.cm.hot,
             norm=norm,
@@ -101,6 +104,7 @@ def hist2d(
             ax.set_ylabel(v2name)
         else:
             ax.yaxis.set_ticklabels([])
+        diff_lim = max(np.max(h) / 2, diff_lim)
     plt.colorbar(mesh, cax=axcol, orientation="horizontal")
 
     a, b = hists[1], hists[0]
@@ -112,12 +116,15 @@ def hist2d(
     # h[owidx[0], owidx[1]] = 0
     # h[np.where(h == 0)] = np.NAN
 
+    diff_lim = max(np.nanmax(np.abs(h)), diff_lim)
     if (np.abs(h) > (np.max(np.abs(h)) / 10)).mean() < 0.05:
         # if h.max() / max(np.median(h), 1) > 6:
-        lim = np.clip(np.nanmax(np.abs(h)), 5, 10)
-        norm = colors.SymLogNorm(linthresh=1, linscale=1.0, vmin=-lim, vmax=lim)
+
+        norm = colors.SymLogNorm(
+            linthresh=1, linscale=1.0, vmin=-diff_lim, vmax=diff_lim
+        )
     else:
-        norm = colors.CenteredNorm(vcenter=0)
+        norm = colors.CenteredNorm(vcenter=0, halfrange=diff_lim)
 
     mesh = ax3.imshow(
         h,
