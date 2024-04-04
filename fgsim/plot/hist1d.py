@@ -25,12 +25,10 @@ def hist1d(
         simw = sim_features[ename] if energy_weighted else None
         genw = gen_features[ename] if energy_weighted else None
         plots_d[f"marginal_{ftn}{fext}.pdf"] = ratioplot(
-            sim=sim_features[ftn],
-            gen=gen_features[ftn],
+            [sim_features[ftn], gen_features[ftn]],
             ftn=ftn,
             bins=b,
-            simw=simw,
-            genw=genw,
+            weights=[simw, genw],
         )
 
     return plots_d

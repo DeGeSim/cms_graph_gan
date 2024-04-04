@@ -13,10 +13,7 @@
             "path": "../thesis_scripts"
         },
         {
-            "path": "wd/uc_t_dmp/fea87f9"
-        },
-        {
-            "path": "wd/scan_cdr5_fullcopy/af5e229"
+            "path": "wd/cc_bguess_cdo0.3/55514a3"
         }
     ],
     "settings": {
@@ -74,7 +71,7 @@
         "python.testing.pytestPath": "/dev/shm/mscham/fgsim/bin/pytest",
         "python.testing.unittestEnabled": false,
         "terminal.integrated.defaultProfile.linux": "zsh",
-        "terminal.integrated.cwd": "/home/mscham/fgsim",
+        "terminal.integrated.cwd": "${env:HOME}/fgsim",
         "terminal.integrated.profiles.linux": {
             "zsh": {
                 "path": "${env:HOME}/.apps/CentOSLinux7/bin/zsh",

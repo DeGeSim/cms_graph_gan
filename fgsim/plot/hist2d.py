@@ -54,7 +54,7 @@ def hist2d(
         v1name, v2name = v2name, v1name
 
     pagewh = [448.13 / 72.0, 636.6 / 72.0]
-    width, height = pagewh[0] / 3.0, pagewh[1] / 3.0
+    width, height = pagewh[0] * 1.3 / 3.0, pagewh[1] * 1.3 / 3.0
     fig, axs = plt.subplots(
         2, 3, figsize=(width * 3, height), height_ratios=[1, 0.05]
     )
@@ -84,7 +84,6 @@ def hist2d(
             x=x,
             y=y,
             bins=[xedges, yedges],
-            # cmap=plt.cm.hot,
             norm=norm,
             linewidths=2,
             weights=weights,
@@ -94,7 +93,7 @@ def hist2d(
             x=x,
             y=y,
             ax=ax,
-            levels=[0.1, 0.3, 0.6, 0.9],
+            levels=[0.3, 0.6, 0.9],
             color="black",
             bw_adjust=1.0,
         )
@@ -117,17 +116,17 @@ def hist2d(
     # h[np.where(h == 0)] = np.NAN
 
     diff_lim = max(np.nanmax(np.abs(h)), diff_lim)
-    if (np.abs(h) > (np.max(np.abs(h)) / 10)).mean() < 0.05:
-        # if h.max() / max(np.median(h), 1) > 6:
+    # if (np.abs(h) > (np.max(np.abs(h)) / 10)).mean() < 0.05:
+    #     # if h.max() / max(np.median(h), 1) > 6:
 
-        norm = colors.SymLogNorm(
-            linthresh=1, linscale=1.0, vmin=-diff_lim, vmax=diff_lim
-        )
-    else:
-        norm = colors.CenteredNorm(vcenter=0, halfrange=diff_lim)
+    #     norm = colors.SymLogNorm(
+    #         linthresh=1, linscale=1.0, vmin=-diff_lim, vmax=diff_lim
+    #     )
+    # else:
+    norm = colors.CenteredNorm(vcenter=0, halfrange=diff_lim)
 
     mesh = ax3.imshow(
-        h,
+        h.T,
         aspect="auto",
         extent=[xedges[0], xedges[-1], yedges[0], yedges[-1]],
         norm=norm,
@@ -136,11 +135,9 @@ def hist2d(
     )
     ax3.yaxis.set_ticklabels([])
     ax3.set_xlabel(v1name)
-    # ax3.set_title(r"$\frac{\text{Model}-\text{Simulation}}{|\text{Simulation}|}$")
     ax3.set_title(r"$\text{Model}-\text{Simulation}$")
     plt.colorbar(mesh, cax=axrcol, orientation="horizontal")
     fig.tight_layout()
-    # fig.savefig("/home/mscham/fgsim/wd/test.pdf")
     return fig
 
 

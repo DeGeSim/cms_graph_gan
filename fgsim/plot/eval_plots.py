@@ -69,7 +69,7 @@ def make_high_level_plots(res: dict, fig_logger: FigLogger) -> None:
             metric_dict[mname] = (sim_obj, gen_obj)
 
     for ftn, (sim_arr, gen_arr) in metric_dict.items():
-        fig = ratioplot(sim=to_np(sim_arr), gen=to_np(gen_arr), ftn=ftn)
+        fig = ratioplot([to_np(sim_arr), to_np(gen_arr)], ftn=ftn)
         fig_logger(fig, f"hlv_{ftn}.pdf")
 
     fig_logger.prefixes.pop()
@@ -148,8 +148,7 @@ def make_critics_plots(res: dict, fig_logger: FigLogger) -> None:
         )
     ):
         fig = ratioplot(
-            sim=to_np(sim_crit.reshape(-1)),
-            gen=to_np(gen_crit.reshape(-1)),
+            [to_np(sim_crit.reshape(-1)), to_np(gen_crit.reshape(-1))],
             ftn=f"Critic \\#{icritic} Score",
         )
         fig_logger(

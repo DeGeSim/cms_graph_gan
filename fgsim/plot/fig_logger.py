@@ -44,7 +44,7 @@ class FigLogger:
                 verticalalignment="bottom",
                 fontsize=5,
             )
-        figure.set_tight_layout(True)
+        # figure.set_tight_layout(True)
 
         prefix = "/".join(self.prefixes)
 

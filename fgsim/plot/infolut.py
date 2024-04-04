@@ -29,7 +29,8 @@ labels_dict: Dict[str, str] = {
         "\\mathrm{Layer}^\\mathrm{Turnoff}|+1}{|\\mathrm{Layer}^\\mathrm{Peak}"
         "-\\mathrm{Layer}^\\mathrm{Turnon}|+1}$"
     ),
-    "showershape_turnon_layer": "Turnon Layer",
+    "showershape_turnon_layer": "Turn-on Layer",
+    "showershape_turnoff_layer": "Turn-off Layer",
     "sphereratio_ratio": (
         "$\\sum\\nolimits_i^{\\mathrm{Sphere}(0.3 σ)}\\mathrm{E_i} /"
         " \\sum\\nolimits_i^{\\mathrm{Sphere}(0.8 σ)}\\mathrm{E_i}$"

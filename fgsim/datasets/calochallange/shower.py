@@ -75,6 +75,7 @@ def analyze_layers(batch: Batch) -> dict[str, torch.Tensor]:
         "peak_layer": peak_layer_per_event.float(),
         "psr": psr.float(),
         "turnon_layer": turnon_layer.float(),
+        "turnoff_layer": turnoff_layer.float(),
     }
 
 

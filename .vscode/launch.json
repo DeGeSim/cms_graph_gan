@@ -3,7 +3,9 @@
         {
             "args": [
                 "--hash",
-                "af5e229",//"fea87f9",
+                // "55514a3", // cc
+                // "af5e229", // jn150
+                "fea87f9", // jn30
                 // "--debug",
                 // "--remote",
                 "test"
@@ -14,7 +16,7 @@
             "module": "fgsim",
             "name": "hash",
             "request": "launch",
-            "type": "python"
+            "type": "debugpy"
         },
         {
             "args": [
@@ -29,7 +31,7 @@
             "module": "fgsim",
             "name": "train",
             "request": "launch",
-            "type": "python"
+            "type": "debugpy"
         },
         {
             "args": [
@@ -44,7 +46,7 @@
             "module": "fgsim",
             "name": "test",
             "request": "launch",
-            "type": "python"
+            "type": "debugpy"
         },
         {
             "args": [
@@ -59,7 +61,7 @@
             "module": "fgsim",
             "name": "preprocess",
             "request": "launch",
-            "type": "python"
+            "type": "debugpy"
         },
         {
             "cwd": "/home/mscham/fgsim",
@@ -68,7 +70,7 @@
             "name": "ray",
             "program": "raytune/tune.py",
             "request": "launch",
-            "type": "python"
+            "type": "debugpy"
         },
         {
             "args": [
@@ -82,7 +84,7 @@
             "name": "setup",
             "program": "fgsim/__main__.py",
             "request": "launch",
-            "type": "python"
+            "type": "debugpy"
         },
         {
             "args": [
@@ -102,7 +104,7 @@
             "name": "cc eval",
             "program": "/home/mscham/homepage/code/evaluate.py",
             "request": "launch",
-            "type": "python"
+            "type": "debugpy"
         }
     ],
     "version": "0.2.0"
