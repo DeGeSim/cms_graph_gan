@@ -32,14 +32,18 @@ labels_dict: Dict[str, str] = {
     "showershape_turnon_layer": "Turn-on Layer",
     "showershape_turnoff_layer": "Turn-off Layer",
     "sphereratio_ratio": (
-        "$\\sum\\nolimits_i^{\\mathrm{Sphere}(0.3 σ)}\\mathrm{E_i} /"
-        " \\sum\\nolimits_i^{\\mathrm{Sphere}(0.8 σ)}\\mathrm{E_i}$"
+        "$\\sum\\nolimits_i^{\\mathrm{Sphere}(0.3"
+        " σ)}\\frac{\\mathrm{E_i}}{E_\\mathrm{Tot}} /"
+        " \\sum\\nolimits_i^{\\mathrm{Sphere}(0.8"
+        " σ)}\\frac{\\mathrm{E_i}}{E_\\mathrm{Tot}}$"
     ),
     "sphereratio_small": (
-        "$\\sum\\nolimits_i^{\\mathrm{Sphere}(0.3 σ)} \\mathrm{E_i}$"
+        "$\\sum\\nolimits_i^{\\mathrm{Sphere}(0.3 σ)}"
+        " \\frac{\\mathrm{E_i}}{E_\\mathrm{Tot}}$"
     ),
     "sphereratio_large": (
-        "$\\sum\\nolimits_i^{\\mathrm{Sphere}(0.8 σ)} \\mathrm{E_i}$"
+        "$\\sum\\nolimits_i^{\\mathrm{Sphere}(0.8 σ)}"
+        " \\frac{\\mathrm{E_i}}{E_\\mathrm{Tot}}$"
     ),
     "cyratio_ratio": (
         "$\\frac{\\sum\\nolimits_i^{\\mathrm{Cylinder}(0.2 σ)}"

@@ -1,5 +1,7 @@
 from typing import Optional
 
+import matplotlib as mpl
+import matplotlib.patheffects as path_effects
 import matplotlib.pyplot as plt
 import mplhep
 import numpy as np
@@ -10,6 +12,20 @@ from matplotlib.ticker import ScalarFormatter
 
 from .binborders import binborders_wo_outliers, bincenters
 from .infolut import var_to_bins, var_to_label
+
+mpl.rcParams["axes.prop_cycle"] = mpl.cycler(
+    color=[
+        "#377eb8",
+        "#ff7f00",
+        "#4daf4a",
+        "#984ea3",
+        "#f781bf",
+        "#a65628",
+        "#999999",
+        "#e41a1c",
+        "#dede00",
+    ]
+)
 
 
 def ratioplot(
@@ -99,7 +115,19 @@ def ratioplot(
     # overflow bins
     delta = (bins[1] - bins[0]) / 2
     colors = [a.stairs.get_edgecolor() for a in artists]
-    kwstyle = dict(linestyle=(0, (0.5, 0.3)), lw=3)
+    print("foo")
+    kwstyle = dict(
+        # linestyle=(0, (0.5, 0.3)),
+        lw=3,
+        path_effects=[
+            # path_effects.Stroke(linewidth=5, foreground="black"),
+            path_effects.PathPatchEffect(
+                edgecolor="black",
+                linewidth=5,
+            ),
+            path_effects.Normal(),
+        ],
+    )
     ibar = 1
     for arr, color in zip(arrays, colors):
         undershot = (arr < bins[0]).sum()
@@ -192,7 +220,7 @@ def ratioplot(
         )
 
     ax.set_ylabel("Counts/Bin", fontsize=17)
-    ax.legend(fontsize=14, loc="best")
+    ax.legend(fontsize=14, loc="best", framealpha=1, edgecolor="black")
 
     if len(arrays) > 2:
         axrat.set_ylabel(r"$\frac{\text{Dataset}}{\text{Simulation}}$", fontsize=15)
@@ -213,21 +241,25 @@ def ratioplot(
 
     ax.tick_params(axis="y", which="both", labelsize=15)
     axrat.tick_params(axis="y", which="both", labelsize=15)
+
     ## ## x Ticks in the middle:
+    # needed to access the formatter, run mpl logic
+    # to reduce the number of ticks if there are too many
+    plt.tight_layout()
+    plt.draw()
+
     # remove labels
     ax.tick_params("x", labelbottom=False)
     axrat.tick_params("x", labelbottom=False)
     # safe for later
     xtickpos = ax.xaxis.get_ticklocs()[1:-1]
-    # needed to access the formatter
-    plt.draw()
     xtickformatter = ax.xaxis.get_major_formatter()
+    xtickformatter.format = xtickformatter.format.replace("%1.3f", "%1.3g")
     xticklabels = [xtickformatter(e) for e in xtickpos]
 
     # ticks to top for ratio Axes
     axrat.xaxis.tick_top()
 
-    plt.tight_layout()
     # Calculate the middle position for the shared x-tick labels
     # It's the average of the top of the bottom subplot
     # and the bottom of the top subplot
@@ -242,8 +274,9 @@ def ratioplot(
             label,
             ha="center",
             va="center",
-            fontsize=15,
+            fontsize=14,
         )
     # plt.tight_layout()
     plt.subplots_adjust(hspace=0.2)  # Adjust the spacing if needed
+    # fig.savefig("/home/mscham/fgsim/wd/tmp.pdf")
     return fig
