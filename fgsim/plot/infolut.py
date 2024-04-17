@@ -113,13 +113,18 @@ def var_to_bins(v: Union[str, int]) -> Optional[np.ndarray]:
             "ptrel": np.linspace(0, 1, nbins),
             "etarel": np.linspace(-0.4, 0.4, nbins),
             "phirel": np.linspace(-0.4, 0.4, nbins),
-            "ptjet": np.linspace(0.5, 1 + 1e-5, nbins),
-            "etajet": np.linspace(-0.045, 0.045, nbins),
-            "phijet": np.linspace(-0.045, 0.045, nbins),
-            "mjet": np.linspace(0, 0.25, nbins),
+            "mass": np.linspace(0, 0.25, nbins),
         }
+        if conf.loader.n_points == 30:
+            bin_d |= {
+                "eta": np.linspace(-0.045, 0.045, nbins),
+                "phi": np.linspace(-0.045, 0.045, nbins),
+                "pt": np.linspace(0.5, 1 + 1e-5, nbins),
+            }
         if conf.loader.n_points == 150:
-            bin_d["ptjet"] = np.linspace(0.9, 1 + 1e-10, nbins, endpoint=True)
+            bin_d |= {
+                "pt": np.linspace(0.975, 1 + 1e-5, nbins, endpoint=True),
+            }
             # bin_d["ptjet"] = np.linspace(0.9, 1, nbins, endpoint=True)
         if v in bin_d:
             return bin_d[v]

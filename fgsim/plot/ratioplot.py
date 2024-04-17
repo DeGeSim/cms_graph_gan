@@ -115,7 +115,6 @@ def ratioplot(
     # overflow bins
     delta = (bins[1] - bins[0]) / 2
     colors = [a.stairs.get_edgecolor() for a in artists]
-    print("foo")
     kwstyle = dict(
         # linestyle=(0, (0.5, 0.3)),
         lw=3,
