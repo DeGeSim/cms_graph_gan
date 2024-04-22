@@ -104,6 +104,7 @@ def ratioplot(
         sharex="col",
     )
 
+    ### run histogramms ###
     artists = mplhep.histplot(
         np.stack(hists),
         bins=bins,
@@ -112,7 +113,7 @@ def ratioplot(
         ax=ax,
     )
 
-    # overflow bins
+    #### overflow bins ###
     delta = (bins[1] - bins[0]) / 2
     colors = [a.stairs.get_edgecolor() for a in artists]
     kwstyle = dict(
@@ -162,61 +163,103 @@ def ratioplot(
         ax.yaxis.get_offset_text().set_fontsize(13)
 
     axrat.set_ylim(0.48, 1.52)
-    for gen_hist, gen_error, label, color in zip(
-        hists[1:], errors[1:], labels[1:], colors[1:]
+
+    #### errors and out-of-range markers ###
+    x = bincenters(bins)
+    frac_error_x = np.array([(bins[1] - bins[0]) / 2.0] * n_bins)
+    n_oor_upper = np.ones_like(x)
+    n_oor_lower = np.ones_like(x)
+    for ihist, (gen_hist, gen_error, label, color) in enumerate(
+        zip(hists, errors, labels, colors)
     ):
-        if len(arrays) == 2:
-            color = "black"
         with np.errstate(divide="ignore", invalid="ignore"):
             frac = gen_hist / sim_hist
             frac_error_y = np.abs(frac) * np.sqrt(
                 (sim_error / sim_hist) ** 2 + (gen_error / gen_hist) ** 2
             )
-            frac_error_x = np.array([(bins[1] - bins[0]) / 2.0] * n_bins)
             frac_mask = (frac != 0) & np.invert(np.isnan(frac_error_y))
 
-        x = bincenters(bins)
+        # simulation
+        if ihist == 0:
+            # grey r==1 line
+            axrat.axhline(1, color=color)
+            axrat.fill_between(
+                x[frac_mask],
+                1 - frac_error_y[frac_mask],
+                1 + frac_error_y[frac_mask],
+                color=color,
+                label=label,
+                alpha=0.4,
+            )
+        # models
+        else:
+            axrat.errorbar(
+                x=x[frac_mask],
+                y=frac[frac_mask],
+                yerr=frac_error_y[frac_mask],
+                xerr=frac_error_x[frac_mask],
+                barsabove=True,
+                linestyle="",
+                marker=None,
+                ecolor=color,  # Use different color for each dataset
+                label=label,  # Add label
+                markersize=2,
+            )
+            # Indicators for out of range ratios:
+            lower, upper = axrat.get_ylim()
 
-        axrat.errorbar(
-            x=x[frac_mask],
-            y=frac[frac_mask],
-            yerr=frac_error_y[frac_mask],
-            xerr=frac_error_x[frac_mask],
-            barsabove=True,
-            linestyle="",
-            marker=None,
-            ecolor=color,  # Use different color for each dataset
-            label=label,  # Add label
-            markersize=2,
-        )
-        # Indicators for out of range ratios:
-        lower, upper = axrat.get_ylim()
+            ms = np.diff(
+                axrat.transData.transform(np.stack([bins, np.zeros_like(bins)]).T)[
+                    :, 0
+                ]
+            )
+            # get marker size by taking the bins,
+            # tranforming from data to display
+            # and then to axis to take the differce
+            # M = axrat.transData.get_matrix()
+            # xscale = M[0, 0]
+            # yscale = M[1, 1]
+            # star = mpl.markers.MarkerStyle("^")
+            # bbox = star.get_path().transformed(star.get_transform()).get_extents()
+            # star_unit_width = bbox.width
+            # star_unit_height = bbox.height
+            # ms = xscale * np.diff(bins) / star_unit_width
 
-        def ax_to_data(tup):
+            # # markers to display space
+            # tup = np.stack([ms, np.zeros_like(ms)]).T  # start in data space
+            # tup = axrat.transData.transform(tup)
+            # # tup = axrat.transAxes.transform(tup)
+
+            tup = np.stack([np.zeros_like(x), np.ones_like(x)]).T
             tup = axrat.transAxes.transform(tup)
+            tup[:, 1] -= (ms + 10 / ms) * n_oor_upper
             tup = axrat.transData.inverted().transform(tup)
-            return tup
+            yupper = tup[:, 1]
 
-        yupper = ax_to_data((0, 0.95))[1]
-        ylower = ax_to_data((0, 0.05))[1]
+            tup = np.stack([np.zeros_like(x), np.zeros_like(x)]).T
+            tup = axrat.transAxes.transform(tup)
+            tup[:, 1] += (ms + 10 / ms) * n_oor_lower
+            tup = axrat.transData.inverted().transform(tup)
+            ylower = tup[:, 1]
 
-        oor_idxs = np.where(frac > upper)[0]
-        axrat.plot(
-            x[oor_idxs],
-            np.ones_like(oor_idxs) * yupper,
-            "^",
-            color=color,
-            markersize=1.5,
-        )
-
-        oor_idxs = np.where(frac < lower)[0]
-        axrat.plot(
-            x[oor_idxs],
-            np.ones_like(oor_idxs) * ylower,
-            "v",
-            color=color,
-            markersize=1.5,
-        )
+            oor_idxs = np.where(frac > upper)[0]
+            n_oor_upper[oor_idxs] += 1
+            axrat.scatter(
+                x=x[oor_idxs],
+                y=yupper[oor_idxs],
+                marker="^",
+                color=color,
+                s=ms[oor_idxs],
+            )
+            oor_idxs = np.where(frac < lower)[0]
+            n_oor_lower[oor_idxs] += 1
+            axrat.scatter(
+                x=x[oor_idxs],
+                y=ylower[oor_idxs],
+                marker="v",
+                color=color,
+                s=ms[oor_idxs],
+            )
 
     ax.set_ylabel("Counts/Bin", fontsize=17)
     ax.legend(fontsize=14, loc="best", framealpha=1, edgecolor="black")
@@ -228,8 +271,6 @@ def ratioplot(
 
     # horizontal grid
     ax.grid(True, "major", "y")
-    # grey r==1 line
-    axrat.axhline(1, color="grey")
 
     # bounding box around the plots
     for iax in [ax, axrat]:
