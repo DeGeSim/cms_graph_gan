@@ -65,6 +65,10 @@ def ratioplot(
         e.detach().cpu().numpy() if isinstance(e, torch.Tensor) else e
         for e in weights
     ]
+    if weights[0] is not None:
+        simulation_factor = weights[0].shape[0] / weights[0].sum()
+        for iarr in range(len(weights)):
+            weights[iarr] = weights[iarr] * simulation_factor
 
     if bins is None:
         bins = var_to_bins(title.strip(r"\\"))
