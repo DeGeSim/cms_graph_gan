@@ -260,8 +260,10 @@ def ratioplot(
                 color=color,
                 s=ms[oor_idxs],
             )
-
-    ax.set_ylabel("Counts/Bin", fontsize=17)
+    if weights[0] is None:
+        ax.set_ylabel("Counts per Bin", fontsize=17)
+    else:
+        ax.set_ylabel("Sum of Weights per Bin", fontsize=17)
     ax.legend(fontsize=14, loc="best", framealpha=1, edgecolor="black")
 
     if len(arrays) > 2:

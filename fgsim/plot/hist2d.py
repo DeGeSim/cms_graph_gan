@@ -33,11 +33,13 @@ def hist2d(
         sim = sim[sel]
         if simw is not None:
             simw = simw[sel]
+            simw = simw * (simw.shape[0] / np.sum(simw))
     if len(gen) > 500_000:
         sel = np.random.choice(gen.shape[0], 500_000)
         gen = gen[sel]
         if genw is not None:
             genw = genw[sel]
+            genw = genw * (simw.shape[0] / np.sum(simw))
 
     if v1bins is None:
         xedges = binborders_wo_outliers(sim[:, 0])
