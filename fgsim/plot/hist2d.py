@@ -3,7 +3,7 @@ from typing import Optional
 import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns  # noqa
-from matplotlib import colors
+from matplotlib import colors, ticker
 from matplotlib.axes import Axes
 from matplotlib.colors import LogNorm, Normalize
 from matplotlib.figure import Figure
@@ -16,14 +16,18 @@ np.set_printoptions(formatter={"float_kind": "{:.3g}".format})
 def hist2d(
     sim: np.ndarray,
     gen: np.ndarray,
-    title: str,
     v1name: str,
     v2name: str,
     v1bins: Optional[np.ndarray] = None,
     v2bins: Optional[np.ndarray] = None,
     simw: Optional[np.ndarray] = None,
     genw: Optional[np.ndarray] = None,
-    step: Optional[int] = None,
+    colorlim: Optional[float] = None,
+    colorlim_delta: Optional[float] = None,
+    force_log=False,
+    force_log_delta=False,
+    # title: str,
+    # step: Optional[int] = None,
 ) -> Figure:
     plt.cla()
     plt.clf()
@@ -56,7 +60,7 @@ def hist2d(
         v1name, v2name = v2name, v1name
 
     pagewh = [448.13 / 72.0, 636.6 / 72.0]
-    width, height = pagewh[0] * 1.3 / 3.0, pagewh[1] * 1.3 / 3.0
+    width, height = pagewh[0] * 1.3 / 3.0 * 0.8, pagewh[1] * 1.3 / 3.0 * 0.8
     fig, axs = plt.subplots(
         2, 3, figsize=(width * 3, height), height_ratios=[1, 0.05]
     )
@@ -74,7 +78,7 @@ def hist2d(
 
     hists = []
     ax: Axes
-    norm = None
+    norm = "log" if force_log else None
     for iax, (ax, arr, weights, title) in enumerate(
         zip([ax1, ax2], [sim, gen], [simw, genw], ("Simulation", "Model"))
     ):
@@ -89,14 +93,16 @@ def hist2d(
             norm=norm,
             linewidths=2,
             weights=weights,
+            vmax=colorlim,
         )
         hists.append(h)
         sns.kdeplot(
             x=x,
             y=y,
             ax=ax,
-            levels=[0.3, 0.6, 0.9],
+            levels=[0.1, 0.3, 0.6, 0.9],
             color="black",
+            thresh=0.2,
             bw_adjust=1.0,
         )
         ax.set_title(title)
@@ -118,14 +124,19 @@ def hist2d(
     # h[np.where(h == 0)] = np.NAN
 
     diff_lim = max(np.nanmax(np.abs(h)), diff_lim)
-    # if (np.abs(h) > (np.max(np.abs(h)) / 10)).mean() < 0.05:
-    #     # if h.max() / max(np.median(h), 1) > 6:
-
-    #     norm = colors.SymLogNorm(
-    #         linthresh=1, linscale=1.0, vmin=-diff_lim, vmax=diff_lim
-    #     )
-    # else:
-    norm = colors.CenteredNorm(vcenter=0, halfrange=diff_lim)
+    if force_log_delta:
+        #  or (np.abs(h) > (np.max(np.abs(h)) / 10)).mean() < 0.05:
+        # if h.max() / max(np.median(h), 1) > 6:
+        norm = colors.SymLogNorm(
+            linthresh=1, linscale=1.0, vmin=-diff_lim, vmax=diff_lim
+        )
+        log_locator = ticker.SymmetricalLogLocator(transform=norm._trf)
+        log_locator.set_params(numticks=5)
+    else:
+        norm = colors.CenteredNorm(
+            vcenter=0,
+            halfrange=diff_lim if colorlim_delta is None else colorlim_delta,
+        )
 
     mesh = ax3.imshow(
         h.T,
@@ -138,7 +149,13 @@ def hist2d(
     ax3.yaxis.set_ticklabels([])
     ax3.set_xlabel(v1name)
     ax3.set_title(r"$\text{Model}-\text{Simulation}$")
-    plt.colorbar(mesh, cax=axrcol, orientation="horizontal")
+
+    plt.colorbar(
+        mesh,
+        cax=axrcol,
+        orientation="horizontal",
+        ticks=log_locator if force_log_delta else None,
+    )
     fig.tight_layout()
     return fig
 
@@ -161,14 +178,16 @@ def _2dhist_with_autonorm(
     range=None,
     density=False,
     weights=None,
+    vmax=None,
     **kwargs,
 ):
     xedges, yedges = bins
     h, _, _ = np.histogram2d(
         x, y, bins=bins, range=range, density=density, weights=weights
     )
-
-    if norm is None:
+    if norm == "log":
+        norm = LogNorm(1, h.max())
+    elif norm is None:
         if (h > (h.max() / 10)).mean() < 0.05:
             # if h.max() / max(np.median(h), 1) > 6:
             norm = LogNorm(1, h.max())
