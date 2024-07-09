@@ -114,7 +114,6 @@ def make_2d_plots(
         figure = hist2d(
             sim=to_np(res["sim_batch"][ftxname][:, [v1, v2]]),
             gen=to_np(res["gen_batch"][ftxname][:, [v1, v2]]),
-            title=title,
             v1name=var_to_label(v1),
             v2name=var_to_label(v2),
             v1bins=bins[v1],

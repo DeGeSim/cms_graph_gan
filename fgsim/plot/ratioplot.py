@@ -283,7 +283,7 @@ def ratioplot(
         for spline in iax.spines.values():
             spline.set_linewidth(1)
             spline.set_color("black")
-    fig.suptitle(title, fontsize=26)
+    ax.set_title(title, fontsize=26)
 
     ax.tick_params(axis="y", which="both", labelsize=15)
     axrat.tick_params(axis="y", which="both", labelsize=15)
