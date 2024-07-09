@@ -26,7 +26,7 @@ def hist2d(
     colorlim_delta: Optional[float] = None,
     force_log=False,
     force_log_delta=False,
-    # title: str,
+    cbtitle=None,
     # step: Optional[int] = None,
 ) -> Figure:
     plt.cla()
@@ -36,14 +36,14 @@ def hist2d(
         sel = np.random.choice(sim.shape[0], 500_000)
         sim = sim[sel]
         if simw is not None:
+            simw = simw * (simw.shape[0] / 500_000)
             simw = simw[sel]
-            simw = simw * (simw.shape[0] / np.sum(simw))
     if len(gen) > 500_000:
         sel = np.random.choice(gen.shape[0], 500_000)
         gen = gen[sel]
         if genw is not None:
+            genw = genw * (genw.shape[0] / 500_000)
             genw = genw[sel]
-            genw = genw * (simw.shape[0] / np.sum(simw))
 
     if v1bins is None:
         xedges = binborders_wo_outliers(sim[:, 0])
@@ -60,7 +60,7 @@ def hist2d(
         v1name, v2name = v2name, v1name
 
     pagewh = [448.13 / 72.0, 636.6 / 72.0]
-    width, height = pagewh[0] * 1.3 / 3.0 * 0.8, pagewh[1] * 1.3 / 3.0 * 0.8
+    width, height = pagewh[0] * 1.3 / 3.0, pagewh[1] * 1.3 / 3.0
     fig, axs = plt.subplots(
         2, 3, figsize=(width * 3, height), height_ratios=[1, 0.05]
     )
@@ -112,7 +112,7 @@ def hist2d(
         else:
             ax.yaxis.set_ticklabels([])
         diff_lim = max(np.max(h) / 2, diff_lim)
-    plt.colorbar(mesh, cax=axcol, orientation="horizontal")
+    cbar1 = plt.colorbar(mesh, cax=axcol, orientation="horizontal")
 
     a, b = hists[1], hists[0]
     # h = np.divide(a - b, np.abs(b), out=np.zeros_like(a), where=b != 0)
@@ -150,12 +150,15 @@ def hist2d(
     ax3.set_xlabel(v1name)
     ax3.set_title(r"$\text{Model}-\text{Simulation}$")
 
-    plt.colorbar(
+    cbar2 = plt.colorbar(
         mesh,
         cax=axrcol,
         orientation="horizontal",
         ticks=log_locator if force_log_delta else None,
     )
+    if cbtitle is not None:
+        cbar1.set_label(cbtitle)
+        cbar2.set_label("Δ " + cbtitle)
     fig.tight_layout()
     return fig
 

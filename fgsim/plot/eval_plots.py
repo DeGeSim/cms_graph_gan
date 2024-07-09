@@ -75,6 +75,12 @@ def make_high_level_plots(res: dict, fig_logger: FigLogger) -> None:
     fig_logger.prefixes.pop()
 
 
+def x_from_batch(batch, ftxname, var, n=100):
+    assert batch.batch[-1] > n
+    last_point_idx = (batch.batch < n).int().argmin()
+    return to_np(batch[ftxname][:last_point_idx, var])
+
+
 def make_2d_plots(
     res: dict, fig_logger: FigLogger, scaled: bool, energy_weighted=False
 ) -> None:
@@ -101,25 +107,30 @@ def make_2d_plots(
         f"2D Histogram for {conf.loader.n_points} points in"
         f" {conf.loader.test_set_size} events"
     )
+    cbtitle = None
     if energy_weighted:
         title = "Weighted " + title
+        cbtitle = var_to_label(ename) + " per Shower"
+
+    n = 100
 
     for v1, v2 in combinations(ftxidxs, 2):
         if energy_weighted:
-            simw = to_np(res["sim_batch"][ftxname][:, epos])
-            genw = to_np(res["gen_batch"][ftxname][:, epos])
+            simw = x_from_batch(res["sim_batch"], ftxname, epos, n) / n
+            genw = x_from_batch(res["gen_batch"], ftxname, epos, n) / n
         else:
             simw = None
             genw = None
         figure = hist2d(
-            sim=to_np(res["sim_batch"][ftxname][:, [v1, v2]]),
-            gen=to_np(res["gen_batch"][ftxname][:, [v1, v2]]),
+            sim=x_from_batch(res["sim_batch"], ftxname, [v1, v2], n),
+            gen=x_from_batch(res["gen_batch"], ftxname, [v1, v2], n),
             v1name=var_to_label(v1),
             v2name=var_to_label(v2),
             v1bins=bins[v1],
             v2bins=bins[v2],
             simw=simw,
             genw=genw,
+            cbtitle=cbtitle,
         )
         fig_logger(
             figure,
