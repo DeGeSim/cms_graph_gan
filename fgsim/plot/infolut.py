@@ -97,6 +97,7 @@ def var_to_bins(v: Union[str, int]) -> Optional[np.ndarray]:
 
         match v:
             case "E":
+                # return 10 ** np.linspace(0, np.log10(5020), 100 + 1) - 0.5
                 return np.linspace(0, 5020, 100 + 1) - 0.5
             case "z":
                 return np.linspace(0, calo.num_z, calo.num_z + 1) - 0.5

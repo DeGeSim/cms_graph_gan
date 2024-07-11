@@ -62,12 +62,13 @@ def ratioplot(
         if bins is None:
             bins = binborders_wo_outliers(arrays[0])
 
-    if weights is None:
+    weighted = weights[0] is not None
+    if not weighted:
         weights = [None for _ in arrays]
 
     title = var_to_label(ftn)
 
-    # cehck lens
+    # check lens
     assert len(arrays) == len(labels) == len(weights)
     len(arrays)
 
@@ -75,42 +76,30 @@ def ratioplot(
         e.detach().cpu().numpy() if isinstance(e, torch.Tensor) else e
         for e in arrays
     ]
-    weights = [
-        e.detach().cpu().numpy() if isinstance(e, torch.Tensor) else e
-        for e in weights
-    ]
-    if weights[0] is not None:
+    if weighted:
+        weights = [e.detach().cpu().numpy() for e in weights]
+        # use the simulation as a reference to scale the sum of the weights to 1
         simulation_factor = weights[0].shape[0] / weights[0].sum()
         for iarr in range(len(weights)):
             weights[iarr] = weights[iarr] * simulation_factor
-
-    if bins is None:
-        bins = var_to_bins(title.strip(r"\\"))
-        if bins is None:
-            bins = binborders_wo_outliers(arrays[0])
-    n_bins = len(bins) - 1
 
     hists = [
         np.histogram(arr, bins=bins, weights=w)[0]
         for arr, w in zip(arrays, weights)
     ]
-    if weights[0] is None:
-        errors = [np.sqrt(hist) for hist in hists]
-    else:
-        weights = [e / np.sum(e) for e in weights]
+
+    if weighted:
+        _weights = [e / np.sum(e) for e in weights]
         errors = [
             np.sqrt(np.histogram(arr, bins=bins, weights=w**2)[0])
-            for arr, w in zip(arrays, weights)
+            for arr, w in zip(arrays, _weights)
         ]
-
-    scale_factor = 0  # int(np.floor(np.log10(max(sim_hist.max(), gen_hist.max()))))
-
-    for i in range(len(hists)):
-        hists[i] = hists[i] * (10**-scale_factor)
-        errors[i] = errors[i] * (10**-scale_factor)
+        del _weights
+    else:
+        errors = [np.sqrt(hist) for hist in hists]
+        pass
 
     sim_hist = hists[0]
-    sim_error = errors[0]
 
     ax: Axes
     axrat: Axes
@@ -122,89 +111,30 @@ def ratioplot(
         sharex="col",
     )
 
-    ### run histogramms ###
-    artists = mplhep.histplot(
-        np.stack(hists),
-        bins=bins,
-        label=labels,  # Use custom labels
-        yerr=np.stack(errors) if weights[0] is None else None,
-        ax=ax,
-    )
-
-    #### overflow bins ###
-    delta = (bins[1] - bins[0]) / 2
-    colors = [a.stairs.get_edgecolor() for a in artists]
-    kwstyle = dict(
-        # linestyle=(0, (0.5, 0.3)),
-        lw=3,
-        path_effects=[
-            # path_effects.Stroke(linewidth=5, foreground="black"),
-            path_effects.PathPatchEffect(
-                edgecolor="black",
-                linewidth=5,
-            ),
-            path_effects.Normal(),
-        ],
-    )
-    ibar = 1
-    for arr, color in zip(arrays, colors):
-        undershot = (arr < bins[0]).sum()
-        if undershot > 0:
-            ax.vlines(
-                x=bins[0] - ibar * delta * kwstyle["lw"],
-                ymin=0,
-                ymax=undershot * (10**-scale_factor),
-                color=color,
-                **kwstyle,
-            )
-            ibar += 1
-    ibar = 1
-    for arr, color in zip(arrays, colors):
-        overshot = (arr > bins[-1]).sum()
-        if overshot > 0:
-            ax.vlines(
-                x=bins[-1] + ibar * delta * kwstyle["lw"],
-                ymin=0,
-                ymax=overshot * (10**-scale_factor),
-                color=color,
-                **kwstyle,
-            )
-            ibar += 1
-
-    if (sim_hist > (sim_hist.max() / 10)).mean() < 0.1:
-        ax.set_yscale("log")
-    else:
-        formatter = ScalarFormatter(useMathText=True)
-        formatter.set_scientific(True)
-        formatter.set_powerlimits((-1, 1))
-        ax.yaxis.set_major_formatter(formatter)
-        ax.yaxis.get_offset_text().set_fontsize(13)
+    colors = make_top_hists(hists, arrays, bins, labels, errors, ax)
 
     axrat.set_ylim(0.48, 1.52)
 
     #### errors and out-of-range markers ###
     x = bincenters(bins)
-    frac_error_x = np.array([(bins[1] - bins[0]) / 2.0] * n_bins)
+    frac_error_x = np.array([(bins[1] - bins[0]) / 2.0] * (len(bins) - 1))
     n_oor_upper = np.ones_like(x)
     n_oor_lower = np.ones_like(x)
     for ihist, (gen_hist, gen_error, label, color) in enumerate(
         zip(hists, errors, labels, colors)
     ):
-        with np.errstate(divide="ignore", invalid="ignore"):
-            frac = gen_hist / sim_hist
-            frac_error_y = np.abs(frac) * np.sqrt(
-                (sim_error / sim_hist) ** 2 + (gen_error / gen_hist) ** 2
-            )
-            frac_mask = (frac != 0) & np.invert(np.isnan(frac_error_y))
+        ratio, high, low, nan_mask = ratio_errors(
+            gen_hist, sim_hist, gen_error, errors[0]
+        )
 
         # simulation
         if ihist == 0:
             # grey r==1 line
             axrat.axhline(1, color=color)
             axrat.fill_between(
-                x[frac_mask],
-                1 - frac_error_y[frac_mask],
-                1 + frac_error_y[frac_mask],
+                x[nan_mask],
+                ratio[nan_mask] - low[nan_mask],
+                ratio[nan_mask] + high[nan_mask],
                 color=color,
                 label=label,
                 alpha=0.4,
@@ -212,10 +142,10 @@ def ratioplot(
         # models
         else:
             axrat.errorbar(
-                x=x[frac_mask],
-                y=frac[frac_mask],
-                yerr=frac_error_y[frac_mask],
-                xerr=frac_error_x[frac_mask],
+                x=x[nan_mask],
+                y=ratio[nan_mask],
+                yerr=np.stack([low[nan_mask], high[nan_mask]]),
+                xerr=frac_error_x[nan_mask],
                 barsabove=True,
                 linestyle="",
                 marker=None,
@@ -223,62 +153,11 @@ def ratioplot(
                 label=label,  # Add label
                 markersize=2,
             )
-            # Indicators for out of range ratios:
-            lower, upper = axrat.get_ylim()
-
-            ms = np.diff(
-                axrat.transData.transform(np.stack([bins, np.zeros_like(bins)]).T)[
-                    :, 0
-                ]
+            n_oor_upper, n_oor_lower = make_oor_indicators(
+                axrat, x, ratio, bins, color, n_oor_upper, n_oor_lower
             )
-            # get marker size by taking the bins,
-            # tranforming from data to display
-            # and then to axis to take the differce
-            # M = axrat.transData.get_matrix()
-            # xscale = M[0, 0]
-            # yscale = M[1, 1]
-            # star = mpl.markers.MarkerStyle("^")
-            # bbox = star.get_path().transformed(star.get_transform()).get_extents()
-            # star_unit_width = bbox.width
-            # star_unit_height = bbox.height
-            # ms = xscale * np.diff(bins) / star_unit_width
 
-            # # markers to display space
-            # tup = np.stack([ms, np.zeros_like(ms)]).T  # start in data space
-            # tup = axrat.transData.transform(tup)
-            # # tup = axrat.transAxes.transform(tup)
-
-            tup = np.stack([np.zeros_like(x), np.ones_like(x)]).T
-            tup = axrat.transAxes.transform(tup)
-            tup[:, 1] -= (ms + 10 / ms) * n_oor_upper
-            tup = axrat.transData.inverted().transform(tup)
-            yupper = tup[:, 1]
-
-            tup = np.stack([np.zeros_like(x), np.zeros_like(x)]).T
-            tup = axrat.transAxes.transform(tup)
-            tup[:, 1] += (ms + 10 / ms) * n_oor_lower
-            tup = axrat.transData.inverted().transform(tup)
-            ylower = tup[:, 1]
-
-            oor_idxs = np.where(frac > upper)[0]
-            n_oor_upper[oor_idxs] += 1
-            axrat.scatter(
-                x=x[oor_idxs],
-                y=yupper[oor_idxs],
-                marker="^",
-                color=color,
-                s=ms[oor_idxs],
-            )
-            oor_idxs = np.where(frac < lower)[0]
-            n_oor_lower[oor_idxs] += 1
-            axrat.scatter(
-                x=x[oor_idxs],
-                y=ylower[oor_idxs],
-                marker="v",
-                color=color,
-                s=ms[oor_idxs],
-            )
-    if weights[0] is None:
+    if not weighted:
         ax.set_ylabel("Counts per Bin", fontsize=17)
     else:
         ax.set_ylabel("Sum of Weights per Bin", fontsize=17)
@@ -338,5 +217,132 @@ def ratioplot(
         )
     # plt.tight_layout()
     plt.subplots_adjust(hspace=0.2)  # Adjust the spacing if needed
-    # fig.savefig("/home/mscham/fgsim/wd/tmp.pdf")
+    fig.savefig("/home/mscham/fgsim/wd/tmp.pdf")
+    print("Done")
     return fig
+
+
+def make_top_hists(hists, arrays, bins, labels, errors, ax):
+    ### run histogramms ###
+    artists = mplhep.histplot(
+        np.stack(hists),
+        bins=bins,
+        label=labels,  # Use custom labels
+        yerr=np.stack(errors),
+        ax=ax,
+    )
+
+    #### overflow bins ###
+    delta = (bins[1] - bins[0]) / 2
+    colors = [a.stairs.get_edgecolor() for a in artists]
+    kwstyle = dict(
+        # linestyle=(0, (0.5, 0.3)),
+        lw=3,
+        path_effects=[
+            # path_effects.Stroke(linewidth=5, foreground="black"),
+            path_effects.PathPatchEffect(
+                edgecolor="black",
+                linewidth=5,
+            ),
+            path_effects.Normal(),
+        ],
+    )
+    ibar = 1
+    for arr, color in zip(arrays, colors):
+        undershot = (arr < bins[0]).sum()
+        if undershot > 0:
+            ax.vlines(
+                x=bins[0] - ibar * delta * kwstyle["lw"],
+                ymin=0,
+                ymax=undershot,
+                color=color,
+                **kwstyle,
+            )
+            ibar += 1
+    ibar = 1
+    for arr, color in zip(arrays, colors):
+        overshot = (arr > bins[-1]).sum()
+        if overshot > 0:
+            ax.vlines(
+                x=bins[-1] + ibar * delta * kwstyle["lw"],
+                ymin=0,
+                ymax=overshot,
+                color=color,
+                **kwstyle,
+            )
+            ibar += 1
+    sim_hist = hists[0]
+    if (sim_hist > (sim_hist.max() / 10)).mean() < 0.1:
+        ax.set_yscale("log")
+    else:
+        formatter = ScalarFormatter(useMathText=True)
+        formatter.set_scientific(True)
+        formatter.set_powerlimits((-1, 1))
+        ax.yaxis.set_major_formatter(formatter)
+        ax.yaxis.get_offset_text().set_fontsize(13)
+    return colors
+
+
+def make_oor_indicators(axrat, x, ratio, bins, color, n_oor_upper, n_oor_lower):
+    # Indicators for out of range ratios:
+    lower, upper = axrat.get_ylim()
+    ms = np.diff(
+        axrat.transData.transform(np.stack([bins, np.zeros_like(bins)]).T)[:, 0]
+    )
+
+    tup = np.stack([np.zeros_like(x), np.ones_like(x)]).T
+    tup = axrat.transAxes.transform(tup)
+    tup[:, 1] -= (ms + 10 / ms) * n_oor_upper
+    tup = axrat.transData.inverted().transform(tup)
+    yupper = tup[:, 1]
+
+    tup = np.stack([np.zeros_like(x), np.zeros_like(x)]).T
+    tup = axrat.transAxes.transform(tup)
+    tup[:, 1] += (ms + 10 / ms) * n_oor_lower
+    tup = axrat.transData.inverted().transform(tup)
+    ylower = tup[:, 1]
+
+    oor_idxs = np.where(ratio > upper)[0]
+    n_oor_upper[oor_idxs] += 1
+    axrat.scatter(
+        x=x[oor_idxs],
+        y=yupper[oor_idxs],
+        marker="^",
+        color=color,
+        s=ms[oor_idxs],
+    )
+    oor_idxs = np.where(ratio < lower)[0]
+    n_oor_lower[oor_idxs] += 1
+    axrat.scatter(
+        x=x[oor_idxs],
+        y=ylower[oor_idxs],
+        marker="v",
+        color=color,
+        s=ms[oor_idxs],
+    )
+    return n_oor_upper, n_oor_lower
+
+
+def ratio_errors(gen_hist, sim_hist, gen_error, sim_error):
+    with np.errstate(divide="ignore", invalid="ignore"):
+        ratio = gen_hist / sim_hist
+        ratio_error_y = np.abs(ratio) * np.sqrt(
+            (sim_error / sim_hist) ** 2 + (gen_error / gen_hist) ** 2
+        )
+        nan_mask = (ratio != 0) & np.invert(np.isnan(ratio_error_y))
+    # with np.errstate(divide="ignore", invalid="ignore"):
+    #     nan_mask = sim_hist != 0
+    # ratio = gen_hist / sim_hist
+
+    # level = 0.682689492137
+    # alpha = 1 - level
+    # k = gen_hist
+    # n = gen_hist + sim_hist
+    # low, high = beta.ppf([alpha / 2, 1 - alpha / 2], [k, k + 1], [n - k + 1, n - k])
+
+    # eff = k / n
+    # ratio = eff / (1 - eff)
+    # low = low / (1 - low)
+    # high = high / (1 - high)
+    return ratio, ratio_error_y, ratio_error_y, nan_mask
+    # return ratio, high, low, nan_mask

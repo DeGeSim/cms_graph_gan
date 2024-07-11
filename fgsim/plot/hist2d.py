@@ -128,6 +128,7 @@ def hist2d(
         diff_lim = max(np.max(h) / 2, diff_lim)
     cbar1 = plt.colorbar(mesh, cax=axcol, orientation="horizontal")
 
+    # Ratio hist
     a, b = hists[1], hists[0]
     # h = np.divide(a - b, np.abs(b), out=np.zeros_like(a), where=b != 0)
     h = a - b
@@ -138,8 +139,7 @@ def hist2d(
     # h[np.where(h == 0)] = np.NAN
 
     diff_lim = max(np.nanmax(np.abs(h)), diff_lim)
-    if force_log_delta:
-        #  or (np.abs(h) > (np.max(np.abs(h)) / 10)).mean() < 0.05:
+    if force_log_delta or (np.abs(h) > (np.max(np.abs(h)) / 10)).mean() < 0.05:
         # if h.max() / max(np.median(h), 1) > 6:
         norm = colors.SymLogNorm(
             linthresh=1, linscale=1.0, vmin=-diff_lim, vmax=diff_lim
@@ -162,7 +162,7 @@ def hist2d(
     )
     ax3.yaxis.set_ticklabels([])
     ax3.set_xlabel(v1name)
-    ax3.set_title(f"\\dt - {simlabel()}$")
+    ax3.set_title(f"\\dt - {simlabel()}")
 
     cbar2 = plt.colorbar(
         mesh,
@@ -172,8 +172,14 @@ def hist2d(
     )
     if cbtitle is not None:
         cbar1.set_label(cbtitle)
-        cbar2.set_label("Δ " + cbtitle)
+        cbar2.set_label("$Δ$ " + cbtitle)
+
+    # if "Hit Energy [MeV]" == v2name:
+    #     for ax in (ax1, ax2, ax3):
+    #         ax.set_yscale("log")
+
     fig.tight_layout()
+    # fig.savefig("/home/mscham/fgsim/wd/test.pdf")
     return fig
 
 

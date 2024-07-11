@@ -97,7 +97,7 @@ def make_2d_plots(
         )
     )
 
-    if "unscaled" in fig_logger.prefixes:
+    if "2D_unscaled" in fig_logger.prefixes:
         bins = [var_to_bins(e) for e in conf.loader.x_features]
     else:
         bins = [None for _ in conf.loader.x_features]
