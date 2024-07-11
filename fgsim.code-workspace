@@ -19,7 +19,7 @@
     "settings": {
         "[python]": {
             "editor.codeActionsOnSave": {
-                "source.organizeImports": "explicit",
+                // "source.organizeImports": "explicit",
                 "source.fixAll": "explicit"
             },
             "editor.formatOnSave": true,

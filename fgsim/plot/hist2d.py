@@ -13,6 +13,20 @@ from fgsim.plot.binborders import binborders_wo_outliers, chip_to_binborders
 np.set_printoptions(formatter={"float_kind": "{:.3g}".format})
 
 
+def simlabel():
+    from fgsim.config import conf
+
+    if conf.dataset_name == "jetnet":
+        if conf.loader.n_points == 150:
+            return "\\JNl"
+        if conf.loader.n_points == 30:
+            return "\\JNs"
+    elif conf.dataset_name == "calochallange":
+        return "CC Dataset 2"
+    else:
+        return "Simulation"
+
+
 def hist2d(
     sim: np.ndarray,
     gen: np.ndarray,
@@ -80,7 +94,7 @@ def hist2d(
     ax: Axes
     norm = "log" if force_log else None
     for iax, (ax, arr, weights, title) in enumerate(
-        zip([ax1, ax2], [sim, gen], [simw, genw], ("Simulation", "Model"))
+        zip([ax1, ax2], [sim, gen], [simw, genw], (simlabel(), "\\dt"))
     ):
         x, y = arr.T
         x = chip_to_binborders(x, xedges)
@@ -148,7 +162,7 @@ def hist2d(
     )
     ax3.yaxis.set_ticklabels([])
     ax3.set_xlabel(v1name)
-    ax3.set_title(r"$\text{Model}-\text{Simulation}$")
+    ax3.set_title(f"\\dt - {simlabel()}$")
 
     cbar2 = plt.colorbar(
         mesh,

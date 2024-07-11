@@ -28,6 +28,20 @@ mpl.rcParams["axes.prop_cycle"] = mpl.cycler(
 )
 
 
+def simlabel():
+    from fgsim.config import conf
+
+    if conf.dataset_name == "jetnet":
+        if conf.loader.n_points == 150:
+            return "\\JNl"
+        if conf.loader.n_points == 30:
+            return "\\JNs"
+    elif conf.dataset_name == "calochallange":
+        return "CC Dataset 2"
+    else:
+        return "Simulation"
+
+
 def ratioplot(
     arrays: list[np.ndarray],
     ftn: str,
@@ -39,7 +53,7 @@ def ratioplot(
     # set defaults
     if labels is None:
         if len(arrays) == 2:
-            labels = ["Simulation", "Model"]
+            labels = [simlabel(), "\\dt"]
         else:
             raise Exception("Need to specify array labels.")
 
@@ -283,7 +297,7 @@ def ratioplot(
         for spline in iax.spines.values():
             spline.set_linewidth(1)
             spline.set_color("black")
-    ax.set_title(title, fontsize=26)
+    axrat.set_xlabel(title, fontsize=26)
 
     ax.tick_params(axis="y", which="both", labelsize=15)
     axrat.tick_params(axis="y", which="both", labelsize=15)
