@@ -9,6 +9,7 @@ import torch
 from matplotlib.axes import Axes
 from matplotlib.figure import Figure
 from matplotlib.ticker import ScalarFormatter
+from scipy.stats import beta
 
 from .binborders import binborders_wo_outliers, bincenters
 from .infolut import var_to_bins, var_to_label
@@ -133,8 +134,8 @@ def ratioplot(
             axrat.axhline(1, color=color)
             axrat.fill_between(
                 x[nan_mask],
-                ratio[nan_mask] - low[nan_mask],
-                ratio[nan_mask] + high[nan_mask],
+                low[nan_mask],
+                high[nan_mask],
                 color=color,
                 label=label,
                 alpha=0.4,
@@ -144,7 +145,12 @@ def ratioplot(
             axrat.errorbar(
                 x=x[nan_mask],
                 y=ratio[nan_mask],
-                yerr=np.stack([low[nan_mask], high[nan_mask]]),
+                yerr=np.stack(
+                    [
+                        ratio[nan_mask] - low[nan_mask],
+                        high[nan_mask] - ratio[nan_mask],
+                    ]
+                ),
                 xerr=frac_error_x[nan_mask],
                 barsabove=True,
                 linestyle="",
@@ -324,25 +330,44 @@ def make_oor_indicators(axrat, x, ratio, bins, color, n_oor_upper, n_oor_lower):
 
 
 def ratio_errors(gen_hist, sim_hist, gen_error, sim_error):
+    # with np.errstate(divide="ignore", invalid="ignore"):
+    #     ratio = gen_hist / sim_hist
+    #     ratio_error_y = np.abs(ratio) * np.sqrt(
+    #         (sim_error / sim_hist) ** 2 + (gen_error / gen_hist) ** 2
+    #     )
+    #     nan_mask = (ratio != 0)
+    # & np.invert(np.isnan(ratio_error_y))
+
+    level = 0.682689492137
+    alpha = 1 - level
+    k = gen_hist
+    n = gen_hist + sim_hist
+    low, high = beta.ppf(
+        np.array([alpha / 2, 1 - alpha / 2]),
+        np.array([k, k + 1]).T,
+        np.array([n - k + 1, n - k]).T,
+    ).T
+
     with np.errstate(divide="ignore", invalid="ignore"):
         ratio = gen_hist / sim_hist
-        ratio_error_y = np.abs(ratio) * np.sqrt(
-            (sim_error / sim_hist) ** 2 + (gen_error / gen_hist) ** 2
+        low = low / (1 - low)
+        high = high / (1 - high)
+        nan_mask = (
+            (ratio != 0)
+            & np.invert(np.isnan(ratio))
+            & np.invert(np.isnan(high))
+            & np.invert(np.isnan(low))
         )
-        nan_mask = (ratio != 0) & np.invert(np.isnan(ratio_error_y))
-    # with np.errstate(divide="ignore", invalid="ignore"):
-    #     nan_mask = sim_hist != 0
-    # ratio = gen_hist / sim_hist
 
-    # level = 0.682689492137
-    # alpha = 1 - level
-    # k = gen_hist
-    # n = gen_hist + sim_hist
-    # low, high = beta.ppf([alpha / 2, 1 - alpha / 2], [k, k + 1], [n - k + 1, n - k])
+    assert all(((high >= ratio) & (ratio >= low))[nan_mask])
 
-    # eff = k / n
-    # ratio = eff / (1 - eff)
-    # low = low / (1 - low)
-    # high = high / (1 - high)
-    return ratio, ratio_error_y, ratio_error_y, nan_mask
-    # return ratio, high, low, nan_mask
+    return ratio, high, low, nan_mask
+    # return ratio, ratio_error_y, ratio_error_y, nan_mask
+
+
+# import boost_histogram as bh
+# simhist = bh.Histogram(bh.axis.Variable(bins))
+# simhist.fill(arrays[0],weight= np.ones_like(arrays[0]))
+# genhist = bh.Histogram(bh.axis.Variable(bins))
+# genhist.fill(arrays[1],weight= np.ones_like(arrays[1]))
+# ratio=genhist/simhist
