@@ -9,7 +9,6 @@ import torch
 from matplotlib.axes import Axes
 from matplotlib.figure import Figure
 from matplotlib.ticker import ScalarFormatter
-from scipy.stats import beta
 
 from .binborders import binborders_wo_outliers, bincenters
 from .infolut import var_to_bins, var_to_label
@@ -63,7 +62,7 @@ def ratioplot(
         if bins is None:
             bins = binborders_wo_outliers(arrays[0])
 
-    weighted = weights[0] is not None
+    weighted = weights is not None and weights[0] is not None
     if not weighted:
         weights = [None for _ in arrays]
 
@@ -78,7 +77,10 @@ def ratioplot(
         for e in arrays
     ]
     if weighted:
-        weights = [e.detach().cpu().numpy() for e in weights]
+        weights = [
+            e.detach().cpu().numpy() if isinstance(e, torch.Tensor) else e
+            for e in weights
+        ]
         # use the simulation as a reference to scale the sum of the weights to 1
         simulation_factor = weights[0].shape[0] / weights[0].sum()
         for iarr in range(len(weights)):
@@ -184,47 +186,16 @@ def ratioplot(
             spline.set_color("black")
     axrat.set_xlabel(title, fontsize=26)
 
-    ax.tick_params(axis="y", which="both", labelsize=15)
-    axrat.tick_params(axis="y", which="both", labelsize=15)
-
     ## ## x Ticks in the middle:
     # needed to access the formatter, run mpl logic
     # to reduce the number of ticks if there are too many
     plt.tight_layout()
     plt.draw()
+    fix_ticks(fig, ax, axrat)
 
-    # remove labels
-    ax.tick_params("x", labelbottom=False)
-    axrat.tick_params("x", labelbottom=False)
-    # safe for later
-    xtickpos = ax.xaxis.get_ticklocs()[1:-1]
-    xtickformatter = ax.xaxis.get_major_formatter()
-    xtickformatter.format = xtickformatter.format.replace("%1.3f", "%1.3g")
-    xticklabels = [xtickformatter(e) for e in xtickpos]
-
-    # ticks to top for ratio Axes
-    axrat.xaxis.tick_top()
-
-    # Calculate the middle position for the shared x-tick labels
-    # It's the average of the top of the bottom subplot
-    # and the bottom of the top subplot
-    middle = (ax.get_position().ymin + axrat.get_position().ymax) / 2
-    # Add shared x-tick labels as text annotations
-    for xpos, label in zip(xtickpos, xticklabels):
-        display_coord = ax.transData.transform((xpos, 0))
-        fig_coord = fig.transFigure.inverted().transform(display_coord)
-        plt.figtext(
-            fig_coord[0],
-            middle,
-            label,
-            ha="center",
-            va="center",
-            fontsize=14,
-        )
-    # plt.tight_layout()
     plt.subplots_adjust(hspace=0.2)  # Adjust the spacing if needed
-    fig.savefig("/home/mscham/fgsim/wd/tmp.pdf")
-    print("Done")
+    # fig.savefig("/home/mscham/fgsim/wd/tmp.pdf")
+    # print("Done")
     return fig
 
 
@@ -289,6 +260,41 @@ def make_top_hists(hists, arrays, bins, labels, errors, ax):
     return colors
 
 
+def fix_ticks(fig, ax, axrat):
+    ax.tick_params(axis="y", which="both", labelsize=15)
+    axrat.tick_params(axis="y", which="both", labelsize=15)
+
+    # remove labels
+    ax.tick_params("x", labelbottom=False)
+    axrat.tick_params("x", labelbottom=False)
+    # safe for later
+    xtickpos = ax.xaxis.get_ticklocs()[1:-1]
+    xtickformatter = ax.xaxis.get_major_formatter()
+    xtickformatter.format = xtickformatter.format.replace("%1.3f", "%1.3g")
+    xticklabels = [xtickformatter(e) for e in xtickpos]
+
+    # ticks to top for ratio Axes
+    axrat.xaxis.tick_top()
+
+    # Calculate the middle position for the shared x-tick labels
+    # It's the average of the top of the bottom subplot
+    # and the bottom of the top subplot
+    middle = (ax.get_position().ymin + axrat.get_position().ymax) / 2
+    # Add shared x-tick labels as text annotations
+    for xpos, label in zip(xtickpos, xticklabels):
+        display_coord = ax.transData.transform((xpos, 0))
+        fig_coord = fig.transFigure.inverted().transform(display_coord)
+        plt.figtext(
+            fig_coord[0],
+            middle,
+            label,
+            ha="center",
+            va="center",
+            fontsize=14,
+        )
+    # plt.tight_layout()
+
+
 def make_oor_indicators(axrat, x, ratio, bins, color, n_oor_upper, n_oor_lower):
     # Indicators for out of range ratios:
     lower, upper = axrat.get_ylim()
@@ -330,34 +336,35 @@ def make_oor_indicators(axrat, x, ratio, bins, color, n_oor_upper, n_oor_lower):
 
 
 def ratio_errors(gen_hist, sim_hist, gen_error, sim_error):
-    # with np.errstate(divide="ignore", invalid="ignore"):
-    #     ratio = gen_hist / sim_hist
-    #     ratio_error_y = np.abs(ratio) * np.sqrt(
-    #         (sim_error / sim_hist) ** 2 + (gen_error / gen_hist) ** 2
-    #     )
-    #     nan_mask = (ratio != 0)
-    # & np.invert(np.isnan(ratio_error_y))
-
-    level = 0.682689492137
-    alpha = 1 - level
-    k = gen_hist
-    n = gen_hist + sim_hist
-    low, high = beta.ppf(
-        np.array([alpha / 2, 1 - alpha / 2]),
-        np.array([k, k + 1]).T,
-        np.array([n - k + 1, n - k]).T,
-    ).T
-
     with np.errstate(divide="ignore", invalid="ignore"):
         ratio = gen_hist / sim_hist
-        low = low / (1 - low)
-        high = high / (1 - high)
-        nan_mask = (
-            (ratio != 0)
-            & np.invert(np.isnan(ratio))
-            & np.invert(np.isnan(high))
-            & np.invert(np.isnan(low))
+        ratio_error_y = np.abs(ratio) * np.sqrt(
+            (sim_error / sim_hist) ** 2 + (gen_error / gen_hist) ** 2
         )
+        nan_mask = (ratio != 0) & np.invert(np.isnan(ratio_error_y))
+
+    high = ratio + ratio_error_y
+    low = ratio - ratio_error_y
+    # level = 0.682689492137
+    # alpha = 1 - level
+    # k = gen_hist
+    # n = gen_hist + sim_hist
+    # low, high = beta.ppf(
+    #     np.array([alpha / 2, 1 - alpha / 2]),
+    #     np.array([k, k + 1]).T,
+    #     np.array([n - k + 1, n - k]).T,
+    # ).T
+
+    # with np.errstate(divide="ignore", invalid="ignore"):
+    #     ratio = gen_hist / sim_hist
+    #     low = low / (1 - low)
+    #     high = high / (1 - high)
+    #     nan_mask = (
+    #         (ratio != 0)
+    #         & np.invert(np.isnan(ratio))
+    #         & np.invert(np.isnan(high))
+    #         & np.invert(np.isnan(low))
+    #     )
 
     assert all(((high >= ratio) & (ratio >= low))[nan_mask])
 
@@ -366,8 +373,27 @@ def ratio_errors(gen_hist, sim_hist, gen_error, sim_error):
 
 
 # import boost_histogram as bh
-# simhist = bh.Histogram(bh.axis.Variable(bins))
-# simhist.fill(arrays[0],weight= np.ones_like(arrays[0]))
-# genhist = bh.Histogram(bh.axis.Variable(bins))
-# genhist.fill(arrays[1],weight= np.ones_like(arrays[1]))
-# ratio=genhist/simhist
+
+# axis = bh.axis.Regular(
+#     len(bins), bins[0], bins[-1], metadata="", underflow=False, overflow=False
+# )
+# simhist = bh.Histogram(axis, storage=bh.storage.Weight())
+# simhist.fill(arrays[0], weight=np.ones_like(arrays[0]))
+# genhist = bh.Histogram(axis, storage=bh.storage.Weight())
+# genhist.fill(arrays[1], weight=np.ones_like(arrays[1]))
+# ratio = genhist / simhist
+
+
+# def neff(arr):
+#     return arr.sum() ** 2 / ((arr**2).sum())
+
+
+# In [24]: a = np.sort(np.random.rand(10))
+# In [25]: a
+# Out[25]:
+# array([0.00805815, 0.04845037, 0.08975773, 0.10092236, 0.13148031,
+#        0.16855003, 0.4255674 , 0.67116426, 0.82113365, 0.92636032])
+
+# In [26]: bins = np.linspace(0,1,10)
+# In [27]: np.searchsorted(a,bins)
+# Out[27]: array([ 0,  4,  6,  6,  7,  7,  7,  8,  9, 10])
