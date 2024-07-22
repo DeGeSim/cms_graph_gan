@@ -69,6 +69,7 @@ labels_dict: Dict[str, str] = {
     "nhits_n_by_E": "Number of Hits / Shower Energy",
     "E": "Hit Energy [MeV]",
     "Eshower": "Shower Energy [MeV]",
+    "Eperhit": "Average Energy per Hit [MeV]",
     "alpha": "$\\alpha$",
     "alpha_Ew": "$\\alpha$ weighted",
     "r": "$r$",
