@@ -88,8 +88,6 @@ def hist2d(
     axcol: Axes = fig.add_subplot(gs[1, :2])
     axrcol: Axes = axs[1, 2]
 
-    diff_lim = 0
-
     hists = []
     ax: Axes
     norm = "log" if force_log else None
@@ -125,22 +123,25 @@ def hist2d(
             ax.set_ylabel(v2name)
         else:
             ax.yaxis.set_ticklabels([])
-        diff_lim = max(np.max(h) / 2, diff_lim)
+
     cbar1 = plt.colorbar(mesh, cax=axcol, orientation="horizontal")
 
     # Ratio hist
-    a, b = hists[1], hists[0]
-    # h = np.divide(a - b, np.abs(b), out=np.zeros_like(a), where=b != 0)
-    h = a - b
+    # subtract the simulated sample from the generated sample
+    h = hists[1] - hists[0]
     # overwrite bins with less then 100 enties in the simulation
-    # insig = (hists[0] * len(sim)) < 100
-    # owidx = np.where(insig)
-    # h[owidx[0], owidx[1]] = 0
-    # h[np.where(h == 0)] = np.NAN
+    insig = (hists[0] * len(sim)) < 100
+    owidx = np.where(insig)
+    h[owidx[0], owidx[1]] = 0
+    h[np.where(h == 0)] = np.NAN
 
-    diff_lim = max(np.nanmax(np.abs(h)), diff_lim)
-    if force_log_delta or (np.abs(h) > (np.max(np.abs(h)) / 10)).mean() < 0.05:
-        # if h.max() / max(np.median(h), 1) > 6:
+    # limit of the delta colorbar = half max of simlated hist
+    diff_lim = np.nanmax(np.abs(hists[0]))
+    # diff_lim = max(np.nanmax(np.abs(h)), diff_lim)
+    # switch to log if less than 5% of bins have at most 10% of the maximum enties
+    # if force_log_delta or (np.abs(h) > (np.max(np.abs(h)) / 10)).mean() < 0.05:
+    # if h.max() / max(np.median(h), 1) > 6:
+    if False:
         norm = colors.SymLogNorm(
             linthresh=1, linscale=1.0, vmin=-diff_lim, vmax=diff_lim
         )
@@ -180,6 +181,7 @@ def hist2d(
 
     fig.tight_layout()
     # fig.savefig("/home/mscham/fgsim/wd/test.pdf")
+    # print("done")
     return fig
 
 
