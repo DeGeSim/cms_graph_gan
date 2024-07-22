@@ -23,12 +23,14 @@ def to_np(a: Union[torch.Tensor, np.ndarray]) -> np.ndarray:
 
 def eval_plots(fig_logger, res: dict):
     make_1d_plots(res, fig_logger, False)
+    make_1d_plots(res, fig_logger, True)
     make_1d_plots(res, fig_logger, False, True)
 
     make_high_level_plots(res, fig_logger)
     make_critics_plots(res, fig_logger)
 
     make_2d_plots(res, fig_logger, False)
+    make_2d_plots(res, fig_logger, True)
     make_2d_plots(res, fig_logger, False, True)
 
 
@@ -37,10 +39,10 @@ def make_1d_plots(
 ) -> None:
     ftxname = "x_scaled" if scaled else "x"
     fig_logger.prefixes.append("1D_" + ("scaled" if scaled else "unscaled"))
-    if "unscaled" in fig_logger.prefixes:
+    if not scaled:
         bins = [var_to_bins(e) for e in conf.loader.x_features]
     else:
-        bins = None
+        bins = [None for _ in conf.loader.x_features]
     for title, fig in hist1d(
         res["sim_batch"],
         res["gen_batch"],
@@ -97,7 +99,7 @@ def make_2d_plots(
         )
     )
 
-    if "2D_unscaled" in fig_logger.prefixes:
+    if not scaled:
         bins = [var_to_bins(e) for e in conf.loader.x_features]
     else:
         bins = [None for _ in conf.loader.x_features]
