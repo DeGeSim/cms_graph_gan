@@ -108,15 +108,15 @@ def hist2d(
             vmax=colorlim,
         )
         hists.append(h)
-        sns.kdeplot(
-            x=x,
-            y=y,
-            ax=ax,
-            levels=[0.1, 0.3, 0.6, 0.9],
-            color="black",
-            thresh=0.2,
-            bw_adjust=1.0,
-        )
+        # sns.kdeplot(
+        #     x=x,
+        #     y=y,
+        #     ax=ax,
+        #     levels=[0.1, 0.3, 0.6, 0.9],
+        #     color="black",
+        #     thresh=0.2,
+        #     bw_adjust=1.0,
+        # )
         ax.set_title(title)
         ax.set_xlabel(v1name)
         if iax == 0:
@@ -161,23 +161,21 @@ def hist2d(
         cmap="bwr",
         origin="lower",
     )
-    ax3.yaxis.set_ticklabels([])
-    ax3.set_xlabel(v1name)
-    ax3.set_title(f"\\dt - {simlabel()}")
 
     cbar2 = plt.colorbar(
         mesh,
         cax=axrcol,
         orientation="horizontal",
-        ticks=log_locator if force_log_delta else None,
+        # ticks=log_locator if force_log_delta else None,
     )
+
+    ax3.yaxis.set_ticklabels([])
+    ax3.set_xlabel(v1name)
+    ax3.set_title(f"\\dt - {simlabel()}")
+
     if cbtitle is not None:
         cbar1.set_label(cbtitle)
         cbar2.set_label("$Δ$ " + cbtitle)
-
-    # if "Hit Energy [MeV]" == v2name:
-    #     for ax in (ax1, ax2, ax3):
-    #         ax.set_yscale("log")
 
     fig.tight_layout()
     # fig.savefig("/home/mscham/fgsim/wd/test.pdf")
