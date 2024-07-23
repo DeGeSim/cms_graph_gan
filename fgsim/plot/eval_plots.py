@@ -28,6 +28,8 @@ def eval_plots(fig_logger, res: dict):
 
     make_high_level_plots(res, fig_logger)
     make_critics_plots(res, fig_logger)
+    make_2d_high_level_plots(res, fig_logger)
+    make_y_vs_hlv_plots(res, fig_logger)
 
     make_2d_plots(res, fig_logger, False)
     make_2d_plots(res, fig_logger, True)
@@ -54,24 +56,76 @@ def make_1d_plots(
     fig_logger.prefixes.pop()
 
 
-def make_high_level_plots(res: dict, fig_logger: FigLogger) -> None:
-    fig_logger.prefixes.append("HLV")
-    metrics = res["sim_batch"]["hlv"].keys()
+def _construct_hlv_metric_dict(res):
+    hlvs = res["sim_batch"]["hlv"].keys()
     metric_dict = {}
-    for mname in metrics:
+    for mname in hlvs:
         sim_obj = res["sim_batch"]["hlv"][mname]
         gen_obj = res["gen_batch"]["hlv"][mname]
         if isinstance(sim_obj, dict):
             for smname in sim_obj.keys():
                 metric_dict[f"{mname}_{smname}"] = (
-                    sim_obj[smname],
-                    gen_obj[smname],
+                    to_np(sim_obj[smname]),
+                    to_np(gen_obj[smname]),
                 )
         else:
-            metric_dict[mname] = (sim_obj, gen_obj)
+            metric_dict[mname] = (to_np(sim_obj), to_np(gen_obj))
+    return metric_dict
 
+
+def make_2d_high_level_plots(res: dict, fig_logger: FigLogger) -> None:
+    fig_logger.prefixes.append("2D_HLV")
+    hlvs = res["sim_batch"]["hlv"].keys()
+    metric_dict = _construct_hlv_metric_dict(res)
+
+    for v1, v2 in combinations(hlvs, 2):
+        figure = hist2d(
+            sim=np.stack([metric_dict[v1][0], metric_dict[v2][0]]).T,
+            gen=np.stack([metric_dict[v1][1], metric_dict[v2][1]]).T,
+            v1name=var_to_label(v1),
+            v2name=var_to_label(v2),
+            v1bins=var_to_bins(v1),
+            v2bins=var_to_bins(v2),
+            kdeplot=False,
+        )
+        fig_logger(
+            figure,
+            f"2dhist_{v1}_vs_{v2}.pdf",
+        )
+    fig_logger.prefixes.pop()
+
+
+def make_y_vs_hlv_plots(res: dict, fig_logger: FigLogger) -> None:
+    fig_logger.prefixes.append("2D_y_vs_HLV")
+    metric_dict = _construct_hlv_metric_dict(res)
+
+    for yidx, yname in enumerate(conf.loader.y_features):
+        for hlv in res["sim_batch"]["hlv"]:
+            figure = hist2d(
+                sim=np.stack(
+                    [to_np(res["sim_batch"]["y"][:, yidx]), metric_dict[hlv][0]]
+                ).T,
+                gen=np.stack(
+                    [to_np(res["gen_batch"]["y"][:, yidx]), metric_dict[hlv][1]]
+                ).T,
+                v1name=var_to_label(yname),
+                v2name=var_to_label(hlv),
+                v1bins=var_to_bins(yname),
+                v2bins=var_to_bins(hlv),
+                kdeplot=False,
+            )
+            fig_logger(
+                figure,
+                f"2dhist_{yname}_vs_{hlv}.pdf",
+            )
+    fig_logger.prefixes.pop()
+
+
+def make_high_level_plots(res: dict, fig_logger: FigLogger) -> None:
+    fig_logger.prefixes.append("HLV")
+    metric_dict = _construct_hlv_metric_dict(res)
     for ftn, (sim_arr, gen_arr) in metric_dict.items():
-        fig = ratioplot([to_np(sim_arr), to_np(gen_arr)], ftn=ftn)
+        fig = ratioplot([sim_arr, gen_arr], ftn=ftn)
         fig_logger(fig, f"hlv_{ftn}.pdf")
 
     fig_logger.prefixes.pop()

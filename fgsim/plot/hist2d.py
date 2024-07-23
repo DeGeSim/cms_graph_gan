@@ -41,6 +41,7 @@ def hist2d(
     force_log=False,
     force_log_delta=False,
     cbtitle=None,
+    kdeplot=True,
     # step: Optional[int] = None,
 ) -> Figure:
     plt.cla()
@@ -108,15 +109,16 @@ def hist2d(
             vmax=colorlim,
         )
         hists.append(h)
-        # sns.kdeplot(
-        #     x=x,
-        #     y=y,
-        #     ax=ax,
-        #     levels=[0.1, 0.3, 0.6, 0.9],
-        #     color="black",
-        #     thresh=0.2,
-        #     bw_adjust=1.0,
-        # )
+        if kdeplot:
+            sns.kdeplot(
+                x=x,
+                y=y,
+                ax=ax,
+                levels=[0.1, 0.3, 0.6, 0.9],
+                color="black",
+                thresh=0.2,
+                bw_adjust=1.0,
+            )
         ax.set_title(title)
         ax.set_xlabel(v1name)
         if iax == 0:
