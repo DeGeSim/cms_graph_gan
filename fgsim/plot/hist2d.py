@@ -83,17 +83,24 @@ def hist2d(
     ax1: Axes = axs[0, 0]
     ax2: Axes = axs[0, 1]
     ax3: Axes = axs[0, 2]
-    axs[1, 0].remove()
-    axs[1, 1].remove()
-    gs = axs[0, 0].get_gridspec()
-    axcol: Axes = fig.add_subplot(gs[1, :2])
+    # axs[1, 0].remove()
+    # axs[1, 1].remove()
+    # gs = axs[0, 0].get_gridspec()
+    # axcol: Axes = fig.add_subplot(gs[1, :2])
     axrcol: Axes = axs[1, 2]
 
     hists = []
     ax: Axes
     norm = "log" if force_log else None
-    for iax, (ax, arr, weights, title) in enumerate(
-        zip([ax1, ax2], [sim, gen], [simw, genw], (simlabel(), "\\dt"))
+    for iax, (ax, arr, weights, cmap, cax, title) in enumerate(
+        zip(
+            [ax1, ax2],
+            [sim, gen],
+            [simw, genw],
+            ["Blues", "Reds"],
+            [axs[1, 0], axs[1, 1]],
+            (simlabel(), "\\dt"),
+        )
     ):
         x, y = arr.T
         x = chip_to_binborders(x, xedges)
@@ -107,7 +114,7 @@ def hist2d(
             linewidths=2,
             weights=weights,
             vmax=colorlim,
-            cmap="Greys",
+            cmap=cmap,
         )
         hists.append(h)
         # if kdeplot:
@@ -126,8 +133,13 @@ def hist2d(
             ax.set_ylabel(v2name)
         else:
             ax.yaxis.set_ticklabels([])
+        cb = plt.colorbar(mesh, cax=cax, orientation="horizontal")
+        if cbtitle is not None:
+            cb.set_label(cbtitle)
+        else:
+            cb.set_label("Counts per Bin")
 
-    cbar1 = plt.colorbar(mesh, cax=axcol, orientation="horizontal")
+    # cbar1 = plt.colorbar(mesh, cax=axcol, orientation="horizontal")
 
     # Ratio hist
     # subtract the simulated sample from the generated sample
@@ -178,8 +190,9 @@ def hist2d(
     ax3.set_title(f"“\\dt”\\ $-$ “{simlabel()}”")
 
     if cbtitle is not None:
-        cbar1.set_label(cbtitle)
         cbar2.set_label("$Δ$ " + cbtitle)
+    else:
+        cbar2.set_label("$Δ$ Counts per Bin")
 
     fig.tight_layout()
     # fig.savefig("/home/mscham/fgsim/wd/test.pdf")
