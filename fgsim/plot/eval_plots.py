@@ -23,17 +23,18 @@ def to_np(a: Union[torch.Tensor, np.ndarray]) -> np.ndarray:
 
 def eval_plots(fig_logger, res: dict):
     make_1d_plots(res, fig_logger, False)
-    make_1d_plots(res, fig_logger, True)
-    make_1d_plots(res, fig_logger, False, True)
-
     make_high_level_plots(res, fig_logger)
-    make_critics_plots(res, fig_logger)
-    make_2d_high_level_plots(res, fig_logger)
-    make_y_vs_hlv_plots(res, fig_logger)
 
     make_2d_plots(res, fig_logger, False)
-    make_2d_plots(res, fig_logger, True)
-    make_2d_plots(res, fig_logger, False, True)
+    make_2d_plots(res, fig_logger, False, True)  # energy weighted
+
+    # Scaled Plots
+    # make_1d_plots(res, fig_logger, True)
+    # make_2d_plots(res, fig_logger, True)
+    # make_1d_plots(res, fig_logger, False, True) # energy weighted
+    # make_critics_plots(res, fig_logger)
+    # make_2d_high_level_plots(res, fig_logger)
+    # make_y_vs_hlv_plots(res, fig_logger)
 
 
 def make_1d_plots(
@@ -125,6 +126,8 @@ def make_high_level_plots(res: dict, fig_logger: FigLogger) -> None:
     fig_logger.prefixes.append("HLV")
     metric_dict = _construct_hlv_metric_dict(res)
     for ftn, (sim_arr, gen_arr) in metric_dict.items():
+        # if ftn != "showershape_peak_layer":
+        #     continue
         fig = ratioplot([sim_arr, gen_arr], ftn=ftn)
         fig_logger(fig, f"hlv_{ftn}.pdf")
 
