@@ -3,9 +3,9 @@ import numpy as np
 
 def binborders_wo_outliers(points: np.ndarray, bins=50, cut_qt=0.05) -> np.ndarray:
     assert len(points.shape) == 1
-    if len(points) > 10_000:
-        points = np.random.choice(points, 10_000)
     points = points[~np.isnan(points)]
+    if len(points) > 100_000:
+        points = np.random.choice(points, 100_000)
 
     if len(np.unique(points[:500])) < 50:
         uniques = np.unique(points)

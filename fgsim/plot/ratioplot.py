@@ -59,8 +59,8 @@ def ratioplot(
 
     if bins is None:
         bins = var_to_bins(ftn)
-        if bins is None:
-            bins = binborders_wo_outliers(arrays[0])
+    if bins is None:
+        bins = binborders_wo_outliers(arrays[0])
 
     weighted = weights is not None and weights[0] is not None
     if not weighted:
@@ -298,19 +298,24 @@ def fix_ticks(fig, ax, axrat):
 def make_oor_indicators(axrat, x, ratio, bins, color, n_oor_upper, n_oor_lower):
     # Indicators for out of range ratios:
     lower, upper = axrat.get_ylim()
+    # markersize = binwidth
     ms = np.diff(
         axrat.transData.transform(np.stack([bins, np.zeros_like(bins)]).T)[:, 0]
     )
 
-    tup = np.stack([np.zeros_like(x), np.ones_like(x)]).T
+    # yval for upper outliers
+    tup = np.stack([np.zeros_like(x), np.ones_like(x) * 0.9]).T
     tup = axrat.transAxes.transform(tup)
-    tup[:, 1] -= (ms + 10 / ms) * n_oor_upper
+    # tup[:, 1] -= (ms + 10 / ms) * n_oor_upper # scale by marker size
+    tup[:, 1] -= n_oor_upper
     tup = axrat.transData.inverted().transform(tup)
     yupper = tup[:, 1]
 
-    tup = np.stack([np.zeros_like(x), np.zeros_like(x)]).T
+    # yval for lower outliers
+    tup = np.stack([np.zeros_like(x), np.ones_like(x) * 0.1]).T
     tup = axrat.transAxes.transform(tup)
-    tup[:, 1] += (ms + 10 / ms) * n_oor_lower
+    # tup[:, 1] += (ms + 10 / ms) * n_oor_lower  # scale by marker size
+    tup[:, 1] += n_oor_lower  # scale by marker size
     tup = axrat.transData.inverted().transform(tup)
     ylower = tup[:, 1]
 
