@@ -57,9 +57,11 @@ class TrainLog:
                     resume="must",
                     name=wandb_name,
                     group=conf["hash"],
-                    entity="mscham"
-                    if conf.project_name == "calochallange"
-                    else "hamgen",
+                    entity=(
+                        "mscham"
+                        if conf.project_name == "calochallange"
+                        else "hamgen"
+                    ),
                     dir=conf.path.run_path,
                     project=conf.project_name,
                     job_type=conf.command,
@@ -79,9 +81,9 @@ class TrainLog:
 
     def log_cmd_time(self):
         if self.use_wandb:
-            self.wandb_run.summary[
-                f"time/{conf.command}"
-            ] = datetime.now().strftime("%y-%m-%d-%H:%M")
+            self.wandb_run.summary[f"time/{conf.command}"] = datetime.now().strftime(
+                "%y-%m-%d-%H:%M"
+            )
 
     def log_model_graph(self, model):
         if self.use_wandb:
@@ -211,9 +213,7 @@ class TrainLog:
             ]
         ):
             return
-        traintime = (
-            self.state.time_train_step_end - self.state.time_train_step_start
-        )
+        traintime = self.state.time_train_step_end - self.state.time_train_step_start
         iotime = self.state.time_io_end - self.state.time_train_step_start
         utilisation = 1 - iotime / traintime
 
