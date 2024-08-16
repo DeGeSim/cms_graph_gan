@@ -17,7 +17,6 @@ from fgsim.models.common.deeptree import (
     TreeGraph,
     get_br_layer,
 )
-from fgsim.monitoring import logger
 from fgsim.utils import check_tensor
 
 # from fgsim.plot.model_plotter import model_plotter
@@ -35,12 +34,15 @@ class ModelClass(nn.Module):
         dim_red_in_branching: bool,
         pruning: str,
         sample_until_full: bool = False,
-        **kwargs,
+        n_cond: int = sum(conf.loader.cond_gen_features),
+        batch_size: int = conf.loader.batch_size,
+        features: list[int] = list(OmegaConf.to_container(conf.tree.features)),
+        branches: list[int] = list(OmegaConf.to_container(conf.tree.branches)),
     ):
         super().__init__()
         self.n_global = n_global
-        self.n_cond = sum(conf.loader.cond_gen_features)
-        self.batch_size = conf.loader.batch_size
+        self.n_cond = n_cond
+        self.batch_size = batch_size
         self.final_layer_scaler = final_layer_scaler
         self.ancestor_mpl = ancestor_mpl
         self.child_mpl = child_mpl
@@ -48,27 +50,27 @@ class ModelClass(nn.Module):
         self.pruning = pruning
         self.sample_until_full = sample_until_full
 
-        self.features: list[int] = list(OmegaConf.to_container(conf.tree.features))
-        self.branches: list[int] = list(OmegaConf.to_container(conf.tree.branches))
+        self.features = features
+        self.branches = branches
         n_levels = len(self.features)
 
         # Shape of the random vector
-        self.z_shape = conf.loader.batch_size, 1, self.features[0]
+        self.z_shape = batch_size, 1, self.features[0]
 
         # Calculate the output points
         self.output_points = prod(self.branches)
-        assert self.output_points == conf.loader.n_points
-        assert self.features[-1] == conf.loader.n_features
+        # assert self.output_points == conf.loader.n_points
+        # assert self.features[-1] == conf.loader.n_features
 
-        logger.debug(f"Generator output will be {self.output_points}")
-        if conf.loader.n_points > self.output_points:
-            raise RuntimeError(
-                "Model cannot generate a sufficent number of points: "
-                f"{conf.loader.n_points} < {self.output_points}"
-            )
+        # logger.debug(f"Generator output will be {self.output_points}")
+        # if conf.loader.n_points > self.output_points:
+        #     raise RuntimeError(
+        #         "Model cannot generate a sufficent number of points: "
+        #         f"{conf.loader.n_points} < {self.output_points}"
+        #     )
 
         self.tree = Tree(
-            batch_size=conf.loader.batch_size,
+            batch_size=batch_size,
             connect_all_ancestors=connect_all_ancestors,
             branches=self.branches,
             features=self.features,

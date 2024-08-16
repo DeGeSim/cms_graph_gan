@@ -92,8 +92,7 @@ class ModelClass(nn.Module):
             x, batchidx = self.pools[ilevel](x=x.clone(), batch=batchidx)
             x_lat_dict[f"lvl{ilevel}_pool"] = x
 
-            assert x.shape == (
-                conf.loader.batch_size,
+            assert x.shape[1:] == (
                 self.pools[ilevel].ratio,
                 self.features[ilevel + 1] * self.n_heads,
             )
