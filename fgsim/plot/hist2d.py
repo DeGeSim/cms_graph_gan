@@ -107,18 +107,19 @@ def hist2d(
             linewidths=2,
             weights=weights,
             vmax=colorlim,
+            cmap="Greys",
         )
         hists.append(h)
-        if kdeplot:
-            sns.kdeplot(
-                x=x,
-                y=y,
-                ax=ax,
-                levels=[0.1, 0.3, 0.6, 0.9],
-                color="black",
-                thresh=0.2,
-                bw_adjust=1.0,
-            )
+        # if kdeplot:
+        #     sns.kdeplot(
+        #         x=x,
+        #         y=y,
+        #         ax=ax,
+        #         levels=[0.1, 0.3, 0.6, 0.9],
+        #         color="black",
+        #         thresh=0.2,
+        #         bw_adjust=1.0,
+        #     )
         ax.set_title(title)
         ax.set_xlabel(v1name)
         if iax == 0:
@@ -138,7 +139,7 @@ def hist2d(
     h[np.where(h == 0)] = np.NAN
 
     # limit of the delta colorbar = half max of simlated hist
-    diff_lim = np.nanmax(np.abs(hists[0]))
+    diff_lim = np.nanmax(np.abs(hists[0])) / 4
     # diff_lim = max(np.nanmax(np.abs(h)), diff_lim)
     # switch to log if less than 5% of bins have at most 10% of the maximum enties
     # if force_log_delta or (np.abs(h) > (np.max(np.abs(h)) / 10)).mean() < 0.05:
@@ -153,6 +154,7 @@ def hist2d(
         norm = colors.CenteredNorm(
             vcenter=0,
             halfrange=diff_lim if colorlim_delta is None else colorlim_delta,
+            # halfrange=np.nanmax(np.abs(h)),
         )
 
     mesh = ax3.imshow(
@@ -173,7 +175,7 @@ def hist2d(
 
     ax3.yaxis.set_ticklabels([])
     ax3.set_xlabel(v1name)
-    ax3.set_title(f"\\dt - {simlabel()}")
+    ax3.set_title(f"“\\dt”\\ $-$ “{simlabel()}”")
 
     if cbtitle is not None:
         cbar1.set_label(cbtitle)
