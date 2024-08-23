@@ -260,18 +260,24 @@ def make_top_hists(hists, arrays, bins, labels, errors, ax):
     return colors
 
 
-def fix_ticks(fig, ax, axrat):
-    ax.tick_params(axis="y", which="both", labelsize=15)
-    axrat.tick_params(axis="y", which="both", labelsize=15)
+def fix_ticks(fig, ax, axrat, labelsize=15):
+    plt.tight_layout()
+    plt.draw()
+    ax.tick_params(axis="y", which="both", labelsize=labelsize)
+    axrat.tick_params(axis="y", which="both", labelsize=labelsize)
 
     # remove labels
     ax.tick_params("x", labelbottom=False)
     axrat.tick_params("x", labelbottom=False)
     # safe for later
     xtickpos = ax.xaxis.get_ticklocs()[1:-1]
-    xtickformatter = ax.xaxis.get_major_formatter()
-    xtickformatter.format = xtickformatter.format.replace("%1.3f", "%1.3g")
-    xticklabels = [xtickformatter(e) for e in xtickpos]
+    xticktlables = ax.get_xticks()[1:-1]
+    if all([float(e) % 1000 == 0 for e in xticktlables]):
+        xticklabels = [f"{int(x)}k" for x in xticktlables / 1000]
+    else:
+        xtickformatter = ax.xaxis.get_major_formatter()
+        xtickformatter.format = xtickformatter.format.replace("%1.3f", "%1.3g")
+        xticklabels = [xtickformatter(e) for e in xticktlables]
 
     # ticks to top for ratio Axes
     axrat.xaxis.tick_top()
@@ -290,9 +296,8 @@ def fix_ticks(fig, ax, axrat):
             label,
             ha="center",
             va="center",
-            fontsize=14,
+            fontsize=labelsize,
         )
-    # plt.tight_layout()
 
 
 def make_oor_indicators(axrat, x, ratio, bins, color, n_oor_upper, n_oor_lower):
@@ -318,6 +323,9 @@ def make_oor_indicators(axrat, x, ratio, bins, color, n_oor_upper, n_oor_lower):
     tup[:, 1] += n_oor_lower  # scale by marker size
     tup = axrat.transData.inverted().transform(tup)
     ylower = tup[:, 1]
+
+    # use this instead next time
+    # https://stackoverflow.com/questions/44397105/how-to-draw-a-triangle-using-matplotlib-pyplot-based-on-3-dots-x-y-in-2d
 
     oor_idxs = np.where(ratio > upper)[0]
     n_oor_upper[oor_idxs] += 1
