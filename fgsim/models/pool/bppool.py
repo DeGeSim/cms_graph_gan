@@ -26,7 +26,7 @@ class BipartPool(nn.Module):
         self.batch_size = batch_size
         assert self.mode in ["attn", "mpl"]
 
-        self.aggrs = nn.Parameter(
+        self.seed_nodes = nn.Parameter(
             torch.normal(0, 1, size=(self.ratio, self.in_channels * self.n_heads))
         )
 
@@ -50,7 +50,7 @@ class BipartPool(nn.Module):
     def forward(self, x: Tensor, batch: Tensor) -> tuple[Tensor, Tensor]:
         n_features = x.shape[-1]
         batch_size = batch[-1] + 1
-        x_aggrs = self.aggrs.repeat(batch_size, 1)
+        x_aggrs = self.seed_nodes.repeat(batch_size, 1)
 
         if self.mode == "attn":
             x_large = x.reshape(-1, n_features)  # self.ln_up()
