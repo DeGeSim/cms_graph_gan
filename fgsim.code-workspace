@@ -65,7 +65,7 @@
         "python.analysis.typeCheckingMode": "basic",
         "python.defaultInterpreterPath": "/dev/shm/mscham/fgsim/bin/python",
         "python.envFile": "~/fgsim/.env",
-        "python.languageServer": "Pylance",
+        "python.languageServer": "Jedi",
         "python.terminal.activateEnvironment": false,
         "python.testing.pytestEnabled": true,
         "python.testing.pytestPath": "/dev/shm/mscham/fgsim/bin/pytest",

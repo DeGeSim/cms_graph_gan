@@ -3,9 +3,10 @@
         {
             "args": [
                 "--hash",
-                // "55514a3", // cc
+                "55514a3", // cc
                 // "af5e229", // jn150
-                "fea87f9", // jn30
+                // "3d60891", // jn30 q
+                // "fea87f9", // jn30
                 // "--debug",
                 // "--remote",
                 "test"
@@ -21,7 +22,7 @@
         {
             "args": [
                 "--tag",
-                "cc_test",
+                "cc_bguess_cdo0.3_xyz",
                 "--debug",
                 "train"
             ],
@@ -36,7 +37,7 @@
         {
             "args": [
                 "--tag",
-                "cc_test",
+                "cc_bguess_cdo0.3_xyz",
                 "--debug",
                 "test"
             ],
@@ -51,7 +52,7 @@
         {
             "args": [
                 "--tag",
-                "cc_test",
+                "cc_bguess_cdo0.3_xyz",
                 "--debug",
                 "preprocess"
             ],
