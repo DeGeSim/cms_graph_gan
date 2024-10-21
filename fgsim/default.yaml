@@ -488,18 +488,19 @@ dataset_options:
         dataset_glob: "**/dataset_2_*.hdf5"
         eval_glob: "dataset_2_2.hdf5"
         n_points: 6000 # 2, 3, 2,5 , 2,5 , 10
+        # x_features: ["E", "x", "y", "z"]
         x_features: ["E", "z", "alpha", "r"]
         x_ftx_energy_pos: 0
         y_features: ["E", "num_particles", "Eperlayer"]
         cond_gen_features: [True, True, True]
         cond_critic_features: [True, True, True]
-        chunk_size: 1000
+        chunk_size: 50
         batch_size: 50
         validation_set_size: 10_000
         test_set_size: 50_000
       val_interval:
-        val_interval: 2_000
-        plot_interval: 4_000
+        val_interval: 4_000
+        plot_interval: 8_000
       metrics:
         debug: ["marginalEw"]
         stopping: ["marginalEw", "showershape", "fpc", "sphereratio", "nhits"]

@@ -24,6 +24,8 @@ def scale_event(batch):
         .reshape(-1)
     )
     add_graph_attr(batch, "n_pointsv", n_pointsv)
+
     batch.x = scaler.transform(batch.x, "x")
     batch.y = scaler.transform(batch.y, "y")
+
     return batch

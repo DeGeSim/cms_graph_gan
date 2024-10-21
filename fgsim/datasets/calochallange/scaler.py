@@ -49,9 +49,9 @@ scaler = ScalerBase(
     len_dict=file_manager.file_len_dict,
     transfs_x=[
         hitE_tf,  # h_energy
-        make_pipeline(*dequant_stdscale()),  # z
-        make_pipeline(*dequant_stdscale()),  # alpha
-        make_pipeline(*dequant_stdscale()),  # r
+        StandardScaler(),  # x
+        StandardScaler(),  # y
+        StandardScaler(),  # z
     ],
     transfs_y=[
         E_tf,  # Energy

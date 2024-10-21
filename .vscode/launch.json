@@ -50,21 +50,6 @@
             "type": "debugpy"
         },
         {
-            "args": [
-                "--tag",
-                "cc_bguess_cdo0.3_xyz",
-                "--debug",
-                "preprocess"
-            ],
-            "cwd": "/home/mscham/fgsim",
-            "envFile": "${workspaceFolder}/.env",
-            "justMyCode": false,
-            "module": "fgsim",
-            "name": "preprocess",
-            "request": "launch",
-            "type": "debugpy"
-        },
-        {
             "cwd": "/home/mscham/fgsim",
             "envFile": "${workspaceFolder}/.env",
             "justMyCode": false,
@@ -76,8 +61,8 @@
         {
             "args": [
                 "--tag",
-                "abil_crit.bbp.gatplus",
-                "--debug",
+                "cc_xyz_cmb2",
+                // "--debug",
                 "setup"
             ],
             "cwd": "/home/mscham/fgsim",

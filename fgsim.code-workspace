@@ -8,12 +8,6 @@
     "folders": [
         {
             "path": "."
-        },
-        {
-            "path": "../thesis_scripts"
-        },
-        {
-            "path": "wd/cc_bguess_cdo0.3/55514a3"
         }
     ],
     "settings": {

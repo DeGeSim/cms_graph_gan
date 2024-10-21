@@ -4,6 +4,7 @@ from fgsim.config import conf
 
 
 def add_position(batch):
+    raise NotImplementedError
     from .scaler import scaler
 
     if batch.pos is not None:

@@ -5,13 +5,46 @@ from torch_geometric.data import Batch
 
 from fgsim.config import conf
 
-from .convcoord import batch_to_Exyz
+from .convcoord import Exyz_to_Ezalphar, Ezalphar_to_Exyz
 from .pca import fpc_from_batch
 from .shower import analyze_layers, cyratio, response, sphereratio
 
 
 def postprocess(batch: Batch, sim_or_gen: str) -> Batch:
-    alphapos = conf.loader.x_features.index("alpha")
+    batch.x = Exyz_to_Ezalphar(batch.x)
+    _x_copy = batch.x.clone()
+
+    for i in [1, 2, 3]:
+        icoord = batch.x[:, i]
+        assert icoord.min
+        if sim_or_gen == "sim":
+            assert icoord.max() <= 1 + 1e-1  # float errors
+            assert icoord.min() >= -1e-1  # float errors
+        icoord = torch.clip(icoord, 0, 1)
+
+        icoord = (
+            icoord
+            * [
+                None,
+                calorimeter.num_z,
+                calorimeter.num_alpha,
+                calorimeter.num_r,
+            ][i]
+        )
+        icoord_copy = icoord.clone()
+        icoord = icoord.int()
+        # catch cases where the rounding is 0
+        edgecases = (icoord == icoord_copy) & (icoord_copy > 0)
+        icoord[edgecases] -= 1
+        # icoord = torch.from_numpy(requant(icoord.cpu().double().numpy())).to(
+        #     icoord.device
+        # )
+        assert (icoord.min() >= 0).all()
+        assert (icoord.max() < calorimeter.dims[i - 1]).all()
+
+        batch.x[:, i] = icoord
+
+    alphapos = 2
     num_alpha = calorimeter.num_alpha
 
     batch = shift_sum_multi_hits(batch, forbid_dublicates=False)
@@ -26,7 +59,8 @@ def postprocess(batch: Batch, sim_or_gen: str) -> Batch:
 
         batch.x[..., alphapos] = alphas
 
-    batch = batch_to_Exyz(batch)
+    batch.xyz = Ezalphar_to_Exyz(batch.x)[..., [1, 2, 3]]
+
     metrics: list[str]
 
     match conf.command:
