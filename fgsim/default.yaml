@@ -494,8 +494,8 @@ dataset_options:
         y_features: ["E", "num_particles", "Eperlayer"]
         cond_gen_features: [True, True, True]
         cond_critic_features: [True, True, True]
-        chunk_size: 50
-        batch_size: 50
+        chunk_size: 40
+        batch_size: 40
         validation_set_size: 10_000
         test_set_size: 50_000
       val_interval:
