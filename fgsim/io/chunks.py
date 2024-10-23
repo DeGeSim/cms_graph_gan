@@ -67,11 +67,6 @@ class ChunkManager:
         self.n_test_batches = conf.loader.test_set_size // batch_size
         n_testing_chunks = conf.loader.test_set_size // chunk_size
 
-        logger.info(
-            f"Using the first {n_validation_batches} batches for "
-            + f"validation and the next {self.n_test_batches} batches for testing."
-        )
-
         if conf.loader.eval_glob is None:
             chunk_coords = compute_chucks(files, len_dict)
             self.validation_chunks = chunk_coords[:n_validation_chunks]
@@ -102,3 +97,11 @@ class ChunkManager:
         assert len(self.validation_chunks) + len(self.testing_chunks) < len(
             self.training_chunks
         ), "Dataset to small"
+
+        n_training_batches = (len(self.training_chunks) * chunk_size) // batch_size
+
+        logger.info(
+            "Using the first"
+            f" {n_validation_batches}/{self.n_test_batches}/~{n_training_batches} "
+            "batches for validation/testing/training."
+        )
