@@ -1,4 +1,3 @@
-import pprint
 from datetime import datetime
 from pathlib import Path
 from typing import Union
@@ -14,6 +13,8 @@ from fgsim.config import conf
 from fgsim.monitoring import logger
 from fgsim.monitoring.experiment_organizer import exp_orga_wandb
 from wandb.sdk.wandb_run import Run
+
+from .pfmt import pfmt
 
 
 class TrainLog:
@@ -107,7 +108,8 @@ class TrainLog:
                 metrics_dict[k + "δ"] = v[1]
 
         if len(metrics_dict.keys()):
-            logger.info(f"Logging wandb:\n{pprint.pformat(metrics_dict)}")
+            logger.info("Logging wandb:")
+            logger.info(pfmt.pformat(metrics_dict))
 
         return metrics_dict
 
