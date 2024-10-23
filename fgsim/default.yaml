@@ -429,8 +429,8 @@ dataset_options:
             smoothing: False
             log_interval: 100
             max_epochs: 20000
-            val_interval: "${div:5_000_000,${dataset_options[${dataset_name}][loader][batch_size]}}"
-            plot_interval: "${div:10_000_000,${dataset_options[${dataset_name}][loader][batch_size]}}"
+            val_interval: 1000
+            plot_interval: 5_000
         loader:
             rootprefix: "treeMaker/tree"
             dataset_glob: "**/*.root"
@@ -498,9 +498,9 @@ dataset_options:
         batch_size: 40
         validation_set_size: 10_000
         test_set_size: 50_000
-      val_interval:
-        val_interval: 4_000
-        plot_interval: 8_000
+      training:
+        val_interval: 2_500
+        plot_interval: 5_000
       metrics:
         debug: ["marginalEw"]
         stopping: ["marginalEw", "showershape", "fpc", "sphereratio", "nhits"]
