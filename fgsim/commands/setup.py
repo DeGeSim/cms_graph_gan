@@ -91,7 +91,7 @@ def setup_experiment() -> None:
     assert codepath.is_dir()
     run_train.log_code(str(codepath), conf.hash)
 
-    exp_orga_wandb[conf["hash"]] = run_train.id
+    exp_orga_wandb[f"{conf['hash']}_train"] = run_train.id
 
     run_test = wandb.init(
         project=conf.project_name,

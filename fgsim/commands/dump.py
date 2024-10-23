@@ -14,14 +14,17 @@ def dump_procedure():
     from fgsim.config import conf
 
     api = wandb.Api()
+    entity = "mscham" if conf.project_name == "calochallange" else "hamgen"
+
     for s in [conf.hash, f"{conf.hash}_train", f"{conf.hash}_test"]:
+        runstr = f"{entity}/{conf.project_name}/runs/{exp_orga_wandb[s]}"
         if s in exp_orga_wandb:
             try:
-                run = api.from_path(f"{conf.project_name}/runs/{exp_orga_wandb[s]}")
+                run = api.from_path(runstr)
                 run.delete()
+                print(f"Deleted {runstr}")
             except wandb.errors.CommError:
-                pass
-
+                print(f"Skipped {runstr}")
             del exp_orga_wandb[s]
 
     # local
