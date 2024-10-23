@@ -17,15 +17,17 @@ def dump_procedure():
     entity = "mscham" if conf.project_name == "calochallange" else "hamgen"
 
     for s in [conf.hash, f"{conf.hash}_train", f"{conf.hash}_test"]:
-        runstr = f"{entity}/{conf.project_name}/runs/{exp_orga_wandb[s]}"
         if s in exp_orga_wandb:
-            try:
-                run = api.from_path(runstr)
-                run.delete()
-                print(f"Deleted {runstr}")
-            except wandb.errors.CommError:
-                print(f"Skipped {runstr}")
-            del exp_orga_wandb[s]
+            runstr = f"{entity}/{conf.project_name}/runs/{exp_orga_wandb[s]}"
+            if s in exp_orga_wandb:
+                try:
+                    run = api.from_path(runstr)
+                    run.delete()
+                    print(f"Deleted {runstr}")
+                except wandb.errors.CommError:
+                    print(f"Skipped {runstr}")
+                del exp_orga_wandb[s]
+        print(f"Skipped {s}")
 
     # local
     paths = glob(f"{args.work_dir}/*/{args.hash}")

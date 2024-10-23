@@ -23,7 +23,7 @@ def init_logger():
             datefmt="%y-%m-%d %H:%M",
         )
 
-        stream_handler = RichHandler()
+        stream_handler = RichHandler(locals_max_string=150)
         stream_handler.setFormatter(format_plain)
         stream_handler.setLevel(logging.DEBUG if conf.debug else conf.loglevel)
         logger.addHandler(stream_handler)
