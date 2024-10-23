@@ -25,9 +25,6 @@ class Trainer:
     def training_loop(self):
         max_epochs = conf.training.max_epochs
         state = self.holder.state
-        # if state.epoch < max_epochs and not early_stopping(self.holder):
-        if state.grad_step == 0:
-            self.validation_step()
         while state.epoch < max_epochs and not early_stopping(self.holder):
             self.train_epoch()
         else:
@@ -42,7 +39,7 @@ class Trainer:
         tbar = tqdm(self.loader.training_batches, **self.tqdmkw())
         for batch in tbar:
             step = self.holder.state.grad_step
-            if step % self.val_interval == 0 and step != 0:
+            if step % self.val_interval:
                 self.validation_step()
                 tbar.unpause()
 
@@ -159,9 +156,9 @@ class Trainer:
         if conf.debug:
             kws["miniters"] = 5
             kws["mininterval"] = 1.0
-        elif self.holder.state.epoch < 10:
-            kws["miniters"] = 300
-            kws["mininterval"] = 10.0
+        # elif self.holder.state.epoch < 10:
+        #     kws["miniters"] = 300
+        #     kws["mininterval"] = 10.0
         else:
             kws["miniters"] = 1000
             kws["mininterval"] = 20.0

@@ -102,7 +102,7 @@ class EvaluationMetrics:
                     f"(Δ{(val_metric_hist[-1]/val_metric_hist[-2]-1)*100:+.0f}%)"
                 )
             logstr += "  "
-        logger.info(logstr)
+        # logger.info(logstr)
         # if conf.debug:
         #     return dict(), list()
 

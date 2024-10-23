@@ -106,7 +106,8 @@ class TrainLog:
                 metrics_dict[k] = v[0]
                 metrics_dict[k + "δ"] = v[1]
 
-        logger.info(f"Logging wandb:\n{pprint.pformat(metrics_dict)}")
+        if len(metrics_dict.keys()):
+            logger.info(f"Logging wandb:\n{pprint.pformat(metrics_dict)}")
 
         return metrics_dict
 
