@@ -39,7 +39,7 @@ class Trainer:
         tbar = tqdm(self.loader.training_batches, **self.tqdmkw())
         for batch in tbar:
             step = self.holder.state.grad_step
-            if step % self.val_interval:
+            if step % self.val_interval == 0:
                 self.validation_step()
                 tbar.unpause()
 
