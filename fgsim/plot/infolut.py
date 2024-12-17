@@ -22,7 +22,7 @@ labels_dict: Dict[str, str] = {
     "pt": "\\ptjet",
     "phi": "\\phijet",
     "eta": "\\etajet",
-    "mass_raw": "\\mjetr",
+    "mass_raw": "\\mjetr [GeV]",
     "pt_raw": "\\ptjetr",
     "phi_raw": "\\phijetr",
     "eta_raw": "\\etajetr",

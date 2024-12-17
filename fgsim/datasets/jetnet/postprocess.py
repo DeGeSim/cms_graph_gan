@@ -11,6 +11,7 @@ def postprocess(batch, sim_or_gen: str):
     if "hlv" not in batch:
         batch["hlv"] = {}
     jn_dict = jet_features(to_stacked_mask(batch).cpu().numpy()[..., :3])
+    jn_dict["mass_raw"] = jn_dict["mass"] * 1000
     for k, v in jn_dict.items():
         batch["hlv"][k] = v
     return batch
