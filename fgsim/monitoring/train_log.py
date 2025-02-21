@@ -25,11 +25,9 @@ class TrainLog:
         # This code block is formatting the hyperparameters
         # for the experiment and creating a list of tags.
         self.state: DictConfig = state
-        default_log = conf.command == "test" or (
-            conf.command == "train" and not conf.debug
-        )
         self.use_tb = False
-        self.use_wandb = default_log and (conf.loader.n_points != 30)
+        self.use_wandb = False
+        # self.use_wandb = default_log and (conf.loader.n_points != 30)
 
         if self.use_tb:
             self.writer: SummaryWriter = SummaryWriter(

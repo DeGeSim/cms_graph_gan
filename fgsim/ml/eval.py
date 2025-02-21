@@ -128,22 +128,22 @@ def eval_res_d(
     mode: list[str],
     plot_path=None,
 ):
-    plot = step % conf.training.plot_interval == 0 or conf.command == "test"
+    # plot = step % conf.training.plot_interval == 0 or conf.command == "test"
 
     # evaluate the validation metrics
-    with torch.no_grad():
-        holder.eval_metrics(**results_d)
-    up_metrics_d, score = holder.eval_metrics.get_metrics()
+    # with torch.no_grad():
+    #     holder.eval_metrics(**results_d)
+    # up_metrics_d, score = holder.eval_metrics.get_metrics()
 
-    if conf.command != "test":
-        holder.train_log.log_metrics(
-            up_metrics_d, prefix="/".join(mode), step=step, epoch=epoch
-        )
-    else:
-        holder.train_log.log_summary(up_metrics_d, prefix="/".join(mode))
+    # if conf.command != "test":
+    #     holder.train_log.log_metrics(
+    #         up_metrics_d, prefix="/".join(mode), step=step, epoch=epoch
+    #     )
+    # else:
+    #     holder.train_log.log_summary(up_metrics_d, prefix="/".join(mode))
 
-    if not plot:
-        return score
+    # if not plot:
+    #     return score
 
     fig_logger = FigLogger(
         holder.train_log,
@@ -154,9 +154,10 @@ def eval_res_d(
     )
 
     eval_plots(fig_logger=fig_logger, res=results_d)
+    exit()
 
-    if mode[0] == "test":
-        return score
+    # if mode[0] == "test":
+    #     return score
 
     # Plot the gradients and the weights
     for lpart in holder.losses:
@@ -164,4 +165,4 @@ def eval_res_d(
             grad_fig = fig_grads(lpart.grad_aggr, lpart.name)
             fig_logger(grad_fig, f"grads/{lpart.name}")
 
-    return score
+    return None

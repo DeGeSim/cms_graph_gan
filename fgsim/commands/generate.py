@@ -106,8 +106,9 @@ def generate_procedure() -> None:
 def __write_dataset(holder, ds, dspath):
     batch_size = conf.loader.batch_size
 
-    y = torch.stack([batch.y for batch in ds.eval_batches])
-    n_pointsv = torch.stack([batch.n_pointsv for batch in ds.eval_batches])
+    batches = ds.training_batches + ds.testing_batches + ds.validation_batches
+    y = torch.stack([batch.y for batch in batches])
+    n_pointsv = torch.stack([batch.n_pointsv for batch in batches])
 
     assert (
         len(y) % batch_size == 0

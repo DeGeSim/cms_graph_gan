@@ -32,7 +32,7 @@ def test_procedure() -> None:
     holder: Holder = Holder(device)
     ds_dict = {
         best_or_last: get_testing_datasets(holder, best_or_last)
-        for best_or_last in ["best"]  # "last",
+        for best_or_last in ["best", "last"]
     }
 
     for best_or_last in ds_dict.keys():
@@ -96,6 +96,7 @@ def get_testing_datasets(holder: Holder, best_or_last) -> TestDataset:
     else:
         reprocess = True
 
+    reprocess = True
     if reprocess:
         # Make sure the batches are loaded
         loader = Dataset()

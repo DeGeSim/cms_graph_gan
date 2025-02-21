@@ -75,7 +75,7 @@ def hist2d(
         v1name, v2name = v2name, v1name
 
     pagewh = [448.13 / 72.0, 636.6 / 72.0]
-    width, height = pagewh[0] * 1.3 / 3.0, pagewh[1] * 1.3 / 3.0
+    width, height = pagewh[0] * 1.3 / 3.0 * 0.8, pagewh[1] * 1.3 / 3.0 * 0.8
     fig, axs = plt.subplots(
         2, 3, figsize=(width * 3, height), height_ratios=[1, 0.05]
     )
@@ -128,9 +128,9 @@ def hist2d(
         #         bw_adjust=1.0,
         #     )
         ax.set_title(title)
-        ax.set_xlabel(v1name)
+        ax.set_xlabel(v1name, size=12)
         if iax == 0:
-            ax.set_ylabel(v2name)
+            ax.set_ylabel(v2name, size=12)
         else:
             ax.yaxis.set_ticklabels([])
         cb = plt.colorbar(mesh, cax=cax, orientation="horizontal")
@@ -186,7 +186,7 @@ def hist2d(
     )
 
     ax3.yaxis.set_ticklabels([])
-    ax3.set_xlabel(v1name)
+    ax3.set_xlabel(v1name, size=12)
     ax3.set_title(f"“\\dt”\\ $-$ “{simlabel()}”")
 
     if cbtitle is not None:

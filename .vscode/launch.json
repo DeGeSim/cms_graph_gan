@@ -3,10 +3,12 @@
         {
             "args": [
                 "--hash",
-                "55514a3", // cc
+                // "04470bb", // cc
                 // "af5e229", // jn150
                 // "3d60891", // jn30 q
                 // "fea87f9", // jn30
+                // "970e2fc",
+                "55514a3",
                 // "--debug",
                 // "--remote",
                 "test"
@@ -22,7 +24,7 @@
         {
             "args": [
                 "--tag",
-                "cc_bguess_cdo0.3_xyz",
+                "cc_xyz_cmb2_gtreelinv_gtreelinv",
                 "--debug",
                 "train"
             ],
@@ -37,7 +39,7 @@
         {
             "args": [
                 "--tag",
-                "cc_bguess_cdo0.3_xyz",
+                "cc_xyz_cmb2_gtreelinv_gtreelinv",
                 "--debug",
                 "test"
             ],
@@ -61,7 +63,7 @@
         {
             "args": [
                 "--tag",
-                "cc_xyz_cmb2",
+                "cc_xyz_cmb2_gtreelinv",
                 // "--debug",
                 "setup"
             ],
